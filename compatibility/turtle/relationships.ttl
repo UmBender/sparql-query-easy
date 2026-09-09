@@ -1,0 +1,11 @@
+@prefix ex: <https://example.test/relationship/> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix owl: <http://www.w3.org/2002/07/owl#> .
+
+ex:subject a owl:Class ;
+    ex:objectProperty ex:target ;
+    ex:dataProperty "text value" .
+
+ex:objectProperty a owl:ObjectProperty ; rdfs:label "object property"@en .
+ex:dataProperty a owl:DatatypeProperty ; rdfs:label "data property"@en .
+ex:target a owl:Class ; rdfs:label "Target"@en .

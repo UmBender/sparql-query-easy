@@ -1,0 +1,7 @@
+{
+  "endpointUrl": "11111111-1111-1111-1111-111111111111",
+  "limit": 1,
+  "variableName": "?item",
+  "ignoreWikidata": true,
+  "where": []
+}

@@ -285,6 +285,10 @@ FakesAssemblies/
 .ntvs_analysis.dat
 node_modules/
 
+# Gradle build outputs and local project state
+.gradle/
+build/
+
 # Visual Studio 6 build log
 *.plg
 

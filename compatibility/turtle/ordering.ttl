@@ -1,0 +1,7 @@
+@prefix ex: <https://example.test/order/> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix owl: <http://www.w3.org/2002/07/owl#> .
+
+ex:low a owl:Class ; rdfs:label "Low"@en ; ex:score 1 .
+ex:middle a owl:Class ; rdfs:label "Middle"@en ; ex:score 2 .
+ex:high a owl:Class ; rdfs:label "High"@en ; ex:score 3 .

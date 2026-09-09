@@ -1,0 +1,7 @@
+{
+  "endpointUrl": "__DATABASE_ID__",
+  "limit": 0,
+  "variableName": "?item",
+  "ignoreWikidata": true,
+  "where": []
+}

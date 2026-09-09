@@ -1,0 +1,12 @@
+{
+  "endpointUrl": "__DATABASE_ID__",
+  "limit": 20,
+  "variableName": "?item",
+  "ignoreWikidata": true,
+  "where": [{
+    "subject": "?item",
+    "predicate": "<https://example.test/related>/<https://example.test/related>",
+    "object": "?target",
+    "filterType": null
+  }]
+}

@@ -1,0 +1,12 @@
+{
+  "endpointUrl": "__DATABASE_ID__",
+  "limit": 20,
+  "variableName": "?member",
+  "ignoreWikidata": true,
+  "where": [{
+    "subject": "<https://example.test/blank/container>",
+    "predicate": "<https://example.test/blank/member>",
+    "object": "?member",
+    "filterType": null
+  }]
+}

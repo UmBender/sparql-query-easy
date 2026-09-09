@@ -1,0 +1,6 @@
+{
+  "endpointUrl": "__DATABASE_ID__",
+  "subjectId": "<https://example.test/literal/subject>",
+  "predicateId": "<https://example.test/literal/english>",
+  "isLiteral": true
+}

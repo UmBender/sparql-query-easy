@@ -1,0 +1,11 @@
+@prefix ex: <https://example.test/prefix/> .
+@prefix vocab: <https://example.test/vocabulary/> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix owl: <http://www.w3.org/2002/07/owl#> .
+
+ex:prefixed-resource a owl:Class ;
+    rdfs:label "Prefix resource"@en ;
+    vocab:hasValue ex:prefixed-target .
+
+ex:prefixed-target a owl:Class ;
+    rdfs:label "Prefix target"@en .

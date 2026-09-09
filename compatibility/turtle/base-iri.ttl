@@ -1,0 +1,10 @@
+@base <https://example.test/base/> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix owl: <http://www.w3.org/2002/07/owl#> .
+
+<relative-item> a owl:Class ;
+    rdfs:label "Base resolved item"@en ;
+    <related> <relative-target> .
+
+<relative-target> a owl:Class ;
+    rdfs:label "Base resolved target"@en .

@@ -1,0 +1,10 @@
+@prefix ex: <https://example.test/> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix owl: <http://www.w3.org/2002/07/owl#> .
+
+ex:Item a owl:Class ;
+    rdfs:label "Simple item"@en ;
+    ex:related ex:Target .
+
+ex:Target a owl:Class ;
+    rdfs:label "Target item"@en .

@@ -1,0 +1,12 @@
+{
+  "endpointUrl": "https://query.wikidata.org/sparql",
+  "limit": 20,
+  "variableName": "?property",
+  "ignoreWikidata": false,
+  "where": [{
+    "subject": "<http://www.wikidata.org/entity/Q42>",
+    "predicate": "?property",
+    "object": "[]",
+    "filterType": null
+  }]
+}
