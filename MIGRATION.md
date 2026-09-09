@@ -985,3 +985,54 @@ GRADLE_USER_HOME=/tmp/sparql-query-easy-gradle ./gradlew ktlintCheck detekt test
 
 The test reports record 20 passing tests, including the seven new Jena RDF
 infrastructure regressions. Formatting and static analysis pass.
+
+## Prompt 8: pure Kotlin result filtering and RDF business rules
+
+### Migrated functions
+
+`application/query/ResultFilteringService.kt` ports the post-execution portions
+of these C# `EndpointService` functions without introducing a Ktor route,
+Jena type, query builder, or endpoint dependency:
+
+| Kotlin function | C# source function | Preserved behavior |
+|---|---|---|
+| `elementRelationships` | `GetElementRelationships` | Maps `property`, `propertyLabel`, and `propertyType` in row order; local results are returned unchanged; non-local results then remove empty labels and exact `outro` types. |
+| `relationshipValues` | `GetRelationshipValue` | Literal values use lexical text as both ID and label with type `text`; resource values use bracketed IRIs; blank nodes are `blank`; empty labels are removed after mapping. |
+| `search` | `GetSearch` local/remote post-query paths | An empty search returns an empty list; remote mappings are otherwise untouched; local mappings use current-culture lowercase containment, exact `objetoClasse`, then `Take(20)`, with no trim or deduplication. |
+| `query` | `GetQuery` post-query path | Removes every `?` from the requested variable name, falls back from an empty label to the ID, removes empty final labels, then applies the exact `objetoClasse` filter only for empty-where requests. |
+
+All lookups treat missing and explicit unbound bindings as the C# extension's
+empty string. Literal rendering deliberately uses lexical form only: language
+tags and datatype IRIs remain on the domain value and are neither coerced nor
+included in the C#-compatible display/comparison strings. Whitespace is not
+trimmed. The pipeline materializes a `List` in original row order and does not
+remove duplicates.
+
+`ResultFilteringServiceTest` ties its cases to the existing
+`RELATIONSHIPS-LOCAL-001`, `RELATIONSHIP-LITERAL-001`,
+`RELATIONSHIP-RESOURCE-001`, `SEARCH-LOCAL-001`, and
+`QUERY-EMPTY-WHERE-001` fixture names. The expected-output directory still has
+no captured C# baselines, so these focused tests encode only directly observed
+C# source behavior and fixture RDF terms; no golden result was added or
+changed.
+
+### Remaining work
+
+Ktor routes, request binding, endpoint state selection, local-cache behavior,
+SPARQL query construction, remote execution, and Wikidata HTTP handling remain
+unported. In particular, the C# query builder's projection-name discrepancy in
+the empty-where path is documented by the existing compatibility catalogue but
+is not corrected or hidden by this result-filtering layer.
+
+Focused validation passed:
+
+```sh
+GRADLE_USER_HOME=/tmp/sparql-query-easy-gradle ./gradlew ktlintFormat test \
+  --tests 'com.example.sparqlqueryeasy.application.query.ResultFilteringServiceTest' --no-daemon
+```
+
+Complete validation also passed (25 tests, zero failures):
+
+```sh
+GRADLE_USER_HOME=/tmp/sparql-query-easy-gradle ./gradlew ktlintCheck detekt test --no-daemon
+```
