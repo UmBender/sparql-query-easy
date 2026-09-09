@@ -983,6 +983,50 @@ GRADLE_USER_HOME=/tmp/sparql-query-easy-gradle ./gradlew test --no-daemon
 GRADLE_USER_HOME=/tmp/sparql-query-easy-gradle ./gradlew ktlintCheck detekt test --no-daemon
 ```
 
+## Prompt 9: typed Wikidata SPARQL query generation
+
+`wikidata/query/WikidataQueryGenerator.kt` now ports the query construction
+performed by C# `SparqlQueryBuilder` and its `EndpointService` callers as an
+independently testable Kotlin component. It has no Ktor dependency. Structured
+inputs cover Wikidata entities (`Q...`), properties (`P...`), variables, IRIs,
+direct-claim property paths, literal values, blank-node patterns, and the
+six C# filter modes. `GeneralSelectQuery`, `DisplaySelectQuery`,
+`RelationshipQuery`, `RelationshipValueQuery`, and `SearchSelectQuery` cover
+all SPARQL-producing `EndpointService` paths.
+
+The deterministic renderer preserves the C# prefixes, `SELECT DISTINCT`
+projection names, OPTIONAL label blocks, `lang(...)=\"en\"` selection,
+Wikidata `wikibase:directClaim` convention, parent/property type binds,
+filter/order-before-limit flow, `Max`/`Min` `LIMIT 1` behavior, and empty
+collection paths. `WikidataQueryGeneratorTest` supplies stable exact snapshots
+for the Wikidata generation fixture and structural Jena parser checks for every
+generated form, including multiple patterns, property paths, filters, language
+selection, empty inputs, invalid IDs, and escaped literal/filter values.
+
+Intentional security differences from the C# builder are documented and tested:
+the C# implementation directly interpolates request strings (including raw
+property paths and filters) and generates random literal variable suffixes.
+Kotlin rejects malformed entity/property/variable/numeric identifiers, accepts
+property paths only as validated `P...` lists, escapes literal/string filter
+content explicitly, and names literal variables by deterministic pattern index.
+These are compatibility-layer changes required to prevent SPARQL injection;
+they are not represented as a silent snapshot update. The C# golden-output
+directory remains empty, so no captured C# snapshot can yet be compared beyond
+the source-derived `WIKIDATA-GENERATION-001` stable snapshot.
+
+Focused validation passed:
+
+```sh
+GRADLE_USER_HOME=/tmp/sparql-query-easy-gradle ./gradlew ktlintFormat test \
+  --tests 'com.example.sparqlqueryeasy.wikidata.query.WikidataQueryGeneratorTest' --no-daemon
+```
+
+Complete formatting, static analysis, and compatibility validation passed:
+
+```sh
+GRADLE_USER_HOME=/tmp/sparql-query-easy-gradle ./gradlew ktlintFormat ktlintCheck detekt test --no-daemon
+```
+
 The test reports record 20 passing tests, including the seven new Jena RDF
 infrastructure regressions. Formatting and static analysis pass.
 
