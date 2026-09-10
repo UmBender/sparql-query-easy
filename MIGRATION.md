@@ -1500,3 +1500,48 @@ GRADLE_USER_HOME=/tmp/sparql-query-easy-gradle ./gradlew ktlintFormat \
 
 The `search` use case is complete. All identified application-service use
 cases are ready for the Ktor route phase; no routes were implemented here.
+
+## Prompt 18: local-database HTTP route group
+
+This slice ports `LocalDatabaseController.Post` as
+`POST /api/local-database`. The Ktor handler is intentionally thin: it reads
+the `multipart/form-data` field `ttlFile`, materializes a request-owned upload
+adapter, invokes the existing `LocalDatabaseUploadService`, and maps its
+application result. Successful responses preserve the C# `200 OK` camelCase
+wrapper: `{"data":"<uuid>"}` with `application/json`. Multipart parsing,
+Turtle parsing, UUID generation, graph caching, and stream ownership remain in
+the application/RDF layers rather than the route.
+
+Missing `ttlFile` and invalid Turtle are mapped to explicit `400 Bad Request`
+JSON error responses. The C# controller dereferenced a missing form file and
+would surface an unhandled server exception; this explicit validation status is
+an intentional HTTP-boundary correction, while the application-level
+`MissingUpload` distinction remains preserved. The route disposes every
+multipart part and the upload service closes its upload boundary after reading.
+The default application composition uses the Jena Turtle parser and the
+12-hour sliding in-memory graph cache; tests inject deterministic UUID/cache
+dependencies.
+
+`LocalDatabaseRoutesTest` covers successful `TTL-SIMPLE-001` upload, exact
+status/content type/JSON shape, `HTTP-MISSING-UPLOAD-001`, `TTL-INVALID-001`
+without cache insertion, and `TTL-EMPTY-001`. Application-level tests retain
+the remaining Turtle compatibility fixtures, cleanup, and failure behavior.
+
+Focused validation passed:
+
+```sh
+GRADLE_USER_HOME=/tmp/sparql-query-easy-gradle ./gradlew ktlintFormat test \
+  --tests 'com.example.sparqlqueryeasy.http.LocalDatabaseRoutesTest' --no-daemon
+```
+
+Complete JDK 21 validation passed:
+
+```sh
+GRADLE_USER_HOME=/tmp/sparql-query-easy-gradle ./gradlew ktlintFormat \
+  ktlintCheck detekt test --no-daemon
+```
+
+The local-database route group is complete. The QueryController group
+(`/api/query`, `/api/query/relationships`, `/api/query/relationship-value`,
+`/api/query/search`, and `/api/query/sparql`) remains for the next route slice;
+no QueryController routes were modified here.
