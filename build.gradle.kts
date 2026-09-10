@@ -31,6 +31,12 @@ sourceSets {
     test {
         resources.srcDir(rootProject.file("compatibility"))
     }
+    create("integrationTest") {
+        kotlin.srcDir("src/integrationTest/kotlin")
+        resources.srcDir("src/integrationTest/resources")
+        compileClasspath += sourceSets["main"].output + configurations["testRuntimeClasspath"]
+        runtimeClasspath += output + compileClasspath
+    }
 }
 
 dependencies {
@@ -40,6 +46,9 @@ dependencies {
     implementation("io.ktor:ktor-server-netty:$ktorVersion")
     implementation("io.ktor:ktor-server-content-negotiation:$ktorVersion")
     implementation("io.ktor:ktor-serialization-kotlinx-json:$ktorVersion")
+    implementation("io.ktor:ktor-client-core:$ktorVersion")
+    implementation("io.ktor:ktor-client-cio:$ktorVersion")
+    implementation("io.ktor:ktor-client-content-negotiation:$ktorVersion")
     implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.9.0")
 
     implementation("org.apache.jena:jena-core:6.2.0")
@@ -50,10 +59,24 @@ dependencies {
     testImplementation("io.kotest:kotest-assertions-core-jvm:5.9.1")
     testImplementation("io.ktor:ktor-server-test-host:$ktorVersion")
     testImplementation("io.ktor:ktor-client-content-negotiation:$ktorVersion")
+    testImplementation("io.ktor:ktor-client-mock:$ktorVersion")
 }
 
 tasks.test {
     useJUnitPlatform()
+}
+
+configurations["integrationTestImplementation"].extendsFrom(configurations["testImplementation"])
+
+tasks.register<Test>("integrationTest") {
+    description = "Runs opt-in live Wikidata integration tests"
+    group = "verification"
+    testClassesDirs = sourceSets["integrationTest"].output.classesDirs
+    classpath = sourceSets["integrationTest"].runtimeClasspath
+    useJUnitPlatform()
+    onlyIf {
+        providers.environmentVariable("RUN_WIKIDATA_INTEGRATION").orNull == "true"
+    }
 }
 
 detekt {

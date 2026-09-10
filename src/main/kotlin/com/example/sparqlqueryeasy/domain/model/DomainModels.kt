@@ -141,3 +141,13 @@ class SparqlQueryExecutionFailure(
     val diagnostic: String,
     cause: Throwable? = null,
 ) : RdfFailure("SPARQL query execution failed: $diagnostic", cause)
+
+class WikidataHttpFailure(
+    val endpoint: String,
+    val statusCode: Int?,
+    val diagnostic: String,
+    val query: String,
+    val retryAfter: String? = null,
+    val retryable: Boolean = statusCode == 429,
+    cause: Throwable? = null,
+) : RdfFailure("Wikidata SPARQL request failed: $diagnostic", cause)

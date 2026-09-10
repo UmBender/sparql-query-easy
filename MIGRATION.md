@@ -1027,8 +1027,50 @@ Complete formatting, static analysis, and compatibility validation passed:
 GRADLE_USER_HOME=/tmp/sparql-query-easy-gradle ./gradlew ktlintFormat ktlintCheck detekt test --no-daemon
 ```
 
-The test reports record 20 passing tests, including the seven new Jena RDF
-infrastructure regressions. Formatting and static analysis pass.
+## Prompt 10: Kotlin Wikidata SPARQL HTTP client
+
+`wikidata/client/WikidataHttpClient.kt` adds `KtorWikidataHttpClient`, a
+transport-only client that accepts generated query text and a configurable
+HTTP(S) endpoint. Query generation remains in the independent Wikidata query
+generator. The default User-Agent remains the C# value (`.NET QueryEasy`) and
+can be overridden. `createWikidataHttpClient` supplies CIO plus explicit
+connect (10 seconds) and request (30 seconds) timeout configuration; callers
+injecting a client (including MockEngine) retain control of its engine and
+configuration. The client is `AutoCloseable` and does not retry requests.
+
+SPARQL JSON responses are decoded into application-owned `SparqlSelectResult`
+values. `head.vars` determines projected-variable order; every row includes an
+explicit `UnboundSparqlBinding` for an absent variable. URI, blank-node, plain,
+language-tagged, and typed literal bindings preserve their value, lexical form,
+datatype IRI, and language tag. Unknown binding types, invalid domain values,
+missing required response fields, and bindings absent from `head.vars` become a
+diagnostic `WikidataHttpFailure`.
+
+HTTP status handling is explicit. Every non-2xx response retains endpoint,
+query, status code, bounded response diagnostics, and `Retry-After`. HTTP 429
+is marked `retryable` for a higher-level policy but is never retried here;
+400/500 and other permanent failures are not retried. Request timeouts become a
+failure with timeout diagnostics, preserving the original cause. This keeps
+the C# client's exception-on-SPARQL-transport-failure behavior while exposing
+structured status data to the application layer. The separate C# Wikidata
+entity-search branch still has its documented non-2xx empty-result behavior and
+is not conflated with this SPARQL transport.
+
+`WikidataHttpClientTest` uses Ktor MockEngine and recorded JSON strings for
+successful, empty, missing-binding, language-tagged, typed-literal, malformed,
+400, 429, 500, and timeout cases. It asserts request query encoding, Accept and
+User-Agent headers, endpoint validation, timeout configuration, and the
+no-retry guarantee. No live Wikidata call is made by the normal test task. A
+live integration-test task remains intentionally unconfigured/opt-in for a
+future phase.
+
+An opt-in `integrationTest` source set/task now contains a basic live Wikidata
+SELECT check. It is skipped unless `RUN_WIKIDATA_INTEGRATION=true`; the endpoint
+can be overridden with `WIKIDATA_SPARQL_ENDPOINT`. The normal `test` task never
+contacts Wikidata.
+
+The HTTP client tests add six passing transport regressions. Formatting and
+static analysis pass.
 
 ## Prompt 8: pure Kotlin result filtering and RDF business rules
 
@@ -1062,9 +1104,9 @@ changed.
 
 ### Remaining work
 
-Ktor routes, request binding, endpoint state selection, local-cache behavior,
-SPARQL query construction, remote execution, and Wikidata HTTP handling remain
-unported. In particular, the C# query builder's projection-name discrepancy in
+Ktor routes, request binding, endpoint state selection, and local-cache
+behavior remain unported. In particular, the C# query builder's
+projection-name discrepancy in
 the empty-where path is documented by the existing compatibility catalogue but
 is not corrected or hidden by this result-filtering layer.
 
@@ -1075,7 +1117,7 @@ GRADLE_USER_HOME=/tmp/sparql-query-easy-gradle ./gradlew ktlintFormat test \
   --tests 'com.example.sparqlqueryeasy.application.query.ResultFilteringServiceTest' --no-daemon
 ```
 
-Complete validation also passed (25 tests, zero failures):
+Complete validation also passed (37 tests, zero failures):
 
 ```sh
 GRADLE_USER_HOME=/tmp/sparql-query-easy-gradle ./gradlew ktlintCheck detekt test --no-daemon
