@@ -1,3 +1,4 @@
+import org.gradle.api.tasks.Copy
 import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 
 plugins {
@@ -64,6 +65,10 @@ dependencies {
 
 tasks.test {
     useJUnitPlatform()
+}
+
+tasks.named<Copy>("processResources") {
+    from(layout.projectDirectory.file("Sparql.QueryEasy/futebol_completo.ttl"))
 }
 
 configurations["integrationTestImplementation"].extendsFrom(configurations["testImplementation"])

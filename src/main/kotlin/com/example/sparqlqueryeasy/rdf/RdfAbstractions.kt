@@ -13,6 +13,16 @@ interface SparqlExecutor {
     suspend fun execute(query: String): SparqlResult
 }
 
+sealed interface SparqlSyntaxValidation {
+    data object Valid : SparqlSyntaxValidation
+
+    data class Invalid(val diagnostic: String) : SparqlSyntaxValidation
+}
+
+interface SparqlSyntaxValidator {
+    fun validate(query: String): SparqlSyntaxValidation
+}
+
 interface TurtleParser {
     fun parse(
         turtle: String,

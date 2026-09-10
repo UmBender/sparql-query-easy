@@ -20,6 +20,8 @@ import com.example.sparqlqueryeasy.domain.model.UnboundSparqlBinding
 import com.example.sparqlqueryeasy.rdf.LocalSparqlExecutor
 import com.example.sparqlqueryeasy.rdf.RdfValueFormatter
 import com.example.sparqlqueryeasy.rdf.RdfValueMapper
+import com.example.sparqlqueryeasy.rdf.SparqlSyntaxValidation
+import com.example.sparqlqueryeasy.rdf.SparqlSyntaxValidator
 import com.example.sparqlqueryeasy.rdf.TurtleParser
 import org.apache.jena.query.QueryException
 import org.apache.jena.query.QueryExecution
@@ -90,6 +92,19 @@ class JenaTurtleParser(
             )
         }
     }
+}
+
+/** Syntax-only validation at the Jena boundary; this never executes a query. */
+class JenaSparqlSyntaxValidator : SparqlSyntaxValidator {
+    override fun validate(query: String): SparqlSyntaxValidation =
+        try {
+            QueryFactory.create(query)
+            SparqlSyntaxValidation.Valid
+        } catch (exception: QueryException) {
+            SparqlSyntaxValidation.Invalid(exception.message ?: exception.javaClass.simpleName)
+        } catch (exception: IllegalArgumentException) {
+            SparqlSyntaxValidation.Invalid(exception.message ?: exception.javaClass.simpleName)
+        }
 }
 
 class JenaLocalSparqlExecutor(

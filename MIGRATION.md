@@ -1247,3 +1247,129 @@ GRADLE_USER_HOME=/tmp/sparql-query-easy-gradle ./gradlew clean compileKotlin \
 
 This application use case is complete; Ktor upload routing and endpoint-context
 are deliberately not part of this slice.
+
+## Prompt 14: endpoint-context application service
+
+This slice ports C# `EndpointService.SetEndpoint` as the stateless
+`EndpointContextResolver`. It replaces the C# typed client's mutable
+`_queryBuilder`, `_queryExecutor`, `_isWikidata`, and `_queryType` fields with
+a newly created immutable `EndpointContext` for each resolution. Contexts are
+`BuiltInGraphEndpointContext`, `UploadedGraphEndpointContext`,
+`WikidataEndpointContext`, or `RemoteSparqlEndpointContext`; each owns a
+request-scoped execution capability supplied by injected local or remote
+executor factories. Resolution never executes a SPARQL query.
+
+The supported C# endpoint forms are preserved as follows:
+
+- Exactly case-sensitive `CampeonatoBrasileiro2023` selects the local built-in
+  graph. Trailing text, slash, whitespace, or case changes do not select it.
+- C# `Guid.TryParse` forms (`D`, `N`, braced `B`, parenthesized `P`, and
+  hexadecimal `X`, including surrounding whitespace for classification) select
+  the local uploaded-graph path. The original, unnormalized text remains the
+  cache key, matching `LocalQueryExecutor.SetDatabase`; only the canonical
+  lower-case UUID emitted by upload normally reaches an existing cache entry.
+- Every other value is remote. Wikidata mode is the original raw,
+  case-sensitive `Contains("query.wikidata.org/sparql")` check, including a
+  trailing slash or the marker in another host/path. Case variants are generic
+  remote endpoints, as in C#.
+
+`InMemoryLocalGraphCache` from Prompt 13 is used directly. A missing local
+graph returns explicit `LocalGraphUnavailable(endpointUrl)` rather than C#'s
+unhandled `Exception("Local database not available")`; this is an intentional
+application-boundary result difference, with no HTTP status/body decision made.
+Likewise invalid remote values return `InvalidRemoteEndpoint` with diagnostics.
+
+The one necessary validation change is that Kotlin accepts only absolute HTTP
+or HTTPS endpoints with a host and rejects surrounding whitespace; C# passes
+all non-local strings to `new Uri(database)`, whose broader and normalization
+behavior has not been captured. The Kotlin context preserves otherwise valid
+input text without scheme/path/trailing-slash normalization. This restriction
+is documented as a deliberate endpoint safety boundary for later route review.
+
+The C# `BrasileiraoDatabase` reads and parses
+`Sparql.QueryEasy/futebol_completo.ttl` once at application construction and
+is registered as a singleton. Gradle now packages that exact tracked asset as
+`futebol_completo.ttl`; `ClasspathTurtleTextSource` closes the classpath stream
+internally, and `ParsedBuiltInGraphProvider` parses it eagerly once when
+constructed, retaining an application-owned immutable graph for its lifetime.
+Any missing resource raises `BuiltInGraphLoadingFailure`; parser failures retain
+the existing `TurtleParsingFailure` type. Application composition remains a
+later phase, so no Ktor route or singleton wiring was added here.
+
+`EndpointContextResolverTest` covers `BUILTIN-GRAPH-001`,
+`LOCAL-CACHE-MISS-001`, `WIKIDATA-GENERATION-001`, canonical and alternative
+GUID forms, built-in and uploaded local contexts, generic remotes, empty and
+malformed endpoints, whitespace/trailing-slash/case behavior, raw Wikidata URL
+variants, interleaved independent contexts/executors, no execution during
+resolution, bundled-resource availability, eager one-time loading, and resource
+or parser failure behavior.
+
+Focused validation passed:
+
+```sh
+GRADLE_USER_HOME=/tmp/sparql-query-easy-gradle ./gradlew ktlintFormat test \
+  --tests 'com.example.sparqlqueryeasy.application.endpoints.EndpointContextResolverTest' --no-daemon
+```
+
+Complete JDK 21 validation passed:
+
+```sh
+GRADLE_USER_HOME=/tmp/sparql-query-easy-gradle ./gradlew ktlintFormat \
+  ktlintCheck detekt test --no-daemon
+```
+
+This application use case is complete; `GetSparqlQuery`, `GetQuery`,
+`GetSearch`, and all Ktor routes remain deliberately unported in this slice.
+
+## Prompt 15: sparql-query-generation application service
+
+This slice ports C# `EndpointService.GetSparqlQuery` into the Ktor-free
+`SparqlQueryGenerationService`. `SparqlQueryGenerationRequest` accepts typed
+`QueryVariable` and `TriplePattern` values, with the C# default limit of 20;
+zero is retained and an empty pattern collection produces an empty `WHERE`.
+The service converts the request to the existing `DisplaySelectQuery` and
+returns an application-owned success or explicit invalid-input/generated-query
+failure. It never executes the selected endpoint context.
+
+Endpoint context affects only the default prefix set: local and generic remote
+contexts use the RDF/RDFS/OWL prefixes, while Wikidata contexts additionally
+use `wikibase`. Labels remain ordinary `rdfs:label` labels because the C# call
+passes `ignoreWikidata: true`. The existing typed Wikidata generator remains
+the sole query-building implementation; output is deterministic and exact
+snapshot assertions are separate from Jena syntax-validation assertions.
+
+The C# method does not pass `WhereRequest.FilterType` to `Where`, so the
+compatibility service deliberately clears typed filters for this use case.
+The resulting literal behavior is the builder's string-equality filter; the
+generator's StartsWith, Contains, numeric, and ordering support remains covered
+for the later `GetQuery` slice. Typed identifiers reject unsafe path/IRI input
+and negative limits before generation. This is an intentional safety and API
+boundary difference from C#'s raw string interpolation and is covered by
+`SPARQL-INJECTION-PATH-001` regression assertions.
+
+`SparqlSyntaxValidator` is the application-owned validation boundary and
+`JenaSparqlSyntaxValidator` uses `QueryFactory.create` without executing a
+query. `SparqlQueryGenerationServiceTest` covers
+`SELECT-BASIC-001`, `SELECT-OPTIONAL-001`, all listed filter/order fixtures,
+`SELECT-LIMIT-ZERO-001`, `SELECT-LIMIT-TWO-001`,
+`SPARQL-INJECTION-PATH-001`, `WIKIDATA-GENERATION-001`, and
+`SELECT-INVALID-001`, plus local/generic/Wikidata contexts, deterministic
+repeated generation, malformed generated output, typed validation, and the
+no-execution contract.
+
+Focused validation passed:
+
+```sh
+GRADLE_USER_HOME=/tmp/sparql-query-easy-gradle ./gradlew ktlintFormat test \
+  --tests 'com.example.sparqlqueryeasy.application.querygeneration.SparqlQueryGenerationServiceTest' --no-daemon
+```
+
+Complete JDK 21 validation passed:
+
+```sh
+GRADLE_USER_HOME=/tmp/sparql-query-easy-gradle ./gradlew ktlintFormat \
+  ktlintCheck detekt test --no-daemon
+```
+
+The `sparql-query-generation` use case is complete. `GetQuery`, `GetSearch`,
+general query execution, and Ktor routes remain deliberately unported.

@@ -35,7 +35,12 @@ sealed interface QueryTerm {
 
 data class IriTerm(val value: String) : QueryTerm {
     init {
-        val parsed = URI(value)
+        val parsed =
+            try {
+                URI(value)
+            } catch (exception: java.net.URISyntaxException) {
+                throw IllegalArgumentException("Invalid query IRI: $value", exception)
+            }
         require(parsed.isAbsolute && parsed.fragment == null && !value.any(Char::isWhitespace)) {
             "Invalid query IRI: $value"
         }
@@ -127,6 +132,7 @@ data class DisplaySelectQuery(
     val variable: QueryVariable,
     val patterns: List<TriplePattern>,
     val limit: Int,
+    val useWikidataPrefixes: Boolean = true,
 ) : WikidataQuery {
     init {
         require(limit >= 0) { "LIMIT must not be negative" }
@@ -192,7 +198,7 @@ class CSharpCompatibleWikidataQueryGenerator : WikidataQueryGenerator {
 
     private fun displaySelect(input: DisplaySelectQuery): String {
         val variable = input.variable.render()
-        return QueryText(true).apply {
+        return QueryText(input.useWikidataPrefixes).apply {
             line("SELECT DISTINCT $variable ${variable}Label")
             line("WHERE {")
             input.patterns.forEachIndexed { index, pattern ->
