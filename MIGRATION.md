@@ -1373,3 +1373,130 @@ GRADLE_USER_HOME=/tmp/sparql-query-easy-gradle ./gradlew ktlintFormat \
 
 The `sparql-query-generation` use case is complete. `GetQuery`, `GetSearch`,
 general query execution, and Ktor routes remain deliberately unported.
+
+## Prompt 16: general-query application service
+
+This slice ports C# `EndpointService.GetQuery` as the suspend, Ktor-free
+`GeneralQueryService`. `GeneralQueryRequest` supplies typed query variable,
+triple patterns, filters, limit, and `ignoreWikidata`; the service delegates
+all SPARQL construction to `CSharpCompatibleWikidataQueryGenerator`, syntax
+checking to `SparqlSyntaxValidator`, execution to the immutable
+`EndpointContext` capability, and post-execution mapping/filtering to the
+existing `ResultFilteringService.query`.
+
+The pipeline is deliberately ordered as C# does it: typed request conversion;
+generator-side triple/filter/order/limit construction; syntax validation;
+local or remote execution selected by the context; then `PropertyResult`
+mapping, empty-label fallback, label filtering, and—only for empty WHERE—the
+parent-type filtering. SPARQL therefore performs `DISTINCT`, ordering, and
+limit before application filtering. No application order is introduced when
+the query has no `ORDER BY`; projected variables, unbound bindings, and rows
+are passed directly to the established application-owned result types.
+
+Wikidata contexts always include the `wikibase` prefix, matching the C# query
+builder selected by `SetEndpoint`; `ignoreWikidata` only selects whether the
+Wikidata direct-claim label form is used. Local uploaded and built-in contexts,
+generic remote contexts, and Wikidata contexts execute only through their
+request-scoped supplied executor. `EndpointContextResolution` cache misses and
+invalid endpoints become explicit application results, and RDF/query transport
+failures become `ExecutionFailure` retaining the original `RdfFailure` cause
+and diagnostic. Invalid typed input and invalid generated SPARQL are also
+explicit results. Unexpected non-RDF runtime exceptions continue to propagate,
+as in C#.
+
+One C# behavior is intentionally preserved although it is likely a defect:
+the empty-WHERE branch binds `?itemParentType` but the SELECT clause projects
+`?itemType`; `ResultFilteringService.query` then filters on the unprojected
+parent-type value. A real executor therefore returns no empty-WHERE values.
+This is covered by `QUERY-EMPTY-WHERE-001`; it has not been silently corrected.
+The typed generator continues to reject unsafe identifiers and values, rather
+than C#'s raw interpolation, as documented in Prompt 15.
+
+`GeneralQueryServiceTest` covers `SELECT-BASIC-001`,
+`SELECT-OPTIONAL-001`, `SELECT-FILTER-STARTS-001`,
+`SELECT-FILTER-CONTAINS-001`, `SELECT-FILTER-GREATER-001`,
+`SELECT-FILTER-LESSER-001`, `SELECT-DISTINCT-001`,
+`SELECT-ORDER-MAX-001`, `SELECT-ORDER-MIN-001`, `SELECT-EMPTY-001`,
+`SELECT-INVALID-001`, `QUERY-EMPTY-WHERE-001`, `TTL-PREFIX-001`,
+`TTL-BASE-001`, `TTL-IRI-UNICODE-001`, `TTL-BNODE-001`,
+`TTL-NUMERIC-001`, and `LOCAL-CACHE-MISS-001`. It uses an actual Jena local
+executor for the recorded Turtle-style local-graph path and fakes for generic
+remote/Wikidata/failure responses; no live endpoint is contacted. It also
+covers unbound optional labels, duplicate preservation after execution,
+generator `DISTINCT`, ordering/limit placement, built-in/uploaded contexts,
+invalid syntax, failures, and interleaved context isolation.
+
+Focused validation passed:
+
+```sh
+GRADLE_USER_HOME=/tmp/sparql-query-easy-gradle ./gradlew ktlintFormat test \
+  --tests 'com.example.sparqlqueryeasy.application.query.GeneralQueryServiceTest' --no-daemon
+```
+
+Complete JDK 21 validation passed:
+
+```sh
+GRADLE_USER_HOME=/tmp/sparql-query-easy-gradle ./gradlew ktlintFormat \
+  ktlintCheck detekt test --no-daemon
+```
+
+The `general-query` use case is complete. Search, Ktor routes, and endpoint
+composition remain deliberately unported.
+
+## Prompt 17: search application service
+
+This slice ports C# `EndpointService.GetSearch` as `SearchService`, with three
+immutable-context branches. Local uploaded and built-in graph contexts generate
+an unfiltered `SearchSelectQuery`, execute through their supplied local
+capability, and delegate current-locale case-insensitive label matching,
+exact `objetoClasse` selection, and the fixed first-20 result cap to
+`ResultFilteringService.search`. Generic non-Wikidata remotes generate a
+SPARQL `STRSTARTS` label filter and supplied SPARQL limit, then map results
+without further filtering or limiting. No order is introduced before the local
+filter-and-`take(20)` pipeline; the executor's result sequence is retained.
+
+Wikidata endpoint contexts do not run SPARQL search. They use the independent
+`WikidataEntitySearchClient` MediaWiki `wbsearchentities` transport and map a
+record to C#-compatible `PropertyResult` strings (`<concepturi>`, `(id) label`,
+and `object`). `KtorWikidataEntitySearchClient` has its own configurable API
+endpoint, User-Agent, connection/request timeouts, JSON parsing, and explicit
+HTTP/timeout/malformed-response failure. It is deliberately separate from the
+existing Wikidata SPARQL JSON client.
+
+Empty search text returns an empty success before endpoint selection, matching
+C# `string.IsNullOrEmpty`; whitespace remains searchable. Kotlin passes text
+as a Ktor URL parameter and the SPARQL generator escapes it as a literal. This
+replaces C# MediaWiki URL-template interpolation, preventing query-string and
+SPARQL injection; special characters and Unicode have regression coverage.
+Negative limits are explicit invalid input; zero is retained. MediaWiki HTTP
+non-success responses are explicit application failures, whereas C# silently
+returned an empty collection for a non-success `HttpClient` response. This is
+an intentional error-contract correction for the later route phase.
+
+`SearchServiceTest` covers `SEARCH-LOCAL-001`, `BUILTIN-GRAPH-001`,
+`TTL-EMPTY-001`, `LOCAL-CACHE-MISS-001`, local fewer/more-than-20 result order,
+generic remote SPARQL behavior, Unicode and injection-like input, Wikidata
+branch selection, missing MediaWiki fields, MediaWiki errors, empty input,
+executor failures, and interleaved contexts. `WikidataEntitySearchHttpClientTest`
+uses Ktor `MockEngine` recorded data for `WIKIDATA-SEARCH-RECORD-001` and
+`WIKIDATA-SEARCH-ERROR-001`, encoding, malformed JSON, timeout, and HTTP 400,
+429, and 500. No test contacts live Wikidata; any live test remains opt-in in
+the existing `integrationTest` task.
+
+Focused validation passed:
+
+```sh
+GRADLE_USER_HOME=/tmp/sparql-query-easy-gradle ./gradlew ktlintFormat test \
+  --tests 'com.example.sparqlqueryeasy.application.search.SearchServiceTest' \
+  --tests 'com.example.sparqlqueryeasy.wikidata.entitysearch.WikidataEntitySearchHttpClientTest' --no-daemon
+```
+
+Complete JDK 21 validation passed:
+
+```sh
+GRADLE_USER_HOME=/tmp/sparql-query-easy-gradle ./gradlew ktlintFormat \
+  ktlintCheck detekt test --no-daemon
+```
+
+The `search` use case is complete. All identified application-service use
+cases are ready for the Ktor route phase; no routes were implemented here.

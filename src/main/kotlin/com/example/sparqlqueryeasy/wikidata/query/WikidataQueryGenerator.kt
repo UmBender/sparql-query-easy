@@ -122,6 +122,7 @@ data class GeneralSelectQuery(
     val patterns: List<TriplePattern>,
     val limit: Int,
     val useWikidataLabels: Boolean = true,
+    val useWikidataPrefixes: Boolean = useWikidataLabels,
 ) : WikidataQuery {
     init {
         require(limit >= 0) { "LIMIT must not be negative" }
@@ -176,7 +177,7 @@ class CSharpCompatibleWikidataQueryGenerator : WikidataQueryGenerator {
 
     private fun generalSelect(input: GeneralSelectQuery): String {
         val variable = input.variable.render()
-        return QueryText(input.useWikidataLabels).apply {
+        return QueryText(input.useWikidataPrefixes).apply {
             line("SELECT DISTINCT $variable ${variable}Label ${variable}RdfType ${variable}Type")
             line("WHERE {")
             if (input.patterns.isEmpty()) {
