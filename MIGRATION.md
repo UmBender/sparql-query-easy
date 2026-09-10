@@ -1187,3 +1187,63 @@ GRADLE_USER_HOME=/tmp/sparql-query-easy-gradle ./gradlew ktlintFormat test \
 
 Complete compatibility validation for this phase is run after the focused
 slice review; no golden outputs were changed.
+
+## Prompt 13: local-database-upload application service
+
+This slice ports the application behavior of C#
+`LocalDatabaseController.Post` without adding a Ktor multipart route.
+`LocalDatabaseUploadService` accepts `LocalDatabaseUploadRequest`, whose
+nullable `TurtleUpload` is an application boundary rather than an `IFormFile`,
+Ktor type, Java stream, Jena model, or dotNetRDF graph. A future HTTP adapter
+must encapsulate its multipart stream behind `TurtleUpload.readUtf8()` and
+must rely on the service to call `close()` exactly once for a present upload.
+
+The C# controller creates `Guid.NewGuid().ToString()` before dereferencing its
+`ttlFile`, creates an empty graph, parses the complete stream without an
+application-supplied base IRI, then calls `IMemoryCache.Set` only after parsing
+succeeds. Its `using` block closes the upload stream; empty Turtle is a valid
+empty graph; invalid Turtle and read/cache failures escape; a missing
+`ttlFile` dereferences null and also escapes. `RandomUuidLocalGraphHandleGenerator`
+preserves the externally visible lower-case hyphenated UUID representation by
+using `UUID.randomUUID().toString()` and is injectable for deterministic tests.
+
+`LocalGraphCache` and `InMemoryLocalGraphCache` are the new application-owned
+local-graph storage boundary. The cache owns references to immutable
+application `RdfGraph` values, never Jena models. `put` explicitly replaces a
+handle collision, matching `IMemoryCache.Set`, and `get` uses the C# 12-hour
+sliding-access expiration behavior. Entries are expired lazily on lookup;
+there is no global cache instance, background eviction, or Ktor dependency.
+Parsing completes before `put`, ensuring a malformed graph is never visible.
+
+The service returns application results: `Success(databaseId)`,
+`MissingUpload`, or `InvalidTurtle(TurtleParsingFailure)`. The latter two
+make failure states usable by a later route while retaining parser diagnostics.
+This is the one intentional application-boundary difference from the C#
+controller's unhandled null/parser exceptions; no HTTP status/body behavior
+has been selected or changed in this phase. Unexpected upload-read, close,
+cache, and non-parser failures still propagate unchanged.
+
+`LocalDatabaseUploadServiceTest` characterizes `TTL-SIMPLE-001`,
+`TTL-PREFIX-001`, `TTL-BASE-001`, `TTL-IRI-UNICODE-001`, `TTL-BNODE-001`,
+`TTL-LITERAL-001`, `TTL-NUMERIC-001`, `TTL-EMPTY-001`, `TTL-INVALID-001`,
+`TTL-INVALID-002`, and `HTTP-MISSING-UPLOAD-001`. It also verifies deterministic
+UUID output, successful and missing cache lookup, independent uploads,
+replacement-on-collision, sliding expiration, no insertion after parser/read
+failure, read/cache failure propagation, and upload lifecycle closure.
+
+Focused validation passed:
+
+```sh
+GRADLE_USER_HOME=/tmp/sparql-query-easy-gradle ./gradlew ktlintFormat test \
+  --tests 'com.example.sparqlqueryeasy.application.localdatabase.LocalDatabaseUploadServiceTest' --no-daemon
+```
+
+Complete JDK 21 validation passed:
+
+```sh
+GRADLE_USER_HOME=/tmp/sparql-query-easy-gradle ./gradlew clean compileKotlin \
+  compileTestKotlin ktlintCheck detekt test --no-daemon
+```
+
+This application use case is complete; Ktor upload routing and endpoint-context
+are deliberately not part of this slice.
