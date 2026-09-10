@@ -1122,3 +1122,34 @@ Complete validation also passed (37 tests, zero failures):
 ```sh
 GRADLE_USER_HOME=/tmp/sparql-query-easy-gradle ./gradlew ktlintCheck detekt test --no-daemon
 ```
+
+## Prompt 11: element-relationships application service
+
+This slice ports C# `EndpointService.GetElementRelationships` and its
+controller entry flow up to (but excluding) HTTP routing.
+`ElementRelationshipsService` accepts a typed endpoint URL plus a typed RDF
+subject (`ElementRelationshipsRequest`), resolves a request-scoped
+`EndpointExecution`, generates the relationship query, executes it, and
+delegates C#-compatible row mapping/filtering to `ResultFilteringService`.
+
+Inputs are the endpoint URL and element RDF term. Dependencies are injected
+`EndpointExecutionResolver`, `WikidataQueryGenerator`, and
+`ResultFilteringService`; the endpoint capability exposes only `isLocal`,
+`isWikidata`, and application-owned suspend SELECT execution. The output is an
+ordered, duplicate-preserving `List<PropertyResult>`. No mutable endpoint
+state, Ktor type, or Jena type crosses this boundary.
+
+`ElementRelationshipsServiceTest` characterizes `RELATIONSHIPS-LOCAL-001`
+(`relationships.ttl` and `relationships-query.json`) for local and remote
+branches. It asserts the exact C# order—map rows, then apply non-local
+empty-label/`outro` filtering while leaving local rows unchanged—plus Wikidata
+direct-claim label generation, regular local labels, explicit unbound values,
+and resolver-failure propagation. The service intentionally does not catch or
+reorder dependency exceptions.
+
+Focused validation passed:
+
+```sh
+GRADLE_USER_HOME=/tmp/sparql-query-easy-gradle ./gradlew ktlintFormat test \
+  --tests 'com.example.sparqlqueryeasy.application.relationships.ElementRelationshipsServiceTest' --no-daemon
+```

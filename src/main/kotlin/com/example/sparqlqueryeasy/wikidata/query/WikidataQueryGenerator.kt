@@ -133,7 +133,12 @@ data class DisplaySelectQuery(
     }
 }
 
-data class RelationshipQuery(val entity: WikidataEntityId) : WikidataQuery
+data class RelationshipQuery(
+    val subject: QueryTerm,
+    val useWikidataLabels: Boolean = true,
+) : WikidataQuery {
+    constructor(entity: WikidataEntityId) : this(entity.asIri(), true)
+}
 
 data class RelationshipValueQuery(
     val subject: QueryTerm,
@@ -199,11 +204,11 @@ class CSharpCompatibleWikidataQueryGenerator : WikidataQueryGenerator {
     }
 
     private fun relationships(input: RelationshipQuery): String =
-        QueryText(true).apply {
+        QueryText(input.useWikidataLabels).apply {
             line("SELECT DISTINCT ?property ?propertyLabel ?propertyType")
             line("WHERE {")
-            line("${input.entity.asIri().render()} ?property [] .")
-            label("?property", true)
+            line("${input.subject.render()} ?property [] .")
+            label("?property", input.useWikidataLabels)
             propertyType("?property")
             finishWhere()
         }.build()
