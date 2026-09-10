@@ -61,6 +61,15 @@ data class PropertyPath(val properties: List<WikidataPropertyId>) : QueryTerm {
     override fun render(): String = properties.joinToString("/") { it.directClaim().render() }
 }
 
+/** A validated sequence of full IRIs for the legacy request form `<iri>/<iri>`. */
+data class IriSequencePath(val segments: List<IriTerm>) : QueryTerm {
+    init {
+        require(segments.size >= 2) { "An IRI sequence path must contain at least two segments" }
+    }
+
+    override fun render(): String = segments.joinToString("/") { it.render() }
+}
+
 sealed interface QueryObject {
     fun render(): String
 }

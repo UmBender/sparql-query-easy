@@ -1545,3 +1545,34 @@ The local-database route group is complete. The QueryController group
 (`/api/query`, `/api/query/relationships`, `/api/query/relationship-value`,
 `/api/query/search`, and `/api/query/sparql`) remains for the next route slice;
 no QueryController routes were modified here.
+
+## Prompt 19: QueryController HTTP route group
+
+This slice ports all five `QueryController` routes under `/api/query`: the
+base query endpoint plus `relationships`, `relationship-value`, `search`, and
+`sparql`. Request DTOs retain the C# field names and defaults, and successful
+responses use the `{"data": ...}` camel-case envelope. The application-owned
+endpoint context resolver creates request-scoped local Jena or remote SPARQL
+execution capabilities, keeping Jena types within `rdf.jena`.
+
+Missing local uploaded graphs map to `404`, malformed request values and
+invalid generated SPARQL map to `400`, and explicit remote execution failures
+map to `502`. The latter statuses are Kotlin HTTP-boundary diagnostics; the C#
+controller delegated many of these cases to framework exception handling, so
+they require contract approval before public rollout. `/api/query/sparql`
+deliberately ignores `filterType`, matching the C# `GetSparqlQuery` path.
+
+`QueryRoutesTest` covers response envelopes and nullable `PropertyDto` fields,
+invalid query input without execution, cache misses, generated-query behavior,
+empty search behavior, relationship-value validation, and a deterministic
+remote failure. No test contacts Wikidata.
+
+Complete JDK 21 validation passed:
+
+```sh
+GRADLE_USER_HOME=/tmp/sparql-query-easy-gradle ./gradlew ktlintFormat \
+  ktlintCheck detekt test --daemon
+```
+
+The QueryController route group is complete. Direct C# fixture capture remains
+blocked until the .NET harness can run.
