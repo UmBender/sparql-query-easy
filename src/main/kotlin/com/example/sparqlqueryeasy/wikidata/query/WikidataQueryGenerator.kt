@@ -144,6 +144,7 @@ data class RelationshipValueQuery(
     val subject: QueryTerm,
     val predicate: QueryTerm,
     val isLiteral: Boolean,
+    val useWikidataPrefixes: Boolean = true,
 ) : WikidataQuery
 
 data class SearchSelectQuery(val search: String, val limit: Int, val isLocal: Boolean) : WikidataQuery {
@@ -214,7 +215,7 @@ class CSharpCompatibleWikidataQueryGenerator : WikidataQueryGenerator {
         }.build()
 
     private fun relationshipValues(input: RelationshipValueQuery): String =
-        QueryText(true).apply {
+        QueryText(input.useWikidataPrefixes).apply {
             line("SELECT DISTINCT ?property ?propertyLabel")
             line("WHERE {")
             line("${input.subject.render()} ${input.predicate.render()} ?property .")

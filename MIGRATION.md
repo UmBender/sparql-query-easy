@@ -1153,3 +1153,37 @@ Focused validation passed:
 GRADLE_USER_HOME=/tmp/sparql-query-easy-gradle ./gradlew ktlintFormat test \
   --tests 'com.example.sparqlqueryeasy.application.relationships.ElementRelationshipsServiceTest' --no-daemon
 ```
+
+## Prompt 12: relationship-value application service
+
+This slice ports C# `EndpointService.GetRelationshipValue` through the
+application boundary, without adding a Ktor route. `RelationshipValueService`
+accepts an endpoint URL, typed subject and predicate terms, and the literal
+mode; it resolves an injected `EndpointExecution`, generates the corresponding
+typed Wikidata query, executes it, and applies the existing C#-compatible
+relationship-value mapping.
+
+Inputs are `endpointUrl`, `subject`, `predicate`, and `isLiteral`. The output
+is an ordered, duplicate-preserving `List<PropertyResult>`. Dependencies are
+the injected endpoint resolver, query generator, and result-filtering service.
+Only application-owned RDF/SPARQL types cross the boundary; Jena, Ktor, and
+global mutable state are not exposed. Endpoint capability controls Wikidata
+prefixes while the query generator preserves the C# distinction between
+literal values (no label OPTIONAL) and resource values (regular `rdfs:label`).
+
+`RelationshipValueServiceTest` reproduces the characterization fixtures
+`RELATIONSHIP-LITERAL-001` (`literals.ttl`, `relationship-literal-query.json`)
+and `RELATIONSHIP-RESOURCE-001` (`simple.ttl`, relationship-resource query).
+It verifies lexical literal preservation for language-tagged and typed values,
+blank-node formatting, missing/unbound values, resource label filtering,
+deterministic query capabilities, and unchanged execution-exception behavior.
+
+Focused validation passed:
+
+```sh
+GRADLE_USER_HOME=/tmp/sparql-query-easy-gradle ./gradlew ktlintFormat test \
+  --tests 'com.example.sparqlqueryeasy.application.relationships.RelationshipValueServiceTest' --no-daemon
+```
+
+Complete compatibility validation for this phase is run after the focused
+slice review; no golden outputs were changed.
