@@ -1,0 +1,13 @@
+{
+  "caseId": "HTTP-MISSING-UPLOAD-001",
+  "turtleFixture": null,
+  "http": null,
+  "generatedSparql": null,
+  "rawQueries": [],
+  "graph": null,
+  "error": {
+    "category": "missing-multipart-file",
+    "type": "System.NullReferenceException"
+  },
+  "request": null
+}

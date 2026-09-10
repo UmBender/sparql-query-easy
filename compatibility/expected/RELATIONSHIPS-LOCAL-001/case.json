@@ -1,0 +1,418 @@
+{
+  "caseId": "RELATIONSHIPS-LOCAL-001",
+  "turtleFixture": {
+    "name": "relationships.ttl",
+    "sha256": "abd9a2d8d1085054e41a301a882d30e2e6074079aa6b1e7b75a1636ceaa01056"
+  },
+  "http": {
+    "status": 200,
+    "body": {
+      "data": [
+        {
+          "propertyClass": null,
+          "propertyId": "\u003Chttps://example.test/relationship/dataProperty\u003E",
+          "propertyLabel": "data property",
+          "propertyType": "label"
+        },
+        {
+          "propertyClass": null,
+          "propertyId": "\u003Chttps://example.test/relationship/objectProperty\u003E",
+          "propertyLabel": "object property",
+          "propertyType": "objeto"
+        },
+        {
+          "propertyClass": null,
+          "propertyId": "\u003Chttp://www.w3.org/1999/02/22-rdf-syntax-ns#type\u003E",
+          "propertyLabel": "",
+          "propertyType": "outro"
+        }
+      ]
+    }
+  },
+  "generatedSparql": "PREFIX rdf: \u003Chttp://www.w3.org/1999/02/22-rdf-syntax-ns#\u003E\nPREFIX rdfs: \u003Chttp://www.w3.org/2000/01/rdf-schema#\u003E\nPREFIX owl: \u003Chttp://www.w3.org/2002/07/owl#\u003E\nSELECT DISTINCT ?property ?propertyLabel ?propertyType\nWHERE {\n\u003Chttps://example.test/relationship/subject\u003E ?property [] .\nOPTIONAL {\n?property rdfs:label ?propertyLabel .\nFILTER (lang(?propertyLabel) = \u0022en\u0022)\n}\nBIND(IF(EXISTS { ?property rdf:type owl:ObjectProperty}, \u0022objeto\u0022, IF(EXISTS {?property rdf:type owl:DatatypeProperty}, \u0022label\u0022, \u0022outro\u0022)) as ?propertyType)\n}\n",
+  "rawQueries": [
+    {
+      "query": "PREFIX rdf: \u003Chttp://www.w3.org/1999/02/22-rdf-syntax-ns#\u003E\nPREFIX rdfs: \u003Chttp://www.w3.org/2000/01/rdf-schema#\u003E\nPREFIX owl: \u003Chttp://www.w3.org/2002/07/owl#\u003E\nSELECT DISTINCT ?property ?propertyLabel ?propertyType\nWHERE {\n\u003Chttps://example.test/relationship/subject\u003E ?property [] .\nOPTIONAL {\n?property rdfs:label ?propertyLabel .\nFILTER (lang(?propertyLabel) = \u0022en\u0022)\n}\nBIND(IF(EXISTS { ?property rdf:type owl:ObjectProperty}, \u0022objeto\u0022, IF(EXISTS {?property rdf:type owl:DatatypeProperty}, \u0022label\u0022, \u0022outro\u0022)) as ?propertyType)\n}\n",
+      "result": {
+        "projectedVariables": [
+          "property",
+          "propertyLabel",
+          "propertyType"
+        ],
+        "rows": [
+          {
+            "bindings": [
+              {
+                "variable": "property",
+                "present": true,
+                "bound": true,
+                "value": {
+                  "kind": "uri",
+                  "uri": "https://example.test/relationship/dataProperty",
+                  "blankId": null,
+                  "lexicalForm": null,
+                  "datatype": null,
+                  "language": null
+                }
+              },
+              {
+                "variable": "propertyLabel",
+                "present": true,
+                "bound": true,
+                "value": {
+                  "kind": "literal",
+                  "uri": null,
+                  "blankId": null,
+                  "lexicalForm": "data property",
+                  "datatype": "http://www.w3.org/1999/02/22-rdf-syntax-ns#langString",
+                  "language": "en"
+                }
+              },
+              {
+                "variable": "propertyType",
+                "present": true,
+                "bound": true,
+                "value": {
+                  "kind": "literal",
+                  "uri": null,
+                  "blankId": null,
+                  "lexicalForm": "label",
+                  "datatype": "http://www.w3.org/2001/XMLSchema#string",
+                  "language": ""
+                }
+              }
+            ]
+          },
+          {
+            "bindings": [
+              {
+                "variable": "property",
+                "present": true,
+                "bound": true,
+                "value": {
+                  "kind": "uri",
+                  "uri": "https://example.test/relationship/objectProperty",
+                  "blankId": null,
+                  "lexicalForm": null,
+                  "datatype": null,
+                  "language": null
+                }
+              },
+              {
+                "variable": "propertyLabel",
+                "present": true,
+                "bound": true,
+                "value": {
+                  "kind": "literal",
+                  "uri": null,
+                  "blankId": null,
+                  "lexicalForm": "object property",
+                  "datatype": "http://www.w3.org/1999/02/22-rdf-syntax-ns#langString",
+                  "language": "en"
+                }
+              },
+              {
+                "variable": "propertyType",
+                "present": true,
+                "bound": true,
+                "value": {
+                  "kind": "literal",
+                  "uri": null,
+                  "blankId": null,
+                  "lexicalForm": "objeto",
+                  "datatype": "http://www.w3.org/2001/XMLSchema#string",
+                  "language": ""
+                }
+              }
+            ]
+          },
+          {
+            "bindings": [
+              {
+                "variable": "property",
+                "present": true,
+                "bound": true,
+                "value": {
+                  "kind": "uri",
+                  "uri": "http://www.w3.org/1999/02/22-rdf-syntax-ns#type",
+                  "blankId": null,
+                  "lexicalForm": null,
+                  "datatype": null,
+                  "language": null
+                }
+              },
+              {
+                "variable": "propertyLabel",
+                "present": false,
+                "bound": false,
+                "value": null
+              },
+              {
+                "variable": "propertyType",
+                "present": true,
+                "bound": true,
+                "value": {
+                  "kind": "literal",
+                  "uri": null,
+                  "blankId": null,
+                  "lexicalForm": "outro",
+                  "datatype": "http://www.w3.org/2001/XMLSchema#string",
+                  "language": ""
+                }
+              }
+            ]
+          }
+        ]
+      }
+    }
+  ],
+  "graph": {
+    "statements": [
+      {
+        "subject": {
+          "kind": "uri",
+          "uri": "https://example.test/relationship/dataProperty",
+          "blankId": null,
+          "lexicalForm": null,
+          "datatype": null,
+          "language": null
+        },
+        "predicate": {
+          "kind": "uri",
+          "uri": "http://www.w3.org/1999/02/22-rdf-syntax-ns#type",
+          "blankId": null,
+          "lexicalForm": null,
+          "datatype": null,
+          "language": null
+        },
+        "object": {
+          "kind": "uri",
+          "uri": "http://www.w3.org/2002/07/owl#DatatypeProperty",
+          "blankId": null,
+          "lexicalForm": null,
+          "datatype": null,
+          "language": null
+        },
+        "sortKey": "uri|https://example.test/relationship/dataProperty||||\u001Furi|http://www.w3.org/1999/02/22-rdf-syntax-ns#type\u001Furi|http://www.w3.org/2002/07/owl#DatatypeProperty||||"
+      },
+      {
+        "subject": {
+          "kind": "uri",
+          "uri": "https://example.test/relationship/dataProperty",
+          "blankId": null,
+          "lexicalForm": null,
+          "datatype": null,
+          "language": null
+        },
+        "predicate": {
+          "kind": "uri",
+          "uri": "http://www.w3.org/2000/01/rdf-schema#label",
+          "blankId": null,
+          "lexicalForm": null,
+          "datatype": null,
+          "language": null
+        },
+        "object": {
+          "kind": "literal",
+          "uri": null,
+          "blankId": null,
+          "lexicalForm": "data property",
+          "datatype": "http://www.w3.org/1999/02/22-rdf-syntax-ns#langString",
+          "language": "en"
+        },
+        "sortKey": "uri|https://example.test/relationship/dataProperty||||\u001Furi|http://www.w3.org/2000/01/rdf-schema#label\u001Fliteral|||data property|http://www.w3.org/1999/02/22-rdf-syntax-ns#langString|en"
+      },
+      {
+        "subject": {
+          "kind": "uri",
+          "uri": "https://example.test/relationship/objectProperty",
+          "blankId": null,
+          "lexicalForm": null,
+          "datatype": null,
+          "language": null
+        },
+        "predicate": {
+          "kind": "uri",
+          "uri": "http://www.w3.org/1999/02/22-rdf-syntax-ns#type",
+          "blankId": null,
+          "lexicalForm": null,
+          "datatype": null,
+          "language": null
+        },
+        "object": {
+          "kind": "uri",
+          "uri": "http://www.w3.org/2002/07/owl#ObjectProperty",
+          "blankId": null,
+          "lexicalForm": null,
+          "datatype": null,
+          "language": null
+        },
+        "sortKey": "uri|https://example.test/relationship/objectProperty||||\u001Furi|http://www.w3.org/1999/02/22-rdf-syntax-ns#type\u001Furi|http://www.w3.org/2002/07/owl#ObjectProperty||||"
+      },
+      {
+        "subject": {
+          "kind": "uri",
+          "uri": "https://example.test/relationship/objectProperty",
+          "blankId": null,
+          "lexicalForm": null,
+          "datatype": null,
+          "language": null
+        },
+        "predicate": {
+          "kind": "uri",
+          "uri": "http://www.w3.org/2000/01/rdf-schema#label",
+          "blankId": null,
+          "lexicalForm": null,
+          "datatype": null,
+          "language": null
+        },
+        "object": {
+          "kind": "literal",
+          "uri": null,
+          "blankId": null,
+          "lexicalForm": "object property",
+          "datatype": "http://www.w3.org/1999/02/22-rdf-syntax-ns#langString",
+          "language": "en"
+        },
+        "sortKey": "uri|https://example.test/relationship/objectProperty||||\u001Furi|http://www.w3.org/2000/01/rdf-schema#label\u001Fliteral|||object property|http://www.w3.org/1999/02/22-rdf-syntax-ns#langString|en"
+      },
+      {
+        "subject": {
+          "kind": "uri",
+          "uri": "https://example.test/relationship/subject",
+          "blankId": null,
+          "lexicalForm": null,
+          "datatype": null,
+          "language": null
+        },
+        "predicate": {
+          "kind": "uri",
+          "uri": "http://www.w3.org/1999/02/22-rdf-syntax-ns#type",
+          "blankId": null,
+          "lexicalForm": null,
+          "datatype": null,
+          "language": null
+        },
+        "object": {
+          "kind": "uri",
+          "uri": "http://www.w3.org/2002/07/owl#Class",
+          "blankId": null,
+          "lexicalForm": null,
+          "datatype": null,
+          "language": null
+        },
+        "sortKey": "uri|https://example.test/relationship/subject||||\u001Furi|http://www.w3.org/1999/02/22-rdf-syntax-ns#type\u001Furi|http://www.w3.org/2002/07/owl#Class||||"
+      },
+      {
+        "subject": {
+          "kind": "uri",
+          "uri": "https://example.test/relationship/subject",
+          "blankId": null,
+          "lexicalForm": null,
+          "datatype": null,
+          "language": null
+        },
+        "predicate": {
+          "kind": "uri",
+          "uri": "https://example.test/relationship/dataProperty",
+          "blankId": null,
+          "lexicalForm": null,
+          "datatype": null,
+          "language": null
+        },
+        "object": {
+          "kind": "literal",
+          "uri": null,
+          "blankId": null,
+          "lexicalForm": "text value",
+          "datatype": "http://www.w3.org/2001/XMLSchema#string",
+          "language": ""
+        },
+        "sortKey": "uri|https://example.test/relationship/subject||||\u001Furi|https://example.test/relationship/dataProperty\u001Fliteral|||text value|http://www.w3.org/2001/XMLSchema#string|"
+      },
+      {
+        "subject": {
+          "kind": "uri",
+          "uri": "https://example.test/relationship/subject",
+          "blankId": null,
+          "lexicalForm": null,
+          "datatype": null,
+          "language": null
+        },
+        "predicate": {
+          "kind": "uri",
+          "uri": "https://example.test/relationship/objectProperty",
+          "blankId": null,
+          "lexicalForm": null,
+          "datatype": null,
+          "language": null
+        },
+        "object": {
+          "kind": "uri",
+          "uri": "https://example.test/relationship/target",
+          "blankId": null,
+          "lexicalForm": null,
+          "datatype": null,
+          "language": null
+        },
+        "sortKey": "uri|https://example.test/relationship/subject||||\u001Furi|https://example.test/relationship/objectProperty\u001Furi|https://example.test/relationship/target||||"
+      },
+      {
+        "subject": {
+          "kind": "uri",
+          "uri": "https://example.test/relationship/target",
+          "blankId": null,
+          "lexicalForm": null,
+          "datatype": null,
+          "language": null
+        },
+        "predicate": {
+          "kind": "uri",
+          "uri": "http://www.w3.org/1999/02/22-rdf-syntax-ns#type",
+          "blankId": null,
+          "lexicalForm": null,
+          "datatype": null,
+          "language": null
+        },
+        "object": {
+          "kind": "uri",
+          "uri": "http://www.w3.org/2002/07/owl#Class",
+          "blankId": null,
+          "lexicalForm": null,
+          "datatype": null,
+          "language": null
+        },
+        "sortKey": "uri|https://example.test/relationship/target||||\u001Furi|http://www.w3.org/1999/02/22-rdf-syntax-ns#type\u001Furi|http://www.w3.org/2002/07/owl#Class||||"
+      },
+      {
+        "subject": {
+          "kind": "uri",
+          "uri": "https://example.test/relationship/target",
+          "blankId": null,
+          "lexicalForm": null,
+          "datatype": null,
+          "language": null
+        },
+        "predicate": {
+          "kind": "uri",
+          "uri": "http://www.w3.org/2000/01/rdf-schema#label",
+          "blankId": null,
+          "lexicalForm": null,
+          "datatype": null,
+          "language": null
+        },
+        "object": {
+          "kind": "literal",
+          "uri": null,
+          "blankId": null,
+          "lexicalForm": "Target",
+          "datatype": "http://www.w3.org/1999/02/22-rdf-syntax-ns#langString",
+          "language": "en"
+        },
+        "sortKey": "uri|https://example.test/relationship/target||||\u001Furi|http://www.w3.org/2000/01/rdf-schema#label\u001Fliteral|||Target|http://www.w3.org/1999/02/22-rdf-syntax-ns#langString|en"
+      }
+    ]
+  },
+  "error": null,
+  "request": "{\n  \u0022endpointUrl\u0022: \u0022__DATABASE_ID__\u0022,\n  \u0022id\u0022: \u0022\\u003Chttps://example.test/relationship/subject\\u003E\u0022\n}"
+}

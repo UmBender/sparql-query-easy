@@ -1,0 +1,20 @@
+{
+  "caseId": "TTL-EMPTY-001",
+  "turtleFixture": {
+    "name": "empty.ttl",
+    "sha256": "46480aa6f618ea50703dd83aa828547e7a215834e5733e1a8f001b1ea6ae3efe"
+  },
+  "http": {
+    "status": 200,
+    "body": {
+      "data": "__DATABASE_ID__"
+    }
+  },
+  "generatedSparql": null,
+  "rawQueries": [],
+  "graph": {
+    "statements": []
+  },
+  "error": null,
+  "request": null
+}

@@ -1,0 +1,16 @@
+{
+  "caseId": "TTL-INVALID-001",
+  "turtleFixture": {
+    "name": "invalid-unclosed-string.ttl",
+    "sha256": "41c657a625b402773f6680e7d174b81b1b0eb0d0f5d885e1d133863a661e61e7"
+  },
+  "http": null,
+  "generatedSparql": null,
+  "rawQueries": [],
+  "graph": null,
+  "error": {
+    "category": "turtle-parse-or-upload",
+    "type": "VDS.RDF.Parsing.RdfParseException"
+  },
+  "request": null
+}

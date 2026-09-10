@@ -1,0 +1,264 @@
+{
+  "caseId": "TTL-BNODE-001",
+  "turtleFixture": {
+    "name": "blank-nodes.ttl",
+    "sha256": "4b1aa6ca99785f213cd1044f644f93c5a962aef07136c441aa1a5827c4d95179"
+  },
+  "http": {
+    "status": 200,
+    "body": {
+      "data": "__DATABASE_ID__"
+    }
+  },
+  "generatedSparql": null,
+  "rawQueries": [],
+  "graph": {
+    "statements": [
+      {
+        "subject": {
+          "kind": "blank",
+          "uri": null,
+          "blankId": "b1",
+          "lexicalForm": null,
+          "datatype": null,
+          "language": null
+        },
+        "predicate": {
+          "kind": "uri",
+          "uri": "http://www.w3.org/1999/02/22-rdf-syntax-ns#type",
+          "blankId": null,
+          "lexicalForm": null,
+          "datatype": null,
+          "language": null
+        },
+        "object": {
+          "kind": "uri",
+          "uri": "http://www.w3.org/2002/07/owl#Class",
+          "blankId": null,
+          "lexicalForm": null,
+          "datatype": null,
+          "language": null
+        },
+        "sortKey": "blank||b1|||\u001Furi|http://www.w3.org/1999/02/22-rdf-syntax-ns#type\u001Furi|http://www.w3.org/2002/07/owl#Class||||"
+      },
+      {
+        "subject": {
+          "kind": "blank",
+          "uri": null,
+          "blankId": "b1",
+          "lexicalForm": null,
+          "datatype": null,
+          "language": null
+        },
+        "predicate": {
+          "kind": "uri",
+          "uri": "http://www.w3.org/2000/01/rdf-schema#label",
+          "blankId": null,
+          "lexicalForm": null,
+          "datatype": null,
+          "language": null
+        },
+        "object": {
+          "kind": "literal",
+          "uri": null,
+          "blankId": null,
+          "lexicalForm": "First blank",
+          "datatype": "http://www.w3.org/1999/02/22-rdf-syntax-ns#langString",
+          "language": "en"
+        },
+        "sortKey": "blank||b1|||\u001Furi|http://www.w3.org/2000/01/rdf-schema#label\u001Fliteral|||First blank|http://www.w3.org/1999/02/22-rdf-syntax-ns#langString|en"
+      },
+      {
+        "subject": {
+          "kind": "blank",
+          "uri": null,
+          "blankId": "b1",
+          "lexicalForm": null,
+          "datatype": null,
+          "language": null
+        },
+        "predicate": {
+          "kind": "uri",
+          "uri": "https://example.test/blank/rank",
+          "blankId": null,
+          "lexicalForm": null,
+          "datatype": null,
+          "language": null
+        },
+        "object": {
+          "kind": "literal",
+          "uri": null,
+          "blankId": null,
+          "lexicalForm": "1",
+          "datatype": "http://www.w3.org/2001/XMLSchema#integer",
+          "language": ""
+        },
+        "sortKey": "blank||b1|||\u001Furi|https://example.test/blank/rank\u001Fliteral|||1|http://www.w3.org/2001/XMLSchema#integer|"
+      },
+      {
+        "subject": {
+          "kind": "blank",
+          "uri": null,
+          "blankId": "b2",
+          "lexicalForm": null,
+          "datatype": null,
+          "language": null
+        },
+        "predicate": {
+          "kind": "uri",
+          "uri": "http://www.w3.org/1999/02/22-rdf-syntax-ns#type",
+          "blankId": null,
+          "lexicalForm": null,
+          "datatype": null,
+          "language": null
+        },
+        "object": {
+          "kind": "uri",
+          "uri": "http://www.w3.org/2002/07/owl#Class",
+          "blankId": null,
+          "lexicalForm": null,
+          "datatype": null,
+          "language": null
+        },
+        "sortKey": "blank||b2|||\u001Furi|http://www.w3.org/1999/02/22-rdf-syntax-ns#type\u001Furi|http://www.w3.org/2002/07/owl#Class||||"
+      },
+      {
+        "subject": {
+          "kind": "blank",
+          "uri": null,
+          "blankId": "b2",
+          "lexicalForm": null,
+          "datatype": null,
+          "language": null
+        },
+        "predicate": {
+          "kind": "uri",
+          "uri": "http://www.w3.org/2000/01/rdf-schema#label",
+          "blankId": null,
+          "lexicalForm": null,
+          "datatype": null,
+          "language": null
+        },
+        "object": {
+          "kind": "literal",
+          "uri": null,
+          "blankId": null,
+          "lexicalForm": "Second blank",
+          "datatype": "http://www.w3.org/1999/02/22-rdf-syntax-ns#langString",
+          "language": "en"
+        },
+        "sortKey": "blank||b2|||\u001Furi|http://www.w3.org/2000/01/rdf-schema#label\u001Fliteral|||Second blank|http://www.w3.org/1999/02/22-rdf-syntax-ns#langString|en"
+      },
+      {
+        "subject": {
+          "kind": "blank",
+          "uri": null,
+          "blankId": "b2",
+          "lexicalForm": null,
+          "datatype": null,
+          "language": null
+        },
+        "predicate": {
+          "kind": "uri",
+          "uri": "https://example.test/blank/rank",
+          "blankId": null,
+          "lexicalForm": null,
+          "datatype": null,
+          "language": null
+        },
+        "object": {
+          "kind": "literal",
+          "uri": null,
+          "blankId": null,
+          "lexicalForm": "2",
+          "datatype": "http://www.w3.org/2001/XMLSchema#integer",
+          "language": ""
+        },
+        "sortKey": "blank||b2|||\u001Furi|https://example.test/blank/rank\u001Fliteral|||2|http://www.w3.org/2001/XMLSchema#integer|"
+      },
+      {
+        "subject": {
+          "kind": "uri",
+          "uri": "https://example.test/blank/container",
+          "blankId": null,
+          "lexicalForm": null,
+          "datatype": null,
+          "language": null
+        },
+        "predicate": {
+          "kind": "uri",
+          "uri": "http://www.w3.org/1999/02/22-rdf-syntax-ns#type",
+          "blankId": null,
+          "lexicalForm": null,
+          "datatype": null,
+          "language": null
+        },
+        "object": {
+          "kind": "uri",
+          "uri": "http://www.w3.org/2002/07/owl#Class",
+          "blankId": null,
+          "lexicalForm": null,
+          "datatype": null,
+          "language": null
+        },
+        "sortKey": "uri|https://example.test/blank/container||||\u001Furi|http://www.w3.org/1999/02/22-rdf-syntax-ns#type\u001Furi|http://www.w3.org/2002/07/owl#Class||||"
+      },
+      {
+        "subject": {
+          "kind": "uri",
+          "uri": "https://example.test/blank/container",
+          "blankId": null,
+          "lexicalForm": null,
+          "datatype": null,
+          "language": null
+        },
+        "predicate": {
+          "kind": "uri",
+          "uri": "https://example.test/blank/member",
+          "blankId": null,
+          "lexicalForm": null,
+          "datatype": null,
+          "language": null
+        },
+        "object": {
+          "kind": "blank",
+          "uri": null,
+          "blankId": "b1",
+          "lexicalForm": null,
+          "datatype": null,
+          "language": null
+        },
+        "sortKey": "uri|https://example.test/blank/container||||\u001Furi|https://example.test/blank/member\u001Fblank||b1|||"
+      },
+      {
+        "subject": {
+          "kind": "uri",
+          "uri": "https://example.test/blank/container",
+          "blankId": null,
+          "lexicalForm": null,
+          "datatype": null,
+          "language": null
+        },
+        "predicate": {
+          "kind": "uri",
+          "uri": "https://example.test/blank/member",
+          "blankId": null,
+          "lexicalForm": null,
+          "datatype": null,
+          "language": null
+        },
+        "object": {
+          "kind": "blank",
+          "uri": null,
+          "blankId": "b2",
+          "lexicalForm": null,
+          "datatype": null,
+          "language": null
+        },
+        "sortKey": "uri|https://example.test/blank/container||||\u001Furi|https://example.test/blank/member\u001Fblank||b2|||"
+      }
+    ]
+  },
+  "error": null,
+  "request": null
+}

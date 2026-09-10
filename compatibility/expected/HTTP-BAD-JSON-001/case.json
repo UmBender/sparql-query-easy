@@ -1,0 +1,16 @@
+{
+  "caseId": "HTTP-BAD-JSON-001",
+  "turtleFixture": {
+    "name": "malformed.json",
+    "sha256": "16cec327556268658cb19280696d51c127be85710fbf5cfbd73b81c7b4b3f855"
+  },
+  "http": null,
+  "generatedSparql": null,
+  "rawQueries": [],
+  "graph": null,
+  "error": {
+    "category": "request-json-parse",
+    "type": "System.Text.Json.JsonReaderException"
+  },
+  "request": null
+}

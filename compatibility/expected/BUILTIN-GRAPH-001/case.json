@@ -1,0 +1,27 @@
+{
+  "caseId": "BUILTIN-GRAPH-001",
+  "turtleFixture": null,
+  "http": {
+    "status": 200,
+    "body": {
+      "data": []
+    }
+  },
+  "generatedSparql": "PREFIX rdf: \u003Chttp://www.w3.org/1999/02/22-rdf-syntax-ns#\u003E\nPREFIX rdfs: \u003Chttp://www.w3.org/2000/01/rdf-schema#\u003E\nPREFIX owl: \u003Chttp://www.w3.org/2002/07/owl#\u003E\nSELECT DISTINCT ?property ?propertyLabel ?propertyParentType\nWHERE {\nOPTIONAL {\n?property rdfs:label ?propertyLabel .\nFILTER (lang(?propertyLabel) = \u0022en\u0022)\n}\n\n                BIND(IF(\n                    EXISTS {\n                        ?property rdf:type ?parentClass .\n                        ?parentClass rdf:type owl:Class\n                    },\n                    \u0022objetoClasse\u0022,\n                    \u0022outro\u0022\n                ) AS ?propertyParentType)\n            \nFILTER (STRSTARTS(STR(?propertyLabel), \u0022campeonato\u0022))\n}\nLIMIT 1\n",
+  "rawQueries": [
+    {
+      "query": "PREFIX rdf: \u003Chttp://www.w3.org/1999/02/22-rdf-syntax-ns#\u003E\nPREFIX rdfs: \u003Chttp://www.w3.org/2000/01/rdf-schema#\u003E\nPREFIX owl: \u003Chttp://www.w3.org/2002/07/owl#\u003E\nSELECT DISTINCT ?property ?propertyLabel ?propertyParentType\nWHERE {\nOPTIONAL {\n?property rdfs:label ?propertyLabel .\nFILTER (lang(?propertyLabel) = \u0022en\u0022)\n}\n\n                BIND(IF(\n                    EXISTS {\n                        ?property rdf:type ?parentClass .\n                        ?parentClass rdf:type owl:Class\n                    },\n                    \u0022objetoClasse\u0022,\n                    \u0022outro\u0022\n                ) AS ?propertyParentType)\n            \nFILTER (STRSTARTS(STR(?propertyLabel), \u0022campeonato\u0022))\n}\nLIMIT 1\n",
+      "result": {
+        "projectedVariables": [
+          "property",
+          "propertyLabel",
+          "propertyParentType"
+        ],
+        "rows": []
+      }
+    }
+  ],
+  "graph": null,
+  "error": null,
+  "request": "{\n  \u0022endpointUrl\u0022: \u0022CampeonatoBrasileiro2023\u0022,\n  \u0022limit\u0022: 1,\n  \u0022search\u0022: \u0022campeonato\u0022\n}"
+}
