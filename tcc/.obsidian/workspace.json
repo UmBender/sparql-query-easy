@@ -1,0 +1,230 @@
+{
+  "main": {
+    "id": "fe0102fde9cc78d7",
+    "type": "split",
+    "children": [
+      {
+        "id": "17e1a81180985cc0",
+        "type": "tabs",
+        "children": [
+          {
+            "id": "ce8a8f813e96bfc1",
+            "type": "leaf",
+            "state": {
+              "type": "markdown",
+              "state": {
+                "file": "90 - Tasks/DOCUMENT.md",
+                "mode": "source",
+                "source": false
+              },
+              "icon": "lucide-file",
+              "title": "DOCUMENT"
+            }
+          }
+        ]
+      }
+    ],
+    "direction": "vertical"
+  },
+  "left": {
+    "id": "fdc3584c31bffeef",
+    "type": "split",
+    "children": [
+      {
+        "id": "6b4f5226cd7d55b2",
+        "type": "tabs",
+        "children": [
+          {
+            "id": "7abf01a7f54ded2b",
+            "type": "leaf",
+            "state": {
+              "type": "file-explorer",
+              "state": {
+                "sortOrder": "alphabetical",
+                "autoReveal": false,
+                "showSearch": false,
+                "searchQuery": ""
+              },
+              "icon": "lucide-folder-closed",
+              "title": "Explorador de arquivos"
+            }
+          },
+          {
+            "id": "127d23d80dbdce08",
+            "type": "leaf",
+            "state": {
+              "type": "search",
+              "state": {
+                "query": "",
+                "matchingCase": false,
+                "explainSearch": false,
+                "collapseAll": false,
+                "extraContext": false,
+                "sortOrder": "alphabetical"
+              },
+              "icon": "lucide-search",
+              "title": "Procurar"
+            }
+          },
+          {
+            "id": "d9b5efc010ba6a7a",
+            "type": "leaf",
+            "state": {
+              "type": "bookmarks",
+              "state": {
+                "showSearch": false,
+                "searchQuery": ""
+              },
+              "icon": "lucide-bookmark",
+              "title": "Marcadores"
+            }
+          }
+        ]
+      }
+    ],
+    "direction": "horizontal",
+    "width": 300
+  },
+  "right": {
+    "id": "9c661d6b38160bdc",
+    "type": "split",
+    "children": [
+      {
+        "id": "8488bd17c4d1d2a2",
+        "type": "tabs",
+        "children": [
+          {
+            "id": "275edfea1f10e710",
+            "type": "leaf",
+            "state": {
+              "type": "backlink",
+              "state": {
+                "file": "TCC.md",
+                "collapseAll": false,
+                "extraContext": false,
+                "sortOrder": "alphabetical",
+                "showSearch": false,
+                "searchQuery": "",
+                "backlinkCollapsed": false,
+                "unlinkedCollapsed": true
+              },
+              "icon": "links-coming-in",
+              "title": "Links inversos"
+            }
+          },
+          {
+            "id": "555b51e5c0164470",
+            "type": "leaf",
+            "state": {
+              "type": "outgoing-link",
+              "state": {
+                "file": "TCC.md",
+                "linksCollapsed": false,
+                "unlinkedCollapsed": true
+              },
+              "icon": "links-going-out",
+              "title": "Links de saída"
+            }
+          },
+          {
+            "id": "faa7cd73f0307e25",
+            "type": "leaf",
+            "state": {
+              "type": "tag",
+              "state": {
+                "sortOrder": "frequency",
+                "useHierarchy": true,
+                "showSearch": false,
+                "searchQuery": ""
+              },
+              "icon": "lucide-tags",
+              "title": "Etiquetas"
+            }
+          },
+          {
+            "id": "86a024fa77c9d896",
+            "type": "leaf",
+            "state": {
+              "type": "all-properties",
+              "state": {
+                "sortOrder": "frequency",
+                "showSearch": false,
+                "searchQuery": ""
+              },
+              "icon": "lucide-archive",
+              "title": "Todas as propriedades"
+            }
+          },
+          {
+            "id": "0115e2a0d26c57f8",
+            "type": "leaf",
+            "state": {
+              "type": "outline",
+              "state": {
+                "file": "TCC.md",
+                "followCursor": false,
+                "showSearch": false,
+                "searchQuery": ""
+              },
+              "icon": "lucide-list",
+              "title": "Sumário"
+            }
+          }
+        ]
+      }
+    ],
+    "direction": "horizontal",
+    "width": 300,
+    "collapsed": true
+  },
+  "left-ribbon": {
+    "hiddenItems": {
+      "switcher:Abrir a troca rápida": false,
+      "graph:Abrir visualização em gráfico": false,
+      "canvas:Criar novo canvas": false,
+      "daily-notes:Abrir a nota de hoje": false,
+      "templates:Inserir modelo": false,
+      "command-palette:Abrir paleta de comandos": false,
+      "bases:Criar nova base": false
+    }
+  },
+  "active": "ce8a8f813e96bfc1",
+  "lastOpenFiles": [
+    "04 - Frontend/Request Flows.md",
+    "03 - Backend/API v1.md",
+    "90 - Tasks/BLOCKERS.md",
+    "90 - Tasks/RUN_LOG.md",
+    "90 - Tasks/WORKER_PROMPT.md",
+    "90 - Tasks/DOCUMENT.md",
+    "90 - Tasks/TASKS.md",
+    "90 - Tasks/FORMAT.md",
+    "90 - Tasks/items/SEC-001-production-boundaries.md",
+    "90 - Tasks/items/BUG-001-csharp-local-search-harness.md",
+    "90 - Tasks/items/API-001-versioned-api-documentation.md",
+    "03 - Backend/API Contract.md",
+    "02 - Architecture/System Architecture.md",
+    "01 - Project/Workspace Inventory.md",
+    "Refatoração.md",
+    "90 - Tasks/items/COM-001-frontend-backend-contract.md",
+    "90 - Tasks/items/DEC-001-project-scope-decisions.md",
+    "90 - Tasks/items/DOC-002-reconcile-migration-docs.md",
+    "90 - Tasks/items/OPS-004-monitoring-backup.md",
+    "90 - Tasks/items/OPS-003-aws-deployment-plan.md",
+    "90 - Tasks/items/OPS-002-dns-tls-cors.md",
+    "90 - Tasks/items/OPS-001-container-runtime.md",
+    "90 - Tasks/items/DATA-001-brazilian-dataset-decision.md",
+    "90 - Tasks/items/INV-001-runtime-resource-lifecycle.md",
+    "90 - Tasks/items/FE-001-browser-frontend-flow-tests.md",
+    "90 - Tasks/items/QUAL-001-recorded-wikidata-routes.md",
+    "90 - Tasks/items",
+    "90 - Tasks",
+    "09 - Decisions",
+    "08 - Quality",
+    "07 - Operations",
+    "06 - Development",
+    "05 - Migration",
+    "04 - Frontend",
+    "03 - Backend",
+    "02 - Architecture"
+  ]
+}
