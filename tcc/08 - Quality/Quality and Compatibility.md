@@ -8,9 +8,11 @@
 
 ## Coverage gaps
 
-- Browser-level frontend workflow tests. Static source/route declarations are
-  covered by `StaticFrontendRoutesTest`; interactive Cytoscape and Materialize
-  flows remain for `FE-001`. See [[04 - Frontend/Request Flows]].
+- Browser-level frontend workflows are covered offline by Playwright Firefox in
+  `frontend-tests/index2.spec.mjs`. It uses the actual static page, test-local
+  API responses, and CDN stubs; run `npm run test:browser`. Further visual and
+  accessibility coverage remains outside the current suite. See
+  [[04 - Frontend/Request Flows]].
 - Valid C# captures for local search/built-in search after harness repair.
 - Recorded Wikidata success/error fixtures replayed through Ktor routes.
 - CORS, TLS/reverse-proxy, deployment, resource-limit, backup, and monitoring tests.

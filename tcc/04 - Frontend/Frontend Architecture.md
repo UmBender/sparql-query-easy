@@ -36,7 +36,11 @@ sequenceDiagram
 
 **Potential issue:** Materialize, Intro.js, Google icons, and CSS are loaded from third-party CDNs, so local development is not fully offline.
 
-**Missing coverage:** No browser-level automated test validates search-result-to-node insertion, uploads, relationship expansion, or query rendering.
+**Confirmed:** Playwright browser tests now validate search-result-to-node
+insertion, Turtle upload endpoint replacement, relationship expansion, and
+SPARQL preview/query execution against test-local HTTP responses. They serve
+the actual page, stub only CDN scripts, and assert relative API URLs. Run
+`npm run test:browser`; see [[Request Flows]].
 
 ## Source files
 

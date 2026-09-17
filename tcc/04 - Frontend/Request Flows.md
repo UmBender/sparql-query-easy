@@ -50,8 +50,10 @@ or UI change.
 that its source declares each backend route, same-origin base, and `ttlFile`
 form field. `ApplicationTest`, `LocalDatabaseRoutesTest`, and
 `QueryRoutesTest` exercise the corresponding HTTP contracts without live
-Wikidata. The end-user browser interactions, Materialize callbacks, and
-Cytoscape state transitions require the dedicated `FE-001` browser test task.
+Wikidata. `frontend-tests/index2.spec.mjs` now runs the actual page in
+Playwright Firefox with test-local API responses and controlled CDN stubs. It
+catches a broken autocomplete callback and verifies upload, relationship,
+SPARQL-preview, and query-execution flows with relative URLs.
 
 ## Source files
 

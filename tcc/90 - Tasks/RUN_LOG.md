@@ -66,3 +66,26 @@
   documented route declarations, link targets, and `git diff --check`.
 - Completed `COM-001`. No application route or API contract was changed; no
   commit was created because unrelated worktree changes remain.
+
+## 2026-09-16 — FE-001
+
+- Selected `FE-001` as the next eligible P1 task; `DOC-001` and `API-001` are
+  `DONE`.
+- Added a pinned Playwright Firefox browser-test setup. It serves the actual
+  `index2.html` from a local Node server, intercepts only CDN scripts with
+  controlled stubs, and serves test-local health/upload/query responses.
+- The first run exposed a missing `M.Sidenav.init` test-stub method, which
+  prevented page initialization. Added the method; this was not a production
+  frontend defect.
+- Passed:
+
+  ```sh
+  npm run test:browser
+  GRADLE_USER_HOME=/tmp/sparql-query-easy-gradle ./gradlew ktlintCheck detekt test --no-daemon --console=plain
+  ```
+
+  The browser suite covers autocomplete callback-to-node insertion, relative
+  URLs, Turtle upload endpoint replacement, relationship expansion, SPARQL
+  preview, and query execution. The Gradle quality gate was `BUILD SUCCESSFUL`.
+- Updated frontend/quality notes, reviewed the task diff and `git diff --check`,
+  and completed `FE-001`.

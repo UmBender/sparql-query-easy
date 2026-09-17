@@ -10,7 +10,7 @@ Tasks are ordered by dependency, then priority. `BLOCKED` tasks need information
 | QUAL-001 | BLOCKED | P1 | quality | Add approved recorded Wikidata route fixtures |
 | API-001 | DONE | P1 | documentation | Publish a versioned API contract from code evidence |
 | COM-001 | DONE | P1 | frontend-backend | Characterize frontend-to-backend request flows |
-| FE-001 | READY | P1 | frontend | Add browser-level tests for authoritative frontend flows |
+| FE-001 | DONE | P1 | frontend | Add browser-level tests for authoritative frontend flows |
 | SEC-001 | BACKLOG | P1 | security | Decide and implement production remote endpoint/upload policy |
 | INV-001 | READY | P1 | investigation | Define lifecycle ownership for Ktor HTTP clients and runtime resources |
 | DATA-001 | READY | P2 | decision | Decide canonical Brazilian football dataset behavior |

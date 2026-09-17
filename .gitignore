@@ -238,6 +238,11 @@ ClientBin/
 *.jfm
 *.pfx
 *.publishsettings
+
+# Node browser-test dependencies and generated reports
+node_modules/
+playwright-report/
+test-results/
 orleans.codegen.cs
 
 # Including strong name files can present a security risk
