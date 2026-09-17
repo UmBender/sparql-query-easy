@@ -1,39 +1,44 @@
 # Compatibility Audit Report
 
 Audit date: 2026-09-10  
-Kotlin branch: `kotlin` at `1e2fb01`  
+Kotlin branch: `kotlin` at `720e9c3`
 Original C# project: retained in `Sparql.QueryEasy/`
 
 ## Executive summary
 
 The Kotlin implementation has strong component-level coverage for RDF parsing,
 local SPARQL, query generation, filtering, endpoint selection, upload, and the
-separate Wikidata transports. It is not yet possible to make a complete
-fixture-by-fixture C# versus Kotlin assertion in this environment:
+separate Wikidata transports. The .NET 8 characterization harness has now
+produced and committed 34 immutable C# captures under
+`compatibility/expected/`. The capture-driven Kotlin HTTP comparator passes for
+successful local and generated-query cases, subject to the documented
+unordered-result comparison rule.
 
-- `dotnet` is unavailable, so the production C# compatibility harness cannot
-  execute.
-- `compatibility/expected/` has no captured C# results and
-  `capture-status.tsv` contains only its header.
-- The Kotlin HTTP surface includes `/health`, `POST /api/local-database`, and
-  all five C# `QueryController` routes. Direct C#-to-Kotlin HTTP comparison
-  still awaits captured C# fixtures.
+Successful local fixture comparisons now include graph isomorphism, Kotlin's
+actually executed SPARQL, projected variables, result-row multiplicity,
+bound/unbound bindings, RDF term details, and the documented ordered versus
+unordered comparison rule. Exception-only C# harness captures remain
+non-equivalent because they do not represent ASP.NET middleware responses.
 
-No fixture is marked equivalent solely from source inspection. No Kotlin fix
-was made in this audit because no C# execution evidence exists to confirm a
-behavioral mismatch. The missing QueryController routes are a confirmed Kotlin
-HTTP-API completeness gap, listed below for the next migration slice.
+`SEARCH-LOCAL-001` and `BUILTIN-GRAPH-001` are currently excluded: the C#
+harness wraps `LocalQueryExecutor`, making its `is LocalQueryExecutor` search
+branch test false and producing a remote-branch capture. They require a harness
+repair and reviewed C# recapture; their expected files were not changed.
+
+No fixture is marked equivalent solely from source inspection. The completed
+HTTP comparison found and corrected fragment-IRI acceptance and Unicode IRI
+ASCII normalization differences.
 
 ## Commands and results
 
 | Command | Result |
 |---|---|
-| `dotnet run --project compatibility/Compatibility.Harness/Compatibility.Harness.csproj` | Failed before execution: `zsh: command not found: dotnet` (exit 127). |
+| `dotnet run --project compatibility/Compatibility.Harness/Compatibility.Harness.csproj` | Passed with .NET SDK 8.0.130; generated 34 reviewed C# captures. |
+| `GRADLE_USER_HOME=/tmp/sparql-query-easy-gradle ./gradlew test --tests 'com.example.sparqlqueryeasy.http.CaptureDrivenCompatibilityTest' --no-daemon` | Passed offline. The comparator checks valid captured graphs, route HTTP output, generated/executed SPARQL, raw projected variables and rows, binding presence, RDF terms, duplicate rows, and documented ordering. |
 | `GRADLE_USER_HOME=/tmp/sparql-query-easy-gradle ./gradlew ktlintFormat ktlintCheck detekt test integrationTest --no-daemon` | Passed formatting, ktlint, Detekt, and unit tests. The opt-in `integrationTest` task was skipped because `RUN_WIKIDATA_INTEGRATION=true` was not set. |
 
-The last Gradle test report contains 93 executed unit-test cases across 17
-test classes. Offline integration tests were compiled but intentionally not
-run against live Wikidata.
+Offline integration tests were compiled but intentionally not run against live
+Wikidata.
 
 ## Test coverage by category
 
@@ -50,29 +55,33 @@ authoritative executed-test total is 85.
 
 ## Fixture execution matrix
 
-The C# column is uniformly `unresolved` because the harness did not start.
-The Kotlin column means the stated behavior has an offline component or route
-test; it does not mean an output was compared to C#.
+The C# captures are real .NET 8 harness output. For valid local-route cases,
+the capture-driven Ktor test now compares successful response status/body,
+Jena graph isomorphism, actual executed SPARQL, and raw bindings. The
+exception-only and C# harness-altered cases below remain explicitly excluded,
+not silently normalized.
 
 | Fixture group | Cases | C# execution | Kotlin execution | Classification |
 |---|---|---|---|---|
-| Turtle/RDF | `TTL-SIMPLE-001`, `TTL-PREFIX-001`, `TTL-BASE-001`, `TTL-IRI-UNICODE-001`, `TTL-BNODE-001`, `TTL-LITERAL-001`, `TTL-NUMERIC-001`, `TTL-EMPTY-001`, `TTL-INVALID-001`, `TTL-INVALID-002` | Unresolved | Offline upload/parser tests; HTTP only for simple/empty/invalid | Unresolved comparison |
-| Generated SELECT | `SELECT-BASIC-001`, `SELECT-OPTIONAL-001`, four filter cases, `SELECT-DISTINCT-001`, order/max/min, zero/two limit, empty, invalid | Unresolved | Generator/general-query tests | Unresolved comparison |
-| Query boundaries | offset, generated-path, ASK/CONSTRUCT unavailable, injection-path | Unresolved | Generator safety tests and documented boundaries | Intentional change for unsafe interpolation; otherwise unresolved |
-| Relationships/filtering | `RELATIONSHIPS-LOCAL-001`, `RELATIONSHIP-LITERAL-001`, `RELATIONSHIP-RESOURCE-001`, `QUERY-EMPTY-WHERE-001` | Unresolved | Application tests | Unresolved comparison |
-| Search/endpoints | `SEARCH-LOCAL-001`, `BUILTIN-GRAPH-001`, `LOCAL-CACHE-MISS-001` | Unresolved | Endpoint/search tests | Unresolved comparison |
-| HTTP | `HTTP-HEALTH-001`, `HTTP-BAD-JSON-001`, `HTTP-MISSING-UPLOAD-001` | Unresolved | Health, local-database, and QueryController route tests; malformed JSON remains untested | Mixed: documented route-boundary changes; otherwise unresolved |
+| Turtle/RDF | `TTL-SIMPLE-001`, `TTL-PREFIX-001`, `TTL-BASE-001`, `TTL-IRI-UNICODE-001`, `TTL-BNODE-001`, `TTL-LITERAL-001`, `TTL-NUMERIC-001`, `TTL-EMPTY-001`, `TTL-INVALID-001`, `TTL-INVALID-002` | Captured graph/exception evidence | Offline Jena graph-isomorphism comparator and route upload | Valid graphs compared; invalid-Turtle exception captures intentionally non-equivalent |
+| Generated SELECT | `SELECT-BASIC-001`, `SELECT-OPTIONAL-001`, four filter cases, `SELECT-DISTINCT-001`, order/max/min, zero/two limit, empty, invalid | Captured generated query/raw results | Offline generated-query and local route comparator | Valid captures compared; invalid-query exception capture intentionally non-equivalent |
+| Query boundaries | offset, generated-path, ASK/CONSTRUCT unavailable, injection-path | Generated-path capture where available | Offline generated-query comparator | Injection capture is generated-query evidence only; unsupported raw operations remain outside the public API |
+| Relationships/filtering | `RELATIONSHIPS-LOCAL-001`, `RELATIONSHIP-LITERAL-001`, `RELATIONSHIP-RESOURCE-001`, `QUERY-EMPTY-WHERE-001` | Captured route/raw results | Offline route/raw-result comparator | Valid captures compared |
+| Search/endpoints | `SEARCH-LOCAL-001`, `BUILTIN-GRAPH-001`, `LOCAL-CACHE-MISS-001` | Harness-altered or exception capture | Deterministic service/route tests | Explicitly non-equivalent pending BUG-001/HTTP contract evidence |
+| HTTP | `HTTP-HEALTH-001`, `HTTP-BAD-JSON-001`, `HTTP-MISSING-UPLOAD-001` | Successful and exception-category captures | Route tests and capture comparator where a response exists | Successful captures compared; exception categories intentionally non-equivalent |
 | Wikidata | `WIKIDATA-GENERATION-001`, `WIKIDATA-SEARCH-RECORD-001`, `WIKIDATA-SEARCH-ERROR-001` | Generation harness unavailable; live search intentionally excluded | Offline generator and MockEngine client tests | Unresolved comparison |
 
 ## Detailed compatibility findings
 
-### Equivalent representation candidates — not yet confirmed
+### Confirmed valid-capture representation coverage
 
 The Kotlin Jena boundary keeps IRIs, blank nodes, literal lexical forms,
 datatype IRIs, language tags, projected variable order, explicit unbound
 bindings, duplicate rows, and graph-isomorphism comparison in application
-types. These are covered by Kotlin tests, but require C# harness output before
-being promoted to an equivalent classification.
+types. `CaptureDrivenCompatibilityTest` compares these against the available
+valid C# harness output through the Kotlin route boundary. It preserves a row
+multiset for unordered queries and retains order only for captured `ORDER BY`
+queries.
 
 ### Existing C# defects intentionally preserved
 
@@ -97,10 +106,47 @@ being promoted to an equivalent classification.
 These changes are recorded in `MIGRATION.md`; approval for public contract
 changes is still required before production rollout.
 
-### Confirmed Kotlin defects / incomplete compatibility
+### Approved production-contract decisions
 
-- C# QueryController routes are implemented and covered by deterministic Ktor
-  tests, but no C# execution evidence is available for black-box comparison.
+The Kotlin development port remains `8080`; this is an approved intentional
+difference from the C# `5242`/`7070` profiles. Kotlin's explicit JSON error
+responses are approved: invalid input is `400`, an unavailable local graph is
+`404`, and upstream execution failure is `502`. The frontend contract is
+`sparql/index2.html`; the legacy `index.html` was removed because it discarded
+the valid `filterType: 0` (`Starts`) value.
+
+Production CORS is deliberately deferred until a frontend domain is selected.
+Local development should serve the frontend and API together from Ktor at
+`http://localhost:8080`, requiring no CORS policy. The future deployment task
+is a restrictive origin allow-list with integration coverage; wildcard CORS is
+not approved.
+
+### Captured error cases — non-equivalent pending approval
+
+The .NET 8 in-process harness now has reviewed captures for the cases below in
+`compatibility/expected/`. They are deliberately **not** marked equivalent:
+the C# harness records an exception category before ASP.NET Core middleware
+produces an HTTP response, whereas Kotlin exposes an explicit route response.
+The C# baseline must remain unchanged. A production-contract decision is
+required before any Kotlin status/body is called compatible.
+
+| Case | C# capture | Kotlin behavior | Classification |
+|---|---|---|---|
+| `HTTP-BAD-JSON-001` | `System.Text.Json.JsonReaderException` during request JSON parsing | Ktor route-level malformed-request response | Non-equivalent pending approval |
+| `HTTP-MISSING-UPLOAD-001` | `System.NullReferenceException` from controller invocation without `ttlFile` | `400` JSON error, `Missing required upload: ttlFile` | Non-equivalent pending approval |
+| `LOCAL-CACHE-MISS-001` | `System.Exception` from controller/query invocation | `404` JSON error for an unavailable local graph | Non-equivalent pending approval |
+| `TTL-INVALID-001` | dotNetRDF `RdfParseException` | `400` JSON Turtle parsing error | Non-equivalent pending approval |
+| `TTL-INVALID-002` | dotNetRDF `RdfParseException` | `400` JSON Turtle parsing error | Non-equivalent pending approval |
+
+These error cases are excluded from normal response-equality assertions in the
+capture-driven Kotlin suite. This records the difference rather than weakening
+either C# capture or Kotlin route assertions.
+
+### Incomplete compatibility coverage
+
+- Two C# local-search captures are invalid because the harness wrapper changes
+  the executor runtime type; `BUG-001` must repair and recapture them before
+  equivalence is claimed.
 - Kotlin has no equivalent Swagger/OpenAPI routes or C# HTTPS-redirection/CORS
   middleware configuration.
 - `application.conf` defaults to HTTP port `8080`; C# development profiles use

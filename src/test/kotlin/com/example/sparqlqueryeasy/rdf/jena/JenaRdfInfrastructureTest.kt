@@ -71,6 +71,20 @@ class JenaRdfInfrastructureTest {
     }
 
     @Test
+    fun `Turtle parser ASCII normalizes Unicode predicate IRIs like C sharp Uri AbsoluteUri`() {
+        val graph = parser.parse("<https://example.test/s> <https://example.test/relação> <https://example.test/o> .")
+
+        graph.statements shouldBe
+            setOf(
+                RdfStatement(
+                    Iri("https://example.test/s"),
+                    Iri("https://example.test/rela%C3%A7%C3%A3o"),
+                    Iri("https://example.test/o"),
+                ),
+            )
+    }
+
+    @Test
     fun `Jena mapping preserves literal lexical form datatype language IRIs and blank node identity`() {
         val graph = parser.parse(resource("turtle/literals.ttl"))
         val values = graph.statements.map(RdfStatement::`object`)

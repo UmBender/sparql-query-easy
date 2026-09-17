@@ -1574,5 +1574,55 @@ GRADLE_USER_HOME=/tmp/sparql-query-easy-gradle ./gradlew ktlintFormat \
   ktlintCheck detekt test --daemon
 ```
 
-The QueryController route group is complete. Direct C# fixture capture remains
-blocked until the .NET harness can run.
+The QueryController route group is complete. The .NET harness has since
+produced committed C# fixture captures; detailed graph and raw-binding
+comparison remains in the compatibility test phase.
+
+## Approved production-contract decisions
+
+The static frontend in `sparql/index2.html` is the authoritative client
+contract. The retired `sparql/index.html` used truthiness for `filterType` and
+therefore lost the valid numeric value `0` (`Starts`); it has been removed.
+
+Kotlin retains its HTTP development port `8080` as an approved intentional
+difference from the C# `5242`/`7070` profiles. Kotlin's explicit JSON error
+contract is also approved: malformed/invalid requests return `400`, unavailable
+local graphs return `404`, and upstream execution failures return `502`.
+These statuses replace C# controller/framework exception behavior and are the
+contract to preserve in future route and frontend work.
+
+### Deferred deployment task: production CORS
+
+During local development, serve the static frontend and API from Ktor at
+`http://localhost:8080`; same-origin browser requests require no CORS policy.
+Before any domain-based deployment, configure a restrictive Ktor CORS allow-list
+for the selected production frontend origin, permit only required methods and
+headers, and add an integration test for allowed and rejected origins. Do not
+use a wildcard production allow-list. This task is intentionally deferred until
+the production frontend domain is chosen.
+
+## Compatibility comparator completion
+
+`CaptureDrivenCompatibilityTest` now parses each captured Turtle fixture with
+Jena and compares it isomorphically against the C# graph capture. For every
+successful local route fixture it records Kotlin's actual executed SPARQL and
+raw SELECT result, then compares it with the C# capture: projected variables,
+each row, explicit bound/unbound presence, RDF kind, IRI, literal lexical form,
+datatype, language, duplicate rows, and blank-node identity mapping. Unordered
+fixtures compare a row multiset; only `ORDER BY` fixtures retain order. Query
+text normalization is limited to the C# random five-hex-digit literal variable
+suffix and Kotlin's corresponding deterministic index.
+
+The harness-only error captures remain intentionally non-equivalent because
+they do not contain an ASP.NET middleware response: `HTTP-BAD-JSON-001`,
+`HTTP-MISSING-UPLOAD-001`, `LOCAL-CACHE-MISS-001`, `SELECT-INVALID-001`,
+`TTL-INVALID-001`, and `TTL-INVALID-002`. Kotlin route tests instead preserve
+the approved explicit JSON `400`/`404`/`502` contract. `StatusPages` maps
+malformed JSON body conversion to the same `400` JSON envelope.
+
+`SEARCH-LOCAL-001` and `BUILTIN-GRAPH-001` are excluded from equivalence until
+the C# harness is repaired and those cases are recaptured. The harness wraps
+`LocalQueryExecutor` in `CapturingQueryExecutor`; C# `GetSearch` checks
+`_queryExecutor is LocalQueryExecutor`, so the wrapper incorrectly forces the
+remote-search query branch. This is a harness defect, not Kotlin evidence; the
+existing expected files remain immutable pending a reviewed recapture.

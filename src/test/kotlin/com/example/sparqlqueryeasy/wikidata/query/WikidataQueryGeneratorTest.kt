@@ -85,10 +85,10 @@ class WikidataQueryGeneratorTest {
         parses(literalQuery(LessOrEqual("7.5")))
 
         val maximum = literalQuery(Maximum)
-        maximum.contains("ORDER BY DESC(?literalValue0)\nLIMIT 1") shouldBe true
+        maximum.contains("ORDER BY DESC(?literalValue0) \nLIMIT 1") shouldBe true
         parses(maximum)
         val minimum = literalQuery(Minimum)
-        minimum.contains("ORDER BY ASC(?literalValue0)\nLIMIT 1") shouldBe true
+        minimum.contains("ORDER BY ASC(?literalValue0) \nLIMIT 1") shouldBe true
         parses(minimum)
     }
 

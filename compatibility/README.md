@@ -1,14 +1,15 @@
 # C# Characterization Corpus
 
 This directory is a baseline corpus for the existing ASP.NET Core/.NET 8
-application. It contains only inputs, execution recipes, and empty locations
-for captured baselines. It deliberately contains no invented response, status,
-or query-output golden files.
+application. It contains inputs, execution recipes, and reviewed captures from
+the in-process C# harness. It deliberately contains no invented response,
+status, or query-output golden files.
 
 The case catalogue is [cases/manifest.md](cases/manifest.md). Every case has a
 stable ID, input files, C# route, behavior being characterized, and rationale.
-`expected/` remains empty until an operator captures a baseline from the
-running C# application.
+`expected/` contains the captured baseline recorded in
+`cases/capture-status.tsv`. New or changed cases must still be captured from
+the running C# application; never hand-author expected output.
 
 ## Layout
 

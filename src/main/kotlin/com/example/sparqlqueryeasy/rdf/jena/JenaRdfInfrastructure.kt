@@ -34,12 +34,13 @@ import org.apache.jena.riot.Lang
 import org.apache.jena.riot.RDFParser
 import org.apache.jena.riot.RiotException
 import org.apache.jena.sparql.ARQException
+import java.net.URI
 
 /** Maps Jena nodes at the RDF infrastructure boundary into application-owned values. */
 class JenaRdfValueMapper : RdfValueMapper<RDFNode> {
     override fun map(value: RDFNode): RdfValue =
         when {
-            value.isURIResource -> Iri(requireNotNull(value.asResource().uri))
+            value.isURIResource -> Iri(URI(requireNotNull(value.asResource().uri)).toASCIIString())
             value.isAnon -> BlankNode(value.asResource().id.labelString)
             value.isLiteral -> {
                 val literal = value.asLiteral()
@@ -186,7 +187,7 @@ private fun Model.toDomainGraph(mapper: JenaRdfValueMapper): RdfGraph {
                     add(
                         RdfStatement(
                             subject = mapper.map(statement.subject) as RdfResource,
-                            predicate = Iri(statement.predicate.uri),
+                            predicate = Iri(URI(statement.predicate.uri).toASCIIString()),
                             `object` = mapper.map(statement.`object`),
                         ),
                     )

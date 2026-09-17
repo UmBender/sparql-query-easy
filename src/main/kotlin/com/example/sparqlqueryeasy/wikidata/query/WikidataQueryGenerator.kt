@@ -41,7 +41,7 @@ data class IriTerm(val value: String) : QueryTerm {
             } catch (exception: java.net.URISyntaxException) {
                 throw IllegalArgumentException("Invalid query IRI: $value", exception)
             }
-        require(parsed.isAbsolute && parsed.fragment == null && !value.any(Char::isWhitespace)) {
+        require(parsed.isAbsolute && !value.any(Char::isWhitespace)) {
             "Invalid query IRI: $value"
         }
     }
@@ -285,8 +285,8 @@ class CSharpCompatibleWikidataQueryGenerator : WikidataQueryGenerator {
                 is Contains -> line("FILTER (CONTAINS(STR($literal), \"${filter.value.escapeSparqlString()}\"))")
                 is GreaterOrEqual -> line("FILTER ($literal >= ${filter.value})")
                 is LessOrEqual -> line("FILTER ($literal <= ${filter.value})")
-                Maximum -> orderBy = "ORDER BY DESC($literal)"
-                Minimum -> orderBy = "ORDER BY ASC($literal)"
+                Maximum -> orderBy = "ORDER BY DESC($literal) "
+                Minimum -> orderBy = "ORDER BY ASC($literal) "
             }
         }
 
@@ -307,21 +307,24 @@ class CSharpCompatibleWikidataQueryGenerator : WikidataQueryGenerator {
             line("}")
         }
 
+        /** Matches the multiline interpolated string emitted by C# AddVariableParentType. */
         fun parentType(variable: String) =
             line(
-                listOf(
-                    "BIND(IF(EXISTS { $variable rdf:type ?parentClass . ?parentClass rdf:type owl:Class },",
-                    "\"objetoClasse\", \"outro\") AS ${variable}ParentType)",
-                ).joinToString(" "),
+                "\n                BIND(IF(\n" +
+                    "                    EXISTS {\n" +
+                    "                        $variable rdf:type ?parentClass .\n" +
+                    "                        ?parentClass rdf:type owl:Class\n" +
+                    "                    },\n" +
+                    "                    \"objetoClasse\",\n" +
+                    "                    \"outro\"\n" +
+                    "                ) AS ${variable}ParentType)\n" +
+                    "            ",
             )
 
         fun propertyType(variable: String) =
             line(
-                listOf(
-                    "BIND(IF(EXISTS { $variable rdf:type owl:ObjectProperty }, \"objeto\",",
-                    "IF(EXISTS { $variable rdf:type owl:DatatypeProperty }, \"label\", \"outro\"))",
-                    "AS ${variable}Type)",
-                ).joinToString(" "),
+                "BIND(IF(EXISTS { $variable rdf:type owl:ObjectProperty}, \"objeto\", " +
+                    "IF(EXISTS {$variable rdf:type owl:DatatypeProperty}, \"label\", \"outro\")) as ${variable}Type)",
             )
 
         fun finishWhere() {

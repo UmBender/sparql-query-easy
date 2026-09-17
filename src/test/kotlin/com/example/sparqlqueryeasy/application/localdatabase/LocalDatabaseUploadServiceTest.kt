@@ -68,7 +68,7 @@ class LocalDatabaseUploadServiceTest {
     }
 
     @Test
-    fun `TTL-IRI-UNICODE-001 preserves escaped and direct Unicode IRIs`() {
+    fun `TTL-IRI-UNICODE-001 exposes escaped and direct Unicode IRIs as ASCII`() {
         val cache = InMemoryLocalGraphCache()
         val handle = RdfGraphHandle("00000000-0000-0000-0000-000000000003")
 
@@ -78,10 +78,10 @@ class LocalDatabaseUploadServiceTest {
 
         stored(cache, handle).statements.map { it.subject } shouldContainExactlyInAnyOrder
             listOf(
-                Iri("https://example.test/café"),
-                Iri("https://example.test/café"),
-                Iri("https://example.test/naïve"),
-                Iri("https://example.test/naïve"),
+                Iri("https://example.test/caf%C3%A9"),
+                Iri("https://example.test/caf%C3%A9"),
+                Iri("https://example.test/na%C3%AFve"),
+                Iri("https://example.test/na%C3%AFve"),
             )
     }
 
