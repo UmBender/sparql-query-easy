@@ -1,5 +1,6 @@
 package com.example.sparqlqueryeasy
 
+import com.example.sparqlqueryeasy.http.configureErrorHandling
 import com.example.sparqlqueryeasy.http.configureRouting
 import com.example.sparqlqueryeasy.http.configureSerialization
 import io.ktor.server.application.Application
@@ -9,5 +10,6 @@ fun main(args: Array<String>): Unit = EngineMain.main(args)
 
 fun Application.module() {
     configureSerialization()
+    configureErrorHandling()
     configureRouting()
 }

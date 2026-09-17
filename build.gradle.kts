@@ -46,6 +46,7 @@ dependencies {
     implementation("io.ktor:ktor-server-core:$ktorVersion")
     implementation("io.ktor:ktor-server-netty:$ktorVersion")
     implementation("io.ktor:ktor-server-content-negotiation:$ktorVersion")
+    implementation("io.ktor:ktor-server-status-pages:$ktorVersion")
     implementation("io.ktor:ktor-serialization-kotlinx-json:$ktorVersion")
     implementation("io.ktor:ktor-client-core:$ktorVersion")
     implementation("io.ktor:ktor-client-cio:$ktorVersion")
@@ -69,6 +70,10 @@ tasks.test {
 
 tasks.named<Copy>("processResources") {
     from(layout.projectDirectory.file("Sparql.QueryEasy/futebol_completo.ttl"))
+    from(layout.projectDirectory.dir("sparql")) {
+        include("index2.html", "login.html", "grafos.css", "cytoscape.min.js", "cytoscape-cxtmenu.js")
+        into("frontend")
+    }
 }
 
 configurations["integrationTestImplementation"].extendsFrom(configurations["testImplementation"])

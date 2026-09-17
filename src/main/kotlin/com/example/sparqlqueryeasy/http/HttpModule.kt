@@ -43,10 +43,15 @@ import io.ktor.http.content.forEachPart
 import io.ktor.serialization.kotlinx.json.json
 import io.ktor.server.application.Application
 import io.ktor.server.application.install
+import io.ktor.server.http.content.staticResources
+import io.ktor.server.plugins.BadRequestException
+import io.ktor.server.plugins.ContentTransformationException
 import io.ktor.server.plugins.contentnegotiation.ContentNegotiation
+import io.ktor.server.plugins.statuspages.StatusPages
 import io.ktor.server.request.receive
 import io.ktor.server.request.receiveMultipart
 import io.ktor.server.response.respond
+import io.ktor.server.response.respondRedirect
 import io.ktor.server.routing.Route
 import io.ktor.server.routing.RoutingContext
 import io.ktor.server.routing.get
@@ -115,12 +120,26 @@ fun Application.configureSerialization() {
     }
 }
 
+/** The approved public error contract also covers malformed JSON before route binding can begin. */
+fun Application.configureErrorHandling() {
+    install(StatusPages) {
+        exception<ContentTransformationException> { call, cause ->
+            call.respond(HttpStatusCode.BadRequest, ErrorResponse(cause.message ?: "Malformed request body"))
+        }
+        exception<BadRequestException> { call, cause ->
+            call.respond(HttpStatusCode.BadRequest, ErrorResponse(cause.message ?: "Malformed request body"))
+        }
+    }
+}
+
 fun Application.configureRouting(dependencies: HttpDependencies = defaultHttpDependencies()) {
     val healthService = HealthService()
     routing {
+        get("/") { call.respondRedirect("/index2.html") }
         get("/health") { call.respond(healthService.current()) }
         localDatabaseRoutes(dependencies.localDatabaseUploadService)
         dependencies.query?.let(::queryRoutes)
+        staticResources("/", "frontend")
     }
 }
 

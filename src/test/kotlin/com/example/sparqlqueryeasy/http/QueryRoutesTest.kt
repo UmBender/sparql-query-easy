@@ -81,6 +81,21 @@ class QueryRoutesTest {
         }
 
     @Test
+    fun `HTTP-BAD-JSON-001 returns the approved JSON error envelope`() =
+        testApplication {
+            application { queryTestModule(RecordingExecution(generalResult())) }
+
+            val response =
+                client.post("/api/query") {
+                    headers.append(HttpHeaders.ContentType, ContentType.Application.Json.toString())
+                    setBody("{not-json")
+                }
+
+            response.status shouldBe HttpStatusCode.BadRequest
+            response.bodyAsText().startsWith("{\"error\":\"") shouldBe true
+        }
+
+    @Test
     fun `LOCAL-CACHE-MISS-001 maps a missing uploaded graph to not found`() =
         testApplication {
             application { queryTestModule(RecordingExecution(generalResult())) }
@@ -198,6 +213,7 @@ class QueryRoutesTest {
         val generator = CSharpCompatibleWikidataQueryGenerator()
         val filtering = ResultFilteringService()
         configureSerialization()
+        configureErrorHandling()
         configureRouting(
             HttpDependencies(
                 LocalDatabaseUploadService(JenaTurtleParser(), InMemoryLocalGraphCache()),

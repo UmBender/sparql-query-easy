@@ -1,0 +1,65 @@
+.node-label {
+    padding: 5px;
+    white-space: nowrap;
+    color: white;
+    font-family: 'Roboto', sans-serif;
+
+}
+
+.node-label-big {
+    margin-top: 150px;
+    color: #4472C4 !important;
+}
+
+.node-label-variable {
+    padding: 5px;
+    white-space: nowrap;
+    color: black;
+    font-family: 'Roboto', sans-serif;
+}
+
+.edge-label {
+    background-color: #ffffff;
+    padding: 4px;
+    color: #4472C4;
+    font-family: 'Roboto', sans-serif;
+}
+
+.edge-label-variable {
+    background-color: #A9D18E;
+    padding: 4px;
+    color: white;
+    font-family: 'Roboto', sans-serif;
+    border: 1px solid #6A9141;
+}
+
+.edge-label-filter {
+    background-color: #8497B0;
+    padding: 4px;
+    color: #4472C4;
+    font-family: 'Roboto', sans-serif;
+    border: 1px dashed black;
+    text-align: center ;
+}
+
+.input-field input[type=text]:focus {
+    border-bottom: 1px solid #fff;
+    box-shadow: 0 1px 0 0 #fff;
+  }
+
+  pre {
+    background-color: #f4f4f4;
+    border: 1px solid #ddd;
+    border-left: 3px solid #f36f21;
+    color: #666;
+    page-break-inside: avoid;
+    font-family: monospace;
+    font-size: 15px;
+    line-height: 1.6;
+    margin-bottom: 1.6em;
+    max-width: 100%;
+    overflow: auto;
+    padding: 1em 1.5em;
+    display: block;
+    word-wrap: break-word;
+}

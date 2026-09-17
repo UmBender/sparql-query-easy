@@ -74,6 +74,7 @@ class LocalDatabaseRoutesTest {
 
     private fun Application.testModule(cache: InMemoryLocalGraphCache = InMemoryLocalGraphCache()) {
         configureSerialization()
+        configureErrorHandling()
         configureRouting(
             HttpDependencies(
                 LocalDatabaseUploadService(
