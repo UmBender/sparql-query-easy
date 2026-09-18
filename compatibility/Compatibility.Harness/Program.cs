@@ -59,10 +59,16 @@ internal sealed class FixtureHarness
         collection.AddSingleton<IMemoryCache>(_cache);
         collection.AddSingleton<BrasileiraoDatabase>();
         collection.AddSingleton(_sink);
-        collection.AddScoped<LocalQueryExecutor>();
-        collection.AddKeyedScoped<IQueryExecutor, CapturingQueryExecutor>("Local");
+        collection.AddKeyedScoped<IQueryExecutor, CapturingLocalQueryExecutor>("Local");
         collection.AddKeyedScoped<IQueryExecutor, NoopRemoteQueryExecutor>("Remote");
         _services = collection.BuildServiceProvider();
+
+        using var scope = _services.CreateScope();
+        var localExecutor = scope.ServiceProvider.GetRequiredKeyedService<IQueryExecutor>("Local");
+        if (localExecutor is not LocalQueryExecutor)
+        {
+            throw new InvalidOperationException("The capture harness must preserve LocalQueryExecutor runtime-type detection.");
+        }
     }
 
     public async Task RunAsync()
@@ -329,25 +335,24 @@ internal sealed class FixtureHarness
     };
 }
 
-internal sealed class CapturingQueryExecutor : IQueryExecutor
+internal sealed class CapturingLocalQueryExecutor : LocalQueryExecutor, IQueryExecutor
 {
-    private readonly LocalQueryExecutor _inner;
     private readonly CaptureSink _sink;
 
-    public CapturingQueryExecutor(LocalQueryExecutor inner, CaptureSink sink)
+    public CapturingLocalQueryExecutor(IMemoryCache memoryCache, BrasileiraoDatabase brasileiraoDatabase, CaptureSink sink)
+        : base(memoryCache, brasileiraoDatabase)
     {
-        _inner = inner;
         _sink = sink;
     }
 
-    public async Task<SparqlResultSet> ExecuteAsync(string query)
+    async Task<SparqlResultSet> IQueryExecutor.ExecuteAsync(string query)
     {
-        var result = await _inner.ExecuteAsync(query);
+        var result = await base.ExecuteAsync(query);
         _sink.Add(new RawQueryCapture(FixtureHarness.NormalizeSparql(query), ResultSnapshot.From(result)));
         return result;
     }
 
-    public void SetDatabase(string database) => _inner.SetDatabase(database);
+    void IQueryExecutor.SetDatabase(string database) => base.SetDatabase(database);
 }
 
 internal sealed class CaptureSink

@@ -85,6 +85,25 @@ class JenaRdfInfrastructureTest {
     }
 
     @Test
+    fun `Turtle parser adds the empty authority path used by C sharp Uri AbsoluteUri`() {
+        val graph =
+            parser.parse(
+                "<http://futebol.usp.br#subject> " +
+                    "<http://futebol.usp.br#predicate> " +
+                    "<http://futebol.usp.br#object> .",
+            )
+
+        graph.statements shouldBe
+            setOf(
+                RdfStatement(
+                    Iri("http://futebol.usp.br/#subject"),
+                    Iri("http://futebol.usp.br/#predicate"),
+                    Iri("http://futebol.usp.br/#object"),
+                ),
+            )
+    }
+
+    @Test
     fun `Jena mapping preserves literal lexical form datatype language IRIs and blank node identity`() {
         val graph = parser.parse(resource("turtle/literals.ttl"))
         val values = graph.statements.map(RdfStatement::`object`)

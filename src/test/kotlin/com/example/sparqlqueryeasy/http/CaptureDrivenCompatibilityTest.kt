@@ -76,11 +76,6 @@ class CaptureDrivenCompatibilityTest {
             )
     }
 
-    @Test
-    fun `harness-wrapped local search captures are not treated as C sharp equivalence evidence`() {
-        HARNESS_ALTERED_LOCAL_SEARCH_CASES shouldBe setOf("SEARCH-LOCAL-001", "BUILTIN-GRAPH-001")
-    }
-
     private fun assertCapture(capture: Capture) {
         val executions = mutableListOf<RecordedExecution>()
         testApplication {
@@ -275,7 +270,12 @@ class CaptureDrivenCompatibilityTest {
                         rowMatches(expectedRow, unmatched[index].bindings, candidate).also { if (it) mapping.replaceWith(candidate) }
                     }
                 val matched =
-                    withMessage(id) { requireNotNull(match) { "No matching Kotlin row for captured C# row: $expectedRow" } }
+                    withMessage(id) {
+                        requireNotNull(match) {
+                            "No matching Kotlin row for captured C# row: $expectedRow; " +
+                                "remaining Kotlin rows (${unmatched.size}): ${unmatched.take(5)}"
+                        }
+                    }
                 unmatched.removeAt(matched)
             }
             withMessage(id) { unmatched shouldBe emptyList() }
@@ -430,8 +430,7 @@ class CaptureDrivenCompatibilityTest {
         val SPARQL_ROUTE_CASES =
             setOf("SELECT-LIMIT-ZERO-001", "SELECT-LIMIT-TWO-001", "SPARQL-INJECTION-PATH-001", "WIKIDATA-GENERATION-001")
         val ORDERED_CASES = setOf("SELECT-ORDER-MAX-001", "SELECT-ORDER-MIN-001")
-        val HARNESS_ALTERED_LOCAL_SEARCH_CASES = setOf("SEARCH-LOCAL-001", "BUILTIN-GRAPH-001")
-        val EXCLUDED_CAPTURE_CASES = INTENTIONAL_EXCEPTION_DIFFERENCES + HARNESS_ALTERED_LOCAL_SEARCH_CASES
+        val EXCLUDED_CAPTURE_CASES = INTENTIONAL_EXCEPTION_DIFFERENCES
     }
 }
 

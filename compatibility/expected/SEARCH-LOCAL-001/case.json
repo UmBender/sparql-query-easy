@@ -10,17 +10,190 @@
       "data": []
     }
   },
-  "generatedSparql": "PREFIX rdf: \u003Chttp://www.w3.org/1999/02/22-rdf-syntax-ns#\u003E\nPREFIX rdfs: \u003Chttp://www.w3.org/2000/01/rdf-schema#\u003E\nPREFIX owl: \u003Chttp://www.w3.org/2002/07/owl#\u003E\nSELECT DISTINCT ?property ?propertyLabel ?propertyParentType\nWHERE {\nOPTIONAL {\n?property rdfs:label ?propertyLabel .\nFILTER (lang(?propertyLabel) = \u0022en\u0022)\n}\n\n                BIND(IF(\n                    EXISTS {\n                        ?property rdf:type ?parentClass .\n                        ?parentClass rdf:type owl:Class\n                    },\n                    \u0022objetoClasse\u0022,\n                    \u0022outro\u0022\n                ) AS ?propertyParentType)\n            \nFILTER (STRSTARTS(STR(?propertyLabel), \u0022alpha\u0022))\n}\nLIMIT 1\n",
+  "generatedSparql": "PREFIX rdf: \u003Chttp://www.w3.org/1999/02/22-rdf-syntax-ns#\u003E\nPREFIX rdfs: \u003Chttp://www.w3.org/2000/01/rdf-schema#\u003E\nPREFIX owl: \u003Chttp://www.w3.org/2002/07/owl#\u003E\nSELECT DISTINCT ?property ?propertyLabel ?propertyParentType\nWHERE {\nOPTIONAL {\n?property rdfs:label ?propertyLabel .\nFILTER (lang(?propertyLabel) = \u0022en\u0022)\n}\n\n                BIND(IF(\n                    EXISTS {\n                        ?property rdf:type ?parentClass .\n                        ?parentClass rdf:type owl:Class\n                    },\n                    \u0022objetoClasse\u0022,\n                    \u0022outro\u0022\n                ) AS ?propertyParentType)\n            \n}\n",
   "rawQueries": [
     {
-      "query": "PREFIX rdf: \u003Chttp://www.w3.org/1999/02/22-rdf-syntax-ns#\u003E\nPREFIX rdfs: \u003Chttp://www.w3.org/2000/01/rdf-schema#\u003E\nPREFIX owl: \u003Chttp://www.w3.org/2002/07/owl#\u003E\nSELECT DISTINCT ?property ?propertyLabel ?propertyParentType\nWHERE {\nOPTIONAL {\n?property rdfs:label ?propertyLabel .\nFILTER (lang(?propertyLabel) = \u0022en\u0022)\n}\n\n                BIND(IF(\n                    EXISTS {\n                        ?property rdf:type ?parentClass .\n                        ?parentClass rdf:type owl:Class\n                    },\n                    \u0022objetoClasse\u0022,\n                    \u0022outro\u0022\n                ) AS ?propertyParentType)\n            \nFILTER (STRSTARTS(STR(?propertyLabel), \u0022alpha\u0022))\n}\nLIMIT 1\n",
+      "query": "PREFIX rdf: \u003Chttp://www.w3.org/1999/02/22-rdf-syntax-ns#\u003E\nPREFIX rdfs: \u003Chttp://www.w3.org/2000/01/rdf-schema#\u003E\nPREFIX owl: \u003Chttp://www.w3.org/2002/07/owl#\u003E\nSELECT DISTINCT ?property ?propertyLabel ?propertyParentType\nWHERE {\nOPTIONAL {\n?property rdfs:label ?propertyLabel .\nFILTER (lang(?propertyLabel) = \u0022en\u0022)\n}\n\n                BIND(IF(\n                    EXISTS {\n                        ?property rdf:type ?parentClass .\n                        ?parentClass rdf:type owl:Class\n                    },\n                    \u0022objetoClasse\u0022,\n                    \u0022outro\u0022\n                ) AS ?propertyParentType)\n            \n}\n",
       "result": {
         "projectedVariables": [
           "property",
           "propertyLabel",
           "propertyParentType"
         ],
-        "rows": []
+        "rows": [
+          {
+            "bindings": [
+              {
+                "variable": "property",
+                "present": true,
+                "bound": true,
+                "value": {
+                  "kind": "uri",
+                  "uri": "https://example.test/search/alpha",
+                  "blankId": null,
+                  "lexicalForm": null,
+                  "datatype": null,
+                  "language": null
+                }
+              },
+              {
+                "variable": "propertyLabel",
+                "present": true,
+                "bound": true,
+                "value": {
+                  "kind": "literal",
+                  "uri": null,
+                  "blankId": null,
+                  "lexicalForm": "Alpha class",
+                  "datatype": "http://www.w3.org/1999/02/22-rdf-syntax-ns#langString",
+                  "language": "en"
+                }
+              },
+              {
+                "variable": "propertyParentType",
+                "present": true,
+                "bound": true,
+                "value": {
+                  "kind": "literal",
+                  "uri": null,
+                  "blankId": null,
+                  "lexicalForm": "outro",
+                  "datatype": "http://www.w3.org/2001/XMLSchema#string",
+                  "language": ""
+                }
+              }
+            ]
+          },
+          {
+            "bindings": [
+              {
+                "variable": "property",
+                "present": true,
+                "bound": true,
+                "value": {
+                  "kind": "uri",
+                  "uri": "https://example.test/search/alphabet",
+                  "blankId": null,
+                  "lexicalForm": null,
+                  "datatype": null,
+                  "language": null
+                }
+              },
+              {
+                "variable": "propertyLabel",
+                "present": true,
+                "bound": true,
+                "value": {
+                  "kind": "literal",
+                  "uri": null,
+                  "blankId": null,
+                  "lexicalForm": "Alphabet class",
+                  "datatype": "http://www.w3.org/1999/02/22-rdf-syntax-ns#langString",
+                  "language": "en"
+                }
+              },
+              {
+                "variable": "propertyParentType",
+                "present": true,
+                "bound": true,
+                "value": {
+                  "kind": "literal",
+                  "uri": null,
+                  "blankId": null,
+                  "lexicalForm": "outro",
+                  "datatype": "http://www.w3.org/2001/XMLSchema#string",
+                  "language": ""
+                }
+              }
+            ]
+          },
+          {
+            "bindings": [
+              {
+                "variable": "property",
+                "present": true,
+                "bound": true,
+                "value": {
+                  "kind": "uri",
+                  "uri": "https://example.test/search/beta",
+                  "blankId": null,
+                  "lexicalForm": null,
+                  "datatype": null,
+                  "language": null
+                }
+              },
+              {
+                "variable": "propertyLabel",
+                "present": true,
+                "bound": true,
+                "value": {
+                  "kind": "literal",
+                  "uri": null,
+                  "blankId": null,
+                  "lexicalForm": "Beta class",
+                  "datatype": "http://www.w3.org/1999/02/22-rdf-syntax-ns#langString",
+                  "language": "en"
+                }
+              },
+              {
+                "variable": "propertyParentType",
+                "present": true,
+                "bound": true,
+                "value": {
+                  "kind": "literal",
+                  "uri": null,
+                  "blankId": null,
+                  "lexicalForm": "outro",
+                  "datatype": "http://www.w3.org/2001/XMLSchema#string",
+                  "language": ""
+                }
+              }
+            ]
+          },
+          {
+            "bindings": [
+              {
+                "variable": "property",
+                "present": true,
+                "bound": true,
+                "value": {
+                  "kind": "uri",
+                  "uri": "https://example.test/search/property",
+                  "blankId": null,
+                  "lexicalForm": null,
+                  "datatype": null,
+                  "language": null
+                }
+              },
+              {
+                "variable": "propertyLabel",
+                "present": true,
+                "bound": true,
+                "value": {
+                  "kind": "literal",
+                  "uri": null,
+                  "blankId": null,
+                  "lexicalForm": "Alpha property",
+                  "datatype": "http://www.w3.org/1999/02/22-rdf-syntax-ns#langString",
+                  "language": "en"
+                }
+              },
+              {
+                "variable": "propertyParentType",
+                "present": true,
+                "bound": true,
+                "value": {
+                  "kind": "literal",
+                  "uri": null,
+                  "blankId": null,
+                  "lexicalForm": "outro",
+                  "datatype": "http://www.w3.org/2001/XMLSchema#string",
+                  "language": ""
+                }
+              }
+            ]
+          }
+        ]
       }
     }
   ],

@@ -40,7 +40,7 @@ import java.net.URI
 class JenaRdfValueMapper : RdfValueMapper<RDFNode> {
     override fun map(value: RDFNode): RdfValue =
         when {
-            value.isURIResource -> Iri(URI(requireNotNull(value.asResource().uri)).toASCIIString())
+            value.isURIResource -> Iri(requireNotNull(value.asResource().uri).toDotNetAbsoluteUri())
             value.isAnon -> BlankNode(value.asResource().id.labelString)
             value.isLiteral -> {
                 val literal = value.asLiteral()
@@ -187,7 +187,7 @@ private fun Model.toDomainGraph(mapper: JenaRdfValueMapper): RdfGraph {
                     add(
                         RdfStatement(
                             subject = mapper.map(statement.subject) as RdfResource,
-                            predicate = Iri(URI(statement.predicate.uri).toASCIIString()),
+                            predicate = mapper.map(statement.predicate) as Iri,
                             `object` = mapper.map(statement.`object`),
                         ),
                     )
@@ -197,6 +197,19 @@ private fun Model.toDomainGraph(mapper: JenaRdfValueMapper): RdfGraph {
     } finally {
         iterator.close()
     }
+}
+
+/** .NET Uri.AbsoluteUri inserts `/` between an authority and a fragment/query when the path is empty. */
+private fun String.toDotNetAbsoluteUri(): String {
+    val parsed = URI(this)
+    val ascii = parsed.toASCIIString()
+    if (parsed.rawAuthority == null || parsed.rawPath.isNotEmpty()) return ascii
+
+    val authorityStart = ascii.indexOf("//", startIndex = parsed.scheme.length + 1) + 2
+    val queryStart = ascii.indexOf('?', startIndex = authorityStart).takeIf { it >= 0 } ?: ascii.length
+    val fragmentStart = ascii.indexOf('#', startIndex = authorityStart).takeIf { it >= 0 } ?: ascii.length
+    val authorityEnd = minOf(queryStart, fragmentStart)
+    return ascii.substring(0, authorityEnd) + "/" + ascii.substring(authorityEnd)
 }
 
 private fun RdfGraph.toJenaModel(): Model =
