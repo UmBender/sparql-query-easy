@@ -42,6 +42,7 @@ import io.ktor.http.content.PartData
 import io.ktor.http.content.forEachPart
 import io.ktor.serialization.kotlinx.json.json
 import io.ktor.server.application.Application
+import io.ktor.server.application.ApplicationStopped
 import io.ktor.server.application.install
 import io.ktor.server.http.content.staticResources
 import io.ktor.server.plugins.BadRequestException
@@ -80,7 +81,12 @@ data class QueryHttpDependencies(
 data class HttpDependencies(
     val localDatabaseUploadService: LocalDatabaseUploadService,
     val query: QueryHttpDependencies? = null,
-)
+    private val ownedResources: List<AutoCloseable> = emptyList(),
+) : AutoCloseable {
+    override fun close() {
+        ownedResources.forEach(AutoCloseable::close)
+    }
+}
 
 fun defaultHttpDependencies(): HttpDependencies {
     val cache = InMemoryLocalGraphCache()
@@ -106,6 +112,7 @@ fun defaultHttpDependencies(): HttpDependencies {
             GeneralQueryService(generator, JenaSparqlSyntaxValidator(), filtering),
             SparqlQueryGenerationService(generator, JenaSparqlSyntaxValidator()),
         ),
+        ownedResources = listOf(httpClient),
     )
 }
 
@@ -133,6 +140,7 @@ fun Application.configureErrorHandling() {
 }
 
 fun Application.configureRouting(dependencies: HttpDependencies = defaultHttpDependencies()) {
+    environment.monitor.subscribe(ApplicationStopped) { dependencies.close() }
     val healthService = HealthService()
     routing {
         get("/") { call.respondRedirect("/index2.html") }
