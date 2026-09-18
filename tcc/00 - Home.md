@@ -29,6 +29,9 @@ This vault is the evidence-based working knowledge base for the undergraduate th
 
 ## Current headline
 
-**Confirmed:** Kotlin/Ktor implements the original controller routes and core services. C# remains in the repository as the baseline. The compatibility corpus contains C# harness captures, but two local-search captures are invalid as equivalence evidence because harness instrumentation changes the C# branch selected.
+**Confirmed:** Kotlin/Ktor implements the original controller routes and core
+services. C# remains in the repository as the baseline. The compatibility
+corpus contains reviewed C# harness captures; after the `BUG-001` harness
+repair, both local-search cases are included in the passing Kotlin comparator.
 
 **Source files:** `AGENTS.md`, `MIGRATION.md`, `MIGRATION_REPORT.md`, `compatibility/Compatibility.Harness/Program.cs`, `src/main/kotlin/com/example/sparqlqueryeasy/http/HttpModule.kt`.

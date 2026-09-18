@@ -1,5 +1,114 @@
 # Task Worker Run Log
 
+## 2026-09-17 — BUG-001
+
+- Resumed the approved P0 blocker and changed it to `IN_PROGRESS` before
+  application/harness changes.
+- Replaced the harness decorator with a capturing `LocalQueryExecutor`
+  subclass plus a runtime-type guard, then ran the .NET 8 harness and reviewed
+  all generated differences. Accepted only `SEARCH-LOCAL-001` and
+  `BUILTIN-GRAPH-001`; restored unrelated unordered-row recapture noise.
+- Recorded reviewed provenance for both recaptures. The real C# local branch
+  generates an unfiltered query without the request limit, then applies its
+  label/`objetoClasse`/`Take(20)` filter in memory.
+- Re-enabled both cases in the Kotlin capture comparator. The raw built-in
+  result comparison exposed `.NET Uri.AbsoluteUri` empty-authority-path
+  normalization, so the Jena boundary now maps `http://host#fragment` to the
+  captured `http://host/#fragment` form. Added a focused regression.
+- Passed the focused RDF and capture tests, `ktlintFormat`, the full
+  `ktlintCheck detekt test` gate, and `git diff --check`. No dedicated
+  Markdown-link or Mermaid checker is configured.
+- Updated migration reports, vault notes, blockers, the task, and the task
+  index. Completed `BUG-001`. No commit was created because the working tree
+  contains unrelated pre-existing changes.
+
+## 2026-09-17 — FE-002
+
+- Implemented the approved persistent node action list in the authoritative
+  frontend. Real left-click selects/retargets it, graph-background click closes
+  it, replacement follows the new node, and Remove closes the unanchored list.
+  The circular right-click plugin is no longer loaded.
+- Preserved entity, variable, default, link, Boolean, literal, Convert, and
+  Remove behavior behind explicit semantic buttons. Added repositioning for
+  pan, zoom, layout, node movement, window resize, narrow/wide viewports, and
+  off-screen recovery.
+- Expanded the deterministic Playwright suite to eight tests, including
+  success/loading/empty/error paths. Corrected its previously empty HTML-label
+  CDN stub after it was proven to abort initialization before graph handlers.
+- Verification: `npm run test:browser` passed 8/8; `./gradlew ktlintCheck detekt
+  test --no-daemon --console=plain` was `BUILD SUCCESSFUL`; `git diff --check`
+  passed. Restricted-sandbox network/bind failures were rerun with approved
+  escalation and are recorded in the task log.
+- Updated frontend architecture/request-flow/quality notes and `MIGRATION.md`;
+  completed `FE-002` with every acceptance criterion checked.
+
+## 2026-09-17 — FE-002 task definition
+
+- Created `FE-002` for the approved node-menu interaction change after reading
+  repository instructions, migration documentation, `FE-001`, frontend source,
+  tests, request-flow notes, the cxtmenu bundle, and relevant Git history.
+- Confirmed that right-click/long-press currently opens a radial
+  Cancel/Remove/Convert menu, while left-click immediately performs node-type
+  actions. The new task requires one persistent vertical action list and moves
+  those existing actions behind explicit choices so selecting a node does not
+  trigger both behaviors.
+- Added source-backed scope, edge cases, acceptance criteria, deterministic
+  browser verification, risks, and documentation requirements. No application
+  code or runtime behavior was changed.
+- Verified frontmatter, dependency eligibility, index synchronization, and
+  Obsidian link targets with `rg`; reviewed the Mermaid state diagram directly
+  because no Markdown/Mermaid checker is present. `git diff --check` passed.
+
+## 2026-09-16 — Worker pass with no eligible task
+
+- Recomputed task eligibility from all item frontmatter and the dependency
+  graph. `DOC-002` is the only `READY` task, but it depends on `BUG-001`, which
+  is `BLOCKED`; therefore no task is eligible for execution.
+- Confirmed the task index remains synchronized with item statuses. No task was
+  started and no application or task status was changed.
+
+## 2026-09-16 — DEC-001
+
+- Selected DEC-001 as the highest-priority eligible task after `DOC-001` and
+  `DATA-001` were `DONE` (other P2 documentation is blocked by BUG-001).
+- Inspected the vault, `sparql/login.html`, C# launch settings, and Kotlin
+  routes. The requested repository-scope, login, and OpenAPI outcomes require
+  human/product approval.
+- Set DEC-001 to `BLOCKED` and recorded the three-part decision question in
+  `BLOCKERS.md`. No application files or assets were changed.
+- Stakeholder approved repository scope: keep the `tcc/` vault and reference
+  PDFs external. Updated the open-decision inventory and narrowed the blocker
+  to login-page and OpenAPI scope; DEC-001 remains `BLOCKED`.
+- Stakeholder selected authentication implementation. Blocked implementation
+  pending credential source, session/token mechanism, and protected-route
+  policy; no speculative security code was added.
+- Stakeholder approved adding Kotlin OpenAPI now. Updated the open-decision
+  inventory; DEC-001 remains blocked only on authentication contract details.
+
+## 2026-09-16 — DATA-001
+
+- Resumed the task after human approval of option 1: keep
+  `Sparql.QueryEasy/futebol_completo.ttl` as the sole canonical built-in
+  dataset; no data or C# baseline was modified.
+- Verified resource packaging:
+
+  ```sh
+  GRADLE_USER_HOME=/tmp/sparql-query-easy-gradle ./gradlew processResources --no-daemon --console=plain
+  sha256sum Sparql.QueryEasy/futebol_completo.ttl build/resources/main/futebol_completo.ttl
+  ```
+
+  Result: `BUILD SUCCESSFUL`; both files have SHA-256
+  `2345428c9513651dcf184835538fa910abae6c95fcb399e508709d646af7993f`.
+- Ran the focused endpoint/resource test:
+  `./gradlew test --tests 'com.example.sparqlqueryeasy.application.endpoints.EndpointContextResolverTest' --no-daemon`.
+  Result: `BUILD SUCCESSFUL`.
+- Revalidated packaging and the focused test after approval. Gradle could not
+  initialize its file-lock service in the restricted sandbox; the approved
+  outside-sandbox retry was `BUILD SUCCESSFUL`, and both source and packaged
+  resources retained the recorded SHA-256.
+- Updated the decision, inventory, API, migration report, task index, and
+  blockers documentation. Completed `DATA-001`.
+
 ## 2026-09-16 — MIG-001
 
 - Selected `MIG-001` as the only eligible highest-priority task after
@@ -89,3 +198,34 @@
   preview, and query execution. The Gradle quality gate was `BUILD SUCCESSFUL`.
 - Updated frontend/quality notes, reviewed the task diff and `git diff --check`,
   and completed `FE-001`.
+
+## 2026-09-16 — INV-001
+
+- Selected `INV-001` as the only eligible remaining P1 task after `DOC-001`.
+- Confirmed that the default factory creates one shared CIO client for remote
+  SPARQL and Wikidata entity search but had no lifecycle owner. Made
+  `HttpDependencies` own resources it creates, registered its close action on
+  Ktor `ApplicationStopped`, and retained empty ownership for test-injected
+  dependencies.
+- Added `HttpModuleLifecycleTest`, which forces an application stop and proves
+  the owned resource is closed exactly once.
+- Ran the focused lifecycle test with `--rerun-tasks`, then
+  `GRADLE_USER_HOME=/tmp/sparql-query-easy-gradle ./gradlew ktlintCheck detekt test --no-daemon --console=plain`.
+  The focused XML has zero failures/errors; the full test-result set has zero
+  failures/errors. `git diff --check` passed.
+- Updated architecture, development, and quality notes; completed `INV-001`.
+  Did not commit because `tcc/.obsidian/workspace.json` changed outside this
+  task and was preserved untouched.
+
+## 2026-09-16 — DATA-001
+
+- Selected `DATA-001` as the next READY P2 task after verifying `DOC-001` is
+  `DONE`.
+- Compared the C# runtime Turtle, its `files/` copy, and the frontend-associated
+  Turtle by SHA-256, size, line count, diff, and packaging configuration.
+  Confirmed the C# asset is the one Kotlin packages, while the frontend asset
+  is materially different and not packaged.
+- No data was changed. The task is `BLOCKED` at its required human gate.
+  Added a decision note and `BLOCKERS.md` question: keep the C# asset
+  canonical (recommended), replace it with approved baseline recapture, or
+  support both under separate endpoint identifiers.

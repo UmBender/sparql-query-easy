@@ -8,7 +8,7 @@
 | Confirmed | `src/` | Kotlin/JVM Ktor migration, unit tests, and opt-in integration tests. |
 | Confirmed | `compatibility/` | C# characterization harness, Turtle/request fixtures, and captured outputs. |
 | Confirmed | `sparql/` | Static browser client; `index2.html` is the documented authoritative page. |
-| Confirmed | `tcc/` | Obsidian thesis vault and reference PDFs. |
+| External | `tcc/` | Obsidian thesis vault and reference PDFs; intentionally kept outside the application repository. |
 | Confirmed | `files/` | Turtle source files not referenced by current Kotlin runtime packaging. |
 | Confirmed | `.github/workflows/` | Azure-oriented .NET GitHub Actions workflow. |
 
@@ -27,7 +27,8 @@
 
 **Confirmed:** `Sparql.QueryEasy/futebol_completo.ttl` is the C# runtime asset and Gradle copies that same file to Kotlin resources. `sparql/databases/brasileirao2023.ttl` exists but is not included by `processResources`.
 
-**Decision required:** Decide whether these datasets are distinct supported datasets or whether one should be canonical.
+**Decision:** Option 1 approved (2026-09-16): the C# `futebol_completo.ttl` is
+the sole canonical built-in dataset; the frontend asset is reference-only.
 
 ## Source files
 

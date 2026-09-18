@@ -23,16 +23,29 @@ sequenceDiagram
 | Turtle file chooser | `POST /api/local-database`, multipart `ttlFile` from selected file | Assigns `response.data` to `#input-endpoint-sparql`; success toast | Loading overlay ends; toast includes raw `err.responseText` or `Unknown error` | [[03 - Backend/API v1#POST /api/local-database\|API v1]]; `LocalDatabaseRoutesTest`; `StaticFrontendRoutesTest` |
 | Search field after 400 ms debounce | `POST /api/query/search`: `endpointUrl: getEndpoint()`, trimmed `search`, `limit: getLimit()` | Builds Materialize autocomplete labels and stores each full item in `searches` | Console error only | [[03 - Backend/API v1#POST /api/query/search\|API v1]]; `QueryRoutesTest`; `StaticFrontendRoutesTest` |
 | Select autocomplete item | Zero or more `POST /api/query` connection probes: graph IDs and `?predicate`, `limit: 1`, `ignoreWikidata: false` | If a probe returns data, adds a graph relationship; otherwise adds standalone node | Console error; probe resolves `false` | [[03 - Backend/API v1#POST /api/query\|API v1]]; `QueryRoutesTest`; `StaticFrontendRoutesTest`; browser interaction coverage is deferred to `FE-001` |
-| Node context menu: relationships | `POST /api/query/relationships`: `endpointUrl`, selected node `id` | Fills `trData`, renders relationship table, opens result modal | Loading overlay ends; generic failure toast and console error | [[03 - Backend/API v1#POST /api/query/relationships\|API v1]]; `QueryRoutesTest`; `StaticFrontendRoutesTest` |
+| Node action list: Explore relationships | A left-click selects an entity node; the explicit list action sends `POST /api/query/relationships` with `endpointUrl` and selected node `id` | The list remains selected while `trData` is filled, the relationship table is rendered, and the result modal opens | Loading overlay ends; generic failure toast and console error; the action list remains associated with the node | [[03 - Backend/API v1#POST /api/query/relationships\|API v1]]; `QueryRoutesTest`; `StaticFrontendRoutesTest`; `frontend-tests/index2.spec.mjs` |
 | Relationship table selection | `POST /api/query/relationship-value`: `endpointUrl`, cached `subjectId`, `predicateId`, `isLiteral` | One value creates node/edge; zero or many creates a `many-results` placeholder | Loading overlay ends; generic failure toast and console error | [[03 - Backend/API v1#POST /api/query/relationship-value\|API v1]]; `QueryRoutesTest`; `StaticFrontendRoutesTest` |
 | Edge context action | Same relationship-value route with `isLiteral: true` | Uses returned one/many values to alter graph | Console error only; no toast or loading overlay | [[03 - Backend/API v1#POST /api/query/relationship-value\|API v1]]; `QueryRoutesTest`; `StaticFrontendRoutesTest`; browser interaction coverage is deferred to `FE-001` |
-| Query action/context menu | `POST /api/query`: `endpointUrl`, graph-derived `where`, selected `variableName`, `limit` | Fills `trData`, renders a result table, then selection replaces/adds graph nodes | Loading overlay ends; generic `Query failed` toast and console error | [[03 - Backend/API v1#POST /api/query\|API v1]]; `QueryRoutesTest`; `StaticFrontendRoutesTest` |
+| Variable-node action list: Run query | The explicit action sends `POST /api/query`: `endpointUrl`, graph-derived `where`, selected `variableName`, `limit` | Fills `trData`, renders a result table, then selection replaces/adds graph nodes; replacement retargets the persistent action list | Loading overlay ends; generic `Query failed` toast and console error | [[03 - Backend/API v1#POST /api/query\|API v1]]; `QueryRoutesTest`; `StaticFrontendRoutesTest`; `frontend-tests/index2.spec.mjs` |
 | SPARQL preview | `POST /api/query/sparql`: `endpointUrl`, graph-derived `where`, `variableName`, `limit` | Writes `data.data` using `.text()` and opens SPARQL modal | Loading overlay ends; substitutes generic modal text, logs error, opens modal | [[03 - Backend/API v1#POST /api/query/sparql\|API v1]]; `QueryRoutesTest`; `StaticFrontendRoutesTest` |
 
 `getEndpoint()` trims the endpoint input. `getLimit()` accepts a positive
 integer and otherwise sends `20`. `buildFilters()` maps graph edges to
 `{subject, predicate, object, filterType}`; it preserves numeric `filterType:
 0`, the valid “Starts with” value.
+
+## Node action-list flow
+
+**Confirmed:** Node selection itself sends no request and performs no node-type
+operation. It opens a semantic vertical list beside the selected node. Actions
+then invoke the same functions used by the earlier direct-tap behavior:
+relationship exploration, variable/default query execution, safe link opening,
+Boolean toggling, literal editing, conversion, and removal. The list is
+retargeted when an action replaces the selected node. A true Cytoscape
+background click is the normal dismissal path; Remove also closes it because
+there is no longer a target. Pan, zoom, resize, layout, and node-position events
+reposition it, and it becomes visually hidden while its node is outside the
+graph viewport.
 
 ## Confirmed error-behavior gap
 
@@ -53,11 +66,15 @@ form field. `ApplicationTest`, `LocalDatabaseRoutesTest`, and
 Wikidata. `frontend-tests/index2.spec.mjs` now runs the actual page in
 Playwright Firefox with test-local API responses and controlled CDN stubs. It
 catches a broken autocomplete callback and verifies upload, relationship,
-SPARQL-preview, and query-execution flows with relative URLs.
+SPARQL-preview, query-execution, real left-click node-menu opening, retargeting,
+keyboard action activation, background dismissal, the node-type action matrix,
+conversion/removal, edge rewiring, and viewport positioning.
 
 ## Source files
 
 - `sparql/index2.html`
+- `frontend-tests/index2.spec.mjs`
+- `frontend-tests/cdn-stubs.mjs`
 - `src/test/kotlin/com/example/sparqlqueryeasy/http/StaticFrontendRoutesTest.kt`
 - `src/test/kotlin/com/example/sparqlqueryeasy/http/QueryRoutesTest.kt`
 - `src/test/kotlin/com/example/sparqlqueryeasy/http/LocalDatabaseRoutesTest.kt`

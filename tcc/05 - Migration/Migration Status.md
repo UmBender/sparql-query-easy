@@ -17,11 +17,22 @@
 
 The earlier list of “remaining” application-service use cases is stale: all listed areas now have Kotlin implementation and tests. End-to-end compatibility remains incomplete.
 
+## Dataset decision
+
+**Approved (2026-09-16):** Kotlin retains the C# `futebol_completo.ttl` as the
+sole canonical built-in dataset for `CampeonatoBrasileiro2023`. The frontend
+dataset is not packaged or treated as equivalent; changing the source requires
+explicit review and C# baseline recapture.
+
 ## Compatibility state
 
 **Confirmed:** 34 C# harness captures are stored under `compatibility/expected/`. Kotlin comparison covers graph isomorphism, executed SPARQL, projected variables, bound/unbound values, RDF terms, duplicate rows, and documented ordering.
 
-**Confirmed bug:** `SEARCH-LOCAL-001` and `BUILTIN-GRAPH-001` are not valid equivalence evidence. The C# harness wraps `LocalQueryExecutor`; C# checks its runtime type and therefore incorrectly uses its remote-search branch. Existing captures must not be modified merely to pass Kotlin; repair harness first, then perform reviewed recapture.
+**Resolved (2026-09-17):** `BUG-001` replaced the C# harness wrapper with a
+capturing `LocalQueryExecutor` subclass, recaptured `SEARCH-LOCAL-001` and
+`BUILTIN-GRAPH-001`, and re-enabled both in the Kotlin comparator. The focused
+suite also verifies the captured .NET empty-path IRI normalization required for
+the built-in graph.
 
 ## MIG-001 verification record
 
@@ -33,10 +44,9 @@ bindings; IRI, literal, language, datatype, and blank-node values; and row
 ordering only where the captured query uses `ORDER BY`. The only query-text
 normalization is the documented literal-variable suffix normalization.
 
-**Explicit exclusions:** The six C# exception-category captures are not HTTP
-equivalence baselines. `SEARCH-LOCAL-001` and `BUILTIN-GRAPH-001` remain
-excluded because of the confirmed C# harness defect tracked by `BUG-001`; no
-C# expected result was edited.
+**Explicit exclusions:** Only the six C# exception-category captures are not
+HTTP equivalence baselines. The two reviewed local-search recaptures are now
+included in ordinary response, query-text, and raw-result comparison.
 
 ## Intentional differences
 
@@ -51,3 +61,4 @@ C# expected result was edited.
 - `compatibility/cases/capture-status.tsv`
 - `compatibility/Compatibility.Harness/Program.cs`
 - `src/test/kotlin/com/example/sparqlqueryeasy/http/CaptureDrivenCompatibilityTest.kt`
+- `src/main/kotlin/com/example/sparqlqueryeasy/rdf/jena/JenaRdfInfrastructure.kt`

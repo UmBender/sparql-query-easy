@@ -8,11 +8,28 @@
 | Unverified | `sparql/login.html` | Exists, but no supporting backend authentication route was found. |
 | Confirmed | `sparql/grafos.css` | Graph-related styling. |
 | Confirmed | `sparql/cytoscape.min.js` | Local graph rendering library. |
-| Confirmed | `sparql/cytoscape-cxtmenu.js` | Local Cytoscape context-menu plugin. |
+| Confirmed | `sparql/cytoscape-cxtmenu.js` | Retained local plugin asset; the authoritative page no longer loads it. |
 
 ## State and interaction
 
 **Confirmed:** Browser state is maintained in JavaScript variables such as `cy` (Cytoscape graph), `searches` (autocomplete result map), and `trData` (selected result metadata). There is no frontend router or separate state-management framework.
+
+**Confirmed:** A left click selects a node and opens one page-owned vertical
+action list beside it. Selecting another node retargets the same list; a graph-
+background click closes it. Entity, variable, default, link, Boolean, and
+literal behavior is invoked through explicit list buttons. Remove closes the
+list because the selected node ceases to exist; node replacement retargets it.
+The former circular right-click/long-press plugin is not loaded by
+`index2.html`.
+
+```mermaid
+stateDiagram-v2
+  [*] --> Closed
+  Closed --> Open: left-click node
+  Open --> Open: select another node or invoke action
+  Open --> Closed: click graph background
+  Open --> Closed: remove selected node
+```
 
 ```mermaid
 sequenceDiagram
@@ -36,15 +53,18 @@ sequenceDiagram
 
 **Potential issue:** Materialize, Intro.js, Google icons, and CSS are loaded from third-party CDNs, so local development is not fully offline.
 
-**Confirmed:** Playwright browser tests now validate search-result-to-node
-insertion, Turtle upload endpoint replacement, relationship expansion, and
-SPARQL preview/query execution against test-local HTTP responses. They serve
-the actual page, stub only CDN scripts, and assert relative API URLs. Run
-`npm run test:browser`; see [[Request Flows]].
+**Confirmed:** Playwright browser tests validate search-result-to-node
+insertion, Turtle upload endpoint replacement, relationship expansion, SPARQL
+preview/query execution, node-menu opening/retargeting/persistence/dismissal,
+node-type actions, conversion/removal, and viewport positioning against test-
+local HTTP responses. They serve the actual page, use controlled CDN stubs,
+and assert relative API URLs. Run `npm run test:browser`; see [[Request Flows]].
 
 ## Source files
 
 - `sparql/index2.html`
 - `sparql/login.html`
 - `sparql/grafos.css`
+- `frontend-tests/index2.spec.mjs`
+- `frontend-tests/cdn-stubs.mjs`
 - `src/main/kotlin/com/example/sparqlqueryeasy/http/HttpModule.kt`

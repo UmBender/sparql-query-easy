@@ -251,6 +251,11 @@ Wikidata behavior is selected when the endpoint contains the documented
 Wikidata marker. An invalid remote endpoint produces `400`; a syntactically
 valid but unavailable local handle produces `404`.
 
+The built-in identifier resolves the canonical C# dataset
+`Sparql.QueryEasy/futebol_completo.ttl`, copied into Kotlin resources; the
+frontend `sparql/databases/brasileirao2023.ttl` file is not a runtime
+alternative.
+
 ## C# compatibility differences
 
 - C# development URLs were HTTP `5242` and HTTPS `7070`; Kotlin's approved

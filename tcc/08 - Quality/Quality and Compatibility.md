@@ -6,14 +6,20 @@
 
 **Confirmed:** C# has no ordinary application test project. `compatibility/Compatibility.Harness` is the characterization mechanism.
 
+**Confirmed:** `HttpModuleLifecycleTest` verifies that an owned application
+resource is closed exactly once when the Ktor application stops. It prevents
+the default shared CIO HTTP client from leaking across application shutdown.
+
 ## Coverage gaps
 
 - Browser-level frontend workflows are covered offline by Playwright Firefox in
   `frontend-tests/index2.spec.mjs`. It uses the actual static page, test-local
-  API responses, and CDN stubs; run `npm run test:browser`. Further visual and
-  accessibility coverage remains outside the current suite. See
+  API responses, and CDN stubs. Coverage includes the persistent node-action
+  list's real left-click opening, retargeting, keyboard activation, node-type
+  actions, background dismissal, conversion/removal, edge rewiring, and
+  viewport positioning; run `npm run test:browser`. Broader visual-regression
+  and accessibility auditing remains outside the current suite. See
   [[04 - Frontend/Request Flows]].
-- Valid C# captures for local search/built-in search after harness repair.
 - Recorded Wikidata success/error fixtures replayed through Ktor routes.
 - CORS, TLS/reverse-proxy, deployment, resource-limit, backup, and monitoring tests.
 - Explicit production behavior for remote endpoint policy and uploads.
@@ -28,3 +34,5 @@ Use graph isomorphism for graphs/blank-node labels, but preserve blank-node iden
 - `compatibility/README.md`
 - `src/test/kotlin/com/example/sparqlqueryeasy/`
 - `src/test/kotlin/com/example/sparqlqueryeasy/http/CaptureDrivenCompatibilityTest.kt`
+- `frontend-tests/index2.spec.mjs`
+- `frontend-tests/cdn-stubs.mjs`

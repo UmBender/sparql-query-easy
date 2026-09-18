@@ -1,7 +1,7 @@
 ---
 id: INV-001
 title: Investigate Ktor HTTP-client and runtime resource lifecycle
-status: READY
+status: DONE
 priority: P1
 type: investigation
 depends_on: [DOC-001]
@@ -40,3 +40,13 @@ Resource leaks or premature shared-client closure.
 
 ## Execution log
 - 2026-09-16: Ready; source review found construction but no visible lifecycle owner.
+- 2026-09-16: Confirmed that `defaultHttpDependencies()` creates one shared CIO
+  client for remote SPARQL and entity search, while wrapper `close()` methods
+  would incorrectly close that shared client if used independently. Made
+  `HttpDependencies` the explicit owner and registered close on Ktor
+  `ApplicationStopped`.
+- 2026-09-16: Added `HttpModuleLifecycleTest`; a forced focused execution
+  passed and verifies an owned resource closes exactly once after application
+  shutdown. `ktlintCheck`, Detekt, and the full test suite completed with no
+  test-result XML failures/errors. `git diff --check` passed. The unrelated
+  `tcc/.obsidian/workspace.json` change was preserved, so no commit was made.

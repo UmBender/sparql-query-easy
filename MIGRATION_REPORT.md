@@ -20,14 +20,23 @@ bound/unbound bindings, RDF term details, and the documented ordered versus
 unordered comparison rule. Exception-only C# harness captures remain
 non-equivalent because they do not represent ASP.NET middleware responses.
 
-`SEARCH-LOCAL-001` and `BUILTIN-GRAPH-001` are currently excluded: the C#
-harness wraps `LocalQueryExecutor`, making its `is LocalQueryExecutor` search
-branch test false and producing a remote-branch capture. They require a harness
-repair and reviewed C# recapture; their expected files were not changed.
+`SEARCH-LOCAL-001` and `BUILTIN-GRAPH-001` were repaired and recaptured on
+2026-09-17. Harness instrumentation is now a `LocalQueryExecutor` subclass, so
+the runtime-type test selects the production local-search branch. Both cases
+are enabled in the Kotlin comparator and pass without weakened assertions.
 
 No fixture is marked equivalent solely from source inspection. The completed
-HTTP comparison found and corrected fragment-IRI acceptance and Unicode IRI
-ASCII normalization differences.
+comparison found and corrected fragment-IRI acceptance, Unicode IRI ASCII
+normalization, and .NET empty-authority-path normalization differences.
+
+### Canonical built-in dataset
+
+Option 1 was approved on 2026-09-16: the C# `Sparql.QueryEasy/futebol_completo.ttl`
+asset (SHA-256
+`2345428c9513651dcf184835538fa910abae6c95fcb399e508709d646af7993f`) remains
+the sole built-in dataset. Gradle packages this same asset for Kotlin;
+`sparql/databases/brasileirao2023.ttl` is reference-only and no capture baseline
+was changed.
 
 ## Commands and results
 
@@ -58,8 +67,8 @@ authoritative executed-test total is 85.
 The C# captures are real .NET 8 harness output. For valid local-route cases,
 the capture-driven Ktor test now compares successful response status/body,
 Jena graph isomorphism, actual executed SPARQL, and raw bindings. The
-exception-only and C# harness-altered cases below remain explicitly excluded,
-not silently normalized.
+exception-only cases below remain explicitly excluded, not silently
+normalized.
 
 | Fixture group | Cases | C# execution | Kotlin execution | Classification |
 |---|---|---|---|---|
@@ -67,7 +76,7 @@ not silently normalized.
 | Generated SELECT | `SELECT-BASIC-001`, `SELECT-OPTIONAL-001`, four filter cases, `SELECT-DISTINCT-001`, order/max/min, zero/two limit, empty, invalid | Captured generated query/raw results | Offline generated-query and local route comparator | Valid captures compared; invalid-query exception capture intentionally non-equivalent |
 | Query boundaries | offset, generated-path, ASK/CONSTRUCT unavailable, injection-path | Generated-path capture where available | Offline generated-query comparator | Injection capture is generated-query evidence only; unsupported raw operations remain outside the public API |
 | Relationships/filtering | `RELATIONSHIPS-LOCAL-001`, `RELATIONSHIP-LITERAL-001`, `RELATIONSHIP-RESOURCE-001`, `QUERY-EMPTY-WHERE-001` | Captured route/raw results | Offline route/raw-result comparator | Valid captures compared |
-| Search/endpoints | `SEARCH-LOCAL-001`, `BUILTIN-GRAPH-001`, `LOCAL-CACHE-MISS-001` | Harness-altered or exception capture | Deterministic service/route tests | Explicitly non-equivalent pending BUG-001/HTTP contract evidence |
+| Search/endpoints | `SEARCH-LOCAL-001`, `BUILTIN-GRAPH-001`, `LOCAL-CACHE-MISS-001` | Reviewed local-branch captures or exception capture | Offline route/raw-result comparator and deterministic service tests | Search captures compared; cache-miss exception remains intentionally non-equivalent |
 | HTTP | `HTTP-HEALTH-001`, `HTTP-BAD-JSON-001`, `HTTP-MISSING-UPLOAD-001` | Successful and exception-category captures | Route tests and capture comparator where a response exists | Successful captures compared; exception categories intentionally non-equivalent |
 | Wikidata | `WIKIDATA-GENERATION-001`, `WIKIDATA-SEARCH-RECORD-001`, `WIKIDATA-SEARCH-ERROR-001` | Generation harness unavailable; live search intentionally excluded | Offline generator and MockEngine client tests | Unresolved comparison |
 
@@ -144,9 +153,6 @@ either C# capture or Kotlin route assertions.
 
 ### Incomplete compatibility coverage
 
-- Two C# local-search captures are invalid because the harness wrapper changes
-  the executor runtime type; `BUG-001` must repair and recapture them before
-  equivalence is claimed.
 - Kotlin has no equivalent Swagger/OpenAPI routes or C# HTTPS-redirection/CORS
   middleware configuration.
 - `application.conf` defaults to HTTP port `8080`; C# development profiles use

@@ -13,6 +13,13 @@ project, package lock/assets file, Dockerfile, or README.
 the .NET output directory. The source data files under `files/` are not
 referenced by production code. There is no Git LFS configuration for the data.
 
+**Approved migration decision (2026-09-16):** this C# runtime asset remains the
+sole canonical built-in dataset for `CampeonatoBrasileiro2023`. Gradle packages
+the same file for Kotlin. The distinct frontend file
+`sparql/databases/brasileirao2023.ttl` is reference-only; replacing or adding a
+built-in dataset requires an explicit contract decision and reviewed C#
+baseline recapture.
+
 ## 1. Project purpose and current behavior
 
 Sparql.QueryEasy is an HTTP API for building and executing constrained SPARQL
@@ -1584,6 +1591,15 @@ The static frontend in `sparql/index2.html` is the authoritative client
 contract. The retired `sparql/index.html` used truthiness for `filterType` and
 therefore lost the valid numeric value `0` (`Starts`); it has been removed.
 
+The frontend node-action interaction changed with explicit approval on
+2026-09-17. A normal left click now selects a Cytoscape node and opens a
+persistent vertical action list beside it; a graph-background click is the
+normal dismissal gesture. Existing relationship, query, link, Boolean,
+literal, conversion, and removal behavior remains available as explicit list
+actions. `index2.html` no longer loads the circular right-click/long-press
+`cytoscape-cxtmenu` plugin. This is a frontend-only contract change and does
+not alter HTTP, RDF, or generated SPARQL behavior.
+
 Kotlin retains its HTTP development port `8080` as an approved intentional
 difference from the C# `5242`/`7070` profiles. Kotlin's explicit JSON error
 contract is also approved: malformed/invalid requests return `400`, unavailable
@@ -1620,9 +1636,19 @@ they do not contain an ASP.NET middleware response: `HTTP-BAD-JSON-001`,
 the approved explicit JSON `400`/`404`/`502` contract. `StatusPages` maps
 malformed JSON body conversion to the same `400` JSON envelope.
 
-`SEARCH-LOCAL-001` and `BUILTIN-GRAPH-001` are excluded from equivalence until
-the C# harness is repaired and those cases are recaptured. The harness wraps
-`LocalQueryExecutor` in `CapturingQueryExecutor`; C# `GetSearch` checks
-`_queryExecutor is LocalQueryExecutor`, so the wrapper incorrectly forces the
-remote-search query branch. This is a harness defect, not Kotlin evidence; the
-existing expected files remain immutable pending a reviewed recapture.
+`BUG-001` was resolved on 2026-09-17. The C# harness now instruments a
+`CapturingLocalQueryExecutor` subclass and fails fast unless the keyed executor
+still satisfies `_queryExecutor is LocalQueryExecutor`. The reviewed
+`SEARCH-LOCAL-001` and `BUILTIN-GRAPH-001` recaptures therefore exercise the
+real local branch: their generated query has neither the remote `STRSTARTS`
+filter nor the request `LIMIT`, and C# applies its case-insensitive
+`objetoClasse`/`Take(20)` filter after execution. Kotlin now compares both
+fixtures without an exclusion.
+
+The recapture also exposed a dotNetRDF/Jena IRI representation difference in
+the built-in graph. `.NET Uri.AbsoluteUri` inserts `/` for an empty authority
+path (`http://futebol.usp.br#item` becomes
+`http://futebol.usp.br/#item`), while Jena retains the source spelling. The
+Jena boundary now applies the captured .NET normalization to URI resources and
+predicates. A focused RDF regression and the capture-driven raw-row comparator
+verify the change; no query or response assertion was weakened.

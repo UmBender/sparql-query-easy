@@ -23,6 +23,13 @@ flowchart LR
 
 **Confirmed:** Endpoint selection is request-scoped and distinguishes built-in graph, uploaded graph, Wikidata, and generic remote SPARQL endpoints.
 
+**Confirmed:** `defaultHttpDependencies()` creates one application-scoped CIO
+HTTP client shared by remote SPARQL execution and Wikidata entity search. The
+returned `HttpDependencies` owns that client; `configureRouting()` closes owned
+resources on Ktor's `ApplicationStopped` event. Test-injected dependencies own
+no resource unless explicitly supplied, preventing a route test from closing a
+shared fixture accidentally.
+
 **Potential issue:** Generic remote HTTP(S) endpoints are caller-controlled, which remains an SSRF/open-proxy risk until a production endpoint policy is approved.
 
 ## Original versus migrated request flow
@@ -48,4 +55,6 @@ sequenceDiagram
 - `src/main/kotlin/com/example/sparqlqueryeasy/domain/model/DomainModels.kt`
 - `src/main/kotlin/com/example/sparqlqueryeasy/application/endpoints/EndpointContextResolver.kt`
 - `src/main/kotlin/com/example/sparqlqueryeasy/rdf/jena/JenaRdfInfrastructure.kt`
+- `src/main/kotlin/com/example/sparqlqueryeasy/http/HttpModule.kt`
+- `src/test/kotlin/com/example/sparqlqueryeasy/http/HttpModuleLifecycleTest.kt`
 - `Sparql.QueryEasy/Services/EndpointService.cs`
