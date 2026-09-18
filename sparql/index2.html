@@ -42,6 +42,67 @@
             width: 100%;
         }
 
+        /* ── Persistent node action menu ─────────────────────────── */
+        #node-action-menu {
+            position: absolute;
+            z-index: 120;
+            width: min(220px, calc(100% - 16px));
+            max-height: calc(100% - 16px);
+            overflow-y: auto;
+            padding: 8px;
+            border: 1px solid rgba(21, 101, 192, 0.25);
+            border-radius: 6px;
+            background: rgba(255, 255, 255, 0.98);
+            box-shadow: 0 4px 14px rgba(0, 0, 0, 0.24);
+        }
+
+        #node-action-menu[hidden] {
+            display: none;
+        }
+
+        #node-action-menu-title {
+            margin: 0 4px 6px;
+            overflow: hidden;
+            color: #424242;
+            font-size: 12px;
+            font-weight: 600;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        #node-action-menu-list {
+            margin: 0;
+        }
+
+        #node-action-menu-list li {
+            list-style: none;
+        }
+
+        .node-action-menu-button {
+            display: flex;
+            align-items: center;
+            width: 100%;
+            min-height: 36px;
+            padding: 7px 10px;
+            border: 0;
+            border-radius: 4px;
+            background: transparent;
+            color: #263238;
+            cursor: pointer;
+            font: inherit;
+            text-align: left;
+        }
+
+        .node-action-menu-button:hover,
+        .node-action-menu-button:focus-visible {
+            outline: none;
+            background: #e3f2fd;
+        }
+
+        .node-action-menu-button.danger {
+            color: #c62828;
+        }
+
         /* ── Hidden file inputs ───────────────────────────────────── */
         #upload-json,
         #upload-triple {
@@ -379,7 +440,7 @@
                                 class="btn waves-effect waves-light green darken-1"
                                 type="submit"
                                 onclick="runQuery()"
-                                data-intro="Run the query and see results. You can also click a variable (?) node directly."
+                                data-intro="Run the query and see results. You can also choose Run query from a variable node's action list."
                                 data-step="7"
                                 title="Run the SPARQL query">
                             <i class="material-icons left">play_arrow</i>Run Query
@@ -392,9 +453,14 @@
         <!-- ── Canvas area ────────────────────────────────────────── -->
         <div id="cy-wrapper">
             <div id="cy"
-                 data-intro="Build your query here. Click a node to explore its relationships. Alt+drag to create a new variable edge."
+                 data-intro="Build your query here. Click a node to open its action list. Click the graph background to close it. Alt+drag to create a new variable edge."
                  data-step="8">
             </div>
+
+            <aside id="node-action-menu" hidden aria-labelledby="node-action-menu-title">
+                <p id="node-action-menu-title"></p>
+                <ul id="node-action-menu-list"></ul>
+            </aside>
 
             <!-- Node legend -->
             <div id="legend" aria-label="Node type legend">
@@ -496,7 +562,6 @@
     <!-- ── Scripts (loaded at end for performance) ─────────────────── -->
     <script src="cytoscape.min.js"></script>
     <script src="https://unpkg.com/cytoscape-html-label@1.1.7/dist/cytoscape-html-label.js"></script>
-    <script src="cytoscape-cxtmenu.js"></script>
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/2.1.1/jquery.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/js/materialize.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/intro.js/7.2.0/intro.min.js"></script>
@@ -517,6 +582,7 @@
         let searches = {};
         let trData   = {};
         let cy       = null;
+        let nodeActionMenuController = null;
 
         // ── Utility ───────────────────────────────────────────────────────
         function escapeHTML(str) {
@@ -954,7 +1020,7 @@
             });
             if (document.getElementById('auto-layout').checked) theCy.layout({ name: 'cose' }).run();
             updateStatusBar();
-            showIntroAlert('newNode', 'Click a node to explore its relationships.');
+            showIntroAlert('newNode', 'Click a node to open its action list.');
         }
 
         function replaceWithNewNode(theCy, varName, nodeId, nodeLabel, propertyType, propertyClass) {
@@ -971,6 +1037,7 @@
                 data:  { id: nodeId, value: nodeValue, label: nodeLabel, type: nodeType },
                 position: oldPos
             });
+            nodeActionMenuController?.retarget(oldId, nodeId);
 
             cy.edges().forEach(edge => {
                 if (edge.data('source') === oldId) {
@@ -1112,6 +1179,7 @@
             });
 
             rewireEdges(oldId, newNodeId);
+            nodeActionMenuController?.retarget(oldId, newNodeId);
             ele.remove();
             $('#modal-change-value').modal('close');
             updateStatusBar();
@@ -1316,6 +1384,13 @@
                         }
                     },
                     {
+                        selector: 'node.node-menu-target',
+                        style: {
+                            'border-width': 4,
+                            'border-color': '#1565C0'
+                        }
+                    },
+                    {
                         selector: 'edge',
                         style: {
                             'width':               3,
@@ -1378,43 +1453,219 @@
                 }
             ]);
 
-            // ── Context menu (right-click on node) ───────────────────────
-            cy.cxtmenu({
-                selector: 'node',
-                adaptativeNodeSpotlightRadius: true,
-                commands: [
-                    { content: 'Cancel', select() {} },
-                    {
-                        content: '<i class="material-icons" style="font-size:16px;color:#c62828;vertical-align:middle;">delete</i> Remove',
-                        select(ele) {
-                            cy.edges()
-                              .filter(e => [e.data('source'), e.data('target')].includes(ele.id()))
-                              .remove();
-                            ele.remove();
-                            updateStatusBar();
-                        }
-                    },
-                    {
-                        content: '? Convert to variable',
-                        select(ele) {
-                            const oldId    = ele.id();
-                            const newVarId = `?node_${Date.now()}`;
-                            const oldData  = ele.data();
-                            const oldPos   = ele.position();
+            // ── Persistent node action menu ──────────────────────────────
+            const nodeActionMenu      = document.getElementById('node-action-menu');
+            const nodeActionMenuTitle = document.getElementById('node-action-menu-title');
+            const nodeActionMenuList  = document.getElementById('node-action-menu-list');
+            const cyContainer         = document.getElementById('cy');
+            const cyWrapper           = document.getElementById('cy-wrapper');
+            let selectedMenuNodeId    = null;
 
-                            cy.add({
-                                group: 'nodes',
-                                data:  Object.assign({}, oldData, { id: newVarId, value: newVarId, label: '?', type: 'variable' }),
-                                position: oldPos
-                            });
+            function selectedMenuNode() {
+                if (!selectedMenuNodeId) return null;
+                const node = cy.getElementById(selectedMenuNodeId);
+                return node.length && node.isNode() ? node : null;
+            }
 
-                            rewireEdges(oldId, newVarId);
-                            ele.remove();
-                            updateStatusBar();
-                        }
-                    }
-                ]
+            function closeNodeActionMenu() {
+                const selected = selectedMenuNode();
+                if (selected) selected.removeClass('node-menu-target');
+                selectedMenuNodeId = null;
+                nodeActionMenu.removeAttribute('data-node-id');
+                nodeActionMenu.hidden = true;
+            }
+
+            function hasVariableSource(node) {
+                return cy.edges().some(edge =>
+                    edge.data('target') === node.id() &&
+                    cy.getElementById(edge.data('source')).data('type') === 'variable'
+                );
+            }
+
+            function nodeActions(node) {
+                const data = node.data();
+                const actions = [];
+
+                if (data.isLink) {
+                    actions.push({ id: 'open-link', label: 'Open link' });
+                } else if (data.type === 'node') {
+                    actions.push({ id: 'explore-relationships', label: 'Explore relationships' });
+                } else if (data.type === 'default') {
+                    actions.push({ id: 'explore-default', label: 'Explore values' });
+                } else if (data.type === 'variable') {
+                    actions.push({ id: 'run-query', label: 'Run query' });
+                }
+
+                if (hasVariableSource(node) && (data.label === 'true' || data.label === 'false')) {
+                    actions.push({ id: 'toggle-boolean', label: 'Toggle Boolean value' });
+                }
+                if (hasVariableSource(node) && data.type === 'label') {
+                    actions.push({ id: 'edit-value', label: 'Edit value' });
+                }
+
+                actions.push({ id: 'convert-variable', label: 'Convert to variable' });
+                actions.push({ id: 'remove', label: 'Remove', danger: true });
+                return actions;
+            }
+
+            function positionNodeActionMenu() {
+                const node = selectedMenuNode();
+                if (!node || nodeActionMenu.hidden) return;
+
+                const wrapperRect = cyWrapper.getBoundingClientRect();
+                const canvasRect  = cyContainer.getBoundingClientRect();
+                const position    = node.renderedPosition();
+                const nodeRadius  = node.renderedOuterWidth() / 2;
+                const gap         = 12;
+                const canvasLeft  = canvasRect.left - wrapperRect.left;
+                const canvasTop   = canvasRect.top - wrapperRect.top;
+                const canvasRight = canvasLeft + canvasRect.width;
+                const canvasBottom = canvasTop + canvasRect.height;
+                const menuWidth   = nodeActionMenu.offsetWidth;
+                const menuHeight  = nodeActionMenu.offsetHeight;
+                const nodeX       = canvasLeft + position.x;
+                const nodeY       = canvasTop + position.y;
+
+                if (
+                    position.x + nodeRadius < 0 || position.y + nodeRadius < 0 ||
+                    position.x - nodeRadius > canvasRect.width ||
+                    position.y - nodeRadius > canvasRect.height
+                ) {
+                    nodeActionMenu.style.visibility = 'hidden';
+                    return;
+                }
+
+                let left = nodeX + nodeRadius + gap;
+                if (left + menuWidth > canvasRight - 8) {
+                    left = nodeX - nodeRadius - gap - menuWidth;
+                }
+                left = Math.max(canvasLeft + 8, Math.min(left, canvasRight - menuWidth - 8));
+                const top = Math.max(
+                    canvasTop + 8,
+                    Math.min(nodeY - menuHeight / 2, canvasBottom - menuHeight - 8)
+                );
+
+                nodeActionMenu.style.left = `${left}px`;
+                nodeActionMenu.style.top = `${top}px`;
+                nodeActionMenu.style.visibility = 'visible';
+            }
+
+            function positionNodeActionMenuAfterLayout() {
+                requestAnimationFrame(() => requestAnimationFrame(positionNodeActionMenu));
+            }
+
+            function renderNodeActionMenu() {
+                const node = selectedMenuNode();
+                if (!node) {
+                    closeNodeActionMenu();
+                    return;
+                }
+
+                nodeActionMenuTitle.textContent = `Actions for ${node.data('label') || node.id()}`;
+                nodeActionMenuList.replaceChildren();
+                nodeActions(node).forEach(action => {
+                    const item = document.createElement('li');
+                    const button = document.createElement('button');
+                    button.type = 'button';
+                    button.className = `node-action-menu-button${action.danger ? ' danger' : ''}`;
+                    button.dataset.action = action.id;
+                    button.textContent = action.label;
+                    item.appendChild(button);
+                    nodeActionMenuList.appendChild(item);
+                });
+                nodeActionMenu.hidden = false;
+                nodeActionMenu.style.visibility = 'hidden';
+                positionNodeActionMenu();
+            }
+
+            function openNodeActionMenu(node) {
+                const previous = selectedMenuNode();
+                if (previous && previous.id() !== node.id()) previous.removeClass('node-menu-target');
+                selectedMenuNodeId = node.id();
+                node.addClass('node-menu-target');
+                nodeActionMenu.dataset.nodeId = node.id();
+                renderNodeActionMenu();
+            }
+
+            function retargetNodeActionMenu(oldId, newId) {
+                if (selectedMenuNodeId !== oldId) return;
+                const replacement = cy.getElementById(newId);
+                if (!replacement.length) {
+                    closeNodeActionMenu();
+                    return;
+                }
+                selectedMenuNodeId = newId;
+                replacement.addClass('node-menu-target');
+                nodeActionMenu.dataset.nodeId = newId;
+                renderNodeActionMenu();
+            }
+
+            function removeMenuNode(node) {
+                cy.edges()
+                  .filter(edge => [edge.data('source'), edge.data('target')].includes(node.id()))
+                  .remove();
+                node.remove();
+                closeNodeActionMenu();
+                updateStatusBar();
+            }
+
+            function convertMenuNodeToVariable(node) {
+                const oldId    = node.id();
+                const newVarId = `?node_${Date.now()}`;
+                const oldData  = node.data();
+                const oldPos   = node.position();
+
+                cy.add({
+                    group: 'nodes',
+                    data:  Object.assign({}, oldData, { id: newVarId, value: newVarId, label: '?', type: 'variable' }),
+                    position: oldPos
+                });
+                rewireEdges(oldId, newVarId);
+                retargetNodeActionMenu(oldId, newVarId);
+                node.remove();
+                updateStatusBar();
+            }
+
+            function runNodeAction(node, action) {
+                const data = node.data();
+                if (action === 'open-link') {
+                    window.open(data.href, '_blank', 'noopener,noreferrer');
+                } else if (action === 'explore-relationships') {
+                    getElementInfo(data.value);
+                } else if (action === 'explore-default') {
+                    const varName = `?default_${Date.now()}`;
+                    getQuery(varName, [{
+                        subject: varName,
+                        predicate: 'rdfs:domain',
+                        object: data.value
+                    }], false, 'getRelationshipValue');
+                } else if (action === 'run-query') {
+                    const component = cy.elements().components()
+                        .find(items => items.some(item => item.id() === data.id));
+                    if (component) getQuery(data.value, buildFilters(component), true);
+                } else if (action === 'toggle-boolean') {
+                    changeElementBooleanValue(node);
+                } else if (action === 'edit-value') {
+                    changeElementStringValueModal(node);
+                } else if (action === 'convert-variable') {
+                    convertMenuNodeToVariable(node);
+                } else if (action === 'remove') {
+                    removeMenuNode(node);
+                }
+            }
+
+            nodeActionMenu.addEventListener('click', event => {
+                const button = event.target.closest('button[data-action]');
+                if (!button) return;
+                event.stopPropagation();
+                const node = selectedMenuNode();
+                if (node) runNodeAction(node, button.dataset.action);
             });
+
+            nodeActionMenuController = {
+                close: closeNodeActionMenu,
+                retarget: retargetNodeActionMenu
+            };
 
             // ── Alt+drag: create variable edge / node ────────────────────
             let isDragging        = false;
@@ -1464,50 +1715,19 @@
                 if (isDragging) { isDragging = false; dragOriginPrivate = null; dragOriginPos = null; }
             });
 
-            // ── Tap handler ──────────────────────────────────────────────
+            // ── Node selection and explicit background dismissal ─────────
+            cy.on('tap', 'node', event => openNodeActionMenu(event.target));
             cy.on('tap', event => {
-                if (event.target === cy) return; // background tap — ignore
-                const priv = event.target._private;
-                if (!priv || !priv.data) return;
-                const data = priv.data;
-
-                // Toggle boolean labels
-                changeElementBooleanValue(event.target);
-                // Open string edit modal
-                changeElementStringValueModal(event.target);
-
-                if (data.isLink) {
-                    window.open(data.href, '_blank', 'noopener,noreferrer');
-                    return;
-                }
-
-                if (data.type === 'node') {
-                    getElementInfo(data.value);
-                    return;
-                }
-
-                if (data.type === 'default') {
-                    const varName = `?default_${Date.now()}`;
-                    getQuery(varName, [{
-                        subject:   varName,
-                        predicate: 'rdfs:domain',
-                        object:    data.value
-                    }], false, 'getRelationshipValue');
-                    return;
-                }
-
-                if (data.type === 'variable') {
-                    const conjuntos = cy.elements().components();
-                    let conjuntoQuery = 0;
-                    for (let i = 0; i < conjuntos.length; i++) {
-                        if (conjuntos[i].some(el => el._private.data.id === data.id)) {
-                            conjuntoQuery = i;
-                            break;
-                        }
-                    }
-                    getQuery(data.value, buildFilters(conjuntos[conjuntoQuery]), true);
-                }
+                if (event.target === cy) closeNodeActionMenu();
             });
+            cy.on('pan zoom resize layoutstop', positionNodeActionMenu);
+            cy.on('position', 'node', event => {
+                if (event.target.id() === selectedMenuNodeId) positionNodeActionMenu();
+            });
+            cy.on('remove', 'node', event => {
+                if (event.target.id() === selectedMenuNodeId) closeNodeActionMenu();
+            });
+            window.addEventListener('resize', positionNodeActionMenuAfterLayout);
 
             // Keep status bar in sync
             cy.on('add remove', updateStatusBar);
@@ -1532,6 +1752,7 @@
                     position: ele.position()
                 });
                 rewireEdges(ele.id(), newNodeId);
+                retargetNodeActionMenu(ele.id(), newNodeId);
                 ele.remove();
             }
 

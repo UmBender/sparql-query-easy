@@ -35,6 +35,9 @@ class StaticFrontendRoutesTest {
             page.bodyAsText().contains("apiUrl('/api/query')") shouldBe true
             page.bodyAsText().contains("const API_BASE = ''") shouldBe true
             page.bodyAsText().contains("onAutocomplete: addSearchResultNode") shouldBe true
+            page.bodyAsText().contains("id=\"node-action-menu\"") shouldBe true
+            page.bodyAsText().contains("cy.on('tap', 'node', event => openNodeActionMenu(event.target))") shouldBe true
+            page.bodyAsText().contains("<script src=\"cytoscape-cxtmenu.js\"></script>") shouldBe false
             stylesheet.status shouldBe HttpStatusCode.OK
         }
 

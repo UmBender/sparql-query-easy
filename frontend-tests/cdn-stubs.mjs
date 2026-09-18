@@ -54,3 +54,9 @@ window.M = {
 `;
 
 export const INTRO_STUB = `window.introJs = () => ({ setOptions() { return this; }, start() {} });`;
+
+export const CYTOSCAPE_HTML_LABEL_STUB = `
+if (window.cytoscape) {
+  window.cytoscape('core', 'htmlLabel', function () { return this; });
+}
+`;
