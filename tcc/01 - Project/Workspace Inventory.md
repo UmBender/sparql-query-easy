@@ -8,7 +8,8 @@
 | Confirmed | `src/` | Kotlin/JVM Ktor migration, unit tests, and opt-in integration tests. |
 | Confirmed | `compatibility/` | C# characterization harness, Turtle/request fixtures, and captured outputs. |
 | Confirmed | `sparql/` | Static browser client; `index2.html` is the documented authoritative page. |
-| External | `tcc/` | Obsidian thesis vault and reference PDFs; intentionally kept outside the application repository. |
+| Confirmed | `tcc/` | Versioned Obsidian Markdown knowledge base and task system. |
+| Decision pending execution | `tcc/PDF/` | Three currently tracked reference PDFs; approved to become external/untracked under `REPO-001`. |
 | Confirmed | `files/` | Turtle source files not referenced by current Kotlin runtime packaging. |
 | Confirmed | `.github/workflows/` | Azure-oriented .NET GitHub Actions workflow. |
 
@@ -37,3 +38,4 @@ the sole canonical built-in dataset; the frontend asset is reference-only.
 - `settings.gradle.kts`
 - `Sparql.QueryEasy/futebol_completo.ttl`
 - `sparql/databases/brasileirao2023.ttl`
+- `tcc/90 - Tasks/items/REPO-001-untrack-reference-pdfs.md`

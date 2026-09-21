@@ -1,5 +1,25 @@
 # Task Worker Run Log
 
+## 2026-09-21 — DEC-001
+
+- Resumed the human-gated scope decision after approval that PDF binaries do
+  not belong in Git and that login plus Swagger/OpenAPI will be implemented.
+- Confirmed three PDFs are currently tracked under `tcc/PDF/` (about 7.7 MB),
+  with no ignore rule or Markdown links. Created `REPO-001` to untrack/ignore
+  them while preserving local copies; history rewriting remains out of scope.
+- Confirmed `login.html` only posts to removed `index.html`, with placeholder
+  registration/recovery links and no Ktor/C# authentication contract. Created
+  human-gated `AUTH-000`, followed by `AUTH-001` backend and `AUTH-002`
+  frontend implementation tasks.
+- Confirmed C# uses default Swashbuckle while Kotlin has eight application
+  routes, a reviewed Markdown API contract, and no OpenAPI dependency. Reviewed
+  official Ktor static and generated Swagger/OpenAPI options; created
+  human-gated `OAPI-000` followed by `OAPI-001` implementation.
+- Updated the repository-scope decision note, open decisions, inventory,
+  frontend note, blockers, and dependency-ordered task index. No application
+  code, PDF, credential, or Obsidian workspace state was changed. Completed
+  `DEC-001`; `REPO-001` is the next eligible P0 task.
+
 ## 2026-09-17 — BUG-001
 
 - Resumed the approved P0 blocker and changed it to `IN_PROGRESS` before

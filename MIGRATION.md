@@ -1587,6 +1587,22 @@ comparison remains in the compatibility test phase.
 
 ## Approved production-contract decisions
 
+The versioned `tcc/` Markdown vault remains the persistent project knowledge
+and task system. PDF binaries under `tcc/PDF/` are approved to become external
+references: `REPO-001` will remove their current index entries and add an
+ignore rule while preserving local copies. Rewriting published Git history is
+not approved by this decision.
+
+Authentication and Swagger/OpenAPI implementation are approved directions,
+not yet complete contracts. `AUTH-000` must decide identity source, browser
+session mechanism, anonymous access, protected routes, auth responses, cookie
+and CSRF policy, and registration/recovery scope before `AUTH-001`/`AUTH-002`
+change backend or frontend behavior. `OAPI-000` must decide specification
+ownership, OpenAPI version, route paths, environment exposure, authentication,
+included routes, and drift checks before `OAPI-001` adds Ktor Swagger support.
+This decision-first ordering prevents credentials, access control, or public
+documentation exposure from being invented during implementation.
+
 The static frontend in `sparql/index2.html` is the authoritative client
 contract. The retired `sparql/index.html` used truthiness for `filterType` and
 therefore lost the valid numeric value `0` (`Starts`); it has been removed.

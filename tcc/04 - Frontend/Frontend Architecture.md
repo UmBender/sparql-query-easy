@@ -5,7 +5,7 @@
 | Status | File | Responsibility |
 |---|---|---|
 | Confirmed | `sparql/index2.html` | Main graph-query UI and current client contract. |
-| Unverified | `sparql/login.html` | Exists, but no supporting backend authentication route was found. |
+| Confirmed prototype | `sparql/login.html` | Packaged static form, but it posts to removed `index.html`; approved authentication awaits `AUTH-000`/`AUTH-001`/`AUTH-002`. |
 | Confirmed | `sparql/grafos.css` | Graph-related styling. |
 | Confirmed | `sparql/cytoscape.min.js` | Local graph rendering library. |
 | Confirmed | `sparql/cytoscape-cxtmenu.js` | Retained local plugin asset; the authoritative page no longer loads it. |
@@ -52,6 +52,14 @@ sequenceDiagram
 **Confirmed:** The frontend calls all API routes documented in [[03 - Backend/API v1]]. Turtle uploads send `ttlFile`; on success the returned UUID replaces the endpoint input. Payload mapping, UI response consumption, failure behavior, and test boundaries are in [[Request Flows]].
 
 **Potential issue:** Materialize, Intro.js, Google icons, and CSS are loaded from third-party CDNs, so local development is not fully offline.
+
+## Planned authentication boundary
+
+**Decision required:** Login implementation is approved, but no credential,
+session, anonymous-access, route-protection, CSRF, registration, or recovery
+contract exists yet. `AUTH-000` is the human gate; backend and frontend work
+must not invent those behaviors. Current links and form submission are not a
+working or secure authentication flow.
 
 **Confirmed:** Playwright browser tests validate search-result-to-node
 insertion, Turtle upload endpoint replacement, relationship expansion, SPARQL

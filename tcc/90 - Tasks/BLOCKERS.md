@@ -12,15 +12,24 @@ Production domain, container/runtime, hosting, and security decisions are not
 yet selected. They block the dependent DNS/TLS/CORS, AWS, monitoring, and
 backup tasks; no deployment or infrastructure mutation is authorized.
 
-## DEC-001 — Repository, login, and OpenAPI scope
+## AUTH-000 — Authentication contract
 
-Human approval is required for two remaining scope decisions. The `tcc/` vault
-and PDFs are approved to remain external; `sparql/login.html` has no matching
-Kotlin authentication route; and C# launch settings reference Swagger while
-Kotlin does not expose OpenAPI. No deletion, authentication implementation, or
-OpenAPI addition is authorized without approval.
+Authentication implementation is approved, but credentials, sessions,
+anonymous access, protected routes, cookie/CSRF/rate-limit policy, and
+registration/recovery scope are not.
 
-**Question:** Authentication was selected, but what is the approved contract:
-credential source (environment-backed local users or external identity
-provider), session cookie versus bearer token, and which API routes require
-authentication? OpenAPI is approved for immediate addition.
+**Question:** Approve the recommended first contract—environment-configured
+bootstrap user(s) with password hashes, server-side same-origin session cookie,
+no anonymous graph/API access, public login/logout/session and health routes,
+no registration/password recovery, and Swagger available only in local
+development—or specify the changes.
+
+## OAPI-000 — Swagger/OpenAPI publication contract
+
+Swagger/OpenAPI implementation is approved, but source ownership, paths,
+environment exposure, security, included routes, and drift enforcement are not.
+
+**Question:** Approve a reviewed static OpenAPI 3.1 document, Swagger UI at
+`/swagger`, raw specification at `/openapi.json`, all current application/auth
+routes documented, local-development exposure by default, and production
+exposure disabled unless explicitly configured—or specify the changes.

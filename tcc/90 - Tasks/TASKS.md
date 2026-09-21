@@ -5,6 +5,13 @@ Tasks are ordered by dependency, then priority. `BLOCKED` tasks need information
 | ID | Status | Priority | Type | Title |
 |---|---|---:|---|---|
 | DOC-001 | DONE | P0 | documentation | Bootstrap project, architecture, backend, frontend, API, development, operations, quality, and decision notes |
+| DEC-001 | DONE | P0 | decision | Resolve vault ownership, login page scope, and OpenAPI scope |
+| AUTH-000 | BLOCKED | P0 | decision | Decide the authentication and authorization contract |
+| OAPI-000 | BLOCKED | P0 | decision | Decide the Swagger and OpenAPI publication contract |
+| REPO-001 | READY | P0 | repository | Stop tracking thesis reference PDFs |
+| AUTH-001 | READY | P0 | security | Implement the approved Ktor authentication backend |
+| AUTH-002 | READY | P0 | frontend | Integrate the login and logout frontend flow |
+| OAPI-001 | READY | P0 | documentation | Implement and verify Kotlin Swagger/OpenAPI documentation |
 | BUG-001 | DONE | P0 | bug | Repair C# local-search capture instrumentation and recapture reviewed baselines |
 | MIG-001 | DONE | P0 | migration | Complete valid capture-driven C# to Kotlin compatibility coverage |
 | QUAL-001 | BLOCKED | P1 | quality | Add approved recorded Wikidata route fixtures |
@@ -20,6 +27,5 @@ Tasks are ordered by dependency, then priority. `BLOCKED` tasks need information
 | OPS-003 | BLOCKED | P2 | operations | Produce AWS deployment plan |
 | OPS-004 | BLOCKED | P2 | operations | Define monitoring, backup, and recovery |
 | DOC-002 | READY | P2 | documentation | Reconcile migration and compatibility documentation |
-| DEC-001 | BLOCKED | P2 | decision | Resolve vault ownership, login page scope, and OpenAPI scope |
 
 See individual files in `items/` for acceptance criteria and logs.
