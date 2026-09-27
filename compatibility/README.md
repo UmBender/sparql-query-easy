@@ -23,8 +23,24 @@ compatibility/
 ├── queries/                     # query-capability boundaries and notes
 ├── requests/                    # JSON request-body templates
 ├── wikidata-responses/          # recorded-only HTTP fixtures and policy
-└── expected/                    # generated C# baselines; initially empty
+└── expected/                    # 34 reviewed C# harness captures + index
 ```
+
+## Current baseline and comparator
+
+`expected/index.json` lists 34 captured cases. Provenance, runtime, status,
+normalizations, and observations are recorded in
+`cases/capture-status.tsv`; 32 entries have status `captured` and the two
+repaired local-search entries have status `recaptured-reviewed`.
+
+`CaptureDrivenCompatibilityTest` executes every valid capture through Kotlin's
+real route/service boundary. It compares graph isomorphism, response status and
+JSON, generated or executed SPARQL, projected variables, binding presence, RDF
+term details, row multiplicity, and ordering only for captured `ORDER BY`
+queries. Its only query-text normalization is the documented random literal
+variable suffix. Six exception-category captures remain explicit intentional
+differences because the in-process C# harness did not produce middleware HTTP
+responses.
 
 ## Running a fixture against C#
 
@@ -89,32 +105,29 @@ cases use `"endpointUrl":"CampeonatoBrasileiro2023"` and need no upload.
 
 ## Capturing expected outputs
 
-Do not create an expected file by hand. Capture it from the C# application,
-then place it below `expected/<case-id>/` using this shape:
+Do not create an expected file by hand. The C# harness writes this structure:
 
 ```text
 expected/<case-id>/
-├── request.json                 # materialized request, UUID redacted
-├── response.status              # e.g. 200
-├── response.headers             # selected stable headers only
-├── response.body                # raw body after allowed normalization
-├── generated.sparql             # only for /api/query/sparql cases
-└── capture.md                   # environment, command, observations
+└── case.json                    # request, HTTP, graph, query/result, or exception evidence
+expected/index.json              # ordered list of captured case IDs
 ```
 
-For uploads, include the source Turtle path and SHA-256 in `capture.md`; do
-not duplicate it. For parser/query failures, capture the status and body as
-produced by the target environment, and describe environment-specific exception
-pages in `capture.md`.
+Each upload capture embeds the Turtle filename and SHA-256. Record capture
+timestamp, C# commit, .NET runtime/OS, status, expected path, every
+normalization, and observations in `cases/capture-status.tsv`. Exception cases
+record exception type/message/stack evidence in `case.json`; a separate
+black-box capture is required for environment-specific middleware responses.
 
-The current application has no stable application-level error schema. Baseline
-captures are evidence, not permission to make a developer exception page a
-permanent API contract.
+The C# in-process exception captures are not stable middleware response
+schemas. Kotlin deliberately uses the approved JSON `400`/`404`/`502` error
+contract; this intentional difference remains documented rather than being
+normalized into false HTTP equivalence.
 
 ## Permitted normalizations
 
-Record every normalization in the relevant `capture.md` and apply the same rule
-to the Kotlin comparison.
+Record every normalization in `cases/capture-status.tsv` and apply the same
+rule to the Kotlin comparison.
 
 - Replace upload UUIDs and later request substitutions with `__DATABASE_ID__`.
 - In generated SPARQL, replace only random suffixes matching
@@ -163,11 +176,16 @@ responses cannot be replayed without changing production code. Use the
 sanitized raw responses under `wikidata-responses/` and test Kotlin through a
 local fake server. See [wikidata-responses/README.md](wikidata-responses/README.md).
 
-## Later Kotlin execution
+## Kotlin execution
 
-The same Turtle and JSON templates will run through Ktor routes. A Kotlin runner
-must start Ktor with test-local cache/resource loading, upload each fixture,
-substitute its returned UUID, use a local fake for Wikidata, apply only allowed
-normalizations, and stop the migration phase on a mismatch. Compare
-application-owned RDF/result values and HTTP output—never Jena `toString()` or
-implementation-specific blank-node labels.
+The Turtle and JSON templates run through Ktor in
+`CaptureDrivenCompatibilityTest`. The test uses a test-local cache and resource
+loader, uploads each required graph, substitutes its returned UUID, forbids
+remote execution, applies only the normalizations above, and reports mismatches
+by fixture ID. Comparisons use application-owned RDF/result values and HTTP
+output—never Jena `toString()` or implementation-specific blank-node labels.
+
+Recorded Wikidata success/error responses are still absent. They require the
+separate approved one-time recording process described in
+[`wikidata-responses/README.md`](wikidata-responses/README.md) before route-level
+replay can be added.

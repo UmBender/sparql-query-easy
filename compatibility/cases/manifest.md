@@ -1,9 +1,12 @@
 # Characterization Case Catalogue
 
-Expected outputs are intentionally absent. Capture the current C# behavior under
-`../expected/<case-id>/` following the parent README. Upload-based requests use
-the `__DATABASE_ID__` placeholder after uploading the listed Turtle input.
-Fixture paths in the tables are relative to `compatibility/`.
+Reviewed C# outputs for 34 executable cases are stored under
+`../expected/<case-id>/` and indexed by `../expected/index.json`. Capture
+provenance is recorded in `capture-status.tsv`. Boundary-only catalogue cases,
+`HTTP-HEALTH-001`, and the two Wikidata search recording cases do not currently
+have C# capture directories. Upload-based requests use the `__DATABASE_ID__`
+placeholder after uploading the listed Turtle input. Fixture paths in the
+tables are relative to `compatibility/`.
 
 ## Turtle upload and graph parsing
 
@@ -67,5 +70,7 @@ Fixture paths in the tables are relative to `compatibility/`.
 
 ## Capture status
 
-Start with [capture-status.tsv](capture-status.tsv). A case is baseline-complete
-only after a real capture, environment metadata, and reviewed normalization note.
+Use [capture-status.tsv](capture-status.tsv) as the authoritative capture
+ledger. A case is baseline-complete only after a real capture, environment
+metadata, and reviewed normalization note; catalogue entries absent from that
+ledger remain uncaptured boundaries or planned recordings.

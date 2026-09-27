@@ -11,6 +11,7 @@ HTTP contract changes.
 | Confirmed | `Sparql.QueryEasy/Program.cs` | C# application bootstrap, Swagger, broad CORS, HTTPS redirection, controllers. |
 | Confirmed | `Application.kt` | Ktor `EngineMain` bootstrap. |
 | Confirmed | `application.conf` | Kotlin port `8080`. |
+| Confirmed | `OpenApiModule.kt` | Public generated OpenAPI 3.1 JSON at `/openapi.json` and Swagger UI at `/swagger`. |
 
 ## HTTP routes
 
@@ -21,8 +22,8 @@ HTTP contract changes.
 | `POST /api/local-database` | multipart `ttlFile` | `{"data":"<uuid>"}` | `400 {"error":"..."}` for missing/invalid Turtle |
 | `POST /api/query` | `endpointUrl`, `limit`, `where`, `variableName`, `ignoreWikidata` | `{"data":[PropertyDto]}` | `400`, `404`, `502` JSON errors |
 | `POST /api/query/sparql` | general-query body | `{"data":"<SPARQL>"}` | `400`, `404` JSON errors |
-| `POST /api/query/relationships` | `endpointUrl`, `id` | `{"data":[PropertyDto]}` | `400`, `404`, `502` where applicable |
-| `POST /api/query/relationship-value` | `endpointUrl`, `subjectId`, `predicateId`, `isLiteral` | `{"data":[PropertyDto]}` | `400`, `404`, `502` where applicable |
+| `POST /api/query/relationships` | `endpointUrl`, `id` | `{"data":[PropertyDto]}` | `400`, `404`; executor failures are not yet mapped to JSON `502` |
+| `POST /api/query/relationship-value` | `endpointUrl`, `subjectId`, `predicateId`, `isLiteral` | `{"data":[PropertyDto]}` | `400`, `404`; executor failures are not yet mapped to JSON `502` |
 | `POST /api/query/search` | `endpointUrl`, `search`, `limit` | `{"data":[PropertyDto]}` | `400`, `404`, `502` where applicable |
 
 `PropertyDto` is serialized as `propertyId`, `propertyLabel`, optional `propertyType`, and optional `propertyClass`.
@@ -44,6 +45,7 @@ HTTP contract changes.
 
 - `src/main/kotlin/com/example/sparqlqueryeasy/http/HttpModule.kt`
 - `src/main/kotlin/com/example/sparqlqueryeasy/http/QueryHttpModels.kt`
+- `src/main/kotlin/com/example/sparqlqueryeasy/http/OpenApiModule.kt`
 - `Sparql.QueryEasy/Controllers/QueryController.cs`
 - `Sparql.QueryEasy/Controllers/LocalDatabaseController.cs`
 - `Sparql.QueryEasy/Requests/QueryRequests.cs`

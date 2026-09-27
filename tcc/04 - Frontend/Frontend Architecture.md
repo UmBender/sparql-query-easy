@@ -51,6 +51,16 @@ sequenceDiagram
 
 **Confirmed:** The frontend calls all API routes documented in [[03 - Backend/API v1]]. Turtle uploads send `ttlFile`; on success the returned UUID replaces the endpoint input. Payload mapping, UI response consumption, failure behavior, and test boundaries are in [[Request Flows]].
 
+**Approved feature direction:** [[Predicate Variable Edge Contract]] defines
+the planned user-visible conversion of an edge predicate into a projected
+SPARQL variable. Kotlin already accepts such predicates; `FE-003` exposes the
+capability through the graph interface.
+
+**Approved direction with open product choices:** [[Two Variable Exploration
+Contract]] records staged exploration for exactly two variables. `FE-004`
+implements only its no-request panel foundation; `DEC-008` gates live
+candidate/binding work.
+
 **Potential issue:** Materialize, Intro.js, Google icons, and CSS are loaded from third-party CDNs, so local development is not fully offline.
 
 ## Planned authentication boundary

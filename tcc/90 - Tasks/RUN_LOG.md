@@ -1,5 +1,89 @@
 # Task Worker Run Log
 
+## 2026-09-27 — FE-003 isolated implementation
+
+- Created the approved predicate-variable edge contract and task after source
+  evidence confirmed the Kotlin general-query route already accepts a variable
+  predicate, while the frontend exposed it only through internal connection
+  discovery.
+- Implemented in isolated branch `feature/predicate-variable-edge`, commit
+  `59a95f75cfe4dde67543e7f7ff24bbcaaafd63af`. The branch adds edge-only
+  left-click actions, predicate conversion, query extraction, local-browser
+  request assertions, and frontend documentation.
+- The Kotlin quality gate and `git diff --check` passed. `npm run test:browser`
+  was not executed because Playwright is absent in that worktree; dependencies
+  were not installed. Keep FE-003 in `REVIEW` until integration and browser
+  verification occur.
+
+## 2026-09-27 — BUG-002 isolated implementation
+
+- Implemented in isolated branch `bug/bug-002-upstream-errors`, commit
+  `a2656b4`. The branch maps only `SparqlQueryExecutionFailure` to the existing
+  JSON `502` envelope for both relationship routes and adds deterministic HTTP
+  regressions.
+- Focused route tests and the complete Kotlin quality gate passed. The task is
+  in `REVIEW` until the branch is integrated into the dirty main worktree.
+
+## 2026-09-27 — OAPI-001
+
+- Resumed OAPI-001 after the stakeholder approved code-generated OpenAPI 3.1,
+  public `/swagger` and `/openapi.json` in every environment, and no
+  authentication until user testing. Recorded and completed `OAPI-000`; kept
+  `AUTH-000` deferred and removed it as an OAPI implementation dependency.
+- Added Ktor routing-OpenAPI and Swagger dependencies at the pinned Ktor 3.5.1
+  version. Compiler inference was evaluated but reported a Kotlin 2.4+
+  requirement, so the project retained Kotlin 2.2.20 and uses explicit runtime
+  `.describe` metadata instead of an unrelated compiler upgrade.
+- Documented exactly eight application operations; hid generated documentation
+  and static-asset routes. The contract includes multipart `ttlFile`, JSON
+  defaults/nullability, numeric filters, success/error schemas, side effects,
+  and the deliberate absence of authentication/security requirements.
+- Added `OpenApiRoutesTest`: HTTP smoke tests, exact route/method inventory,
+  Swagger Parser OpenAPI 3.1 validation, and semantic schema/error assertions.
+  Normal tests remain offline.
+- The audit exposed an existing executor-error mapping gap on the two
+  relationship routes. Documented current behavior and created `BUG-002`; no
+  unrelated HTTP behavior was changed in OAPI-001.
+- Verification passed:
+  `GRADLE_USER_HOME=/tmp/sparql-query-easy-gradle ./gradlew ktlintFormat
+  ktlintCheck detekt test --no-daemon` and `git diff --check`.
+- Updated API, development, quality, migration, decision, README, blocker,
+  task-index, and task documentation. Completed OAPI-001. No commit was created
+  because the worktree contains pre-existing DOC-002 changes and the unrelated
+  `tcc/.obsidian/workspace.json` modification.
+
+## 2026-09-21 — OAPI-001 blocked audit
+
+- The requested implementation was audited three consecutive times. Its
+  required decision tasks `OAPI-000` and `AUTH-000` remain human-gated and
+  `BLOCKED`; no explicit approval was received for source ownership, paths,
+  environment exposure, security scheme, or protected routes.
+- Marked `OAPI-001` `BLOCKED` to make its actual eligibility visible. No
+  dependency, production source, route, build file, specification, or test was
+  changed. The existing approval questions remain in `BLOCKERS.md`.
+
+## 2026-09-21 — DOC-002
+
+- Selected the only eligible documentation reconciliation after confirming
+  `BUG-001` and `MIG-001` were `DONE`; moved it through `IN_PROGRESS` to
+  `DONE` in this run.
+- Reconciled the migration checklist/report, corpus guide/catalogue,
+  remaining-work list, vault home/migration/quality notes, and new root README
+  against source, call sites, Git history, 34 captures/provenance rows, the
+  comparator, Ktor tests, and Playwright tests.
+- Preserved historical phase records but labeled superseded state. Documented
+  the real `case.json` layout, 34-capture baseline, complete valid-capture
+  comparison, all six exception-only non-equivalences, approved Kotlin JSON
+  errors, existing browser coverage, and the actual open decision/task chain.
+- Focused comparator and full `ktlintCheck detekt test` passed using the
+  existing Gradle cache after the temporary-cache download timed out. The
+  authorized local-server Playwright run passed 8/8 after the sandbox correctly
+  rejected the first bind attempt. Ten-document link validation, capture/index
+  count checks, stale-claim searches, and `git diff --check` passed.
+- No application source, capture, expected result, blocker, secret, or Mermaid
+  changed. The unrelated pre-existing Obsidian workspace-state modification
+  was preserved, so no autonomous commit was created.
+
 ## 2026-09-21 — DEC-001
 
 - Resumed the human-gated scope decision after approval that PDF binaries do

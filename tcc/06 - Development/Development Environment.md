@@ -6,6 +6,8 @@
 |---|---|
 | Kotlin quality gate | `GRADLE_USER_HOME=/tmp/sparql-query-easy-gradle ./gradlew ktlintCheck detekt test --no-daemon` |
 | Kotlin application | `./gradlew run` |
+| OpenAPI JSON | `http://localhost:8080/openapi.json` |
+| Swagger UI | `http://localhost:8080/swagger` |
 | C# harness | `dotnet run --project compatibility/Compatibility.Harness/Compatibility.Harness.csproj` |
 | C# application | `dotnet run --project Sparql.QueryEasy/Sparql.QueryEasy.csproj --launch-profile https` |
 
@@ -17,6 +19,10 @@
 - **Confirmed:** The default runtime owns one shared CIO HTTP client and closes
   it on Ktor `ApplicationStopped`. Do not close individual remote-SPARQL or
   Wikidata wrapper clients created from that shared client.
+- **Confirmed:** OpenAPI 3.1 is assembled from Ktor route metadata at runtime.
+  It requires no separate generation command or checked-in generated file.
+  Both documentation endpoints are intentionally public in every environment
+  until `AUTH-000` defines authentication.
 - **Unknown:** No documented production Kotlin configuration, secrets model, or environment-variable matrix exists.
 
 ## Source files

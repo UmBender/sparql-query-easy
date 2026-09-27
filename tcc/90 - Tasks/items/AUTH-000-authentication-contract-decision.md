@@ -7,7 +7,7 @@ type: decision
 depends_on: [DEC-001]
 human_gate: true
 created: 2026-09-21
-updated: 2026-09-21
+updated: 2026-09-27
 ---
 # Decide the authentication and authorization contract
 
@@ -101,6 +101,10 @@ git diff --check
   login/auth call sites, Ktor composition, tests, Gradle dependencies, and C#
   history. Recommended direction is a same-origin server-side session cookie,
   subject to explicit human approval of the complete contract.
+- 2026-09-27: Stakeholder explicitly deferred authentication until user
+  testing. The task remains `BLOCKED`; no provider, credential, session,
+  protected-route, cookie, CSRF, or recovery contract was invented. OpenAPI
+  remains public and has no security scheme in the meantime.
 
 ## Source files
 

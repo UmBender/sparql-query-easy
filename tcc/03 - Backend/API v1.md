@@ -8,6 +8,20 @@ configuration. JSON uses `application/json`. Successful API responses use
 `{"data": ...}`. Application-owned failures use `{"error":"<diagnostic>"}`.
 Kotlin serialization emits `null` fields explicitly.
 
+## Interactive and machine-readable documentation
+
+**Confirmed:** Ktor generates an OpenAPI 3.1 document from runtime route
+metadata. The raw JSON is public at `GET /openapi.json` and Swagger UI is
+public at `GET /swagger` in every environment. Neither endpoint nor any
+application operation has an OpenAPI security requirement yet because
+authentication is explicitly deferred until user testing. No production
+server hostname is embedded in the document.
+
+The OpenAPI inventory covers the eight operations below exactly once. Static
+frontend resources are intentionally excluded. Route metadata is maintained
+in `OpenApiModule.kt`; `OpenApiRoutesTest` validates the document with Swagger
+Parser and detects route/schema drift.
+
 ## Shared representations
 
 ### Property item
@@ -118,7 +132,10 @@ Success (`200 OK`):
 }
 ```
 
-Failures use the shared `400`, `404`, or `502` response as applicable.
+Documented application-owned failures are `400` and `404`. **Potential issue:**
+unlike search and general query, this route does not currently map an executor
+failure to the explicit `502` JSON envelope; an unexpected execution exception
+can therefore reach Ktor's default server-error handling.
 
 ### `POST /api/query/relationship-value`
 
@@ -153,7 +170,9 @@ Success (`200 OK`, resource form):
 When `isLiteral` is true, `propertyId` and `propertyLabel` carry the literal
 lexical text and `propertyType` is `"text"`. Missing identifiers return `400`,
 for example `{"error":"Missing required field: subjectId"}`; other failures
-use the shared `400`, `404`, or `502` response.
+use the shared `400` or `404` response. **Potential issue:** like the
+relationships route, this route does not currently map an executor failure to
+the explicit `502` JSON envelope.
 
 ### `POST /api/query/search`
 
@@ -273,11 +292,13 @@ alternative.
 
 - `src/main/kotlin/com/example/sparqlqueryeasy/http/HttpModule.kt`
 - `src/main/kotlin/com/example/sparqlqueryeasy/http/QueryHttpModels.kt`
+- `src/main/kotlin/com/example/sparqlqueryeasy/http/OpenApiModule.kt`
 - `src/main/kotlin/com/example/sparqlqueryeasy/application/query/ResultFilteringService.kt`
 - `src/main/kotlin/com/example/sparqlqueryeasy/application/query/GeneralQueryService.kt`
 - `src/main/kotlin/com/example/sparqlqueryeasy/application/querygeneration/SparqlQueryGenerationService.kt`
 - `src/test/kotlin/com/example/sparqlqueryeasy/http/QueryRoutesTest.kt`
 - `src/test/kotlin/com/example/sparqlqueryeasy/http/LocalDatabaseRoutesTest.kt`
+- `src/test/kotlin/com/example/sparqlqueryeasy/http/OpenApiRoutesTest.kt`
 - `src/test/kotlin/com/example/sparqlqueryeasy/ApplicationTest.kt`
 - `Sparql.QueryEasy/Controllers/QueryController.cs`
 - `Sparql.QueryEasy/Controllers/LocalDatabaseController.cs`

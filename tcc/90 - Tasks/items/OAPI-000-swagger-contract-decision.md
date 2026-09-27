@@ -1,13 +1,13 @@
 ---
 id: OAPI-000
 title: Decide the Swagger and OpenAPI publication contract
-status: BLOCKED
+status: DONE
 priority: P0
 type: decision
 depends_on: [DEC-001]
 human_gate: true
 created: 2026-09-21
-updated: 2026-09-21
+updated: 2026-09-27
 ---
 # Decide the Swagger and OpenAPI publication contract
 
@@ -55,11 +55,11 @@ Decide and record:
 
 ## Acceptance criteria
 
-- [ ] All seven numbered choices are approved and recorded.
-- [ ] The decision names the authoritative specification source and version.
-- [ ] Swagger/spec exposure and authentication policy are explicit for local
+- [x] All seven numbered choices are approved and recorded.
+- [x] The decision names the authoritative specification source and version.
+- [x] Swagger/spec exposure and authentication policy are explicit for local
       development and production.
-- [ ] `OAPI-001` is updated to match the approved decision.
+- [x] `OAPI-001` is updated to match the approved decision.
 
 ## Verification commands
 
@@ -88,6 +88,11 @@ or send authenticated requests if its security policy is not deliberate.
   the hand-reviewed API contract, and official Ktor Swagger/OpenAPI options.
   Recommended direction is a reviewed static OpenAPI 3.1 specification served
   by Swagger UI, subject to human approval.
+- 2026-09-27: Human approval selected code-generated OpenAPI 3.1, Swagger UI
+  at `/swagger`, raw JSON at `/openapi.json`, and public availability in every
+  environment. Authentication is explicitly deferred; route metadata and
+  tests must remain ready to add security requirements later. Decision details
+  are recorded in `tcc/09 - Decisions/OpenAPI and Swagger Contract.md`.
 
 ## Source files
 

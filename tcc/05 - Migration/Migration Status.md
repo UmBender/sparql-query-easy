@@ -15,7 +15,10 @@
 | General query/search | services and routes | Confirmed ported |
 | Controller HTTP routes | Ktor module | Confirmed ported |
 
-The earlier list of “remaining” application-service use cases is stale: all listed areas now have Kotlin implementation and tests. End-to-end compatibility remains incomplete.
+The earlier list of “remaining” application-service use cases is historical:
+all listed areas now have Kotlin implementation and tests. Remaining work is
+limited to explicit compatibility gaps and production/additive requirements,
+not another core feature port.
 
 ## Dataset decision
 
@@ -48,6 +51,28 @@ normalization is the documented literal-variable suffix normalization.
 HTTP equivalence baselines. The two reviewed local-search recaptures are now
 included in ordinary response, query-text, and raw-result comparison.
 
+The six exception captures are intentional non-equivalences, not unresolved
+Kotlin error behavior. The approved Kotlin contract returns JSON `400` for
+malformed/invalid input, `404` for an unavailable local graph, and `502` for an
+upstream execution failure. The C# evidence remains an exception category
+because the harness did not run ASP.NET middleware.
+
+## Remaining migration-related work
+
+- `QUAL-001`: approved Wikidata success/error recordings and full Ktor route
+  replay.
+- C# black-box evidence for health/middleware failure responses and a generic
+  remote endpoint, if production equivalence requires those claims.
+- `AUTH-000`/`AUTH-001`/`AUTH-002`: new authentication requirement.
+- `OAPI-000`/`OAPI-001`: completed code-generated OpenAPI 3.1 and Swagger UI
+  addition; future authentication metadata remains under `AUTH-000`.
+- `BUG-002`: relationship executor failures still need the approved explicit
+  JSON `502` mapping already used by search and general query.
+- `SEC-001` and `OPS-001`–`OPS-004`: production security and operations.
+
+Browser-level frontend coverage is already present under `frontend-tests/`.
+Port `8080` and explicit JSON errors are approved intentional changes.
+
 ## Intentional differences
 
 - Kotlin port is `8080`, unlike C# development `5242`/`7070`.
@@ -58,7 +83,11 @@ included in ordinary response, query-text, and raw-result comparison.
 
 - `MIGRATION.md`
 - `MIGRATION_REPORT.md`
+- `README.md`
+- `remaining.md`
+- `compatibility/README.md`
 - `compatibility/cases/capture-status.tsv`
 - `compatibility/Compatibility.Harness/Program.cs`
 - `src/test/kotlin/com/example/sparqlqueryeasy/http/CaptureDrivenCompatibilityTest.kt`
 - `src/main/kotlin/com/example/sparqlqueryeasy/rdf/jena/JenaRdfInfrastructure.kt`
+- `frontend-tests/index2.spec.mjs`

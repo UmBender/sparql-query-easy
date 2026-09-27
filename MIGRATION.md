@@ -736,44 +736,46 @@ Recommended boundaries:
   main/test compilation, focused domain tests, the complete Kotlin suite,
   KtLint, Detekt, and `check` passed with Gradle 9.7.1 and Temurin JDK 21; see
   the Prompt 6 verification record below.
-- [ ] Capture the existing C# baseline using the input-only
-  [`compatibility/`](compatibility/README.md) corpus. The corpus and capture
-  rules are in place; no expected output is considered valid until it is
-  captured from a running C# instance and reviewed. A production-code-reusing
-  [`Compatibility.Harness`](compatibility/Compatibility.Harness/README.md)
-  now writes structured graph, raw-result, generated-SPARQL, controller-response,
-  and exception captures; this environment lacks the .NET SDK, so no baseline
-  output has yet been generated or approved here.
-- [ ] Freeze this repository's baseline: capture representative HTTP request/
-  response fixtures for every route, local dataset mode, uploaded dataset mode,
-  Wikidata mode, and one non-Wikidata remote endpoint.
-- [ ] Add a Kotlin Gradle/Ktor skeleton with only `/health`; verify packaging,
-  startup port, and deployment artifact independently.
-- [ ] Add the built-in TTL as a classpath resource; parse it with Jena RIOT and
-  compare canonicalized triples/count against the dotNetRDF baseline.
-- [ ] Add semantic Turtle fixtures for base/prefix resolution, relative IRIs,
+- [x] Capture and review the C# baseline with
+  [`Compatibility.Harness`](compatibility/Compatibility.Harness/README.md).
+  The repository contains 34 provenance-recorded graph, raw-result,
+  generated-SPARQL, controller-response, and exception captures.
+- [ ] Complete the remaining black-box/remote baseline: C# health and
+  middleware failures, approved Wikidata search success/error recordings, and
+  a non-Wikidata remote endpoint. Local/generated-query baseline coverage is
+  complete and must not be recaptured without review.
+- [x] Add the Kotlin Gradle/Ktor application, `/health`, static frontend,
+  packaged resources, and the approved development port `8080`.
+- [x] Package the canonical C# built-in TTL and compare its captured graph and
+  query results through the Jena compatibility boundary.
+- [x] Add semantic Turtle fixtures for base/prefix resolution, relative IRIs,
   blank nodes, plain/typed/language literals, escapes, and malformed input.
-- [ ] Implement and unit-test the Jena node formatter against all rows in the
-  formatting table, including unbound values and blank-node collapse.
-- [ ] Port the SPARQL builder as a pure Kotlin component; golden-test every
-  generated query string for each `FilterType`, Wikidata mode, empty `where`,
+- [x] Implement and test the Jena node formatter against captured RDF terms
+  and every formatting-table row, including unbound values and blank-node
+  collapse.
+- [x] Port the SPARQL builder as a pure Kotlin component and compare every
+  captured generated query for each `FilterType`, Wikidata mode, empty `where`,
   and `Min`/`Max` limit behavior.
-- [ ] Execute those golden queries locally in dotNetRDF and Jena; compare
+- [x] Execute captured queries locally in dotNetRDF and Jena; compare
   result multisets, bound variables, and ordered results only where ordering is
   explicit.
-- [ ] Implement local graph cache/upload; verify UUID selection, 12-hour
-  access-based expiry, malformed upload behavior, and restart behavior.
-- [ ] Implement remote Jena query execution; compare User-Agent, endpoint
-  protocol behavior, result parsing, failure behavior, and cancellation/timeouts.
+- [x] Implement local graph cache/upload; verify UUID selection, 12-hour
+  access-based expiry, malformed upload behavior, and process-local lifetime.
+- [x] Implement remote SPARQL execution with deterministic transport tests.
+  C# black-box comparison for a generic remote endpoint remains part of the
+  incomplete baseline item above.
 - [ ] Implement the Wikidata API branch with recorded fixtures; verify Q/P IDs,
   `concepturi` brackets, labels, raw-search encoding decision, and non-2xx
-  empty-result behavior.
-- [ ] Implement Ktor JSON/multipart routes and response wrappers; contract-test
+  behavior. The branch and offline client tests exist; approved raw recordings
+  and full Ktor route replay remain `QUAL-001`.
+- [x] Implement Ktor JSON/multipart routes and response wrappers; contract-test
   request defaults, numeric enums, null/missing input, content types, status
   codes, and JSON property names.
 - [ ] Make an explicit, reviewed decision on input validation, SPARQL
   parameterization, endpoint allowlisting, CORS, upload limits, and structured
   error responses; treat approved hardening as a versioned behavior change.
+  Structured JSON errors are approved; production endpoint/upload/CORS policy
+  remains open under `SEC-001` and `OPS-002`.
 - [ ] Replace the Azure deployment workflow only after the Kotlin artifact,
   runtime configuration, health check, and resource packaging are verified.
 
@@ -785,28 +787,29 @@ resources. Install a Gradle version compatible with Kotlin 2.2.20 (Gradle 8.14
 or newer is recommended), then run these commands from the repository root:
 
 ```sh
-gradle clean
-gradle compileKotlin compileTestKotlin
-gradle ktlintCheck
-gradle detekt
-gradle test
-gradle check
+./gradlew clean
+./gradlew compileKotlin compileTestKotlin
+./gradlew ktlintCheck
+./gradlew detekt
+./gradlew test
+./gradlew check
 ```
 
 The complete verification command is:
 
 ```sh
-gradle clean check
+./gradlew clean check
 ```
 
-The minimal application can be started with:
+The application can be started with:
 
 ```sh
-gradle run
+./gradlew run
 ```
 
-The initial Kotlin HTTP contract is intentionally limited to `GET /health`.
-Ktor tests use `testApplication`; ordinary tests do not contact Wikidata.
+The current Kotlin HTTP contract includes the root frontend redirect, health,
+local upload, and all five query routes. Ktor route tests use
+`testApplication`; ordinary tests do not contact live Wikidata.
 
 ## Prompt 6 recovery: framework-independent RDF and SPARQL domain model
 
@@ -960,10 +963,11 @@ serialized triple order and blank-node labels do not affect graph comparison.
 Focused regressions in `JenaRdfInfrastructureTest` cover the checked-in Turtle
 base/prefix, literal, blank-node, optional/unbound, duplicate-row, and ordered
 query fixtures; parser and query failure diagnostics; semantic graph equality;
-and the captured C# formatting policy. The complete fixture catalogue cannot
-yet be compared as golden HTTP output: `compatibility/expected/` intentionally
-contains no C# captures (see its README and `capture-status.tsv`). No expected
-result was invented or changed in this phase.
+and the captured C# formatting policy. At this historical phase checkpoint,
+the fixture catalogue could not yet be compared as golden HTTP output because
+no C# capture existed. That statement is superseded: 34 reviewed captures are
+now committed, and the capture-driven Kotlin comparator covers every valid
+capture. No expected result was invented or changed during Prompt 7 itself.
 
 Known Jena/dotNetRDF differences recorded for this slice:
 
@@ -1017,9 +1021,10 @@ Kotlin rejects malformed entity/property/variable/numeric identifiers, accepts
 property paths only as validated `P...` lists, escapes literal/string filter
 content explicitly, and names literal variables by deterministic pattern index.
 These are compatibility-layer changes required to prevent SPARQL injection;
-they are not represented as a silent snapshot update. The C# golden-output
-directory remains empty, so no captured C# snapshot can yet be compared beyond
-the source-derived `WIKIDATA-GENERATION-001` stable snapshot.
+they are not represented as a silent snapshot update. At this historical phase
+checkpoint the C# golden-output directory was empty. It now contains the
+reviewed `WIKIDATA-GENERATION-001` harness capture, which the Kotlin comparator
+checks without remote execution.
 
 Focused validation passed:
 
@@ -1104,15 +1109,17 @@ remove duplicates.
 `ResultFilteringServiceTest` ties its cases to the existing
 `RELATIONSHIPS-LOCAL-001`, `RELATIONSHIP-LITERAL-001`,
 `RELATIONSHIP-RESOURCE-001`, `SEARCH-LOCAL-001`, and
-`QUERY-EMPTY-WHERE-001` fixture names. The expected-output directory still has
-no captured C# baselines, so these focused tests encode only directly observed
-C# source behavior and fixture RDF terms; no golden result was added or
-changed.
+`QUERY-EMPTY-WHERE-001` fixture names. At this historical phase checkpoint no
+C# baselines had been captured, so the focused tests then encoded source
+behavior and fixture RDF terms only. Those cases now have reviewed captures
+and are included in the Kotlin comparator; no golden result was changed by the
+result-filtering phase.
 
-### Remaining work
+### Work remaining at this historical checkpoint
 
 Ktor routes, request binding, endpoint state selection, and local-cache
-behavior remain unported. In particular, the C# query builder's
+behavior had not yet been ported in this phase; all are now implemented. The
+C# query builder's
 projection-name discrepancy in
 the empty-where path is documented by the existing compatibility catalogue but
 is not corrected or hidden by this result-filtering layer.
@@ -1325,8 +1332,9 @@ GRADLE_USER_HOME=/tmp/sparql-query-easy-gradle ./gradlew ktlintFormat \
   ktlintCheck detekt test --no-daemon
 ```
 
-This application use case is complete; `GetSparqlQuery`, `GetQuery`,
-`GetSearch`, and all Ktor routes remain deliberately unported in this slice.
+This application use case was complete at this checkpoint;
+`GetSparqlQuery`, `GetQuery`, `GetSearch`, and Ktor routes were deferred to
+later slices and are now implemented.
 
 ## Prompt 15: sparql-query-generation application service
 
@@ -1378,8 +1386,9 @@ GRADLE_USER_HOME=/tmp/sparql-query-easy-gradle ./gradlew ktlintFormat \
   ktlintCheck detekt test --no-daemon
 ```
 
-The `sparql-query-generation` use case is complete. `GetQuery`, `GetSearch`,
-general query execution, and Ktor routes remain deliberately unported.
+The `sparql-query-generation` use case was complete at this checkpoint.
+`GetQuery`, `GetSearch`, general query execution, and Ktor routes were deferred
+to later slices and are now implemented.
 
 ## Prompt 16: general-query application service
 
@@ -1447,8 +1456,9 @@ GRADLE_USER_HOME=/tmp/sparql-query-easy-gradle ./gradlew ktlintFormat \
   ktlintCheck detekt test --no-daemon
 ```
 
-The `general-query` use case is complete. Search, Ktor routes, and endpoint
-composition remain deliberately unported.
+The `general-query` use case was complete at this checkpoint. Search, Ktor
+routes, and endpoint composition were deferred to later slices and are now
+implemented.
 
 ## Prompt 17: search application service
 
@@ -1505,8 +1515,9 @@ GRADLE_USER_HOME=/tmp/sparql-query-easy-gradle ./gradlew ktlintFormat \
   ktlintCheck detekt test --no-daemon
 ```
 
-The `search` use case is complete. All identified application-service use
-cases are ready for the Ktor route phase; no routes were implemented here.
+The `search` use case was complete at this checkpoint. All identified
+application-service use cases then became ready for the Ktor route phase; the
+routes were implemented in Prompts 18 and 19.
 
 ## Prompt 18: local-database HTTP route group
 
@@ -1581,9 +1592,10 @@ GRADLE_USER_HOME=/tmp/sparql-query-easy-gradle ./gradlew ktlintFormat \
   ktlintCheck detekt test --daemon
 ```
 
-The QueryController route group is complete. The .NET harness has since
-produced committed C# fixture captures; detailed graph and raw-binding
-comparison remains in the compatibility test phase.
+The QueryController route group is complete. The .NET harness subsequently
+produced committed C# fixture captures, and the capture-driven Kotlin suite now
+performs the detailed graph, query, raw-binding, duplicate, and ordering
+comparison.
 
 ## Approved production-contract decisions
 
@@ -1593,15 +1605,20 @@ references: `REPO-001` will remove their current index entries and add an
 ignore rule while preserving local copies. Rewriting published Git history is
 not approved by this decision.
 
-Authentication and Swagger/OpenAPI implementation are approved directions,
-not yet complete contracts. `AUTH-000` must decide identity source, browser
+Authentication remains an approved direction without a complete contract.
+`AUTH-000` must decide identity source, browser
 session mechanism, anonymous access, protected routes, auth responses, cookie
 and CSRF policy, and registration/recovery scope before `AUTH-001`/`AUTH-002`
-change backend or frontend behavior. `OAPI-000` must decide specification
-ownership, OpenAPI version, route paths, environment exposure, authentication,
-included routes, and drift checks before `OAPI-001` adds Ktor Swagger support.
-This decision-first ordering prevents credentials, access control, or public
-documentation exposure from being invented during implementation.
+change backend or frontend behavior.
+
+OpenAPI was approved and implemented on 2026-09-27. Ktor generates an OpenAPI
+3.1 document from explicit runtime route metadata, serves its JSON publicly at
+`/openapi.json`, and serves Swagger UI publicly at `/swagger` in development
+and production. The document covers all eight application operations and no
+static frontend assets. Authentication/security requirements are intentionally
+absent until `AUTH-000` is approved; tests make that absence explicit so the
+future security scheme and protected-route requirements can be added as a
+reviewed contract change.
 
 The static frontend in `sparql/index2.html` is the authoritative client
 contract. The retired `sparql/index.html` used truthiness for `filterType` and

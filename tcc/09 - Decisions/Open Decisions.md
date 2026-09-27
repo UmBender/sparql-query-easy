@@ -8,7 +8,7 @@
 | DEC-004 | Decision required | Production remote-SPARQL endpoint policy: arbitrary endpoint versus allow-list. |
 | DEC-005 | Decision required | Upload graph size, cache size, persistence, retention, and access-control policy. |
 | DEC-006 | Decision direction approved | Implement authentication; `AUTH-000` must decide identity, sessions, anonymous access, protected routes, and security controls first. |
-| DEC-007 | Decision direction approved | Add Swagger/OpenAPI; `OAPI-000` must decide source ownership, paths, exposure, security, and drift checks first. |
+| DEC-007 | Approved | Generate OpenAPI 3.1 from Ktor code; publish public `/swagger` and `/openapi.json` endpoints in every environment; defer authentication. |
 
 ## Already documented decisions
 
@@ -20,6 +20,9 @@
   history rewrite.
 - **Approved direction (2026-09-21):** Implement authentication and
   Swagger/OpenAPI after their decision-first tasks are approved.
+- **Approved (2026-09-27):** Generate OpenAPI 3.1 from Ktor code and publish
+  public `/swagger` and `/openapi.json` endpoints in development and
+  production. Authentication remains deferred until user testing.
 
 ## Source files
 
@@ -28,3 +31,4 @@
 - `sparql/index2.html`
 - `sparql/login.html`
 - `tcc/09 - Decisions/Repository Login and OpenAPI Scope.md`
+- `tcc/09 - Decisions/OpenAPI and Swagger Contract.md`

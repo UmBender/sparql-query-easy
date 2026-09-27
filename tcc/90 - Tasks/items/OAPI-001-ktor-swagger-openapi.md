@@ -1,13 +1,13 @@
 ---
 id: OAPI-001
 title: Implement and verify Kotlin Swagger/OpenAPI documentation
-status: READY
+status: DONE
 priority: P0
 type: documentation
-depends_on: [OAPI-000, AUTH-000]
+depends_on: [OAPI-000]
 human_gate: false
 created: 2026-09-21
-updated: 2026-09-21
+updated: 2026-09-27
 ---
 # Implement and verify Kotlin Swagger/OpenAPI documentation
 
@@ -28,8 +28,9 @@ current Kotlin route, including authentication and error behavior.
 - Add the authoritative specification source selected by `OAPI-000`.
 - Document `/`, `/health`, `/api/local-database`, and all five `/api/query`
   routes: parameters, multipart body, JSON bodies/defaults/nullability,
-  numeric filter enum, success schemas, `400`/`401`/`403`/`404`/`502` errors,
-  side effects, and authentication/security requirements.
+  numeric filter enum, success schemas, current `400`/`404`/`502` errors,
+  side effects, and the approved absence of authentication/security
+  requirements.
 - Serve Swagger UI and the raw specification at the approved paths/exposure
   level without enabling wildcard production CORS.
 - Add tests that parse/validate the specification, fetch UI/spec routes, and
@@ -46,18 +47,19 @@ current Kotlin route, including authentication and error behavior.
 ## Dependencies
 
 - `OAPI-000` selects specification ownership and exposure.
-- `AUTH-000` selects security schemes and protected routes.
+- Authentication is deliberately deferred. The current public contract is
+  documented without a security scheme; `AUTH-000` will define it later.
 
 ## Acceptance criteria
 
-- [ ] Swagger UI and raw OpenAPI endpoints return successful documented content
+- [x] Swagger UI and raw OpenAPI endpoints return successful documented content
       at the approved paths.
-- [ ] Every current application route/method is represented exactly once.
-- [ ] Request defaults, multipart upload, nullable response fields, numeric
+- [x] Every current application route/method is represented exactly once.
+- [x] Request defaults, multipart upload, nullable response fields, numeric
       filters, and all approved errors/security requirements match code/tests.
-- [ ] The spec parses under an OpenAPI validator and automated drift checks
+- [x] The spec parses under an OpenAPI validator and automated drift checks
       fail when a route or required schema is missing.
-- [ ] Normal tests are offline and the complete quality gate passes.
+- [x] Normal tests are offline and the complete quality gate passes.
 
 ## Verification commands
 
@@ -83,3 +85,34 @@ wildcard CORS.
 
 - 2026-09-21: Created from DEC-001 analysis. Implementation waits for the two
   decision-first tasks so it does not invent exposure or security behavior.
+- 2026-09-21: Three consecutive execution audits confirmed that `OAPI-000` and
+  `AUTH-000` remain human-gated and `BLOCKED`. No explicit approval was
+  received for specification ownership/paths, environment exposure, security
+  scheme, or protected-route policy. Marked `BLOCKED` without modifying
+  dependencies, application code, routes, or tests. Resume after the concrete
+  approval question in `BLOCKERS.md` is answered.
+- 2026-09-27: User approved code-generated OpenAPI 3.1, `/swagger`,
+  `/openapi.json`, production availability, and no authentication for now.
+  Removed the unresolved authentication decision as an implementation
+  dependency and started OAPI-001.
+- 2026-09-27: Added Ktor runtime routing metadata, public Swagger UI and raw
+  JSON routes, explicit OpenAPI defaults/filter/multipart annotations, and an
+  offline contract suite. Swagger Parser accepts the generated OpenAPI 3.1
+  document without messages; tests enforce the exact eight-operation
+  inventory, schemas, errors, and deliberate lack of security requirements.
+- 2026-09-27: Ktor's compiler inference was evaluated but not retained because
+  Ktor 3.5.1 reported it requires Kotlin 2.4+, while this project pins Kotlin
+  2.2.20. Runtime `.describe` metadata provides code-owned generation without
+  an unrelated compiler upgrade.
+- 2026-09-27: `GRADLE_USER_HOME=/tmp/sparql-query-easy-gradle ./gradlew
+  ktlintFormat ktlintCheck detekt test --no-daemon` passed. `git diff --check`
+  passed. Updated API, development, quality, migration, decision, README, task,
+  run-log, and blocker documentation. Completed OAPI-001.
+
+## Source files
+
+- `build.gradle.kts`
+- `src/main/kotlin/com/example/sparqlqueryeasy/http/HttpModule.kt`
+- `src/main/kotlin/com/example/sparqlqueryeasy/http/OpenApiModule.kt`
+- `src/main/kotlin/com/example/sparqlqueryeasy/http/QueryHttpModels.kt`
+- `src/test/kotlin/com/example/sparqlqueryeasy/http/OpenApiRoutesTest.kt`
