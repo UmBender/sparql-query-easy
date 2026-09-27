@@ -143,11 +143,12 @@ fun Application.configureRouting(dependencies: HttpDependencies = defaultHttpDep
     environment.monitor.subscribe(ApplicationStopped) { dependencies.close() }
     val healthService = HealthService()
     routing {
-        get("/") { call.respondRedirect("/index2.html") }
-        get("/health") { call.respond(healthService.current()) }
+        get("/") { call.respondRedirect("/index2.html") }.documentRootRedirect()
+        get("/health") { call.respond(healthService.current()) }.documentHealth()
         localDatabaseRoutes(dependencies.localDatabaseUploadService)
         dependencies.query?.let(::queryRoutes)
-        staticResources("/", "frontend")
+        openApiDocumentationRoutes()
+        hideFromOpenApi(staticResources("/", "frontend"))
     }
 }
 
@@ -168,7 +169,7 @@ private fun Route.localDatabaseRoutes(uploadService: LocalDatabaseUploadService)
                 is LocalDatabaseUploadResult.InvalidTurtle ->
                     call.respond(HttpStatusCode.BadRequest, ErrorResponse(result.failure.message ?: "Invalid Turtle"))
             }
-        }
+        }.documentLocalDatabaseUpload()
     }
 }
 
@@ -183,7 +184,7 @@ private fun Route.queryRoutes(dependencies: QueryHttpDependencies) {
                     )
                 call.respond(DataResponse(values.map { it.toRelationshipResponse() }))
             }
-        }
+        }.documentRelationships()
         post("relationship-value") {
             runQueryRoute {
                 val request = call.receive<RelationshipValueHttpRequest>()
@@ -193,7 +194,7 @@ private fun Route.queryRoutes(dependencies: QueryHttpDependencies) {
                     )
                 call.respond(DataResponse(values.map { it.toRelationshipValueResponse(request.isLiteral) }))
             }
-        }
+        }.documentRelationshipValue()
         post("search") {
             runQueryRoute {
                 val request = call.receive<SearchHttpRequest>()
@@ -211,7 +212,7 @@ private fun Route.queryRoutes(dependencies: QueryHttpDependencies) {
                     is SearchResult.ExecutionFailure -> upstreamFailure(result.diagnostic)
                 }
             }
-        }
+        }.documentSearch()
         post {
             runQueryRoute {
                 val request = call.receive<GeneralQueryHttpRequest>()
@@ -230,7 +231,7 @@ private fun Route.queryRoutes(dependencies: QueryHttpDependencies) {
                     is GeneralQueryResult.ExecutionFailure -> upstreamFailure(result.diagnostic)
                 }
             }
-        }
+        }.documentGeneralQuery()
         post("sparql") {
             runQueryRoute {
                 val request = call.receive<GeneralQueryHttpRequest>()
@@ -251,7 +252,7 @@ private fun Route.queryRoutes(dependencies: QueryHttpDependencies) {
                     is EndpointContextResolution.InvalidRemoteEndpoint -> badRequest(endpoint.diagnostic)
                 }
             }
-        }
+        }.documentSparqlGeneration()
     }
 }
 

@@ -20,6 +20,7 @@ import com.example.sparqlqueryeasy.wikidata.query.StartsWith
 import com.example.sparqlqueryeasy.wikidata.query.TermObject
 import com.example.sparqlqueryeasy.wikidata.query.TriplePattern
 import com.example.sparqlqueryeasy.wikidata.query.VariableTerm
+import io.ktor.openapi.JsonSchema
 import kotlinx.serialization.Serializable
 
 internal const val DEFAULT_ENDPOINT_URL = "https://query.wikidata.org/sparql"
@@ -27,33 +28,44 @@ internal const val DEFAULT_LIMIT = 20
 
 @Serializable
 data class RelationshipsHttpRequest(
+    @JsonSchema.Default("\"$DEFAULT_ENDPOINT_URL\"")
     val endpointUrl: String = DEFAULT_ENDPOINT_URL,
+    @JsonSchema.Default("20")
     val limit: Int = DEFAULT_LIMIT,
+    @JsonSchema.Default("\"<http://www.wikidata.org/entity/Q529207>\"")
     val id: String = "<http://www.wikidata.org/entity/Q529207>",
 )
 
 @Serializable
 data class RelationshipValueHttpRequest(
+    @JsonSchema.Default("\"$DEFAULT_ENDPOINT_URL\"")
     val endpointUrl: String = DEFAULT_ENDPOINT_URL,
+    @JsonSchema.Default("20")
     val limit: Int = DEFAULT_LIMIT,
     val subjectId: String? = null,
     val predicateId: String? = null,
+    @JsonSchema.Default("false")
     val isLiteral: Boolean = false,
 )
 
 @Serializable
 data class SearchHttpRequest(
+    @JsonSchema.Default("\"$DEFAULT_ENDPOINT_URL\"")
     val endpointUrl: String = DEFAULT_ENDPOINT_URL,
+    @JsonSchema.Default("20")
     val limit: Int = DEFAULT_LIMIT,
     val search: String? = null,
 )
 
 @Serializable
 data class GeneralQueryHttpRequest(
+    @JsonSchema.Default("\"$DEFAULT_ENDPOINT_URL\"")
     val endpointUrl: String = DEFAULT_ENDPOINT_URL,
+    @JsonSchema.Default("20")
     val limit: Int = DEFAULT_LIMIT,
     val where: List<WhereHttpRequest>? = null,
     val variableName: String? = null,
+    @JsonSchema.Default("true")
     val ignoreWikidata: Boolean = true,
 )
 
@@ -62,6 +74,8 @@ data class WhereHttpRequest(
     val subject: String? = null,
     val predicate: String? = null,
     val `object`: String? = null,
+    @JsonSchema.Description("Numeric filter: 0 Starts, 1 Contains, 2 Greater/equal, 3 Lesser/equal, 4 Max, 5 Min.")
+    @JsonSchema.Enum("0", "1", "2", "3", "4", "5")
     val filterType: Int? = null,
 )
 
