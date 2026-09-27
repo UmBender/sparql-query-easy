@@ -1653,6 +1653,17 @@ an edge-specific binding handler: update predicate identifier/label in place,
 clear the variable marker, and preserve topology, metadata, and nodes. Removed
 or rebound edges are ignored. Ordinary node results retain their handler.
 
+**Node connector follow-up (2026-09-27):** The frontend can now create a
+predicate edge from any existing node through its left-click action list. A
+variable predicate receives a collision-safe `?predicate_<number>` token; a
+defined predicate comes from the existing `/api/query/relationships` response
+for that source node. A temporary dashed arrow follows the pointer until the
+user clicks a destination node. Escape or a graph-background click cancels
+without changing the graph. The completed edge uses the existing `nodeId`,
+source, and target representation consumed by `buildFilters()`. This adds no
+new API endpoint or backend SPARQL behavior; browser regressions cover both
+choices, graph query extraction, and cancellation.
+
 Run Query also rejects two or more distinct predicate variables between the
 same fixed subject/object values before staging or execution. These parallel
 edges do not form a traversal chain; the frontend explains the unsupported

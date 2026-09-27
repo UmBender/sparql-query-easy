@@ -81,6 +81,23 @@
         #two-variable-list { margin: 0 0 12px; }
         #two-variable-list li { list-style: disc; margin-left: 20px; }
 
+        #connection-preview {
+            position: absolute;
+            inset: 0;
+            z-index: 110;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+        }
+
+        #connection-preview[hidden] { display: none; }
+
+        .node-action-menu-message {
+            padding: 7px 10px;
+            color: #546e7a;
+            font-size: 12px;
+        }
+
         #node-action-menu-title,
         #edge-action-menu-title {
             margin: 0 4px 6px;
@@ -483,6 +500,11 @@
                  data-intro="Build your query here. Click a node to open its action list. Click the graph background to close it. Alt+drag to create a new variable edge."
                  data-step="8">
             </div>
+
+            <svg id="connection-preview" hidden aria-hidden="true">
+                <defs><marker id="connection-preview-arrow" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto" markerUnits="strokeWidth"><path d="M0,0 L0,6 L9,3 z" fill="#1565c0"/></marker></defs>
+                <line id="connection-preview-line" stroke="#1565c0" stroke-width="3" stroke-dasharray="6 4" marker-end="url(#connection-preview-arrow)"/>
+            </svg>
 
             <aside id="node-action-menu" hidden aria-labelledby="node-action-menu-title">
                 <p id="node-action-menu-title"></p>
@@ -1338,6 +1360,10 @@
 
             // ── Keyboard shortcut: Enter → run query ─────────────────────
             document.addEventListener('keydown', e => {
+                if (e.key === 'Escape' && pendingConnection) {
+                    cancelConnection();
+                    return;
+                }
                 if (e.key === 'Escape' && !document.getElementById('two-variable-panel').hidden) {
                     closeTwoVariablePanel();
                     return;
@@ -1521,6 +1547,13 @@
                         }
                     },
                     {
+                        selector: 'node.connector-source',
+                        style: {
+                            'border-width': 4,
+                            'border-color': '#1565C0'
+                        }
+                    },
+                    {
                         selector: 'edge.edge-menu-target',
                         style: {
                             'line-color': '#1565C0',
@@ -1604,6 +1637,62 @@
             let selectedMenuNodeId    = null;
             let selectedMenuEdgeId    = null;
             let predicateVariableSequence = 1;
+            let predicateChoiceRequestId = 0;
+            let pendingConnection = null;
+            let predicateChoices = null;
+            const connectionPreview = document.getElementById('connection-preview');
+            const connectionPreviewLine = document.getElementById('connection-preview-line');
+
+            function updateConnectionPreview(endPoint) {
+                if (!pendingConnection) return;
+                const source = cy.getElementById(pendingConnection.sourceId);
+                if (!source.length) {
+                    cancelConnection();
+                    return;
+                }
+                const wrapper = cyWrapper.getBoundingClientRect();
+                const canvas = cyContainer.getBoundingClientRect();
+                const rendered = source.renderedPosition();
+                const start = { x: canvas.left - wrapper.left + rendered.x, y: canvas.top - wrapper.top + rendered.y };
+                pendingConnection.endPoint = endPoint || pendingConnection.endPoint || { x: start.x + 80, y: start.y };
+                connectionPreviewLine.setAttribute('x1', start.x);
+                connectionPreviewLine.setAttribute('y1', start.y);
+                connectionPreviewLine.setAttribute('x2', pendingConnection.endPoint.x);
+                connectionPreviewLine.setAttribute('y2', pendingConnection.endPoint.y);
+            }
+
+            function cancelConnection() {
+                if (pendingConnection) {
+                    const source = cy.getElementById(pendingConnection.sourceId);
+                    if (source.length) source.removeClass('connector-source');
+                }
+                pendingConnection = null;
+                connectionPreview.setAttribute('hidden', '');
+            }
+
+            function beginConnection(source, predicateId, predicateLabel) {
+                cancelConnection();
+                pendingConnection = { sourceId: source.id(), predicateId, predicateLabel };
+                closeNodeActionMenu();
+                source.addClass('connector-source');
+                connectionPreview.removeAttribute('hidden');
+                updateConnectionPreview();
+                toast('Click a destination node to connect it. Click the background or press Escape to cancel.');
+            }
+
+            function completeConnection(target) {
+                const connection = pendingConnection;
+                if (!connection) return;
+                const source = cy.getElementById(connection.sourceId);
+                cancelConnection();
+                if (!source.length || !target.length) return;
+                cy.add({ group: 'edges', data: {
+                    source: source.id(), target: target.id(), nodeId: connection.predicateId,
+                    label: connection.predicateLabel,
+                    ...(connection.predicateId.startsWith('?') ? { type: 'variable' } : {})
+                } });
+                updateStatusBar();
+            }
 
             function selectedMenuNode() {
                 if (!selectedMenuNodeId) return null;
@@ -1617,6 +1706,7 @@
                 selectedMenuNodeId = null;
                 nodeActionMenu.removeAttribute('data-node-id');
                 nodeActionMenu.hidden = true;
+                predicateChoices = null;
             }
 
             function selectedMenuEdge() {
@@ -1660,6 +1750,9 @@
                 if (hasVariableSource(node) && data.type === 'label') {
                     actions.push({ id: 'edit-value', label: 'Edit value' });
                 }
+
+                actions.push({ id: 'connect-variable-predicate', label: 'Connect with variable predicate' });
+                actions.push({ id: 'connect-defined-predicate', label: 'Connect with defined predicate' });
 
                 actions.push({ id: 'convert-variable', label: 'Convert to variable' });
                 actions.push({ id: 'remove', label: 'Remove', danger: true });
@@ -1731,6 +1824,25 @@
                     item.appendChild(button);
                     nodeActionMenuList.appendChild(item);
                 });
+                if (predicateChoices?.sourceId === node.id()) {
+                    if (predicateChoices.message) {
+                        const message = document.createElement('li');
+                        message.className = 'node-action-menu-message';
+                        message.textContent = predicateChoices.message;
+                        nodeActionMenuList.appendChild(message);
+                    }
+                    predicateChoices.items.forEach((predicate, index) => {
+                        const item = document.createElement('li');
+                        const button = document.createElement('button');
+                        button.type = 'button';
+                        button.className = 'node-action-menu-button';
+                        button.dataset.action = 'choose-predicate';
+                        button.dataset.predicateIndex = index;
+                        button.textContent = predicate.propertyLabel || predicate.propertyId;
+                        item.appendChild(button);
+                        nodeActionMenuList.appendChild(item);
+                    });
+                }
                 nodeActionMenu.hidden = false;
                 nodeActionMenu.style.visibility = 'hidden';
                 positionNodeActionMenu();
@@ -1785,7 +1897,31 @@
                 updateStatusBar();
             }
 
-            function runNodeAction(node, action) {
+            function loadPredicateChoices(node) {
+                const sourceId = node.id();
+                const requestId = ++predicateChoiceRequestId;
+                predicateChoices = { sourceId, message: 'Loading predicates…', items: [] };
+                renderNodeActionMenu();
+                $.ajax({
+                    url: apiUrl('/api/query/relationships'),
+                    type: 'POST',
+                    contentType: 'application/json',
+                    data: JSON.stringify({ endpointUrl: getEndpoint(), id: node.data('value') || sourceId, limit: getLimit() }),
+                    success(response) {
+                        if (requestId !== predicateChoiceRequestId || selectedMenuNodeId !== sourceId || predicateChoices?.sourceId !== sourceId) return;
+                        const items = (response.data || []).filter(item => typeof item.propertyId === 'string' && item.propertyId);
+                        predicateChoices = { sourceId, message: items.length ? 'Choose a predicate:' : 'No predicates found.', items };
+                        renderNodeActionMenu();
+                    },
+                    error() {
+                        if (requestId !== predicateChoiceRequestId || selectedMenuNodeId !== sourceId || predicateChoices?.sourceId !== sourceId) return;
+                        predicateChoices = { sourceId, message: 'Could not load predicates. Try again.', items: [] };
+                        renderNodeActionMenu();
+                    }
+                });
+            }
+
+            function runNodeAction(node, action, button) {
                 const data = node.data();
                 if (action === 'open-link') {
                     window.open(data.href, '_blank', 'noopener,noreferrer');
@@ -1806,6 +1942,14 @@
                     changeElementBooleanValue(node);
                 } else if (action === 'edit-value') {
                     changeElementStringValueModal(node);
+                } else if (action === 'connect-variable-predicate') {
+                    beginConnection(node, nextPredicateVariableName(), '?');
+                } else if (action === 'connect-defined-predicate') {
+                    loadPredicateChoices(node);
+                } else if (action === 'choose-predicate') {
+                    const predicate = predicateChoices?.sourceId === node.id()
+                        ? predicateChoices.items[Number(button.dataset.predicateIndex)] : null;
+                    if (predicate) beginConnection(node, predicate.propertyId, predicate.propertyLabel || predicate.propertyId);
                 } else if (action === 'convert-variable') {
                     convertMenuNodeToVariable(node);
                 } else if (action === 'remove') {
@@ -1818,7 +1962,7 @@
                 if (!button) return;
                 event.stopPropagation();
                 const node = selectedMenuNode();
-                if (node) runNodeAction(node, button.dataset.action);
+                if (node) runNodeAction(node, button.dataset.action, button);
             });
 
             nodeActionMenuController = {
@@ -1986,10 +2130,19 @@
             });
 
             // ── Node selection and explicit background dismissal ─────────
-            cy.on('tap', 'node', event => openNodeActionMenu(event.target));
+            cyContainer.addEventListener('pointermove', event => {
+                if (!pendingConnection) return;
+                const wrapper = cyWrapper.getBoundingClientRect();
+                updateConnectionPreview({ x: event.clientX - wrapper.left, y: event.clientY - wrapper.top });
+            });
+            cy.on('tap', 'node', event => {
+                if (pendingConnection) completeConnection(event.target);
+                else openNodeActionMenu(event.target);
+            });
             cy.on('tap', 'edge', event => openEdgeActionMenu(event.target));
             cy.on('tap', event => {
                 if (event.target === cy) {
+                    cancelConnection();
                     closeNodeActionMenu();
                     closeEdgeActionMenu();
                     closeTwoVariablePanel();
@@ -1998,14 +2151,17 @@
             cy.on('pan zoom resize layoutstop', () => {
                 positionNodeActionMenu();
                 positionEdgeActionMenu();
+                updateConnectionPreview();
             });
             cy.on('position', 'node', event => {
+                if (pendingConnection?.sourceId === event.target.id()) updateConnectionPreview();
                 if (event.target.id() === selectedMenuNodeId) positionNodeActionMenu();
                 if (selectedMenuEdge() && [selectedMenuEdge().data('source'), selectedMenuEdge().data('target')].includes(event.target.id())) {
                     positionEdgeActionMenu();
                 }
             });
             cy.on('remove', 'node', event => {
+                if (pendingConnection?.sourceId === event.target.id()) cancelConnection();
                 if (event.target.id() === selectedMenuNodeId) closeNodeActionMenu();
             });
             cy.on('remove', 'edge', event => {

@@ -457,6 +457,76 @@ test('edge action menu converts only a relation predicate into a queryable varia
   await expect(edgeMenu.getByRole('button', { name: 'Convert relation to variable' })).toBeVisible();
 });
 
+test('node action connects an existing subject variable to an existing object with a variable predicate', async ({ page }) => {
+  await disableAutoLayout(page);
+  await page.evaluate(() => { cy.add([
+    { group: 'nodes', data: { id: '?subject', value: '?subject', label: '?', type: 'variable' }, position: { x: 180, y: 180 } },
+    { group: 'nodes', data: { id: 'object', value: '<https://example.test/object>', label: 'Object', type: 'node' }, position: { x: 560, y: 420 } },
+  ]); });
+
+  await clickGraphNode(page, '?subject');
+  await page.locator('#node-action-menu').getByRole('button', { name: 'Connect with variable predicate' }).click();
+  await expect(page.locator('#connection-preview')).toBeVisible();
+  await expect(page.locator('#status-edges')).toHaveText('Edges: 0');
+  await clickGraphNode(page, 'object');
+
+  await expect(page.locator('#connection-preview')).toBeHidden();
+  await expect(page.locator('#status-nodes')).toHaveText('Nodes: 2');
+  await expect(page.locator('#status-edges')).toHaveText('Edges: 1');
+  const edge = await page.evaluate(() => cy.edges().first().data());
+  expect(edge).toMatchObject({ source: '?subject', target: 'object', nodeId: expect.stringMatching(/^\?predicate_\d+$/), label: '?', type: 'variable' });
+  expect(await page.evaluate(() => buildFilters(cy.elements().components()[0])[0])).toMatchObject({
+    subject: '?subject', predicate: edge.nodeId, object: '<https://example.test/object>',
+  });
+});
+
+test('node action loads defined predicates and connects the chosen one to an existing node', async ({ page }) => {
+  await disableAutoLayout(page);
+  await page.evaluate(() => { cy.add([
+    { group: 'nodes', data: { id: 'source', value: '<https://example.test/source>', label: 'Source', type: 'node' }, position: { x: 180, y: 180 } },
+    { group: 'nodes', data: { id: '?object', value: '?object', label: '?', type: 'variable' }, position: { x: 560, y: 420 } },
+  ]); });
+
+  await clickGraphNode(page, 'source');
+  await page.locator('#node-action-menu').getByRole('button', { name: 'Connect with defined predicate' }).click();
+  await expect(page.locator('#node-action-menu').getByRole('button', { name: 'name', exact: true })).toBeVisible();
+  const requests = server.requests.filter(({ path }) => path === '/api/query/relationships');
+  expect(JSON.parse(requests.at(-1).body)).toMatchObject({ id: '<https://example.test/source>' });
+  await page.locator('#node-action-menu').getByRole('button', { name: 'name', exact: true }).click();
+  await expect(page.locator('#connection-preview')).toBeVisible();
+  await clickGraphNode(page, '?object');
+
+  await expect(page.locator('#status-nodes')).toHaveText('Nodes: 2');
+  await expect(page.locator('#status-edges')).toHaveText('Edges: 1');
+  expect(await page.evaluate(() => cy.edges().first().data())).toMatchObject({
+    source: 'source', target: '?object', nodeId: '<https://example.test/hasName>', label: 'name',
+  });
+  expect(await page.evaluate(() => buildFilters(cy.elements().components()[0])[0])).toMatchObject({
+    subject: '<https://example.test/source>', predicate: '<https://example.test/hasName>', object: '?object',
+  });
+});
+
+test('connection preview cancels on Escape and graph background without adding an edge', async ({ page }) => {
+  await disableAutoLayout(page);
+  await page.evaluate(() => { cy.add([
+    { group: 'nodes', data: { id: 'source', value: '<https://example.test/source>', label: 'Source', type: 'node' }, position: { x: 220, y: 200 } },
+    { group: 'nodes', data: { id: 'target', value: '<https://example.test/target>', label: 'Target', type: 'node' }, position: { x: 560, y: 420 } },
+  ]); });
+  const start = async () => {
+    await clickGraphNode(page, 'source');
+    await page.locator('#node-action-menu').getByRole('button', { name: 'Connect with variable predicate' }).click();
+    await expect(page.locator('#connection-preview')).toBeVisible();
+  };
+
+  await start();
+  await page.keyboard.press('Escape');
+  await expect(page.locator('#connection-preview')).toBeHidden();
+  await start();
+  await page.locator('#cy').click({ position: { x: 16, y: 16 } });
+  await expect(page.locator('#connection-preview')).toBeHidden();
+  await expect(page.locator('#status-edges')).toHaveText('Edges: 0');
+});
+
 test('selecting a node-variable result still replaces the variable node', async ({ page }) => {
   await disableAutoLayout(page);
   await page.evaluate(() => {

@@ -36,6 +36,16 @@ label and clears the variable type in place. It preserves node/edge counts,
 topology, and unrelated metadata, and ignores removed or rebound edges.
 Ordinary node-query results continue to use node replacement.
 
+**Confirmed:** Every node action list offers two outgoing connection actions.
+The variable action assigns a collision-safe `?predicate_<number>` value. The
+defined action calls `/api/query/relationships` for the selected source node
+and displays the returned predicate labels in the action list. After either
+choice, a dashed arrow follows the pointer from the source node. Clicking an
+existing destination node creates the graph edge; Escape or a graph-background
+click cancels the preview without adding an edge. The new edge has `nodeId`
+set to the chosen predicate, so `buildFilters()` includes it in the existing
+query request. No new graph node or backend route is created for this flow.
+
 **Confirmed:** Before staging or executing the first component, Run Query
 rejects multiple distinct predicate variables on the same directed pair of
 fixed RDF endpoints. Those parallel edges do not form a traversal chain.
