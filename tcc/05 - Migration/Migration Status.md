@@ -79,6 +79,15 @@ Port `8080` and explicit JSON errors are approved intentional changes.
 - Kotlin returns explicit JSON `400`/`404`/`502` errors.
 - Kotlin validates/escapes several unsafe query/endpoint forms rather than preserving raw interpolation.
 
+## HTTP error mapping follow-up
+
+**Confirmed (2026-09-27):** `POST /api/query/relationships` and
+`POST /api/query/relationship-value` now map only the application-owned
+`SparqlQueryExecutionFailure` thrown by their selected executor to the approved
+`502 {"error":"<diagnostic>"}` response. They retain their existing `200`,
+`400`, and `404` behavior; unexpected exceptions are not converted to `502`.
+`QueryRoutesTest` supplies a deterministic failing executor for each route.
+
 ## Source files
 
 - `MIGRATION.md`
