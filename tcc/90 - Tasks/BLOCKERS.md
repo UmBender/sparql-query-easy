@@ -1,16 +1,20 @@
 # Project Blockers
 
-## QUAL-001 — Recorded Wikidata fixtures
+## DEC-009 — Captured health response
 
-No approved, provenance-recorded Wikidata success/error responses exist. Human
-approval is required before one-time collection and sanitization; normal tests
-must continue to avoid live Wikidata.
+The actual C# host returns `200 text/plain Healthy`; Kotlin returns `200`
+JSON `{"status":"ok"}`. The success-status match does not make the response
+equivalent. Before `MIG-002` can remove C#, choose whether to approve Kotlin
+JSON as an intentional difference or align Kotlin to the C# body/content type.
+The three approved C# success captures are complete; additional C#
+middleware-error equivalence was explicitly waived.
 
 ## Production operations tasks
 
-Production domain, container/runtime, hosting, and security decisions are not
-yet selected. They block the dependent DNS/TLS/CORS, AWS, monitoring, and
-backup tasks; no deployment or infrastructure mutation is authorized.
+OPS-001 defines local JVM/container packaging. Production domain, hosting,
+security, TLS/CORS, monitoring, and backup decisions are still open under
+OPS-002–OPS-004 and SEC-001. No deployment or infrastructure mutation is
+authorized; see [[../07 - Operations/Local JVM and Container Runtime]].
 
 ## AUTH-000 — Authentication contract
 

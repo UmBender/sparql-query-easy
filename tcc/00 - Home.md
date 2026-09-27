@@ -15,6 +15,7 @@ This vault is the evidence-based working knowledge base for the undergraduate th
 - [[04 - Frontend/Frontend Architecture|Frontend architecture]]
 - [[05 - Migration/Migration Status|C# to Kotlin migration status]]
 - [[06 - Development/Development Environment|Development environment]]
+- [[07 - Operations/Local JVM and Container Runtime|Local JVM/container runtime]]
 - [[08 - Quality/Quality and Compatibility|Quality and compatibility]]
 - [[09 - Decisions/Open Decisions|Open decisions]]
 - [[09 - Decisions/OpenAPI and Swagger Contract|OpenAPI and Swagger contract]]

@@ -26,7 +26,7 @@
 
 ## Runtime data
 
-**Confirmed:** `Sparql.QueryEasy/futebol_completo.ttl` is the C# runtime asset and Gradle copies that same file to Kotlin resources. `sparql/databases/brasileirao2023.ttl` exists but is not included by `processResources`.
+**Confirmed:** `Sparql.QueryEasy/futebol_completo.ttl` is the C# runtime asset. Kotlin packages a byte-identical copy from `src/main/resources/futebol_completo.ttl`, without a build dependency on the C# tree. `sparql/databases/brasileirao2023.ttl` exists but is not included by `processResources`.
 
 **Decision:** Option 1 approved (2026-09-16): the C# `futebol_completo.ttl` is
 the sole canonical built-in dataset; the frontend asset is reference-only.
@@ -37,5 +37,6 @@ the sole canonical built-in dataset; the frontend asset is reference-only.
 - `build.gradle.kts`
 - `settings.gradle.kts`
 - `Sparql.QueryEasy/futebol_completo.ttl`
+- `src/main/resources/futebol_completo.ttl`
 - `sparql/databases/brasileirao2023.ttl`
 - `tcc/90 - Tasks/items/REPO-001-untrack-reference-pdfs.md`

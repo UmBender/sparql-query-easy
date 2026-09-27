@@ -23,17 +23,21 @@ JSON `400`/`404`/`502` contract is approved.
 
 ## Compatibility and production work
 
-- `QUAL-001`: obtain approved, provenance-recorded Wikidata success/error
-  responses and replay them through the complete Ktor route boundary. Normal
-  tests must remain offline.
+- `QUAL-001` replays a provenance-recorded public Wikidata success body and
+  controlled `429`/malformed bodies through Ktor offline. The C# success route
+  and one generic remote SPARQL route are now captured separately from the
+  original 34 and compared with Kotlin; middleware-error equivalence was
+  explicitly waived.
+- `DEC-009`: decide whether to approve Kotlin's JSON `/health` response as an
+  intentional change or align it to captured C# `text/plain Healthy`.
 - `SEC-001`: decide production remote-endpoint and upload/cache limits.
-- `OPS-001`–`OPS-004`: define container packaging, hosting, DNS/TLS,
-  restrictive production CORS, deployment, monitoring, backup, and recovery.
+- `OPS-001` provides local JVM/container packaging. `OPS-002`–`OPS-004`
+  still define hosting, DNS/TLS, restrictive production CORS, deployment,
+  monitoring, backup, and recovery.
 - `REPO-001`: stop tracking thesis reference PDFs while preserving local
   copies; no history rewrite is approved.
-- `BUG-002`: map relationship and relationship-value executor failures to the
-  approved JSON `502` envelope; those two routes currently lack the mapping
-  already used by search and general query.
+- `BUG-002` is complete: relationship and relationship-value executor failures
+  use the approved JSON `502` envelope.
 
 Port `8080` is an approved intentional development change, not unfinished C#
 port parity. Local frontend and API requests are same-origin through Ktor, so

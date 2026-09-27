@@ -15,7 +15,9 @@ referenced by production code. There is no Git LFS configuration for the data.
 
 **Approved migration decision (2026-09-16):** this C# runtime asset remains the
 sole canonical built-in dataset for `CampeonatoBrasileiro2023`. Gradle packages
-the same file for Kotlin. The distinct frontend file
+the same bytes from a Kotlin-owned `src/main/resources/futebol_completo.ttl`
+copy as of OPS-001 (2026-09-27), removing its build dependency on the C#
+project. The distinct frontend file
 `sparql/databases/brasileirao2023.ttl` is reference-only; replacing or adding a
 built-in dataset requires an explicit contract decision and reviewed C#
 baseline recapture.
@@ -740,14 +742,22 @@ Recommended boundaries:
   [`Compatibility.Harness`](compatibility/Compatibility.Harness/README.md).
   The repository contains 34 provenance-recorded graph, raw-result,
   generated-SPARQL, controller-response, and exception captures.
-- [ ] Complete the remaining black-box/remote baseline: C# health and
-  middleware failures, approved Wikidata search success/error recordings, and
-  a non-Wikidata remote endpoint. Local/generated-query baseline coverage is
-  complete and must not be recaptured without review.
+- [x] Capture the agreed three additional C# success cases separately from
+  the immutable 34-case corpus: real-host `/health`, C# Wikidata search with
+  the recorded public upstream body, and generic remote SPARQL with a
+  controlled local handler. Kotlin replay matches the two query responses and
+  remote raw result. Health status matches but its body/content type differs;
+  `DEC-009` awaits approval or correction. The user waived additional C#
+  middleware-error response captures; their exception records are not falsely
+  marked equivalent.
 - [x] Add the Kotlin Gradle/Ktor application, `/health`, static frontend,
   packaged resources, and the approved development port `8080`.
 - [x] Package the canonical C# built-in TTL and compare its captured graph and
   query results through the Jena compatibility boundary.
+- [x] Make the Kotlin package independent of the C# source tree (OPS-001):
+  copy the approved Turtle bytes into `src/main/resources`, verify SHA-256
+  in tests and the distribution JAR, and package the static frontend with the
+  Java 21 application distribution. This is local packaging, not deployment.
 - [x] Add semantic Turtle fixtures for base/prefix resolution, relative IRIs,
   blank nodes, plain/typed/language literals, escapes, and malformed input.
 - [x] Implement and test the Jena node formatter against captured RDF terms
@@ -764,10 +774,11 @@ Recommended boundaries:
 - [x] Implement remote SPARQL execution with deterministic transport tests.
   C# black-box comparison for a generic remote endpoint remains part of the
   incomplete baseline item above.
-- [ ] Implement the Wikidata API branch with recorded fixtures; verify Q/P IDs,
-  `concepturi` brackets, labels, raw-search encoding decision, and non-2xx
-  behavior. The branch and offline client tests exist; approved raw recordings
-  and full Ktor route replay remain `QUAL-001`.
+- [x] Implement the Wikidata API branch and offline route replay with a
+  provenance-recorded public success response plus controlled `429` and
+  malformed-body fixtures. Verify `Q` IDs, `concepturi` brackets, labels,
+  request encoding, and Kotlin's approved non-2xx `502` behavior. The separate
+  C# success-route capture now confirms the output shape.
 - [x] Implement Ktor JSON/multipart routes and response wrappers; contract-test
   request defaults, numeric enums, null/missing input, content types, status
   codes, and JSON property names.
@@ -778,6 +789,8 @@ Recommended boundaries:
   remains open under `SEC-001` and `OPS-002`.
 - [ ] Replace the Azure deployment workflow only after the Kotlin artifact,
   runtime configuration, health check, and resource packaging are verified.
+  The local artifact and `/health` are now verified under OPS-001, but the
+  workflow remains .NET-only and no production cutover is approved.
 
 ## Kotlin scaffold commands
 
@@ -1302,8 +1315,8 @@ is documented as a deliberate endpoint safety boundary for later route review.
 
 The C# `BrasileiraoDatabase` reads and parses
 `Sparql.QueryEasy/futebol_completo.ttl` once at application construction and
-is registered as a singleton. Gradle now packages that exact tracked asset as
-`futebol_completo.ttl`; `ClasspathTurtleTextSource` closes the classpath stream
+is registered as a singleton. Gradle packages byte-identical
+`src/main/resources/futebol_completo.ttl`; `ClasspathTurtleTextSource` closes the classpath stream
 internally, and `ParsedBuiltInGraphProvider` parses it eagerly once when
 constructed, retaining an application-owned immutable graph for its lifetime.
 Any missing resource raises `BuiltInGraphLoadingFailure`; parser failures retain
@@ -1635,16 +1648,25 @@ not alter HTTP, RDF, or generated SPARQL behavior.
 
 The FE-004 frontend foundation adds a second-variable branch to the main Run
 Query flow. For the first connected graph component (the component already
-used to build the request), the client collects SPARQL-style variable tokens
-from node values and edge predicate `nodeId` values, validates them against
+used to build the request), the client accepts node values and edge predicate
+`nodeId` values as variables only when the entire value matches
 `[?$][A-Za-z_][A-Za-z0-9_]*`, deduplicates them, and sorts them
-lexicographically. Exactly two tokens open a keyboard-accessible side panel
+lexicographically. Exactly two variables open a keyboard-accessible side panel
 listing both variables and a staged-exploration placeholder; that branch does
 not call `/api/query`. Escape, the Back button, and a graph-background click
 dismiss the panel. Zero/one/more-than-two-variable handling keeps its prior
 flow. Candidate fetching, binding substitution, and result preview are not
 part of this foundation. This is a frontend-only interaction and does not
 change API or SPARQL contracts.
+
+**Variable detection correction (2026-09-27):** The first panel implementation
+matched variable-like substrings inside fixed IRIs, literals, and malformed
+values. Such values could incorrectly trigger the two-variable panel and skip
+ordinary one-variable execution. Whole-value matching now excludes those
+substrings. Offline browser regressions cover a fixed IRI containing `?ghost`
+and malformed `?alpha-bad`, alongside the genuine two-variable panel case.
+The full offline browser suite passed all 22 tests after this correction;
+JavaScript syntax and diff checks passed.
 
 **Predicate follow-up (2026-09-27):** A nonempty predicate-query result was
 incorrectly dispatched to node replacement, creating a new node while leaving
@@ -1663,6 +1685,17 @@ without changing the graph. The completed edge uses the existing `nodeId`,
 source, and target representation consumed by `buildFilters()`. This adds no
 new API endpoint or backend SPARQL behavior; browser regressions cover both
 choices, graph query extraction, and cancellation.
+
+**Wikidata route replay follow-up (2026-09-27):** A one-time public MediaWiki
+`wbsearchentities` HTTP 200 response for `Douglas Adams` is now stored under
+`compatibility/wikidata-responses/` with timestamp, URL, selected headers,
+body hash, and unchanged `Q42`/`Q28421831` identifiers and labels. Controlled
+local `429` and malformed-body responses are labelled separately; they are
+not live Wikidata observations. `RecordedWikidataRoutesTest` injects those
+bodies through `MockEngine` and exercises the complete Ktor search route
+offline. The success response is exact, and failures preserve Kotlin's
+approved JSON `502` contract. The C# harness has not captured an equivalent
+search-route response, so strict C# response equivalence remains unclaimed.
 
 Run Query also rejects two or more distinct predicate variables between the
 same fixed subject/object values before staging or execution. These parallel
@@ -1702,6 +1735,10 @@ They preserve existing successful, validation (`400`), and local-graph-miss
 (`404`) responses. Unexpected exceptions are deliberately not misclassified as
 upstream execution failures. Deterministic HTTP tests use a fake failing
 executor; no live endpoint is contacted.
+
+The BUG-002 OpenAPI follow-up documents the same JSON `502` error response for
+both relationship operations. Its exact response-inventory test now includes
+`502`, and the API v1 documentation no longer describes the resolved gap.
 
 ### Deferred deployment task: production CORS
 
@@ -1748,3 +1785,55 @@ path (`http://futebol.usp.br#item` becomes
 Jena boundary now applies the captured .NET normalization to URI resources and
 predicates. A focused RDF regression and the capture-driven raw-row comparator
 verify the change; no query or response assertion was weakened.
+
+## OPS-001 — local JVM and container packaging (2026-09-27)
+
+Kotlin's built-in Turtle file is now owned by `src/main/resources/` rather
+than copied from `Sparql.QueryEasy/` during every build. The source file,
+Gradle output, and distribution JAR retain the approved SHA-256
+`2345428c9513651dcf184835538fa910abae6c95fcb399e508709d646af7993f`.
+The C# file, 34-case capture corpus, and golden results were not changed.
+`EndpointContextResolverTest` guards the resource bytes, and the existing
+capture-driven comparator guards graph/query behavior.
+
+Gradle's `installDist` distribution includes the Java 21 launcher, runtime
+dependencies, frontend, OpenAPI routes, and built-in graph. A local Dockerfile
+builds that distribution and runs it on Java 21 as a non-root user with a
+`/health` probe. The approved local port remains `8080`. No image is pushed or
+deployed. See `tcc/07 - Operations/Local JVM and Container Runtime.md` for
+repeatable commands, configuration boundaries, and future OPS decisions.
+
+This removes one C# retirement dependency, not the retirement gate itself.
+The .NET Azure workflow and C# capture harness still reference the original
+project. `MIG-002` requires an explicit decision on remaining captures and a
+separately reviewed removal/CI change. Production domain/TLS/CORS, security,
+hosting, monitoring, backup, and rollback remain under OPS-002–OPS-004 and
+SEC-001; none is inferred from local packaging.
+
+## Retirement success captures and discovered remote RDF difference (2026-09-27)
+
+The user approved capturing C# `/health`, Wikidata search success, and one
+generic remote SPARQL success before C# removal, while waiving further
+middleware-error equivalence. `RetirementCaptureHarness` writes only three
+new cases under `compatibility/retirement-expected/`; the original 34-case
+`expected/` tree remains unchanged. The new provenance rows record the C#
+source commit, .NET SDK/host, timestamp, paths, normalizations, and observations.
+The health case ran the original ASP.NET host on loopback. The two query cases
+used production C# controller/service code with fail-closed HTTP handlers and
+recorded/controlled response bodies; no live upstream was contacted.
+
+`RetirementSuccessCompatibilityTest` passes for the C# Wikidata and remote
+SPARQL outputs. The remote capture exposed a raw RDF metadata difference:
+dotNetRDF maps a language-tagged SPARQL JSON literal to datatype
+`rdf:langString`, whereas Kotlin previously left its datatype null. The
+Kotlin transport mapper now preserves `rdf:langString` for language-tagged
+literals. Focused remote transport and route regression tests verify this; no
+expected result or assertion was weakened.
+
+C# `/health` returned `200 text/plain Healthy`; Kotlin currently returns
+`200 application/json {"status":"ok"}`. Only status is equal. This is a
+newly confirmed observable difference, **not** an approved equivalence.
+`DEC-009` must select whether to retain Kotlin JSON as an intentional change
+or align Kotlin with C# before MIG-002 can remove the original code. The
+.NET-only workflow, local gate, preservation plan, and removal review are
+independent remaining retirement gates; no production deployment is required.

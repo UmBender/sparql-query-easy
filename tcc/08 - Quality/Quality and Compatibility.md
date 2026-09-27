@@ -43,12 +43,15 @@ and accessibility auditing remains outside the current suite. See
 
 ## Coverage gaps
 
-- Recorded Wikidata success/error fixtures replayed through Ktor routes.
+- `DEC-009`: choose the observed C# plain-text versus Kotlin JSON health
+  response contract. The status matches, but the body/content type do not.
 - CORS, TLS/reverse-proxy, deployment, resource-limit, backup, and monitoring
   tests.
 - Explicit production behavior for remote endpoint policy and uploads.
-- C# black-box health/middleware responses and a generic remote-endpoint
-  comparison beyond the current in-process harness.
+- Further C# middleware-error response equivalence was explicitly waived;
+  original exception categories remain non-equivalent. The agreed C# health,
+  Wikidata success, and generic remote success captures are complete in the
+  separate retirement corpus and compared with Kotlin where applicable.
 
 ## RDF parity rules
 
@@ -61,5 +64,9 @@ Use graph isomorphism for graphs/blank-node labels, but preserve blank-node iden
 - `src/test/kotlin/com/example/sparqlqueryeasy/`
 - `src/test/kotlin/com/example/sparqlqueryeasy/http/CaptureDrivenCompatibilityTest.kt`
 - `src/test/kotlin/com/example/sparqlqueryeasy/http/OpenApiRoutesTest.kt`
+- `src/test/kotlin/com/example/sparqlqueryeasy/http/RecordedWikidataRoutesTest.kt`
+- `src/test/kotlin/com/example/sparqlqueryeasy/http/RetirementSuccessCompatibilityTest.kt`
+- `compatibility/retirement-expected/README.md`
+- `compatibility/wikidata-responses/README.md`
 - `frontend-tests/index2.spec.mjs`
 - `frontend-tests/cdn-stubs.mjs`

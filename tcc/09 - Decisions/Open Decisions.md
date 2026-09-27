@@ -9,6 +9,7 @@
 | DEC-005 | Decision required | Upload graph size, cache size, persistence, retention, and access-control policy. |
 | DEC-006 | Decision direction approved | Implement authentication; `AUTH-000` must decide identity, sessions, anonymous access, protected routes, and security controls first. |
 | DEC-007 | Approved | Generate OpenAPI 3.1 from Ktor code; publish public `/swagger` and `/openapi.json` endpoints in every environment; defer authentication. |
+| DEC-009 | Decision required | Captured C# `/health` is `200 text/plain Healthy`; Kotlin is `200` JSON `{"status":"ok"}`. Approve the Kotlin difference or align it before C# removal. |
 
 ## Already documented decisions
 
@@ -23,6 +24,10 @@
 - **Approved (2026-09-27):** Generate OpenAPI 3.1 from Ktor code and publish
   public `/swagger` and `/openapi.json` endpoints in development and
   production. Authentication remains deferred until user testing.
+- **Approved (2026-09-27):** Capture three remaining C# success cases before
+  retirement, preserve the original 34, and waive further C# middleware-error
+  equivalence. The health capture exposed an additional undecided success
+  response difference; see [[../90 - Tasks/items/DEC-009-health-response-contract]].
 
 ## Source files
 
@@ -32,3 +37,4 @@
 - `sparql/login.html`
 - `tcc/09 - Decisions/Repository Login and OpenAPI Scope.md`
 - `tcc/09 - Decisions/OpenAPI and Swagger Contract.md`
+- `compatibility/retirement-expected/README.md`

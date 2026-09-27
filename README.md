@@ -11,6 +11,9 @@ evidence while Kotlin provides the current development runtime.
   have Kotlin implementations.
 - The reviewed C# characterization baseline contains 34 captures under
   `compatibility/expected/`.
+- Three additional C# retirement success captures are kept separately under
+  `compatibility/retirement-expected/`. Wikidata and generic remote SPARQL
+  outputs match Kotlin; the health response body still needs a decision.
 - The offline Kotlin comparator executes every valid capture and checks HTTP
   output, graph isomorphism, generated/executed SPARQL, projected variables,
   bindings, RDF terms, duplicate rows, and explicit ordering.
@@ -24,7 +27,7 @@ The remaining work is production hardening and approved additions rather than
 another core feature port. OpenAPI 3.1 and Swagger UI are generated from the
 Ktor route contract and tested for drift. Authentication is intentionally
 deferred until user testing. Recorded Wikidata route fixtures, production
-endpoint/upload policy, containers, TLS/CORS, deployment, monitoring, and
+endpoint/upload policy, TLS/CORS, deployment, monitoring, and
 backup remain open.
 
 ## Run locally
@@ -39,6 +42,13 @@ development port `8080`:
 Then open `http://localhost:8080/`; Ktor redirects to the packaged frontend.
 Swagger UI is at `http://localhost:8080/swagger`, and the raw generated
 OpenAPI 3.1 JSON is at `http://localhost:8080/openapi.json`.
+
+For a local JVM distribution, run `./gradlew installDist`, then
+`./build/install/sparql-query-easy-kotlin/bin/sparql-query-easy-kotlin`.
+An optional Docker build is available with
+`docker build -t sparql-query-easy:local .`; it uses Java 21, listens on
+port `8080`, and checks `/health`. This is local packaging, not a deployment
+pipeline. See [the runtime notes](tcc/07%20-%20Operations/Local%20JVM%20and%20Container%20Runtime.md).
 
 ## Verification
 

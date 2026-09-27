@@ -22,14 +22,20 @@ not another core feature port.
 
 ## Dataset decision
 
-**Approved (2026-09-16):** Kotlin retains the C# `futebol_completo.ttl` as the
-sole canonical built-in dataset for `CampeonatoBrasileiro2023`. The frontend
-dataset is not packaged or treated as equivalent; changing the source requires
-explicit review and C# baseline recapture.
+**Approved (2026-09-16):** Kotlin retains the approved C# `futebol_completo.ttl`
+bytes as the sole built-in dataset for `CampeonatoBrasileiro2023`. Since
+OPS-001, Kotlin packages its own byte-identical resource. The frontend dataset
+is not packaged or treated as equivalent; changing the bytes requires explicit
+review and C# baseline recapture.
 
 ## Compatibility state
 
-**Confirmed:** 34 C# harness captures are stored under `compatibility/expected/`. Kotlin comparison covers graph isomorphism, executed SPARQL, projected variables, bound/unbound values, RDF terms, duplicate rows, and documented ordering.
+**Confirmed:** 34 original C# harness captures are stored unchanged under
+`compatibility/expected/`. Three additional retirement success captures are
+stored separately under `compatibility/retirement-expected/`. Kotlin comparison
+covers graph isomorphism, executed SPARQL, projected variables, bound/unbound
+values, RDF terms, duplicate rows, documented ordering, and the new Wikidata
+and generic remote success responses.
 
 **Resolved (2026-09-17):** `BUG-001` replaced the C# harness wrapper with a
 capturing `LocalQueryExecutor` subclass, recaptured `SEARCH-LOCAL-001` and
@@ -59,16 +65,19 @@ because the harness did not run ASP.NET middleware.
 
 ## Remaining migration-related work
 
-- `QUAL-001`: approved Wikidata success/error recordings and full Ktor route
-  replay.
-- C# black-box evidence for health/middleware failure responses and a generic
-  remote endpoint, if production equivalence requires those claims.
+- `DEC-009` must resolve the newly captured C# `text/plain Healthy` versus
+  Kotlin JSON `{"status":"ok"}` health-response difference. Do not call it
+  equivalent solely because both return HTTP 200.
+- The three agreed C# success captures are complete. Additional middleware
+  error-equivalence captures were explicitly waived; the original exception
+  evidence remains separate from HTTP response claims.
 - `AUTH-000`/`AUTH-001`/`AUTH-002`: new authentication requirement.
 - `OAPI-000`/`OAPI-001`: completed code-generated OpenAPI 3.1 and Swagger UI
   addition; future authentication metadata remains under `AUTH-000`.
-- `BUG-002`: relationship executor failures still need the approved explicit
-  JSON `502` mapping already used by search and general query.
-- `SEC-001` and `OPS-001`–`OPS-004`: production security and operations.
+- `BUG-002` is complete: relationship executor failures use the approved JSON
+  `502` mapping.
+- `OPS-001`: local Kotlin JVM/container packaging, completed without deployment.
+- `SEC-001` and `OPS-002`–`OPS-004`: production security and operations.
 
 Browser-level frontend coverage is already present under `frontend-tests/`.
 Port `8080` and explicit JSON errors are approved intentional changes.

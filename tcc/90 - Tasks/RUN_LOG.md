@@ -1,5 +1,78 @@
 # Task Worker Run Log
 
+## 2026-09-27 — FE-003 review follow-up
+
+- Strengthened the predicate-edge Playwright assertion to compare the complete
+  `/api/query` JSON body, including explicit endpoint and limit values.
+- Tried to block all external browser requests with a local structural CSS
+  stub. The focused predicate-edge test passed, but the full run exposed a
+  node-menu click failure under that incomplete stylesheet. Removed the block
+  and CSS stub; the normal harness still loads external styles and fonts.
+  FE-003 remains REVIEW pending fully offline, deterministic browser coverage.
+
+## 2026-09-27 — C# retirement success captures
+
+- User approved three specific C# success captures, waived further C#
+  middleware-error equivalence, and required the original 34-case corpus to
+  remain unchanged. The new `--retirement-success` harness mode wrote only
+  `compatibility/retirement-expected/` and refused overwrites. Captured the
+  actual ASP.NET `/health` response plus controlled, offline C# Wikidata
+  search and generic remote SPARQL controller/service success paths.
+- Recorded timestamp, source SHA, .NET SDK/host, path, normalizations, and
+  observations in `capture-status.tsv`. Existing 34 expected case files and
+  index were not changed. The C# host and fail-closed handlers made no live
+  external request.
+- Added capture-driven Kotlin route/raw-result comparison. The first focused
+  run exposed Kotlin's missing `rdf:langString` datatype on remote
+  language-tagged SPARQL JSON literals; fixed the transport mapper and kept
+  the exact raw-RDF assertion. Focused capture and transport tests passed.
+- Actual C# health output is `200 text/plain Healthy`, while Kotlin is `200`
+  JSON `{"status":"ok"}`. Recorded it as an unresolved non-equivalence under
+  DEC-009 instead of changing either capture or Kotlin health contract.
+- The initial Kotlin comparator compilation failed on an import and a later
+  focused run found the real `rdf:langString` mismatch. Both were fixed.
+  A combined format/check run raced KtLint against formatting; running the
+  full `ktlintCheck detekt test --no-daemon` gate after formatting passed.
+  The original 34-case `expected/` tree remains untouched; `git diff --check`
+  passed. No deployment, push, or C# removal was performed.
+- Final evidence review found a synthetic `application/json` content type on
+  the two in-process C# controller cases. Corrected the harness to record
+  `null` (no middleware header was observed), regenerated only the three new
+  provisional captures, and updated their provenance timestamps. The real
+  black-box health content type remains `text/plain`. No original capture
+  was removed or rewritten.
+
+## 2026-09-27 — OPS-001
+
+- Implemented a Java 21 Gradle `installDist` package and local Docker image
+  independent of the C# project. Copied the approved built-in Turtle bytes
+  into Kotlin resources, added a SHA-256 regression, and kept frontend assets
+  and port 8080 unchanged. No capture/golden data was modified.
+- Full `ktlintFormat ktlintCheck detekt test installDist --no-daemon` gate,
+  resource/JAR hashes, distribution HTTP smoke, Docker build, non-root Docker
+  health, frontend, and OpenAPI smoke checks passed. Sandbox socket limits
+  required approved local host retries. The temporary container was removed;
+  no image was pushed or deployed.
+- Documented local packaging and future SEC-001/OPS-002/003/004 requirements.
+  MIG-002 now separates repository-level C# removal from future production
+  launch; the .NET workflow, remaining capture decision, and human review still
+  block removal. Preserved pre-existing QUAL-001 and unrelated work.
+
+## 2026-09-27 — QUAL-001
+
+- The user's implementation request approved one public Wikidata success
+  recording. Captured HTTP 200 with `Q42` and `Q28421831` at 18:18:27 UTC;
+  stored the body, request, selected headers, body hash, and sanitation note.
+- Added clearly labelled controlled local `429` and malformed-body fixtures,
+  plus full Ktor search-route replay using `MockEngine`. The success response
+  maps identifiers and labels exactly; the errors exercise the approved
+  explicit JSON `502` contract. No normal test contacts Wikidata.
+- Initial focused Gradle checks exposed test-only compilation and KtLint
+  failures; corrected them. Focused route tests and the full offline
+  `ktlintFormat ktlintCheck detekt test --no-daemon` gate passed. The immutable
+  34-case C# baseline remains untouched; C# Wikidata search-route response
+  capture is still a separate retirement gate.
+
 ## 2026-09-27 — integrated BUG-002, FE-003, and FE-004
 
 - Integrated BUG-002 (`e040afc`), predicate-variable edges (`62b3eaf`), and
