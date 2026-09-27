@@ -118,7 +118,11 @@ Success (`200 OK`):
 }
 ```
 
-Failures use the shared `400`, `404`, or `502` response as applicable.
+Missing or invalid request values use the shared `400` response and unavailable
+local graphs use `404`. An application-owned `SparqlQueryExecutionFailure`
+from the selected executor uses `502 Bad Gateway` with the shared error
+envelope, for example `{"error":"<executor diagnostic>"}`. Other unexpected
+exceptions remain server failures and are not relabeled as upstream failures.
 
 ### `POST /api/query/relationship-value`
 
@@ -135,7 +139,11 @@ Request fields and defaults:
 ```
 
 `subjectId` and `predicateId` are required. `limit` is accepted for C# shape
-compatibility but unused.
+compatibility but unused. Missing or invalid request values use the shared
+`400` response and unavailable local graphs use `404`. An application-owned
+`SparqlQueryExecutionFailure` from the selected executor uses `502 Bad Gateway`
+with `{"error":"<executor diagnostic>"}`. Other unexpected exceptions remain
+server failures and are not relabeled as upstream failures.
 
 Success (`200 OK`, resource form):
 

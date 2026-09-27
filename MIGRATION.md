@@ -1623,6 +1623,14 @@ local graphs return `404`, and upstream execution failures return `502`.
 These statuses replace C# controller/framework exception behavior and are the
 contract to preserve in future route and frontend work.
 
+**Follow-up (2026-09-27):** the relationship and relationship-value Ktor
+routes now apply that approved `502` envelope when, and only when, their
+selected executor throws the application-owned `SparqlQueryExecutionFailure`.
+They preserve existing successful, validation (`400`), and local-graph-miss
+(`404`) responses. Unexpected exceptions are deliberately not misclassified as
+upstream execution failures. Deterministic HTTP tests use a fake failing
+executor; no live endpoint is contacted.
+
 ### Deferred deployment task: production CORS
 
 During local development, serve the static frontend and API from Ktor at

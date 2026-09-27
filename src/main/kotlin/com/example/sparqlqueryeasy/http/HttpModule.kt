@@ -29,6 +29,7 @@ import com.example.sparqlqueryeasy.application.relationships.RelationshipValueSe
 import com.example.sparqlqueryeasy.application.search.SearchRequest
 import com.example.sparqlqueryeasy.application.search.SearchResult
 import com.example.sparqlqueryeasy.application.search.SearchService
+import com.example.sparqlqueryeasy.domain.model.SparqlQueryExecutionFailure
 import com.example.sparqlqueryeasy.rdf.jena.JenaGraphEndpointExecution
 import com.example.sparqlqueryeasy.rdf.jena.JenaSparqlSyntaxValidator
 import com.example.sparqlqueryeasy.rdf.jena.JenaTurtleParser
@@ -264,6 +265,8 @@ private suspend fun RoutingContext.runQueryRoute(block: suspend RoutingContext.(
         badRequest(failure.message ?: "Invalid endpoint")
     } catch (failure: HttpRequestValidationFailure) {
         badRequest(failure.message ?: "Invalid request")
+    } catch (failure: SparqlQueryExecutionFailure) {
+        upstreamFailure(failure.diagnostic)
     } catch (failure: IllegalArgumentException) {
         badRequest(failure.message ?: "Invalid request")
     }

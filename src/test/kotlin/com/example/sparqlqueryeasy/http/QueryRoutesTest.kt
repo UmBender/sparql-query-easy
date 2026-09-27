@@ -148,6 +148,20 @@ class QueryRoutesTest {
         }
 
     @Test
+    fun `POST relationships maps executor failures to the explicit bad gateway envelope`() =
+        testApplication {
+            application { queryTestModule(failingExecution()) }
+
+            val response =
+                client.post("/api/query/relationships") {
+                    jsonBody("""{"endpointUrl":"$BRASILEIRAO_ENDPOINT_ID","id":"<https://example.test/item>"}""")
+                }
+
+            response.status shouldBe HttpStatusCode.BadGateway
+            response.bodyAsText() shouldBe """{"error":"fake upstream failure"}"""
+        }
+
+    @Test
     fun `POST relationship-value preserves literal mapping and validates missing identifiers`() =
         testApplication {
             val execution = RecordingExecution(valueResult())
@@ -167,6 +181,23 @@ class QueryRoutesTest {
                 """{"data":[{"propertyId":"literal","propertyLabel":"literal","propertyType":"text","propertyClass":null}]}"""
             invalid.status shouldBe HttpStatusCode.BadRequest
             invalid.bodyAsText() shouldBe """{"error":"Missing required field: subjectId"}"""
+        }
+
+    @Test
+    fun `POST relationship-value maps executor failures to the explicit bad gateway envelope`() =
+        testApplication {
+            application { queryTestModule(failingExecution()) }
+
+            val response =
+                client.post("/api/query/relationship-value") {
+                    jsonBody(
+                        """{"endpointUrl":"$BRASILEIRAO_ENDPOINT_ID","subjectId":"<https://example.test/item>",""" +
+                            "\"predicateId\":\"<https://example.test/p>\",\"isLiteral\":false}",
+                    )
+                }
+
+            response.status shouldBe HttpStatusCode.BadGateway
+            response.bodyAsText() shouldBe """{"error":"fake upstream failure"}"""
         }
 
     @Test
@@ -233,6 +264,8 @@ class QueryRoutesTest {
         headers.append(HttpHeaders.ContentType, ContentType.Application.Json.toString())
         setBody(value)
     }
+
+    private fun failingExecution() = RecordingExecution { throw SparqlQueryExecutionFailure("query", "fake upstream failure") }
 }
 
 private object EmptyEntitySearchClient : WikidataEntitySearchClient {
