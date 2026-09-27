@@ -91,6 +91,41 @@ test('SPARQL preview and query execution use their documented relative endpoints
   expect(server.requests.some(({ path }) => path === '/api/query')).toBe(true);
 });
 
+test('running a query with exactly two valid variables opens the staged exploration panel without an API request', async ({ page }) => {
+  await disableAutoLayout(page);
+  await page.evaluate(() => {
+    cy.add([
+      { group: 'nodes', data: { id: '?zeta', value: '?zeta', label: '?', type: 'variable' }, position: { x: 220, y: 200 } },
+      { group: 'nodes', data: { id: '?alpha', value: '?alpha', label: '?', type: 'variable' }, position: { x: 440, y: 200 } },
+      { group: 'edges', data: { id: 'predicate-variable', source: '?zeta', target: '?alpha', nodeId: '?relation', label: '?' } },
+    ]);
+  });
+  const queryRequestsBefore = server.requests.filter(({ path }) => path === '/api/query').length;
+
+  await page.locator('#run-query-btn').click();
+
+  const panel = page.getByRole('complementary', { name: 'Explore two variables' });
+  await expect(panel).toBeVisible();
+  await expect(page.locator('#two-variable-list')).toHaveText('?alpha?relation?zeta');
+  await expect(panel).toContainText('Staged exploration');
+  await expect(page.getByRole('button', { name: 'Close two-variable exploration' })).toBeFocused();
+  expect(server.requests.filter(({ path }) => path === '/api/query').length).toBe(queryRequestsBefore);
+
+  await page.keyboard.press('Escape');
+  await expect(panel).toBeHidden();
+  await expect(page.locator('#run-query-btn')).toBeFocused();
+
+  await page.locator('#run-query-btn').click();
+  await expect(panel).toBeVisible();
+  await page.getByRole('button', { name: 'Close two-variable exploration' }).click();
+  await expect(panel).toBeHidden();
+
+  await page.locator('#run-query-btn').click();
+  await expect(panel).toBeVisible();
+  await page.locator('#cy').click({ position: { x: 16, y: 16 } });
+  await expect(panel).toBeHidden();
+});
+
 test('left click opens a persistent node action list and only the graph background dismisses it', async ({ page }) => {
   await disableAutoLayout(page);
   await page.evaluate(() => addNode(cy, '<https://example.test/team-a>', 'Team A'));

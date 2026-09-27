@@ -62,6 +62,25 @@
             display: none;
         }
 
+        #two-variable-panel {
+            position: absolute;
+            z-index: 130;
+            top: 12px;
+            right: 12px;
+            width: min(340px, calc(100% - 24px));
+            padding: 16px;
+            border: 1px solid rgba(21, 101, 192, 0.25);
+            border-radius: 8px;
+            background: rgba(255, 255, 255, 0.98);
+            box-shadow: 0 4px 18px rgba(0, 0, 0, 0.24);
+        }
+
+        #two-variable-panel[hidden] { display: none; }
+        #two-variable-panel h2 { margin: 0 36px 12px 0; font-size: 18px; }
+        #two-variable-panel-close { position: absolute; top: 8px; right: 8px; }
+        #two-variable-list { margin: 0 0 12px; }
+        #two-variable-list li { list-style: disc; margin-left: 20px; }
+
         #node-action-menu-title,
         #edge-action-menu-title {
             margin: 0 4px 6px;
@@ -472,6 +491,13 @@
             <aside id="edge-action-menu" hidden aria-labelledby="edge-action-menu-title">
                 <p id="edge-action-menu-title"></p>
                 <ul id="edge-action-menu-list"></ul>
+            </aside>
+
+            <aside id="two-variable-panel" hidden aria-labelledby="two-variable-panel-title" aria-describedby="two-variable-panel-description">
+                <button id="two-variable-panel-close" type="button" class="btn-flat" aria-label="Close two-variable exploration" title="Back to graph">Back</button>
+                <h2 id="two-variable-panel-title">Explore two variables</h2>
+                <ul id="two-variable-list" aria-label="Variables in this query"></ul>
+                <p id="two-variable-panel-description">Staged exploration: choose how to connect these variables in a future step.</p>
             </aside>
 
             <!-- Node legend -->
@@ -976,6 +1002,11 @@
             }
 
             const component    = conjuntos[0];
+            const queryVariables = getQueryVariables(component);
+            if (queryVariables.length === 2) {
+                openTwoVariablePanel(queryVariables);
+                return;
+            }
             const variableName = extractVariableName(component);
             const filters      = [];
 
@@ -1011,6 +1042,43 @@
             }
 
             getQuery(variableName, filters, true);
+        }
+
+        function getQueryVariables(component) {
+            const variables = new Set();
+            const variablePattern = /[?$][A-Za-z_][A-Za-z0-9_]*/g;
+            for (const item of component) {
+                const values = item.data('source') && item.data('target')
+                    ? [item.data('nodeId')]
+                    : [item.data('value') || item.data('id')];
+                for (const value of values) {
+                    if (typeof value !== 'string') continue;
+                    for (const match of value.matchAll(variablePattern)) variables.add(match[0]);
+                }
+            }
+            return [...variables].sort((left, right) => left < right ? -1 : left > right ? 1 : 0);
+        }
+
+        let twoVariablePanelReturnFocus = null;
+
+        function openTwoVariablePanel(variables) {
+            const panel = document.getElementById('two-variable-panel');
+            const list = document.getElementById('two-variable-list');
+            twoVariablePanelReturnFocus = document.activeElement;
+            list.replaceChildren(...variables.map(variable => {
+                const item = document.createElement('li');
+                item.textContent = variable;
+                return item;
+            }));
+            panel.hidden = false;
+            document.getElementById('two-variable-panel-close').focus();
+        }
+
+        function closeTwoVariablePanel() {
+            const panel = document.getElementById('two-variable-panel');
+            const shouldRestoreFocus = panel.contains(document.activeElement);
+            panel.hidden = true;
+            if (shouldRestoreFocus && twoVariablePanelReturnFocus?.isConnected) twoVariablePanelReturnFocus.focus();
         }
 
         // ── Node/edge factory helpers ─────────────────────────────────────
@@ -1226,6 +1294,10 @@
 
             // ── Keyboard shortcut: Enter → run query ─────────────────────
             document.addEventListener('keydown', e => {
+                if (e.key === 'Escape' && !document.getElementById('two-variable-panel').hidden) {
+                    closeTwoVariablePanel();
+                    return;
+                }
                 const tag = document.activeElement.tagName;
                 if (e.key === 'Enter' && tag !== 'INPUT' && tag !== 'TEXTAREA' && tag !== 'BUTTON') {
                     runQuery();
@@ -1481,6 +1553,7 @@
             const edgeActionMenu      = document.getElementById('edge-action-menu');
             const edgeActionMenuTitle = document.getElementById('edge-action-menu-title');
             const edgeActionMenuList  = document.getElementById('edge-action-menu-list');
+            document.getElementById('two-variable-panel-close').addEventListener('click', closeTwoVariablePanel);
             const cyContainer         = document.getElementById('cy');
             const cyWrapper           = document.getElementById('cy-wrapper');
             let selectedMenuNodeId    = null;
@@ -1874,6 +1947,7 @@
                 if (event.target === cy) {
                     closeNodeActionMenu();
                     closeEdgeActionMenu();
+                    closeTwoVariablePanel();
                 }
             });
             cy.on('pan zoom resize layoutstop', () => {

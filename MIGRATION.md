@@ -1633,6 +1633,19 @@ actions. `index2.html` no longer loads the circular right-click/long-press
 `cytoscape-cxtmenu` plugin. This is a frontend-only contract change and does
 not alter HTTP, RDF, or generated SPARQL behavior.
 
+The FE-004 frontend foundation adds a second-variable branch to the main Run
+Query flow. For the first connected graph component (the component already
+used to build the request), the client collects SPARQL-style variable tokens
+from node values and edge predicate `nodeId` values, validates them against
+`[?$][A-Za-z_][A-Za-z0-9_]*`, deduplicates them, and sorts them
+lexicographically. Exactly two tokens open a keyboard-accessible side panel
+listing both variables and a staged-exploration placeholder; that branch does
+not call `/api/query`. Escape, the Back button, and a graph-background click
+dismiss the panel. Zero/one/more-than-two-variable handling keeps its prior
+flow. Candidate fetching, binding substitution, and result preview are not
+part of this foundation. This is a frontend-only interaction and does not
+change API or SPARQL contracts.
+
 Kotlin retains its HTTP development port `8080` as an approved intentional
 difference from the C# `5242`/`7070` profiles. Kotlin's explicit JSON error
 contract is also approved: malformed/invalid requests return `400`, unavailable
