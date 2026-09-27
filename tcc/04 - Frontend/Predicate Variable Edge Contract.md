@@ -38,6 +38,13 @@ nodes, it must submit the resulting triple pattern in this form:
 and use that same variable as `variableName`. The existing general-query
 endpoint then queries the predicate without a new HTTP route.
 
+Selecting a predicate-query result binds the queried edge in place: its
+`nodeId` and visible label become the returned predicate identifier and label,
+and its temporary `variable` type is cleared. Source, target, edge identity,
+other metadata, and all nodes remain intact. Result rows retain their queried
+edge IDs; if an edge was removed or its predicate changed before selection,
+that stale result does not recreate it or create a node.
+
 ## Boundaries
 
 - This is a frontend interaction extension; it does not change C# parity,

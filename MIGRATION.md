@@ -1646,6 +1646,37 @@ flow. Candidate fetching, binding substitution, and result preview are not
 part of this foundation. This is a frontend-only interaction and does not
 change API or SPARQL contracts.
 
+**Predicate follow-up (2026-09-27):** A nonempty predicate-query result was
+incorrectly dispatched to node replacement, creating a new node while leaving
+the edge variable unchanged. Result rows now retain queried edge IDs and use
+an edge-specific binding handler: update predicate identifier/label in place,
+clear the variable marker, and preserve topology, metadata, and nodes. Removed
+or rebound edges are ignored. Ordinary node results retain their handler.
+
+Run Query also rejects two or more distinct predicate variables between the
+same fixed subject/object values before staging or execution. These parallel
+edges do not form a traversal chain; the frontend explains the unsupported
+shape without altering the graph or sending an arbitrary query. Directed RDF
+endpoint values determine each pair. A genuine two-predicate chain retains
+the panel; repeated use of one predicate variable on parallel edges remains
+a one-variable query and binds those edges together. These user-requested
+frontend corrections do not change HTTP or backend SPARQL contracts.
+
+The first predicate regression reproduced the unwanted third node. The
+parallel regressions also failed before their guard. Initial full browser
+validation found an existing FE-004 fixture with three distinct variables
+despite its exactly-two expectation; its fixed predicate now makes the fixture
+match the approved two-variable contract without weakening the production
+guard. Kotlin's complete `ktlintCheck detekt test` gate passes. Browser tests
+reuse installed Playwright/Firefox and mocked local APIs; the existing harness
+still loads CDN styles/fonts. No dependency was installed and no live Wikidata
+request was used.
+
+Final validation on the isolated fix branch passed: `npm run test:browser`
+(17 tests), `GRADLE_USER_HOME=/tmp/sparql-query-easy-gradle ./gradlew
+ktlintCheck detekt test --no-daemon` (107 Kotlin tests, no failures), JavaScript
+syntax checks, and `git diff --check`.
+
 Kotlin retains its HTTP development port `8080` as an approved intentional
 difference from the C# `5242`/`7070` profiles. Kotlin's explicit JSON error
 contract is also approved: malformed/invalid requests return `400`, unavailable

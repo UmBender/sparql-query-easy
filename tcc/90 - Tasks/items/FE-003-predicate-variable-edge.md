@@ -106,6 +106,26 @@ cause a node-only menu action or silently project the wrong variable.
   solely because the required Playwright browser run cannot start without its
   uninstalled dependency; no dependency was installed during integration.
 
+## Predicate-result follow-up (2026-09-27)
+
+The result-selection path still used node replacement after predicate queries.
+A nonempty mocked result reproduced an extra node while the edge remained a
+variable. Predicate results now bind the existing edge in place, preserving
+its topology and metadata and clearing the variable marker. Result rows retain
+edge IDs and ignore removed or rebound edges. Ordinary node-result selection
+is also covered.
+
+The first full browser run reported 12 passed and an existing FE-004 fixture
+failure: it declared three variables while expecting the exactly-two-variable
+panel. The related parallel-predicate follow-up corrected that fixture to
+contain exactly two variables; the production exactly-two guard is preserved.
+The complete Kotlin `ktlintCheck detekt test` gate passes. Existing installed
+Playwright/Firefox were reused without installing dependencies. API responses
+are mocked; the existing browser harness still loads CDN styles/fonts.
+
+Final validation passed: all 17 browser tests, all 107 Kotlin tests with
+`ktlintCheck detekt`, JavaScript syntax checks, and `git diff --check`.
+
 ## Source files
 
 - `sparql/index2.html`

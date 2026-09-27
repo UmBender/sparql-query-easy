@@ -97,7 +97,7 @@ test('running a query with exactly two valid variables opens the staged explorat
     cy.add([
       { group: 'nodes', data: { id: '?zeta', value: '?zeta', label: '?', type: 'variable' }, position: { x: 220, y: 200 } },
       { group: 'nodes', data: { id: '?alpha', value: '?alpha', label: '?', type: 'variable' }, position: { x: 440, y: 200 } },
-      { group: 'edges', data: { id: 'predicate-variable', source: '?zeta', target: '?alpha', nodeId: '?relation', label: '?' } },
+      { group: 'edges', data: { id: 'fixed-predicate', source: '?zeta', target: '?alpha', nodeId: '<https://example.test/relation>', label: 'relation' } },
     ]);
   });
   const queryRequestsBefore = server.requests.filter(({ path }) => path === '/api/query').length;
@@ -106,7 +106,7 @@ test('running a query with exactly two valid variables opens the staged explorat
 
   const panel = page.getByRole('complementary', { name: 'Explore two variables' });
   await expect(panel).toBeVisible();
-  await expect(page.locator('#two-variable-list')).toHaveText('?alpha?relation?zeta');
+  await expect(page.locator('#two-variable-list')).toHaveText('?alpha?zeta');
   await expect(panel).toContainText('Staged exploration');
   await expect(page.getByRole('button', { name: 'Close two-variable exploration' })).toBeFocused();
   expect(server.requests.filter(({ path }) => path === '/api/query').length).toBe(queryRequestsBefore);
@@ -124,6 +124,72 @@ test('running a query with exactly two valid variables opens the staged explorat
   await expect(panel).toBeVisible();
   await page.locator('#cy').click({ position: { x: 16, y: 16 } });
   await expect(panel).toBeHidden();
+});
+
+for (const predicateCount of [2, 3]) {
+  test(`${predicateCount} parallel predicate variables between fixed endpoints are not a traversal chain`, async ({ page }) => {
+    await disableAutoLayout(page);
+    await page.evaluate(count => {
+      M.toast = options => { window.__lastToast = options.html; };
+      cy.add([
+        { group: 'nodes', data: { id: 'source', value: '<https://example.test/source>', type: 'node' } },
+        { group: 'nodes', data: { id: 'target', value: '<https://example.test/target>', type: 'node' } },
+        ...Array.from({ length: count }, (_, index) => ({
+          group: 'edges', data: { id: `relation-${index}`, source: 'source', target: 'target', nodeId: `?predicate_${index}`, label: '?', type: 'variable' },
+        })),
+      ]);
+    }, predicateCount);
+    const graphBefore = await page.evaluate(() => cy.elements().map(element => element.json()));
+    const requestsBefore = server.requests.filter(({ path }) => path === '/api/query').length;
+    await page.locator('#run-query-btn').click();
+    await expect.poll(() => page.evaluate(() => window.__lastToast)).toContain('Parallel predicate variables');
+    await expect(page.locator('#two-variable-panel')).toBeHidden();
+    expect(server.requests.filter(({ path }) => path === '/api/query').length).toBe(requestsBefore);
+    expect(await page.evaluate(() => cy.elements().map(element => element.json()))).toEqual(graphBefore);
+  });
+}
+
+test('two predicate variables on successive edges retain the staged chain flow', async ({ page }) => {
+  await disableAutoLayout(page);
+  await page.evaluate(() => {
+    cy.add([
+      { group: 'nodes', data: { id: 'source', value: '<https://example.test/source>', type: 'node' } },
+      { group: 'nodes', data: { id: 'middle', value: '<https://example.test/middle>', type: 'node' } },
+      { group: 'nodes', data: { id: 'target', value: '<https://example.test/target>', type: 'node' } },
+      { group: 'edges', data: { id: 'first', source: 'source', target: 'middle', nodeId: '?predicate_1', label: '?' } },
+      { group: 'edges', data: { id: 'second', source: 'middle', target: 'target', nodeId: '?predicate_2', label: '?' } },
+    ]);
+  });
+  const requestsBefore = server.requests.filter(({ path }) => path === '/api/query').length;
+  await page.locator('#run-query-btn').click();
+  await expect(page.locator('#two-variable-panel')).toBeVisible();
+  await expect(page.locator('#two-variable-list')).toHaveText('?predicate_1?predicate_2');
+  expect(server.requests.filter(({ path }) => path === '/api/query').length).toBe(requestsBefore);
+});
+
+test('parallel edges sharing one predicate variable bind together without staging', async ({ page }) => {
+  await disableAutoLayout(page);
+  await page.evaluate(() => {
+    cy.add([
+      { group: 'nodes', data: { id: 'source', value: '<https://example.test/source>', type: 'node' } },
+      { group: 'nodes', data: { id: 'target', value: '<https://example.test/target>', type: 'node' } },
+      ...['first', 'second'].map(id => ({
+        group: 'edges', data: { id, source: 'source', target: 'target', nodeId: '?predicate_1', label: '?', type: 'variable', custom: id },
+      })),
+    ]);
+  });
+  await page.route('**/api/query', route => route.fulfill({
+    contentType: 'application/json',
+    body: JSON.stringify({ data: [{ propertyId: '<https://example.test/relation>', propertyLabel: 'relation', propertyType: 'object', propertyClass: null }] }),
+  }));
+  await page.locator('#run-query-btn').click();
+  await expect(page.locator('#table-results-body')).toContainText('relation');
+  await expect(page.locator('#two-variable-panel')).toBeHidden();
+  await page.locator('#table-results-body tr.query-row').dispatchEvent('click');
+  expect(await page.evaluate(() => cy.edges().map(edge => edge.data()))).toEqual(['first', 'second'].map(id => ({
+    id, source: 'source', target: 'target', nodeId: '<https://example.test/relation>', label: 'relation', custom: id,
+  })));
+  await expect(page.locator('#status-nodes')).toHaveText('Nodes: 2');
 });
 
 test('left click opens a persistent node action list and only the graph background dismisses it', async ({ page }) => {
@@ -302,8 +368,8 @@ test('edge action menu converts only a relation predicate into a queryable varia
   await disableAutoLayout(page);
   await page.evaluate(() => {
     cy.add([
-      { group: 'nodes', data: { id: '<https://example.test/team-a>', value: '<https://example.test/team-a>', label: 'Team A', type: 'node' }, position: { x: 220, y: 280 } },
-      { group: 'nodes', data: { id: '<https://example.test/team-b>', value: '<https://example.test/team-b>', label: 'Team B', type: 'node' }, position: { x: 580, y: 280 } },
+      { group: 'nodes', data: { id: '<https://example.test/team-a>', value: '<https://example.test/team-a>', label: 'Team A', type: 'node' }, position: { x: 220, y: 180 } },
+      { group: 'nodes', data: { id: '<https://example.test/team-b>', value: '<https://example.test/team-b>', label: 'Team B', type: 'node' }, position: { x: 580, y: 480 } },
       {
         group: 'edges',
         data: {
@@ -343,11 +409,19 @@ test('edge action menu converts only a relation predicate into a queryable varia
   });
   expect(await page.evaluate(() => cy.getElementById('has-rival-edge').length)).toBe(1);
 
-  const queriesBefore = server.requests.filter(({ path }) => path === '/api/query').length;
+  const nodesBefore = await page.evaluate(() => cy.nodes().map(node => node.json()));
+  await page.route('**/api/query', route => route.fulfill({
+    contentType: 'application/json',
+    body: JSON.stringify({ data: [{
+      propertyId: '<https://example.test/playsAgainst>',
+      propertyLabel: 'plays against',
+      propertyType: 'object',
+      propertyClass: null,
+    }] }),
+  }));
+  const queryRequest = page.waitForRequest(request => request.url().endsWith('/api/query'));
   await page.evaluate(() => window.runQuery());
-  await expect.poll(() => server.requests.filter(({ path }) => path === '/api/query').length).toBe(queriesBefore + 1);
-  const request = server.requests.filter(({ path }) => path === '/api/query').at(-1);
-  expect(JSON.parse(request.body)).toMatchObject({
+  expect((await queryRequest).postDataJSON()).toMatchObject({
     variableName: convertedEdge.nodeId,
     where: [{
       subject: '<https://example.test/team-a>',
@@ -361,7 +435,71 @@ test('edge action menu converts only a relation predicate into a queryable varia
   await expect(edgeMenu).toBeVisible();
   await page.locator('#cy').click({ position: { x: 16, y: 16 } });
   await expect(edgeMenu).toBeHidden();
+
+  await expect(page.locator('#table-results-body')).toContainText('plays against');
+  await page.locator('#table-results-body tr.query-row').dispatchEvent('click');
+
+  expect(await page.evaluate(() => cy.nodes().map(node => node.json()))).toEqual(nodesBefore);
+  await expect(page.locator('#status-nodes')).toHaveText('Nodes: 2');
+  await expect(page.locator('#status-edges')).toHaveText('Edges: 1');
+  const boundEdge = await page.evaluate(() => cy.getElementById('has-rival-edge').data());
+  expect(boundEdge).toEqual({
+    id: 'has-rival-edge',
+    source: '<https://example.test/team-a>',
+    target: '<https://example.test/team-b>',
+    nodeId: '<https://example.test/playsAgainst>',
+    label: 'plays against',
+    customMetadata: 'must-survive',
+  });
+  expect(await page.evaluate(() => buildFilters(cy.elements().components()[0])[0].predicate))
+    .toBe('<https://example.test/playsAgainst>');
+  await clickGraphEdge(page, 'has-rival-edge');
+  await expect(edgeMenu.getByRole('button', { name: 'Convert relation to variable' })).toBeVisible();
 });
+
+test('selecting a node-variable result still replaces the variable node', async ({ page }) => {
+  await disableAutoLayout(page);
+  await page.evaluate(() => {
+    cy.add({ group: 'nodes', data: { id: '?item', value: '?item', label: '?', type: 'variable' }, position: { x: 220, y: 200 } });
+  });
+  await page.route('**/api/query', route => route.fulfill({
+    contentType: 'application/json',
+    body: JSON.stringify({ data: [{ propertyId: '<https://example.test/team-a>', propertyLabel: 'Team A', propertyType: 'object', propertyClass: null }] }),
+  }));
+  await page.locator('#run-query-btn').click();
+  await expect(page.locator('#table-results-body')).toContainText('Team A');
+  await page.locator('#table-results-body tr.query-row').dispatchEvent('click');
+  expect(await page.evaluate(() => cy.nodes().map(node => node.data()))).toEqual([{
+    id: '<https://example.test/team-a>', value: '<https://example.test/team-a>', label: 'Team A', type: 'node',
+  }]);
+});
+
+for (const change of ['removed', 'rebound']) {
+  test(`a stale predicate result does not recreate a ${change} edge or add a node`, async ({ page }) => {
+    await disableAutoLayout(page);
+    await page.evaluate(() => {
+      cy.add([
+        { group: 'nodes', data: { id: 'source', value: '<https://example.test/source>' } },
+        { group: 'nodes', data: { id: 'target', value: '<https://example.test/target>' } },
+        { group: 'edges', data: { id: 'relation', source: 'source', target: 'target', nodeId: '?predicate_1', label: '?', type: 'variable' } },
+      ]);
+    });
+    await page.route('**/api/query', route => route.fulfill({
+      contentType: 'application/json',
+      body: JSON.stringify({ data: [{ propertyId: '<https://example.test/relation>', propertyLabel: 'relation', propertyType: 'object', propertyClass: null }] }),
+    }));
+    await page.locator('#run-query-btn').click();
+    await expect(page.locator('#table-results-body')).toContainText('relation');
+    await page.evaluate(change => {
+      const edge = cy.getElementById('relation');
+      if (change === 'removed') edge.remove();
+      else edge.data('nodeId', '?predicate_2');
+    }, change);
+    const graphBefore = await page.evaluate(() => cy.elements().map(element => element.json()));
+    await page.locator('#table-results-body tr.query-row').dispatchEvent('click');
+    expect(await page.evaluate(() => cy.elements().map(element => element.json()))).toEqual(graphBefore);
+  });
+}
 
 test('the node action list remains inside the graph viewport after movement pan and zoom', async ({ page }) => {
   await disableAutoLayout(page);

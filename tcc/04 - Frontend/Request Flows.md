@@ -36,6 +36,19 @@ integer and otherwise sends `20`. `buildFilters()` maps graph edges to
 
 ## Node action-list flow
 
+Predicate-query result selection uses `replacePredicateVariable`, with edge
+IDs captured when `getQuery` starts. It changes the existing edge's predicate
+identifier/label and clears its variable type without adding nodes, rewiring,
+or requesting relationship values. Removed or rebound edges are ignored.
+The result table still routes ordinary node bindings to `replaceNodeVariable`
+and default-node exploration to `getRelationshipValue`.
+
+Before staging or execution, the main Run Query action rejects two or more
+distinct predicate variables between the same fixed subject/object values.
+It shows a message without modifying the graph or sending an API request.
+Successive edges with exactly two variables retain their staged-panel flow;
+parallel edges sharing one predicate variable retain ordinary execution.
+
 **Confirmed:** Node and edge selection themselves send no request and perform
 no node-type operation. A node opens its semantic vertical list beside the node;
 an edge opens a separate list beside its rendered midpoint. Selecting one closes
