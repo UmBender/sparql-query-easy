@@ -22,6 +22,14 @@ list because the selected node ceases to exist; node replacement retargets it.
 The former circular right-click/long-press plugin is not loaded by
 `index2.html`.
 
+**Confirmed:** A left click on an existing graph edge opens a separate,
+accessible action list. Its current action changes only the edge predicate
+representation: `nodeId` becomes a collision-safe SPARQL variable named
+`?predicate_<number>`, the visible edge label becomes `?`, and its type becomes
+`variable`. The Cytoscape edge ID, source, target, and unrelated edge metadata
+are retained. Selecting an edge closes the node list, so edge selection cannot
+invoke a node action. A graph-background click closes either list.
+
 ```mermaid
 stateDiagram-v2
   [*] --> Closed
@@ -29,6 +37,16 @@ stateDiagram-v2
   Open --> Open: select another node or invoke action
   Open --> Closed: click graph background
   Open --> Closed: remove selected node
+```
+
+```mermaid
+stateDiagram-v2
+  [*] --> EdgeMenuClosed
+  EdgeMenuClosed --> EdgeMenuOpen: left-click existing edge
+  EdgeMenuOpen --> EdgeMenuClosed: convert predicate to variable
+  EdgeMenuOpen --> EdgeMenuClosed: click graph background
+  EdgeMenuOpen --> NodeMenuOpen: left-click node
+  NodeMenuOpen --> EdgeMenuOpen: left-click edge
 ```
 
 ```mermaid
@@ -65,8 +83,10 @@ working or secure authentication flow.
 insertion, Turtle upload endpoint replacement, relationship expansion, SPARQL
 preview/query execution, node-menu opening/retargeting/persistence/dismissal,
 node-type actions, conversion/removal, and viewport positioning against test-
-local HTTP responses. They serve the actual page, use controlled CDN stubs,
-and assert relative API URLs. Run `npm run test:browser`; see [[Request Flows]].
+local HTTP responses. They also validate edge-menu isolation, predicate-variable
+conversion, topology/metadata preservation, and the generated query request
+body. They serve the actual page, use controlled CDN stubs, and assert relative
+API URLs. Run `npm run test:browser`; see [[Request Flows]].
 
 ## Source files
 

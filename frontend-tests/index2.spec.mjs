@@ -39,6 +39,19 @@ async function clickGraphNode(page, nodeId) {
   await page.locator('#cy').click({ position });
 }
 
+async function clickGraphEdge(page, edgeId) {
+  await page.evaluate(() => new Promise((resolve) => {
+    requestAnimationFrame(() => requestAnimationFrame(resolve));
+  }));
+  const position = await page.evaluate((id) => {
+    const midpoint = cy.getElementById(id).midpoint();
+    const zoom = cy.zoom();
+    const pan = cy.pan();
+    return { x: midpoint.x * zoom + pan.x, y: midpoint.y * zoom + pan.y };
+  }, edgeId);
+  await page.locator('#cy').click({ position });
+}
+
 test('autocomplete callback adds the selected search result as a graph node through relative API URLs', async ({ page }) => {
   await page.locator('#input-busca-elementos').fill('Team');
   await page.locator('#input-busca-elementos').dispatchEvent('input');
@@ -248,6 +261,71 @@ test('convert retargets the menu and rewires edges while remove closes the unanc
   await expect(menu).toBeHidden();
   await expect(page.locator('#status-nodes')).toHaveText('Nodes: 1');
   await expect(page.locator('#status-edges')).toHaveText('Edges: 0');
+});
+
+test('edge action menu converts only a relation predicate into a queryable variable', async ({ page }) => {
+  await disableAutoLayout(page);
+  await page.evaluate(() => {
+    cy.add([
+      { group: 'nodes', data: { id: '<https://example.test/team-a>', value: '<https://example.test/team-a>', label: 'Team A', type: 'node' }, position: { x: 220, y: 280 } },
+      { group: 'nodes', data: { id: '<https://example.test/team-b>', value: '<https://example.test/team-b>', label: 'Team B', type: 'node' }, position: { x: 580, y: 280 } },
+      {
+        group: 'edges',
+        data: {
+          id: 'has-rival-edge',
+          source: '<https://example.test/team-a>',
+          target: '<https://example.test/team-b>',
+          nodeId: '<https://example.test/hasRival>',
+          label: 'has rival',
+          customMetadata: 'must-survive'
+        }
+      },
+    ]);
+  });
+
+  await clickGraphNode(page, '<https://example.test/team-a>');
+  await expect(page.locator('#node-action-menu')).toBeVisible();
+  await clickGraphEdge(page, 'has-rival-edge');
+
+  const edgeMenu = page.locator('#edge-action-menu');
+  await expect(page.locator('#node-action-menu')).toBeHidden();
+  await expect(edgeMenu).toBeVisible();
+  await expect(edgeMenu).toHaveAttribute('data-edge-id', 'has-rival-edge');
+  await expect(edgeMenu.getByRole('button', { name: 'Convert relation to variable' })).toBeVisible();
+
+  await edgeMenu.getByRole('button', { name: 'Convert relation to variable' }).click();
+  await expect(edgeMenu).toBeHidden();
+
+  const convertedEdge = await page.evaluate(() => cy.getElementById('has-rival-edge').data());
+  expect(convertedEdge).toMatchObject({
+    id: 'has-rival-edge',
+    source: '<https://example.test/team-a>',
+    target: '<https://example.test/team-b>',
+    nodeId: expect.stringMatching(/^\?predicate_[A-Za-z0-9_]+$/),
+    label: '?',
+    type: 'variable',
+    customMetadata: 'must-survive',
+  });
+  expect(await page.evaluate(() => cy.getElementById('has-rival-edge').length)).toBe(1);
+
+  const queriesBefore = server.requests.filter(({ path }) => path === '/api/query').length;
+  await page.evaluate(() => window.runQuery());
+  await expect.poll(() => server.requests.filter(({ path }) => path === '/api/query').length).toBe(queriesBefore + 1);
+  const request = server.requests.filter(({ path }) => path === '/api/query').at(-1);
+  expect(JSON.parse(request.body)).toMatchObject({
+    variableName: convertedEdge.nodeId,
+    where: [{
+      subject: '<https://example.test/team-a>',
+      predicate: convertedEdge.nodeId,
+      object: '<https://example.test/team-b>',
+      filterType: null,
+    }],
+  });
+
+  await clickGraphEdge(page, 'has-rival-edge');
+  await expect(edgeMenu).toBeVisible();
+  await page.locator('#cy').click({ position: { x: 16, y: 16 } });
+  await expect(edgeMenu).toBeHidden();
 });
 
 test('the node action list remains inside the graph viewport after movement pan and zoom', async ({ page }) => {

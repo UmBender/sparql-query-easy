@@ -42,8 +42,9 @@
             width: 100%;
         }
 
-        /* ── Persistent node action menu ─────────────────────────── */
-        #node-action-menu {
+        /* ── Persistent graph action menus ───────────────────────── */
+        #node-action-menu,
+        #edge-action-menu {
             position: absolute;
             z-index: 120;
             width: min(220px, calc(100% - 16px));
@@ -56,11 +57,13 @@
             box-shadow: 0 4px 14px rgba(0, 0, 0, 0.24);
         }
 
-        #node-action-menu[hidden] {
+        #node-action-menu[hidden],
+        #edge-action-menu[hidden] {
             display: none;
         }
 
-        #node-action-menu-title {
+        #node-action-menu-title,
+        #edge-action-menu-title {
             margin: 0 4px 6px;
             overflow: hidden;
             color: #424242;
@@ -70,15 +73,18 @@
             white-space: nowrap;
         }
 
-        #node-action-menu-list {
+        #node-action-menu-list,
+        #edge-action-menu-list {
             margin: 0;
         }
 
-        #node-action-menu-list li {
+        #node-action-menu-list li,
+        #edge-action-menu-list li {
             list-style: none;
         }
 
-        .node-action-menu-button {
+        .node-action-menu-button,
+        .edge-action-menu-button {
             display: flex;
             align-items: center;
             width: 100%;
@@ -94,7 +100,9 @@
         }
 
         .node-action-menu-button:hover,
-        .node-action-menu-button:focus-visible {
+        .node-action-menu-button:focus-visible,
+        .edge-action-menu-button:hover,
+        .edge-action-menu-button:focus-visible {
             outline: none;
             background: #e3f2fd;
         }
@@ -461,6 +469,10 @@
                 <p id="node-action-menu-title"></p>
                 <ul id="node-action-menu-list"></ul>
             </aside>
+            <aside id="edge-action-menu" hidden aria-labelledby="edge-action-menu-title">
+                <p id="edge-action-menu-title"></p>
+                <ul id="edge-action-menu-list"></ul>
+            </aside>
 
             <!-- Node legend -->
             <div id="legend" aria-label="Node type legend">
@@ -684,6 +696,7 @@
                 if (item.data('source') && item.data('source').includes('?')) variableName = item.data('source');
                 if (item.data('target') && item.data('target').includes('?')) variableName = item.data('target');
                 if (item.data('id')     && item.data('id').includes('?'))     variableName = item.data('id');
+                if (item.data('nodeId') && item.data('nodeId').startsWith('?')) variableName = item.data('nodeId');
             }
             return variableName;
         }
@@ -1391,6 +1404,14 @@
                         }
                     },
                     {
+                        selector: 'edge.edge-menu-target',
+                        style: {
+                            'line-color': '#1565C0',
+                            'target-arrow-color': '#1565C0',
+                            'width': 5
+                        }
+                    },
+                    {
                         selector: 'edge',
                         style: {
                             'width':               3,
@@ -1457,9 +1478,14 @@
             const nodeActionMenu      = document.getElementById('node-action-menu');
             const nodeActionMenuTitle = document.getElementById('node-action-menu-title');
             const nodeActionMenuList  = document.getElementById('node-action-menu-list');
+            const edgeActionMenu      = document.getElementById('edge-action-menu');
+            const edgeActionMenuTitle = document.getElementById('edge-action-menu-title');
+            const edgeActionMenuList  = document.getElementById('edge-action-menu-list');
             const cyContainer         = document.getElementById('cy');
             const cyWrapper           = document.getElementById('cy-wrapper');
             let selectedMenuNodeId    = null;
+            let selectedMenuEdgeId    = null;
+            let predicateVariableSequence = 1;
 
             function selectedMenuNode() {
                 if (!selectedMenuNodeId) return null;
@@ -1473,6 +1499,20 @@
                 selectedMenuNodeId = null;
                 nodeActionMenu.removeAttribute('data-node-id');
                 nodeActionMenu.hidden = true;
+            }
+
+            function selectedMenuEdge() {
+                if (!selectedMenuEdgeId) return null;
+                const edge = cy.getElementById(selectedMenuEdgeId);
+                return edge.length && edge.isEdge() ? edge : null;
+            }
+
+            function closeEdgeActionMenu() {
+                const selected = selectedMenuEdge();
+                if (selected) selected.removeClass('edge-menu-target');
+                selectedMenuEdgeId = null;
+                edgeActionMenu.removeAttribute('data-edge-id');
+                edgeActionMenu.hidden = true;
             }
 
             function hasVariableSource(node) {
@@ -1579,6 +1619,7 @@
             }
 
             function openNodeActionMenu(node) {
+                closeEdgeActionMenu();
                 const previous = selectedMenuNode();
                 if (previous && previous.id() !== node.id()) previous.removeClass('node-menu-target');
                 selectedMenuNodeId = node.id();
@@ -1667,6 +1708,117 @@
                 retarget: retargetNodeActionMenu
             };
 
+            // ── Persistent edge action menu ──────────────────────────────
+            function edgeActions(edge) {
+                return edge.data('nodeId')?.startsWith('?')
+                    ? []
+                    : [{ id: 'convert-predicate-variable', label: 'Convert relation to variable' }];
+            }
+
+            function positionEdgeActionMenu() {
+                const edge = selectedMenuEdge();
+                if (!edge || edgeActionMenu.hidden) return;
+
+                const wrapperRect = cyWrapper.getBoundingClientRect();
+                const canvasRect = cyContainer.getBoundingClientRect();
+                const midpoint = edge.midpoint();
+                const zoom = cy.zoom();
+                const pan = cy.pan();
+                const renderedMidpoint = {
+                    x: midpoint.x * zoom + pan.x,
+                    y: midpoint.y * zoom + pan.y
+                };
+                const canvasLeft = canvasRect.left - wrapperRect.left;
+                const canvasTop = canvasRect.top - wrapperRect.top;
+                const canvasRight = canvasLeft + canvasRect.width;
+                const canvasBottom = canvasTop + canvasRect.height;
+                const menuWidth = edgeActionMenu.offsetWidth;
+                const menuHeight = edgeActionMenu.offsetHeight;
+
+                if (
+                    renderedMidpoint.x < 0 || renderedMidpoint.y < 0 ||
+                    renderedMidpoint.x > canvasRect.width || renderedMidpoint.y > canvasRect.height
+                ) {
+                    edgeActionMenu.style.visibility = 'hidden';
+                    return;
+                }
+
+                const gap = 12;
+                let left = canvasLeft + renderedMidpoint.x + gap;
+                if (left + menuWidth > canvasRight - 8) left = canvasLeft + renderedMidpoint.x - gap - menuWidth;
+                left = Math.max(canvasLeft + 8, Math.min(left, canvasRight - menuWidth - 8));
+                const top = Math.max(
+                    canvasTop + 8,
+                    Math.min(canvasTop + renderedMidpoint.y - menuHeight / 2, canvasBottom - menuHeight - 8)
+                );
+
+                edgeActionMenu.style.left = `${left}px`;
+                edgeActionMenu.style.top = `${top}px`;
+                edgeActionMenu.style.visibility = 'visible';
+            }
+
+            function renderEdgeActionMenu() {
+                const edge = selectedMenuEdge();
+                if (!edge) {
+                    closeEdgeActionMenu();
+                    return;
+                }
+
+                edgeActionMenuTitle.textContent = `Actions for relation ${edge.data('label') || edge.data('nodeId') || edge.id()}`;
+                edgeActionMenuList.replaceChildren();
+                edgeActions(edge).forEach(action => {
+                    const item = document.createElement('li');
+                    const button = document.createElement('button');
+                    button.type = 'button';
+                    button.className = 'edge-action-menu-button';
+                    button.dataset.action = action.id;
+                    button.textContent = action.label;
+                    item.appendChild(button);
+                    edgeActionMenuList.appendChild(item);
+                });
+                edgeActionMenu.hidden = false;
+                edgeActionMenu.style.visibility = 'hidden';
+                positionEdgeActionMenu();
+            }
+
+            function openEdgeActionMenu(edge) {
+                closeNodeActionMenu();
+                const previous = selectedMenuEdge();
+                if (previous && previous.id() !== edge.id()) previous.removeClass('edge-menu-target');
+                selectedMenuEdgeId = edge.id();
+                edge.addClass('edge-menu-target');
+                edgeActionMenu.dataset.edgeId = edge.id();
+                renderEdgeActionMenu();
+            }
+
+            function nextPredicateVariableName() {
+                let candidate;
+                do {
+                    candidate = `?predicate_${predicateVariableSequence++}`;
+                } while (cy.elements().some(element =>
+                    ['id', 'nodeId', 'value'].some(key => element.data(key) === candidate)
+                ));
+                return candidate;
+            }
+
+            function convertMenuEdgeToPredicateVariable(edge) {
+                const variableName = nextPredicateVariableName();
+                edge.data('nodeId', variableName);
+                edge.data('label', '?');
+                edge.data('type', 'variable');
+                closeEdgeActionMenu();
+            }
+
+            edgeActionMenu.addEventListener('click', event => {
+                const button = event.target.closest('button[data-action]');
+                if (!button) return;
+                event.stopPropagation();
+                const edge = selectedMenuEdge();
+                if (edge && button.dataset.action === 'convert-predicate-variable') {
+                    convertMenuEdgeToPredicateVariable(edge);
+                }
+            });
+
             // ── Alt+drag: create variable edge / node ────────────────────
             let isDragging        = false;
             let dragOriginPrivate = null;
@@ -1717,17 +1869,33 @@
 
             // ── Node selection and explicit background dismissal ─────────
             cy.on('tap', 'node', event => openNodeActionMenu(event.target));
+            cy.on('tap', 'edge', event => openEdgeActionMenu(event.target));
             cy.on('tap', event => {
-                if (event.target === cy) closeNodeActionMenu();
+                if (event.target === cy) {
+                    closeNodeActionMenu();
+                    closeEdgeActionMenu();
+                }
             });
-            cy.on('pan zoom resize layoutstop', positionNodeActionMenu);
+            cy.on('pan zoom resize layoutstop', () => {
+                positionNodeActionMenu();
+                positionEdgeActionMenu();
+            });
             cy.on('position', 'node', event => {
                 if (event.target.id() === selectedMenuNodeId) positionNodeActionMenu();
+                if (selectedMenuEdge() && [selectedMenuEdge().data('source'), selectedMenuEdge().data('target')].includes(event.target.id())) {
+                    positionEdgeActionMenu();
+                }
             });
             cy.on('remove', 'node', event => {
                 if (event.target.id() === selectedMenuNodeId) closeNodeActionMenu();
             });
-            window.addEventListener('resize', positionNodeActionMenuAfterLayout);
+            cy.on('remove', 'edge', event => {
+                if (event.target.id() === selectedMenuEdgeId) closeEdgeActionMenu();
+            });
+            window.addEventListener('resize', () => {
+                positionNodeActionMenuAfterLayout();
+                requestAnimationFrame(() => requestAnimationFrame(positionEdgeActionMenu));
+            });
 
             // Keep status bar in sync
             cy.on('add remove', updateStatusBar);
