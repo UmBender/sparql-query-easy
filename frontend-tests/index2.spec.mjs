@@ -126,6 +126,25 @@ test('running a query with exactly two valid variables opens the staged explorat
   await expect(panel).toBeHidden();
 });
 
+for (const fixedValue of ['<https://example.test/relation?ghost>', '?alpha-bad']) {
+  test(`query variable detection ignores the non-variable value ${fixedValue}`, async ({ page }) => {
+    await disableAutoLayout(page);
+    await page.evaluate(value => {
+      cy.add([
+        { group: 'nodes', data: { id: 'fixed-node', value, label: value, type: 'node' } },
+        { group: 'nodes', data: { id: '?real', value: '?real', label: '?', type: 'variable' } },
+        { group: 'edges', data: { id: 'fixed-predicate', source: 'fixed-node', target: '?real', nodeId: '<https://example.test/relation>', label: 'relation' } },
+      ]);
+    }, fixedValue);
+    const queryRequestsBefore = server.requests.filter(({ path }) => path === '/api/query').length;
+
+    await page.locator('#run-query-btn').click();
+
+    await expect(page.locator('#two-variable-panel')).toBeHidden();
+    await expect.poll(() => server.requests.filter(({ path }) => path === '/api/query').length).toBe(queryRequestsBefore + 1);
+  });
+}
+
 for (const predicateCount of [2, 3]) {
   test(`${predicateCount} parallel predicate variables between fixed endpoints are not a traversal chain`, async ({ page }) => {
     await disableAutoLayout(page);
@@ -366,6 +385,8 @@ test('convert retargets the menu and rewires edges while remove closes the unanc
 
 test('edge action menu converts only a relation predicate into a queryable variable', async ({ page }) => {
   await disableAutoLayout(page);
+  await page.locator('#input-endpoint-sparql').fill('uploaded-test-graph');
+  await page.locator('#input-max-results').fill('7');
   await page.evaluate(() => {
     cy.add([
       { group: 'nodes', data: { id: '<https://example.test/team-a>', value: '<https://example.test/team-a>', label: 'Team A', type: 'node' }, position: { x: 220, y: 180 } },
@@ -421,8 +442,10 @@ test('edge action menu converts only a relation predicate into a queryable varia
   }));
   const queryRequest = page.waitForRequest(request => request.url().endsWith('/api/query'));
   await page.evaluate(() => window.runQuery());
-  expect((await queryRequest).postDataJSON()).toMatchObject({
+  expect((await queryRequest).postDataJSON()).toEqual({
+    endpointUrl: 'uploaded-test-graph',
     variableName: convertedEdge.nodeId,
+    limit: 7,
     where: [{
       subject: '<https://example.test/team-a>',
       predicate: convertedEdge.nodeId,

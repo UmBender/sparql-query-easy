@@ -117,7 +117,7 @@ internal fun Route.documentRelationships(): Route =
             "Builds and executes the relationship query for the selected endpoint. " +
                 "limit is retained for request compatibility but is not consumed by this operation.",
         successDescription = "Relationships mapped to application property values.",
-        includeUpstreamFailure = false,
+        includeUpstreamFailure = true,
     )
 
 internal fun Route.documentRelationshipValue(): Route =
@@ -128,7 +128,7 @@ internal fun Route.documentRelationshipValue(): Route =
             "Builds and executes the relationship-value query for the selected endpoint. " +
                 "subjectId and predicateId are semantically required; limit is accepted but unused.",
         successDescription = "Relationship values mapped to application property values.",
-        includeUpstreamFailure = false,
+        includeUpstreamFailure = true,
     )
 
 internal fun Route.documentSearch(): Route =

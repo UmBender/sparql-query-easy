@@ -79,6 +79,10 @@ Returns `200 OK`:
 ```
 
 There is no application-owned error response for this route.
+The actual C# host returned `200 text/plain Healthy` in
+`compatibility/retirement-expected/HTTP-HEALTH-001/case.json`. The Kotlin
+body/content type are **not equivalent**; [[../90 - Tasks/items/DEC-009-health-response-contract]]
+awaits a human choice to approve Kotlin JSON or align it to C#.
 
 ### `POST /api/local-database`
 
@@ -174,10 +178,8 @@ Success (`200 OK`, resource form):
 
 When `isLiteral` is true, `propertyId` and `propertyLabel` carry the literal
 lexical text and `propertyType` is `"text"`. Missing identifiers return `400`,
-for example `{"error":"Missing required field: subjectId"}`; other failures
-use the shared `400` or `404` response. **Potential issue:** like the
-relationships route, this route does not currently map an executor failure to
-the explicit `502` JSON envelope.
+for example `{"error":"Missing required field: subjectId"}`. The generated
+OpenAPI contract documents the shared `400`, `404`, and `502` error responses.
 
 ### `POST /api/query/search`
 
@@ -275,8 +277,8 @@ Wikidata behavior is selected when the endpoint contains the documented
 Wikidata marker. An invalid remote endpoint produces `400`; a syntactically
 valid but unavailable local handle produces `404`.
 
-The built-in identifier resolves the canonical C# dataset
-`Sparql.QueryEasy/futebol_completo.ttl`, copied into Kotlin resources; the
+The built-in identifier resolves the approved C# baseline bytes from the
+Kotlin-owned `src/main/resources/futebol_completo.ttl`; the
 frontend `sparql/databases/brasileirao2023.ttl` file is not a runtime
 alternative.
 

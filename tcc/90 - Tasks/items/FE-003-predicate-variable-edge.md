@@ -126,6 +126,20 @@ are mocked; the existing browser harness still loads CDN styles/fonts.
 Final validation passed: all 17 browser tests, all 107 Kotlin tests with
 `ktlintCheck detekt`, JavaScript syntax checks, and `git diff --check`.
 
+## Review follow-up (2026-09-27)
+
+The predicate-edge browser test now asserts the complete `POST /api/query` JSON
+body, including explicit `endpointUrl` and `limit` values, with exact equality.
+A focused run of that test passed under the attempted local CSS stub.
+
+An attempted test-only external-request block exposed a browser-layout
+dependency on Materialize CSS. A small local CSS stub made the focused FE-003
+test pass, but the full browser run failed an existing node-menu click test:
+the menu stayed hidden. The incomplete CSS stub and network block were removed
+to preserve the established interaction tests. FE-003 remains `REVIEW` until
+the browser suite can be shown to run deterministically without external
+assets. No production code or compatibility expectation was changed.
+
 ## Source files
 
 - `sparql/index2.html`

@@ -89,8 +89,12 @@ boundary and preserve its diagnostic.
   `ktlintCheck detekt test` gate. Status is `REVIEW` until that commit is merged
   into the currently dirty main worktree.
 - 2026-09-27: Integrated as merge commit `e040afc` on `kotlin`. The integrated
-  `ktlintCheck detekt test --no-daemon` gate passed; all acceptance criteria
-  are objectively verified.
+  `ktlintCheck detekt test --no-daemon` gate passed for the runtime change.
+- 2026-09-27: Follow-up audit found that generated OpenAPI still omitted `502`
+  for both relationship operations and API v1 retained stale gap text. Corrected
+  the OpenAPI declarations, exact response-inventory and JSON error-schema
+  tests, and documentation. Focused `QueryRoutesTest`/`OpenApiRoutesTest` and
+  the full `ktlintCheck detekt test --no-daemon` gate passed.
 
 ## Source files
 

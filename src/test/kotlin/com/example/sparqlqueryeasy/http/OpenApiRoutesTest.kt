@@ -125,13 +125,21 @@ class OpenApiRoutesTest {
                 document.operation("/api/query/search", "post").requiredObject("responses").keys,
             )
             assertEquals(
-                setOf("200", "400", "404"),
+                setOf("200", "400", "404", "502"),
                 document.operation("/api/query/relationships", "post").requiredObject("responses").keys,
             )
             assertEquals(
-                setOf("200", "400", "404"),
+                setOf("200", "400", "404", "502"),
                 document.operation("/api/query/relationship-value", "post").requiredObject("responses").keys,
             )
+            val upstreamErrorSchema =
+                document.responseSchema(document.operation("/api/query/search", "post"), "502", "application/json")
+            for (path in listOf("/api/query/relationships", "/api/query/relationship-value")) {
+                assertEquals(
+                    upstreamErrorSchema,
+                    document.responseSchema(document.operation(path, "post"), "502", "application/json"),
+                )
+            }
             assertEquals(
                 setOf("200", "400", "404"),
                 document.operation("/api/query/sparql", "post").requiredObject("responses").keys,

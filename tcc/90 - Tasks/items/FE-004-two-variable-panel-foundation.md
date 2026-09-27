@@ -36,8 +36,8 @@ backend routes, and remote traffic.
 - [x] The panel is keyboard accessible and dismissible without graph changes.
 - [x] Zero/one-variable execution is unchanged.
 - [x] No request is sent for a two-variable graph.
-- [x] Browser and Kotlin checks pass (17 browser tests and 107 Kotlin tests
-      in the predicate-query follow-up).
+- [x] Browser and Kotlin checks pass (22 browser tests in the variable-detection
+      follow-up; 107 Kotlin tests in the predicate-query follow-up).
 
 ## Verification commands
 
@@ -66,3 +66,16 @@ GRADLE_USER_HOME=/tmp/sparql-query-easy-gradle ./gradlew ktlintCheck detekt test
   chains retain the panel and repeated use of one variable still executes.
   Final validation passed: all 17 browser tests, all 107 Kotlin tests with
   `ktlintCheck detekt`, JavaScript syntax checks, and `git diff --check`.
+- 2026-09-27: Review found that variable detection accepted matching
+  substrings inside fixed IRIs, literals, and malformed values. Changed it to
+  require a whole valid node value or edge predicate value. Added offline
+  browser regressions for an IRI containing `?ghost` and malformed
+  `?alpha-bad`, each alongside one real variable. The full browser suite
+  passed (22 tests); JavaScript syntax and `git diff --check` passed. The
+  initial browser attempt was blocked by sandbox socket permissions; an
+  intermediate run timed out when a concurrent external-resource test-harness
+  edit changed page layout. Both conditions were resolved before the passing
+  run. No Kotlin production code changed in this correction.
+- 2026-09-27: Final integrated checks passed (22/22 browser tests and the
+  Kotlin quality gate), but the page still requests external CSS/fonts, so
+  deterministic offline browser execution remains unverified. Kept REVIEW.

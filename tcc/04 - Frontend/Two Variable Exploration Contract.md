@@ -10,6 +10,9 @@ variable by traversal order, so two-variable queries are ambiguous.
 ## Approved direction
 
 For exactly two distinct valid variables, running a query opens a side panel.
+Only a whole node value or edge predicate value matching
+`[?$][A-Za-z_][A-Za-z0-9_]*` counts as a variable. Variable-like substrings
+inside fixed IRIs, literals, or malformed values do not count.
 It will eventually list candidates for a first variable, let the user assume a
 binding, then show bounded candidates and the approved preview for the second.
 This avoids sending an uncontrolled `n × m` request.

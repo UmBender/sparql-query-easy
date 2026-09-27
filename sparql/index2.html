@@ -1112,14 +1112,13 @@
 
         function getQueryVariables(component) {
             const variables = new Set();
-            const variablePattern = /[?$][A-Za-z_][A-Za-z0-9_]*/g;
+            const variablePattern = /^[?$][A-Za-z_][A-Za-z0-9_]*$/;
             for (const item of component) {
                 const values = item.data('source') && item.data('target')
                     ? [item.data('nodeId')]
                     : [item.data('value') || item.data('id')];
                 for (const value of values) {
-                    if (typeof value !== 'string') continue;
-                    for (const match of value.matchAll(variablePattern)) variables.add(match[0]);
+                    if (typeof value === 'string' && variablePattern.test(value)) variables.add(value);
                 }
             }
             return [...variables].sort((left, right) => left < right ? -1 : left > right ? 1 : 0);
