@@ -16,8 +16,8 @@ export async function startFrontendTestServer() {
   const server = createServer(async (request, response) => {
     const url = new URL(request.url, 'http://localhost');
     if (url.pathname.startsWith('/api/') || url.pathname === '/health') {
-      requests.push({ method: request.method, path: url.pathname });
-      await consume(request);
+      const body = await consume(request);
+      requests.push({ method: request.method, path: url.pathname, body });
       return respondApi(response, url.pathname);
     }
     const relativePath = url.pathname === '/' ? 'index2.html' : url.pathname.slice(1);
@@ -66,7 +66,9 @@ function respond(response, value) {
 }
 
 async function consume(request) {
+  let body = '';
   for await (const _chunk of request) {
-    // The browser-test server only needs to consume request bodies before responding.
+    body += _chunk;
   }
+  return body;
 }

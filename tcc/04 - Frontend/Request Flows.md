@@ -24,8 +24,8 @@ sequenceDiagram
 | Search field after 400 ms debounce | `POST /api/query/search`: `endpointUrl: getEndpoint()`, trimmed `search`, `limit: getLimit()` | Builds Materialize autocomplete labels and stores each full item in `searches` | Console error only | [[03 - Backend/API v1#POST /api/query/search\|API v1]]; `QueryRoutesTest`; `StaticFrontendRoutesTest` |
 | Select autocomplete item | Zero or more `POST /api/query` connection probes: graph IDs and `?predicate`, `limit: 1`, `ignoreWikidata: false` | If a probe returns data, adds a graph relationship; otherwise adds standalone node | Console error; probe resolves `false` | [[03 - Backend/API v1#POST /api/query\|API v1]]; `QueryRoutesTest`; `StaticFrontendRoutesTest`; browser interaction coverage is deferred to `FE-001` |
 | Node action list: Explore relationships | A left-click selects an entity node; the explicit list action sends `POST /api/query/relationships` with `endpointUrl` and selected node `id` | The list remains selected while `trData` is filled, the relationship table is rendered, and the result modal opens | Loading overlay ends; generic failure toast and console error; the action list remains associated with the node | [[03 - Backend/API v1#POST /api/query/relationships\|API v1]]; `QueryRoutesTest`; `StaticFrontendRoutesTest`; `frontend-tests/index2.spec.mjs` |
+| Edge action list: Convert relation to variable | A left-click on an existing edge performs no HTTP request. The explicit action changes the predicate held in its `nodeId` to a collision-safe `?predicate_<number>` variable and shows `?`; source, target, edge ID, and other data stay unchanged. | The next query uses the changed predicate as part of `where`; when there is no variable node, that predicate variable becomes `variableName`. | No HTTP failure path exists for conversion. The menu closes after conversion; a background click also dismisses the list. | `frontend-tests/index2.spec.mjs`; browser coverage asserts the eventual `POST /api/query` JSON body. |
 | Relationship table selection | `POST /api/query/relationship-value`: `endpointUrl`, cached `subjectId`, `predicateId`, `isLiteral` | One value creates node/edge; zero or many creates a `many-results` placeholder | Loading overlay ends; generic failure toast and console error | [[03 - Backend/API v1#POST /api/query/relationship-value\|API v1]]; `QueryRoutesTest`; `StaticFrontendRoutesTest` |
-| Edge context action | Same relationship-value route with `isLiteral: true` | Uses returned one/many values to alter graph | Console error only; no toast or loading overlay | [[03 - Backend/API v1#POST /api/query/relationship-value\|API v1]]; `QueryRoutesTest`; `StaticFrontendRoutesTest`; browser interaction coverage is deferred to `FE-001` |
 | Variable-node action list: Run query | The explicit action sends `POST /api/query`: `endpointUrl`, graph-derived `where`, selected `variableName`, `limit` | Fills `trData`, renders a result table, then selection replaces/adds graph nodes; replacement retargets the persistent action list | Loading overlay ends; generic `Query failed` toast and console error | [[03 - Backend/API v1#POST /api/query\|API v1]]; `QueryRoutesTest`; `StaticFrontendRoutesTest`; `frontend-tests/index2.spec.mjs` |
 | SPARQL preview | `POST /api/query/sparql`: `endpointUrl`, graph-derived `where`, `variableName`, `limit` | Writes `data.data` using `.text()` and opens SPARQL modal | Loading overlay ends; substitutes generic modal text, logs error, opens modal | [[03 - Backend/API v1#POST /api/query/sparql\|API v1]]; `QueryRoutesTest`; `StaticFrontendRoutesTest` |
 
@@ -36,16 +36,18 @@ integer and otherwise sends `20`. `buildFilters()` maps graph edges to
 
 ## Node action-list flow
 
-**Confirmed:** Node selection itself sends no request and performs no node-type
-operation. It opens a semantic vertical list beside the selected node. Actions
-then invoke the same functions used by the earlier direct-tap behavior:
+**Confirmed:** Node and edge selection themselves send no request and perform
+no node-type operation. A node opens its semantic vertical list beside the node;
+an edge opens a separate list beside its rendered midpoint. Selecting one closes
+the other, so an edge cannot run a node action. Node actions then invoke the
+same functions used by the earlier direct-tap behavior:
 relationship exploration, variable/default query execution, safe link opening,
 Boolean toggling, literal editing, conversion, and removal. The list is
 retargeted when an action replaces the selected node. A true Cytoscape
 background click is the normal dismissal path; Remove also closes it because
 there is no longer a target. Pan, zoom, resize, layout, and node-position events
-reposition it, and it becomes visually hidden while its node is outside the
-graph viewport.
+reposition the lists, which become visually hidden while their target is outside
+the graph viewport.
 
 ## Confirmed error-behavior gap
 
@@ -68,7 +70,9 @@ Playwright Firefox with test-local API responses and controlled CDN stubs. It
 catches a broken autocomplete callback and verifies upload, relationship,
 SPARQL-preview, query-execution, real left-click node-menu opening, retargeting,
 keyboard action activation, background dismissal, the node-type action matrix,
-conversion/removal, edge rewiring, and viewport positioning.
+conversion/removal, edge rewiring, viewport positioning, edge-menu isolation,
+predicate-variable conversion, and the exact `POST /api/query` predicate-query
+payload.
 
 ## Source files
 
