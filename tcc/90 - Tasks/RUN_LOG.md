@@ -1,5 +1,17 @@
 # Task Worker Run Log
 
+## 2026-09-27 — integrated BUG-002, FE-003, and FE-004
+
+- Integrated BUG-002 (`e040afc`), predicate-variable edges (`62b3eaf`), and
+  the two-variable panel foundation (`04254db`) into the `kotlin` migration
+  branch. The only frontend merge conflict was resolved by retaining both the
+  edge action list and the independent two-variable panel.
+- The integrated offline Kotlin gate
+  `GRADLE_USER_HOME=/tmp/sparql-query-easy-gradle ./gradlew ktlintCheck detekt test --no-daemon`
+  and `node --check frontend-tests/index2.spec.mjs` passed. `BUG-002` is DONE.
+- FE-003 and FE-004 remain REVIEW because `npm run test:browser` requires the
+  uninstalled Playwright executable. No dependencies were installed.
+
 ## 2026-09-27 — FE-003 isolated implementation
 
 - Created the approved predicate-variable edge contract and task after source

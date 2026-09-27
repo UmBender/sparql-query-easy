@@ -1,7 +1,7 @@
 ---
 id: BUG-002
 title: Map relationship executor failures to the approved JSON 502 contract
-status: REVIEW
+status: DONE
 priority: P1
 type: bug
 depends_on: [OAPI-001]
@@ -46,13 +46,13 @@ and general-query execution failures.
 
 ## Acceptance criteria
 
-- [ ] Both relationship routes return JSON `502` for deterministic executor
+- [x] Both relationship routes return JSON `502` for deterministic executor
       failures.
-- [ ] Existing success, validation, and cache-miss tests remain unchanged and
+- [x] Existing success, validation, and cache-miss tests remain unchanged and
       pass.
-- [ ] Generated OpenAPI documents `502` for both operations.
-- [ ] The complete offline Kotlin quality gate passes.
-- [ ] API/migration documentation no longer lists this gap.
+- [x] Generated OpenAPI documents `502` for both operations.
+- [x] The complete offline Kotlin quality gate passes.
+- [x] API/migration documentation no longer lists this gap.
 
 ## Verification commands
 
@@ -88,6 +88,9 @@ boundary and preserve its diagnostic.
   relationship routes, and passed focused `QueryRoutesTest` plus the complete
   `ktlintCheck detekt test` gate. Status is `REVIEW` until that commit is merged
   into the currently dirty main worktree.
+- 2026-09-27: Integrated as merge commit `e040afc` on `kotlin`. The integrated
+  `ktlintCheck detekt test --no-daemon` gate passed; all acceptance criteria
+  are objectively verified.
 
 ## Source files
 

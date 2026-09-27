@@ -101,6 +101,10 @@ cause a node-only menu action or silently project the wrong variable.
   installed in that worktree; no dependency was installed. Status is `REVIEW`
   pending integration and the required browser-test execution in an environment
   with the committed Node dependencies available.
+- 2026-09-27: Integrated as merge commit `62b3eaf` on `kotlin`. The integrated
+  Kotlin quality gate and JavaScript syntax check passed. Remains `REVIEW`
+  solely because the required Playwright browser run cannot start without its
+  uninstalled dependency; no dependency was installed during integration.
 
 ## Source files
 

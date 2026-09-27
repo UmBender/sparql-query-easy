@@ -1,7 +1,7 @@
 ---
 id: FE-004
 title: Add the two-variable query exploration panel foundation
-status: IN_PROGRESS
+status: REVIEW
 priority: P1
 type: frontend
 depends_on: [FE-002]
@@ -32,11 +32,12 @@ backend routes, and remote traffic.
 
 ## Acceptance criteria
 
-- [ ] Exactly two variables open the panel on Run Query.
-- [ ] The panel is keyboard accessible and dismissible without graph changes.
-- [ ] Zero/one-variable execution is unchanged.
-- [ ] No request is sent for a two-variable graph.
-- [ ] Browser and Kotlin checks pass.
+- [x] Exactly two variables open the panel on Run Query.
+- [x] The panel is keyboard accessible and dismissible without graph changes.
+- [x] Zero/one-variable execution is unchanged.
+- [x] No request is sent for a two-variable graph.
+- [ ] Browser and Kotlin checks pass. Kotlin checks pass; Playwright is not
+      installed, so the required browser run remains pending.
 
 ## Verification commands
 
@@ -48,3 +49,10 @@ GRADLE_USER_HOME=/tmp/sparql-query-easy-gradle ./gradlew ktlintCheck detekt test
 ## Execution log
 
 - 2026-09-27: Started in `feature/two-variable-panel-foundation`.
+- 2026-09-27: Implemented in isolated branch
+  `feature/two-variable-panel-foundation`, commit `4d35a9c`. Its complete
+  Kotlin gate, JavaScript syntax check, and diff check passed. Browser tests
+  were not run because Playwright is not installed; no dependency was added.
+- 2026-09-27: Integrated as merge commit `04254db` on `kotlin`. The integrated
+  Kotlin quality gate and JavaScript syntax check passed. Status is `REVIEW`
+  pending the required Playwright run.
