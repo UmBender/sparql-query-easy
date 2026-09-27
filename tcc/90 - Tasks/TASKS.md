@@ -23,6 +23,7 @@ Tasks are ordered by dependency, then priority. `BLOCKED` tasks need information
 | FE-002 | DONE | P1 | frontend | Replace the node radial menu with a persistent left-click action list |
 | FE-003 | REVIEW | P1 | frontend | Let users convert a graph relation into a projected predicate variable |
 | FE-004 | REVIEW | P1 | frontend | Add the two-variable query exploration panel foundation |
+| FE-007 | DONE | P1 | frontend | Connect existing nodes with variable or defined predicates |
 | FE-005 | BACKLOG | P1 | frontend | Fetch bounded candidates for the first query variable |
 | FE-006 | BACKLOG | P1 | frontend | Explore the second variable under an assumed first binding |
 | SEC-001 | BACKLOG | P1 | security | Decide and implement production remote endpoint/upload policy |
@@ -32,6 +33,7 @@ Tasks are ordered by dependency, then priority. `BLOCKED` tasks need information
 | OPS-002 | BLOCKED | P2 | operations | Define DNS, TLS, reverse proxy, and production CORS |
 | OPS-003 | BLOCKED | P2 | operations | Produce AWS deployment plan |
 | OPS-004 | BLOCKED | P2 | operations | Define monitoring, backup, and recovery |
+| MIG-002 | BACKLOG | P1 | migration | Retire the C# project after compatibility and operations gates |
 | DOC-002 | DONE | P2 | documentation | Reconcile migration and compatibility documentation |
 
 See individual files in `items/` for acceptance criteria and logs.
