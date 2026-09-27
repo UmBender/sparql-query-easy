@@ -1,0 +1,79 @@
+{
+  "caseId": "REMOTE-RELATIONSHIP-CSHARP-001",
+  "captureKind": "controller-with-controlled-upstream",
+  "method": "POST",
+  "route": "/api/query/relationship-value",
+  "request": {
+    "endpointUrl": "https://example.test/sparql",
+    "subjectId": "\u003Chttps://example.test/subject\u003E",
+    "predicateId": "\u003Chttps://example.test/predicate\u003E",
+    "isLiteral": false
+  },
+  "http": {
+    "status": 200,
+    "contentType": null,
+    "bodyText": null,
+    "bodyJson": {
+      "data": [
+        {
+          "propertyClass": null,
+          "propertyId": "\u003Chttps://example.test/object\u003E",
+          "propertyLabel": "Remote object",
+          "propertyType": null
+        }
+      ]
+    }
+  },
+  "generatedSparql": "PREFIX rdf: \u003Chttp://www.w3.org/1999/02/22-rdf-syntax-ns#\u003E\nPREFIX rdfs: \u003Chttp://www.w3.org/2000/01/rdf-schema#\u003E\nPREFIX owl: \u003Chttp://www.w3.org/2002/07/owl#\u003E\nSELECT DISTINCT ?property ?propertyLabel\nWHERE {\n\u003Chttps://example.test/subject\u003E \u003Chttps://example.test/predicate\u003E ?property .\nOPTIONAL {\n?property rdfs:label ?propertyLabel .\nFILTER (lang(?propertyLabel) = \u0022en\u0022)\n}\n}\n",
+  "rawQueries": [
+    {
+      "query": "PREFIX rdf: \u003Chttp://www.w3.org/1999/02/22-rdf-syntax-ns#\u003E\nPREFIX rdfs: \u003Chttp://www.w3.org/2000/01/rdf-schema#\u003E\nPREFIX owl: \u003Chttp://www.w3.org/2002/07/owl#\u003E\nSELECT DISTINCT ?property ?propertyLabel\nWHERE {\n\u003Chttps://example.test/subject\u003E \u003Chttps://example.test/predicate\u003E ?property .\nOPTIONAL {\n?property rdfs:label ?propertyLabel .\nFILTER (lang(?propertyLabel) = \u0022en\u0022)\n}\n}\n",
+      "result": {
+        "projectedVariables": [
+          "property",
+          "propertyLabel"
+        ],
+        "rows": [
+          {
+            "bindings": [
+              {
+                "variable": "property",
+                "present": true,
+                "bound": true,
+                "value": {
+                  "kind": "uri",
+                  "uri": "https://example.test/object",
+                  "blankId": null,
+                  "lexicalForm": null,
+                  "datatype": null,
+                  "language": null
+                }
+              },
+              {
+                "variable": "propertyLabel",
+                "present": true,
+                "bound": true,
+                "value": {
+                  "kind": "literal",
+                  "uri": null,
+                  "blankId": null,
+                  "lexicalForm": "Remote object",
+                  "datatype": "http://www.w3.org/1999/02/22-rdf-syntax-ns#langString",
+                  "language": "en"
+                }
+              }
+            ]
+          }
+        ]
+      }
+    }
+  ],
+  "upstream": {
+    "fixture": "compatibility/remote-responses/remote-relationship-success.json",
+    "sha256": "f31b5ecdba9f642391d0805c1b922f5376570641211f203c8c59d0979e5d968f",
+    "method": "GET",
+    "requestUri": "https://example.test/sparql?query=PREFIX\u002Brdf%3a\u002B%3chttp%3a%2f%2fwww.w3.org%2f1999%2f02%2f22-rdf-syntax-ns%23%3e%0aPREFIX\u002Brdfs%3a\u002B%3chttp%3a%2f%2fwww.w3.org%2f2000%2f01%2frdf-schema%23%3e%0aPREFIX\u002Bowl%3a\u002B%3chttp%3a%2f%2fwww.w3.org%2f2002%2f07%2fowl%23%3e%0aSELECT\u002BDISTINCT\u002B%3fproperty\u002B%3fpropertyLabel%0aWHERE\u002B%7b%0a%3chttps%3a%2f%2fexample.test%2fsubject%3e\u002B%3chttps%3a%2f%2fexample.test%2fpredicate%3e\u002B%3fproperty\u002B.%0aOPTIONAL\u002B%7b%0a%3fproperty\u002Brdfs%3alabel\u002B%3fpropertyLabel\u002B.%0aFILTER\u002B(lang(%3fpropertyLabel)\u002B%3d\u002B%22en%22)%0a%7d%0a%7d%0a",
+    "requestBody": null
+  },
+  "capturedAtUtc": "2026-09-27T21:58:26.4990089+00:00"
+}

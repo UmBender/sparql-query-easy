@@ -41,7 +41,7 @@ class WikidataHttpClientTest {
             (result.rows[0].binding(SparqlVariable("item")) as BoundSparqlBinding).value shouldBe
                 Iri("https://www.wikidata.org/entity/Q42")
             (result.rows[0].binding(SparqlVariable("label")) as BoundSparqlBinding).value shouldBe
-                Literal("Douglas Adams", language = "en")
+                Literal("Douglas Adams", datatype = Literal.RDF_LANG_STRING, language = "en")
             (result.rows[0].binding(SparqlVariable("typed")) as BoundSparqlBinding).value shouldBe
                 Literal("0042", Iri("http://www.w3.org/2001/XMLSchema#integer"))
             result.rows[1].binding(SparqlVariable("label")) shouldBe UnboundSparqlBinding(SparqlVariable("label"))

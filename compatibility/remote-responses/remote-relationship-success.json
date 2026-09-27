@@ -1,0 +1,11 @@
+{
+  "head": { "vars": ["property", "propertyLabel"] },
+  "results": {
+    "bindings": [
+      {
+        "property": { "type": "uri", "value": "https://example.test/object" },
+        "propertyLabel": { "type": "literal", "xml:lang": "en", "value": "Remote object" }
+      }
+    ]
+  }
+}

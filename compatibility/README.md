@@ -7,7 +7,8 @@ status, or query-output golden files.
 
 The case catalogue is [cases/manifest.md](cases/manifest.md). Every case has a
 stable ID, input files, C# route, behavior being characterized, and rationale.
-`expected/` contains the captured baseline recorded in
+`expected/` contains the original 34-case baseline; `retirement-expected/`
+contains three additional success captures. Both sets are recorded in
 `cases/capture-status.tsv`. New or changed cases must still be captured from
 the running C# application; never hand-author expected output.
 
@@ -23,7 +24,9 @@ compatibility/
 ├── queries/                     # query-capability boundaries and notes
 ├── requests/                    # JSON request-body templates
 ├── wikidata-responses/          # recorded-only HTTP fixtures and policy
-└── expected/                    # 34 reviewed C# harness captures + index
+├── remote-responses/            # controlled local SPARQL JSON fixture
+├── expected/                    # immutable 34 reviewed C# captures + index
+└── retirement-expected/         # three additional retirement success captures
 ```
 
 ## Current baseline and comparator
@@ -41,6 +44,16 @@ queries. Its only query-text normalization is the documented random literal
 variable suffix. Six exception-category captures remain explicit intentional
 differences because the in-process C# harness did not produce middleware HTTP
 responses.
+
+The separately indexed `retirement-expected/` set captures a real ASP.NET
+`GET /health`, a C# Wikidata search-route success with the previously recorded
+upstream body, and a C# generic remote-SPARQL relationship success with a
+controlled upstream response. `RetirementSuccessCompatibilityTest` replays
+both query routes offline against the C# outputs and raw remote RDF result.
+The health status matches, but its body does not: C# returns `text/plain`
+`Healthy`, Kotlin returns JSON `{"status":"ok"}`. This is an unresolved
+health-contract decision, not a passing equivalence. The user waived further
+C# middleware-error equivalence captures; existing exception evidence remains.
 
 ## Running a fixture against C#
 
@@ -117,7 +130,8 @@ Each upload capture embeds the Turtle filename and SHA-256. Record capture
 timestamp, C# commit, .NET runtime/OS, status, expected path, every
 normalization, and observations in `cases/capture-status.tsv`. Exception cases
 record exception type/message/stack evidence in `case.json`; a separate
-black-box capture is required for environment-specific middleware responses.
+black-box capture would be required to claim environment-specific middleware
+response equivalence; that additional equivalence was explicitly waived.
 
 The C# in-process exception captures are not stable middleware response
 schemas. Kotlin deliberately uses the approved JSON `400`/`404`/`502` error
@@ -170,11 +184,13 @@ corpus records generated text only and never executes such probes remotely.
 ## Wikidata policy
 
 Ordinary characterization/unit runs must not contact live Wikidata. The C#
-service hard-codes its URL and has no injection seam, so deterministic C# HTTP
-responses cannot be replayed without changing production code. Use the
-`WIKIDATA-*` cases only as manually approved, one-time recordings; then store
-sanitized raw responses under `wikidata-responses/` and test Kotlin through a
-local fake server. See [wikidata-responses/README.md](wikidata-responses/README.md).
+service hard-codes its URL but accepts an injected `HttpClient`; a controlled
+handler can capture its response without changing production code. A one-time
+public success body, selected headers, and provenance are now under
+`wikidata-responses/`. Non-2xx and malformed bodies there are explicitly
+controlled local faults, not live Wikidata captures. Kotlin replays all three
+through its full Ktor search route using `MockEngine`. See
+[wikidata-responses/README.md](wikidata-responses/README.md).
 
 ## Kotlin execution
 
@@ -185,7 +201,10 @@ remote execution, applies only the normalizations above, and reports mismatches
 by fixture ID. Comparisons use application-owned RDF/result values and HTTP
 output—never Jena `toString()` or implementation-specific blank-node labels.
 
-Recorded Wikidata success/error responses are still absent. They require the
-separate approved one-time recording process described in
-[`wikidata-responses/README.md`](wikidata-responses/README.md) before route-level
-replay can be added.
+The recorded Wikidata success and controlled fault cases are replayed by
+`RecordedWikidataRoutesTest`. The success body is also injected into the
+original C# controller/service for
+`retirement-expected/WIKIDATA-SEARCH-CSHARP-001`; Kotlin route output matches
+that C# capture. Controlled faults are intentionally non-equivalent under the
+approved JSON error contract. Neither the three new captures nor the
+controlled faults are added to the original `expected/index.json`.

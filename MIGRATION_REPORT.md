@@ -15,6 +15,12 @@ produced and committed 34 immutable C# captures under
 successful local and generated-query cases, subject to the documented
 unordered-result comparison rule.
 
+On 2026-09-27, three additional success captures were recorded separately
+under `compatibility/retirement-expected/`, leaving the original 34 intact.
+Kotlin matches the C# Wikidata and controlled generic remote SPARQL outputs.
+The C# health status matches but its plain-text body differs from Kotlin JSON;
+`DEC-009` is the remaining health-contract decision.
+
 Successful local fixture comparisons now include graph isomorphism, Kotlin's
 actually executed SPARQL, projected variables, result-row multiplicity,
 bound/unbound bindings, RDF term details, and the documented ordered versus
@@ -35,7 +41,8 @@ normalization, and .NET empty-authority-path normalization differences.
 Option 1 was approved on 2026-09-16: the C# `Sparql.QueryEasy/futebol_completo.ttl`
 asset (SHA-256
 `2345428c9513651dcf184835538fa910abae6c95fcb399e508709d646af7993f`) remains
-the sole built-in dataset. Gradle packages this same asset for Kotlin;
+the sole built-in dataset. Since OPS-001, Gradle packages a byte-identical
+Kotlin-owned copy at `src/main/resources/futebol_completo.ttl`;
 `sparql/databases/brasileirao2023.ttl` is reference-only and no capture baseline
 was changed.
 
@@ -49,6 +56,9 @@ was changed.
 | `npm run test:browser` | Eight offline Playwright tests passed on 2026-09-21 using the local fixture server and CDN stubs. |
 | `./gradlew test --tests 'com.example.sparqlqueryeasy.http.OpenApiRoutesTest' --no-daemon` | Passed on 2026-09-27; public Swagger/spec endpoints, exact eight-operation inventory, OpenAPI 3.1 validation, and representative schemas/errors are verified offline. |
 | `./gradlew ktlintFormat ktlintCheck detekt test --no-daemon` | Passed the complete Kotlin quality gate on 2026-09-27 after the OpenAPI implementation. |
+| `dotnet run --project compatibility/Compatibility.Harness/Compatibility.Harness.csproj --no-build -- --retirement-success` | Captured the three separately indexed C# retirement success cases on 2026-09-27 with .NET SDK 8.0.131 and no live upstream request. |
+| `./gradlew ktlintFormat test --tests 'com.example.sparqlqueryeasy.http.RetirementSuccessCompatibilityTest' --tests 'com.example.sparqlqueryeasy.wikidata.client.WikidataHttpClientTest' --no-daemon` | Passed offline after mapping language-tagged remote SPARQL JSON literals to `rdf:langString`. |
+| `./gradlew ktlintCheck detekt test --no-daemon` | Passed the full offline Kotlin gate on 2026-09-27 after the retirement captures and parser correction. |
 
 The opt-in live Wikidata integration task was intentionally not run. Ordinary
 verification must remain offline.
@@ -83,8 +93,9 @@ normalized.
 | Query boundaries | offset, generated-path, ASK/CONSTRUCT unavailable, injection-path | Generated-path capture where available | Offline generated-query comparator | Injection capture is generated-query evidence only; unsupported raw operations remain outside the public API |
 | Relationships/filtering | `RELATIONSHIPS-LOCAL-001`, `RELATIONSHIP-LITERAL-001`, `RELATIONSHIP-RESOURCE-001`, `QUERY-EMPTY-WHERE-001` | Captured route/raw results | Offline route/raw-result comparator | Valid captures compared |
 | Search/endpoints | `SEARCH-LOCAL-001`, `BUILTIN-GRAPH-001`, `LOCAL-CACHE-MISS-001` | Reviewed local-branch captures or exception capture | Offline route/raw-result comparator and deterministic service tests | Search captures compared; cache-miss exception remains intentionally non-equivalent |
-| HTTP | `HTTP-BAD-JSON-001`, `HTTP-MISSING-UPLOAD-001`; `HTTP-HEALTH-001` is catalogue-only | Exception-category captures; no C# health capture | Kotlin route tests; exception cases excluded from response equality | Exception captures intentionally non-equivalent; C# health middleware remains uncaptured |
-| Wikidata | `WIKIDATA-GENERATION-001`; planned `WIKIDATA-SEARCH-RECORD-001` and `WIKIDATA-SEARCH-ERROR-001` | Generated query captured; live search intentionally absent | Generated-query comparator plus offline generator/MockEngine client tests | Generation compared; search route replay remains open under `QUAL-001` |
+| HTTP | Original exception captures; separate `HTTP-HEALTH-001` | Real ASP.NET host returned `200 text/plain Healthy` | Kotlin health route returns `200` JSON `{"status":"ok"}` | Status matches; body/content type differ pending explicit decision. Middleware-error equivalence was waived. |
+| Wikidata | `WIKIDATA-GENERATION-001`; separate `WIKIDATA-SEARCH-CSHARP-001`; recorded success and controlled fault bodies | C# controller/service captured with the recorded public success body injected by a fail-closed handler | Ktor route replays the same body offline | Success status/JSON match; non-2xx JSON `502` remains an approved intentional difference. |
+| Generic remote SPARQL | Separate `REMOTE-RELATIONSHIP-CSHARP-001` | C# controller/service/`RemoteQueryExecutor` with controlled SPARQL JSON; generated query, raw result, and response captured | Kotlin remote transport and route replay same body offline | Response, query, projected variables, binding presence, and RDF terms match; language literal `rdf:langString` mapping fixed without weakening assertions. |
 
 ## Detailed compatibility findings
 
@@ -174,8 +185,12 @@ either C# capture or Kotlin route assertions.
 - `application.conf` defaults to HTTP port `8080`; C# development profiles use
   `http://localhost:5242` and `https://localhost:7070`. Port `8080` is an
   approved intentional change, not missing parity.
-- The manifest's C# health case and production middleware failure responses
-  have not been black-box captured.
+- The C# health response was captured from the actual ASP.NET host. Its
+  `text/plain Healthy` body differs from Kotlin's JSON `{"status":"ok"}`;
+  `DEC-009` must approve the Kotlin change or align it to C#.
+- The user explicitly waived additional C# middleware-error equivalence
+  captures. Existing exception-only evidence remains intact; no claim of
+  equivalent error status/body is made.
 
 ### Unresolved risks
 
@@ -183,10 +198,13 @@ either C# capture or Kotlin route assertions.
   Parser diagnostic text for invalid Turtle, additional numeric edge cases,
   and unspecified row order outside the fixtures remain broader risks.
 - C# HTTP framework error bodies/statuses for malformed JSON, invalid Turtle,
-  missing upload, cache miss, and remote failures have not been black-box
-  captured.
-- Live Wikidata responses are intentionally absent from normal tests; recorded
-  production fixtures must be supplied before a live-contract claim.
+  missing upload, cache miss, and remote failures are not black-box goldens by
+  the approved waiver. Kotlin's explicit JSON errors remain intentional.
+- One public Wikidata success body is stored with provenance and replayed in
+  both C# and Kotlin without normal-test network access. The non-2xx and
+  malformed cases are controlled faults, not observed Wikidata responses.
+  Three additional C# retirement captures are separate from the immutable
+  34-case corpus; see `compatibility/retirement-expected/README.md`.
 
 ## Manual verification procedure
 
@@ -202,18 +220,17 @@ either C# capture or Kotlin route assertions.
 4. Compare controller status/body, generated query text, raw projected
    variables, bindings, graph snapshots, and diagnostics. Add a minimal
    regression before correcting each confirmed Kotlin difference.
-5. Black-box capture C# middleware behavior separately for malformed JSON and
-   uncaught controller failures, because the in-process harness deliberately
-   does not model developer exception pages.
+5. Preserve the explicit waiver of further C# middleware-error captures;
+   never label those in-process exception categories as response-equivalent.
 
 ## Deployment and rollback recommendations
 
-- Do not remove the C# project or switch production traffic until the open
-  production decisions, recorded Wikidata route cases, and required middleware
-  captures are reviewed.
-- Deploy Kotlin behind a reversible path/host or weighted rollout; keep the C#
-  deployment artifact and its 12-hour local-cache semantics available.
+- Do not remove the C# project until the health-body decision, .NET workflow
+  replacement/disablement, local gates, capture preservation, and removal diff
+  are reviewed. Production traffic remains a separate, deferred decision.
+- A future Kotlin deployment needs its own approved rollback plan; do not
+  assume the C# artifact remains deployable after repository-level retirement.
 - Monitor route status distribution, upload parse failures, cache misses,
   remote/SPARQL/MediaWiki status codes, response schema errors, and latency.
-- Roll back by routing traffic to the C# artifact if compatibility checks or
-  production telemetry show an unapproved status/body/order difference.
+- Plan rollback to a previously verified Kotlin artifact before deployment;
+  no deployment or production rollback path is approved in this phase.

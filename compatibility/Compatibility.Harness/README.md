@@ -26,3 +26,12 @@ error pages remain environment-dependent and require a separate black-box host
 capture if they become contractual.
 
 No output is written until the harness is actually run with the .NET 8 SDK.
+
+For the three separately approved C# retirement success captures, use
+`--retirement-success` after the project is built. This mode writes only to
+`compatibility/retirement-expected/` and refuses to overwrite an existing
+capture. It starts the original ASP.NET host on loopback for `/health` and
+injects controlled recorded HTTP bodies for Wikidata search and a generic
+remote SPARQL relationship query. It does not write the original 34-case
+`expected/` corpus or contact live external services. See
+[`retirement-expected/README.md`](../retirement-expected/README.md).

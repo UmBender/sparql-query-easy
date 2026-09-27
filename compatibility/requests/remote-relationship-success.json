@@ -1,0 +1,6 @@
+{
+  "endpointUrl": "https://example.test/sparql",
+  "subjectId": "<https://example.test/subject>",
+  "predicateId": "<https://example.test/predicate>",
+  "isLiteral": false
+}

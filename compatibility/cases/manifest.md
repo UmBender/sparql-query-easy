@@ -1,10 +1,11 @@
 # Characterization Case Catalogue
 
-Reviewed C# outputs for 34 executable cases are stored under
-`../expected/<case-id>/` and indexed by `../expected/index.json`. Capture
-provenance is recorded in `capture-status.tsv`. Boundary-only catalogue cases,
-`HTTP-HEALTH-001`, and the two Wikidata search recording cases do not currently
-have C# capture directories. Upload-based requests use the `__DATABASE_ID__`
+Reviewed C# outputs for the original 34 executable cases remain under
+`../expected/<case-id>/` and indexed by `../expected/index.json`. Three
+additional success captures are stored separately under
+`../retirement-expected/`. Capture provenance for both sets is recorded in
+`capture-status.tsv`. Boundary-only catalogue cases and controlled Wikidata
+faults are not C# HTTP goldens. Upload-based requests use the `__DATABASE_ID__`
 placeholder after uploading the listed Turtle input. Fixture paths in the
 tables are relative to `compatibility/`.
 
@@ -61,12 +62,15 @@ tables are relative to `compatibility/`.
 
 | Case ID | Inputs and route | Behavior characterized | Why it matters |
 |---|---|---|---|
-| `HTTP-HEALTH-001` | `GET /health` | Health status/body. | Deployment health contract. |
+| `HTTP-HEALTH-001` | Actual ASP.NET host `GET /health`; `../retirement-expected/HTTP-HEALTH-001/case.json` | `200 text/plain Healthy`; Kotlin currently returns `200` JSON `{"status":"ok"}`. | Health-body difference requires approval or correction; not equivalent yet. |
 | `HTTP-BAD-JSON-001` | `malformed.json` → `POST /api/query` | Framework/model-binding malformed JSON response. | Ktor behavior must be chosen deliberately. |
 | `HTTP-MISSING-UPLOAD-001` | `POST /api/local-database` without `ttlFile` | Missing multipart field behavior. | Captures current validation/error boundary. |
 | `WIKIDATA-GENERATION-001` | `wikidata-query-generation.json` → `/api/query/sparql` | Wikidata prefix and `wikibase:directClaim` label text. | Safe, no-network characterization of Wikidata logic. |
-| `WIKIDATA-SEARCH-RECORD-001` | Approved live recording only; see `wikidata-responses/README.md` | Entity result mapping to brackets, `(Qid) label`, and `object`. | Captures it once without live unit-test dependency. |
-| `WIKIDATA-SEARCH-ERROR-001` | Approved controlled non-success recording only | Non-success empty-data versus thrown-error behavior. | Required before HTTP client replacement. |
+| `WIKIDATA-SEARCH-RECORD-001` | One public response recorded under `wikidata-responses/` | Raw upstream input reused in C# and Kotlin route tests. | No ordinary test contacts Wikidata. |
+| `WIKIDATA-SEARCH-CSHARP-001` | Recorded upstream body → original C# `POST /api/query/search`; `../retirement-expected/WIKIDATA-SEARCH-CSHARP-001/case.json` | Controller result and upstream request are captured. | Kotlin route output is compared offline. |
+| `REMOTE-RELATIONSHIP-CSHARP-001` | Controlled SPARQL JSON → original C# `POST /api/query/relationship-value`; `../retirement-expected/REMOTE-RELATIONSHIP-CSHARP-001/case.json` | Production `RemoteQueryExecutor` query/result and controller response captured. | Kotlin route, SPARQL text, projected variables and RDF bindings are compared offline. |
+| `WIKIDATA-SEARCH-ERROR-001` | Controlled local `429` fixture, not Wikidata traffic | C# non-success empty-data versus Kotlin JSON `502` behavior. | Explicit intentional difference, tested offline. |
+| `WIKIDATA-SEARCH-MALFORMED-001` | Controlled local malformed `200` fixture | Kotlin JSON `502` parsing failure. | Error-path replay is offline; not a C# middleware capture. |
 
 ## Capture status
 

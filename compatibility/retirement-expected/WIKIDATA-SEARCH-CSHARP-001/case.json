@@ -1,0 +1,42 @@
+{
+  "caseId": "WIKIDATA-SEARCH-CSHARP-001",
+  "captureKind": "controller-with-recorded-upstream",
+  "method": "POST",
+  "route": "/api/query/search",
+  "request": {
+    "endpointUrl": "https://query.wikidata.org/sparql",
+    "search": "Douglas Adams",
+    "limit": 2
+  },
+  "http": {
+    "status": 200,
+    "contentType": null,
+    "bodyText": null,
+    "bodyJson": {
+      "data": [
+        {
+          "propertyClass": null,
+          "propertyId": "\u003Chttp://www.wikidata.org/entity/Q42\u003E",
+          "propertyLabel": "(Q42) Douglas Adams",
+          "propertyType": "object"
+        },
+        {
+          "propertyClass": null,
+          "propertyId": "\u003Chttp://www.wikidata.org/entity/Q28421831\u003E",
+          "propertyLabel": "(Q28421831) Douglas Adams",
+          "propertyType": "object"
+        }
+      ]
+    }
+  },
+  "generatedSparql": null,
+  "rawQueries": [],
+  "upstream": {
+    "fixture": "compatibility/wikidata-responses/recorded-WIKIDATA-SEARCH-RECORD-001-body.json",
+    "sha256": "3635de97607591642df709934420c03162063c1c878ac1eb0fc64ae7985ba755",
+    "method": "GET",
+    "requestUri": "https://www.wikidata.org/w/api.php?action=wbsearchentities\u0026continue=0\u0026format=json\u0026language=en\u0026limit=2\u0026origin=*\u0026search=Douglas%20Adams\u0026type=item\u0026uselang=en",
+    "requestBody": null
+  },
+  "capturedAtUtc": "2026-09-27T21:58:26.3944363+00:00"
+}

@@ -198,6 +198,11 @@ private fun SparqlJsonBinding.toDomainValue() =
     when (type) {
         "uri" -> Iri(value)
         "bnode" -> BlankNode(value)
-        "literal", "typed-literal" -> Literal(lexicalForm = value, datatype = datatype?.let(::Iri), language = language)
+        "literal", "typed-literal" ->
+            Literal(
+                lexicalForm = value,
+                datatype = datatype?.let(::Iri) ?: if (language != null) Literal.RDF_LANG_STRING else null,
+                language = language,
+            )
         else -> error("Unsupported SPARQL JSON binding type: $type")
     }

@@ -15,6 +15,11 @@ using VDS.RDF;
 using VDS.RDF.Query;
 
 var root = FindRepositoryRoot(Directory.GetCurrentDirectory());
+if (args is ["--retirement-success"])
+{
+    await new RetirementCaptureHarness(root).RunAsync();
+    return;
+}
 var harness = new FixtureHarness(root);
 await harness.RunAsync();
 
