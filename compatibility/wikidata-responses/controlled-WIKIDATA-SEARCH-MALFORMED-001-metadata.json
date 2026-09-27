@@ -1,0 +1,13 @@
+{
+  "caseId": "WIKIDATA-SEARCH-MALFORMED-001",
+  "provenance": "controlled-local-MockEngine-response; not a live Wikidata recording",
+  "createdAtUtc": "2026-09-27",
+  "requestMethod": "GET",
+  "requestEndpoint": "https://www.wikidata.org/w/api.php",
+  "responseStatus": 200,
+  "selectedResponseHeaders": {
+    "content-type": "application/json; charset=utf-8"
+  },
+  "responseBody": "controlled-WIKIDATA-SEARCH-MALFORMED-001-body.json",
+  "observation": "The deliberately truncated body exercises Kotlin's explicit JSON 502 path. It is not C# HTTP-response evidence."
+}

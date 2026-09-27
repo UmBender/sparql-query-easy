@@ -1,0 +1,20 @@
+{
+  "caseId": "WIKIDATA-SEARCH-RECORD-001",
+  "provenance": "live-public-wikidata",
+  "capturedAtUtc": "2026-09-27T18:18:27Z",
+  "requestMethod": "GET",
+  "requestUrl": "https://www.wikidata.org/w/api.php?action=wbsearchentities&continue=0&format=json&language=en&limit=2&origin=*&search=Douglas%20Adams&type=item&uselang=en",
+  "requestUserAgent": "SPARQLEasyQuery-compatibility-capture/1.0 (educational project)",
+  "responseStatus": 200,
+  "selectedResponseHeaders": {
+    "date": "Sun, 27 Sep 2026 18:18:27 GMT",
+    "content-type": "application/json; charset=utf-8",
+    "content-length": "1015"
+  },
+  "responseBody": "recorded-WIKIDATA-SEARCH-RECORD-001-body.json",
+  "rawBodySha256ExcludingFileNewline": "7c9839c1cd94d48a72bda77fe80ef0d145b2f9161d2943841caadc35a0a8ccde",
+  "csharpSourceCommit": "4fb9270fc88ba872c017eeccea05058560c4a94f",
+  "identifiers": ["Q42", "Q28421831"],
+  "normalization": "No JSON field, identifier, or label normalization; one terminal newline added to the fixture file",
+  "omittedHeaders": "Cookies, client IP, cache IDs, server instance IDs, and operational telemetry"
+}

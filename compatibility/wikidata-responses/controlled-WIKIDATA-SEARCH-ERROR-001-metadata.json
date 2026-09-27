@@ -1,0 +1,14 @@
+{
+  "caseId": "WIKIDATA-SEARCH-ERROR-001",
+  "provenance": "controlled-local-MockEngine-response; not a live Wikidata recording",
+  "createdAtUtc": "2026-09-27",
+  "requestMethod": "GET",
+  "requestEndpoint": "https://www.wikidata.org/w/api.php",
+  "responseStatus": 429,
+  "selectedResponseHeaders": {
+    "content-type": "text/plain; charset=utf-8",
+    "Retry-After": "30"
+  },
+  "responseBody": "controlled-WIKIDATA-SEARCH-ERROR-001-body.txt",
+  "observation": "C# GetSearch returns an empty data array for a non-success response; Kotlin returns the approved explicit JSON 502 error."
+}
