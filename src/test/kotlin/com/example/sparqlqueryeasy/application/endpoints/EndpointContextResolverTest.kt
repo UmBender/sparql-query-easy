@@ -11,9 +11,21 @@ import com.example.sparqlqueryeasy.rdf.TurtleParser
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.types.shouldBeInstanceOf
 import org.junit.jupiter.api.Test
+import java.security.MessageDigest
 import kotlin.test.assertFailsWith
 
 class EndpointContextResolverTest {
+    @Test
+    fun `Kotlin-owned built-in Turtle resource preserves the approved C sharp baseline bytes`() {
+        val bytes =
+            checkNotNull(javaClass.classLoader.getResourceAsStream("futebol_completo.ttl")) {
+                "Missing built-in Turtle classpath resource"
+            }.use { it.readBytes() }
+        val hash = MessageDigest.getInstance("SHA-256").digest(bytes).joinToString("") { "%02x".format(it) }
+
+        hash shouldBe "2345428c9513651dcf184835538fa910abae6c95fcb399e508709d646af7993f"
+    }
+
     @Test
     fun `BUILTIN-GRAPH-001 resolves the exact built-in identifier to the eager singleton graph`() {
         val graph = RdfGraph()

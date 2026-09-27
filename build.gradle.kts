@@ -72,7 +72,6 @@ tasks.test {
 }
 
 tasks.named<Copy>("processResources") {
-    from(layout.projectDirectory.file("Sparql.QueryEasy/futebol_completo.ttl"))
     from(layout.projectDirectory.dir("sparql")) {
         include("index2.html", "login.html", "grafos.css", "cytoscape.min.js", "cytoscape-cxtmenu.js")
         into("frontend")

@@ -21,7 +21,7 @@ class BuiltInGraphLoadingFailure(
     cause: Throwable? = null,
 ) : RuntimeException("Built-in Brazilian graph resource is unavailable: $resourceName", cause)
 
-/** Reads the bundled C# runtime asset after Gradle copies it to the Kotlin classpath. */
+/** Reads the byte-identical C# baseline dataset from the Kotlin-owned classpath resource. */
 class ClasspathTurtleTextSource(
     private val resourceName: String = "futebol_completo.ttl",
     private val classLoader: ClassLoader = ClasspathTurtleTextSource::class.java.classLoader,

@@ -1,0 +1,17 @@
+.git
+.github
+.gradle
+.idea
+.vs
+build
+node_modules
+playwright-report
+test-results
+Sparql.QueryEasy
+compatibility
+files
+frontend-tests
+tcc
+src/test
+src/integrationTest
+*.pdf

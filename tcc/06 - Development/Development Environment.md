@@ -6,6 +6,8 @@
 |---|---|
 | Kotlin quality gate | `GRADLE_USER_HOME=/tmp/sparql-query-easy-gradle ./gradlew ktlintCheck detekt test --no-daemon` |
 | Kotlin application | `./gradlew run` |
+| Kotlin JVM distribution | `./gradlew installDist`, then `./build/install/sparql-query-easy-kotlin/bin/sparql-query-easy-kotlin` |
+| Optional local container | `docker build -t sparql-query-easy:local .` (daemon and network required) |
 | OpenAPI JSON | `http://localhost:8080/openapi.json` |
 | Swagger UI | `http://localhost:8080/swagger` |
 | C# harness | `dotnet run --project compatibility/Compatibility.Harness/Compatibility.Harness.csproj` |
@@ -23,11 +25,15 @@
   It requires no separate generation command or checked-in generated file.
   Both documentation endpoints are intentionally public in every environment
   until `AUTH-000` defines authentication.
-- **Unknown:** No documented production Kotlin configuration, secrets model, or environment-variable matrix exists.
+- **Confirmed:** Kotlin's classpath now owns the byte-identical built-in
+  Turtle resource; the Gradle build no longer reads from `Sparql.QueryEasy/`.
+- **Unknown:** No approved production Kotlin configuration, secrets model, or environment-variable matrix exists. See [[../07 - Operations/Local JVM and Container Runtime]].
 
 ## Source files
 
 - `build.gradle.kts`
+- `Dockerfile`
+- `src/main/resources/futebol_completo.ttl`
 - `src/main/resources/application.conf`
 - `Sparql.QueryEasy/Properties/launchSettings.json`
 - `src/integrationTest/kotlin/com/example/sparqlqueryeasy/wikidata/client/WikidataLiveIntegrationTest.kt`
