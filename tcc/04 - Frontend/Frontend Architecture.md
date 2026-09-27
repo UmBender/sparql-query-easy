@@ -30,6 +30,18 @@ representation: `nodeId` becomes a collision-safe SPARQL variable named
 are retained. Selecting an edge closes the node list, so edge selection cannot
 invoke a node action. A graph-background click closes either list.
 
+**Confirmed:** Predicate-query result rows use an edge-specific selection
+handler. It binds the captured edge IDs to the chosen predicate identifier and
+label and clears the variable type in place. It preserves node/edge counts,
+topology, and unrelated metadata, and ignores removed or rebound edges.
+Ordinary node-query results continue to use node replacement.
+
+**Confirmed:** Before staging or executing the first component, Run Query
+rejects multiple distinct predicate variables on the same directed pair of
+fixed RDF endpoints. Those parallel edges do not form a traversal chain.
+Two variables on successive edges still stage; parallel edges sharing a single
+variable still execute as one binding. See [[Two Variable Exploration Contract]].
+
 ```mermaid
 stateDiagram-v2
   [*] --> Closed

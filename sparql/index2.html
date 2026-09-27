@@ -829,7 +829,12 @@
 
         // ── API: run query ────────────────────────────────────────────────
         function getQuery(variableName, filters, showDefault, anotherAction) {
-            const method = anotherAction || 'replaceNodeVariable';
+            const predicateEdgeIds = cy.edges()
+                .filter(edge => edge.data('nodeId') === variableName)
+                .map(edge => edge.id());
+            const method = anotherAction || (predicateEdgeIds.length
+                ? 'replacePredicateVariable'
+                : 'replaceNodeVariable');
             showLoading();
             $.ajax({
                 url:         apiUrl('/api/query'),
@@ -862,6 +867,9 @@
                             propertyType:  item.propertyType,
                             propertyClass: item.propertyClass
                         };
+                        if (method === 'replacePredicateVariable') {
+                            trData[i].predicateEdgeIds = predicateEdgeIds;
+                        }
                         if (anotherAction) {
                             trData[i].subjectId      = variableName;
                             trData[i].predicateId    = item.propertyId;
@@ -959,6 +967,18 @@
         }
 
         // ── Graph operations ──────────────────────────────────────────────
+        function replacePredicateVariable(nodeLine) {
+            const p = trData[nodeLine];
+            if (!p) return;
+            p.predicateEdgeIds.forEach(id => {
+                const edge = cy.getElementById(id);
+                if (!edge.length || !edge.isEdge() || edge.data('nodeId') !== p.variableName) return;
+                edge.data({ nodeId: p.nodeId, label: p.nodeLabel });
+                if (edge.data('type') === 'variable') edge.removeData('type');
+            });
+            $('#grid-resultado-consulta').modal('close');
+        }
+
         function replaceNodeVariable(nodeLine) {
             const p = trData[nodeLine];
             if (!p) return;
@@ -1002,6 +1022,11 @@
             }
 
             const component    = conjuntos[0];
+            if (hasParallelPredicateVariables(component)) {
+                closeTwoVariablePanel();
+                toast('Parallel predicate variables between the same fixed subject and object do not form a chain. Keep one predicate variable for this pair.', 'error');
+                return;
+            }
             const queryVariables = getQueryVariables(component);
             if (queryVariables.length === 2) {
                 openTwoVariablePanel(queryVariables);
@@ -1042,6 +1067,25 @@
             }
 
             getQuery(variableName, filters, true);
+        }
+
+        function hasParallelPredicateVariables(component) {
+            const predicatesByEndpoints = new Map();
+            const variablePattern = /^[?$][A-Za-z_][A-Za-z0-9_]*$/;
+            for (const edge of component.edges()) {
+                const predicate = edge.data('nodeId');
+                if (!variablePattern.test(predicate)) continue;
+                const subject = edge.source().data('value') || edge.data('source');
+                const object = edge.target().data('value') || edge.data('target');
+                if (variablePattern.test(subject) || variablePattern.test(object)) continue;
+
+                const key = JSON.stringify([subject, object]);
+                const predicates = predicatesByEndpoints.get(key) || new Set();
+                predicates.add(predicate);
+                if (predicates.size > 1) return true;
+                predicatesByEndpoints.set(key, predicates);
+            }
+            return false;
         }
 
         function getQueryVariables(component) {
@@ -1324,6 +1368,7 @@
                 } else if (row.classList.contains('query-row')) {
                     const method = row.getAttribute('data-method');
                     if (method === 'getRelationshipValue') getRelationshipValue(+index);
+                    else if (method === 'replacePredicateVariable') replacePredicateVariable(+index);
                     else replaceNodeVariable(+index);
                 }
             });

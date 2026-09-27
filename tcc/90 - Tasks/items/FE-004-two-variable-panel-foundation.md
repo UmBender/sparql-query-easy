@@ -36,8 +36,8 @@ backend routes, and remote traffic.
 - [x] The panel is keyboard accessible and dismissible without graph changes.
 - [x] Zero/one-variable execution is unchanged.
 - [x] No request is sent for a two-variable graph.
-- [ ] Browser and Kotlin checks pass. Kotlin checks pass; Playwright is not
-      installed, so the required browser run remains pending.
+- [x] Browser and Kotlin checks pass (17 browser tests and 107 Kotlin tests
+      in the predicate-query follow-up).
 
 ## Verification commands
 
@@ -56,3 +56,13 @@ GRADLE_USER_HOME=/tmp/sparql-query-easy-gradle ./gradlew ktlintCheck detekt test
 - 2026-09-27: Integrated as merge commit `04254db` on `kotlin`. The integrated
   Kotlin quality gate and JavaScript syntax check passed. Status is `REVIEW`
   pending the required Playwright run.
+- 2026-09-27: Browser execution exposed a fixture error: the test named
+  "exactly two valid variables" created three distinct variables. Corrected
+  its relation to a fixed predicate so the test exercises the approved two-
+  variable case. The additional reported parallel-predicate bug now has a
+  guard before staging/execution: multiple distinct predicate variables on
+  the same fixed directed endpoint pair are rejected with a message. Two- and
+  three-edge regressions preserve the graph and assert no API call; genuine
+  chains retain the panel and repeated use of one variable still executes.
+  Final validation passed: all 17 browser tests, all 107 Kotlin tests with
+  `ktlintCheck detekt`, JavaScript syntax checks, and `git diff --check`.
