@@ -29,6 +29,51 @@ Source files: `sparql/query-calculations.js`, `sparql/index2.html`,
 `tsconfig.frontend.json`, `package.json`, `frontend-tests/query-calculations.unit.mjs`,
 `frontend-tests/index2.spec.mjs`, `build.gradle.kts`.
 
+## Size review for agent-sized edits (FE-018, 2026-09-28)
+
+Analysis only; no application code changed. `sparql/index2.html` grew from
+1,558 lines (`beb7058`) to 3,001 lines / 144 KB (`6b5df75`), about 36k tokens
+(estimate: bytes ÷ 4). Each FE card since FE-002 added 20–330 lines to this one
+file, so an agent must read or search the whole page even for a menu or CSS
+change. The pure modules (`query-calculations.js`, `query-stages.js`, 383
+lines) are the only parts with DOM-free tests and type checks.
+
+| Lines | Region | Coupling |
+|---|---|---|
+| 12–499 | Inline CSS, one comment header per UI area | None; plain `<link>` move |
+| 502–807 | Markup: toolbar, canvas, panel, possible-graph window, modals | Needed by tests and Materialize init |
+| 820–1284 | Config, globals, utilities, modals, API calls, graph operations | Top-level functions; tests call `runQuery`, `getQuery`, `seeSparqlQuery`, `getElementInfo`, `getRelationshipValue`, `addNewVariable` on `window` |
+| 1285–1434 | Variable registry bridge, stage-order blocks, panel | Uses `window.queryStages` |
+| 1435–1899 | Staged exploration and possible-graph window | Timer, `AbortController`, stage cache |
+| 1900–2086 | Node factory, connection discovery, change-value modal | Top-level functions |
+| 2089–2999 | `DOMContentLoaded`: Materialize, uploads, autocomplete, Cytoscape init, node menu (≈345), edge menu (≈120), Alt+drag, selection | Closure locals such as `selectedMenuNodeId`, `pendingConnection`, `predicateChoices` shared by menus |
+
+No function is unused. `possibleGraphStyle()` repeats the main Cytoscape base
+node/edge style literally. `possibleGraphState()`, `nodeActions()`,
+`edgeActions()` and `nextPredicateVariableName()` are mainly data decisions
+mixed with timers or DOM. 15 inline `onclick` attributes depend on globals.
+
+**Recommendation:** continue Option A/B with files split by responsibility,
+not by line count. Top-level code moves to ordered classic
+`<script src>` files first, so global functions and the `window` contract used
+by tests and inline handlers stay unchanged without a bridge. Every new file
+must be added to the `processResources` include list in `build.gradle.kts` and
+to the packaged-resource test; the Playwright server already serves any file
+under `sparql/`. No bundler or framework is needed for this.
+
+| Card | Slice | Estimated effect |
+|---|---|---|
+| FE-019 | Move inline CSS to `index2.css` | −488 lines, no JS change |
+| FE-020 | Move top-level script (820–2086) to ordered classic files: core/API, stage order, exploration, graph nodes | Page ≈1,250 lines; largest file ≈470 |
+| FE-021 | Move pure possible-graph, menu-action and naming decisions into checked modules; share one base Cytoscape style | New unit tests; less duplicated style |
+| FE-022 | Move node/edge menus and connection preview out of `DOMContentLoaded` into a controller that owns its state | Page ≈330 lines (markup + includes) |
+
+Acceptance for each slice: identical browser suite, `npm run test:query`,
+`npm run check:frontend-types` where modules change, and the Gradle packaged-
+resource test. Rollback is reverting that slice's commit. Expected end state:
+no application file above about 500 lines, and each FE card touches one or two
+responsibility files plus markup.
+
 ## Evidence and concentration
 
 Confirmed: `sparql/index2.html` is 2,221 lines. Inline application JavaScript

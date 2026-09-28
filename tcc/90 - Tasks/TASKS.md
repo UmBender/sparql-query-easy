@@ -45,6 +45,11 @@ Ordered by dependencies, then priority among selection candidates. See [worker r
 | FE-015 | DONE | P1 | frontend | [Preview the concrete graph on the canvas while exploring stages](<items/FE-015-concrete-graph-hover-preview.md>) |
 | FE-016 | DONE | P2 | frontend | [Show the Remove relation action in red](<items/FE-016-red-remove-relation-action.md>) |
 | FE-017 | DONE | P1 | frontend | [Show the possible graph in its own window while exploring stages](<items/FE-017-possible-graph-window.md>) |
+| FE-018 | DONE | P1 | analysis | [Analyze index2.html size and plan agent-sized frontend files](<items/FE-018-index2-size-audit.md>) |
+| FE-019 | BACKLOG | P2 | refactor | [Move index2 inline CSS to its own stylesheet](<items/FE-019-extract-index2-css.md>) |
+| FE-020 | BACKLOG | P1 | refactor | [Split the index2 top-level script into ordered classic files](<items/FE-020-split-index2-top-level-script.md>) |
+| FE-021 | BACKLOG | P2 | refactor | [Move pure possible-graph and menu decisions into checked modules](<items/FE-021-pure-possible-graph-and-menu-logic.md>) |
+| FE-022 | BACKLOG | P2 | refactor | [Move graph action menus into a controller file](<items/FE-022-graph-menu-controller.md>) |
 | INV-001 | DONE | P1 | investigation | [Investigate Ktor HTTP-client and runtime resource lifecycle](<items/INV-001-runtime-resource-lifecycle.md>) |
 | QUAL-001 | DONE | P1 | quality | [Replay recorded Wikidata success and controlled error route fixtures](<items/QUAL-001-recorded-wikidata-routes.md>) |
 | MIG-002 | DONE | P1 | migration | [Retire the C# project after compatibility and operations gates](<items/MIG-002-retire-csharp-project.md>) |
