@@ -1,0 +1,12 @@
+{
+  "endpointUrl": "__DATABASE_ID__",
+  "limit": 20,
+  "variableName": "?item",
+  "ignoreWikidata": true,
+  "where": [{
+    "subject": "?item",
+    "predicate": "<http://www.w3.org/2000/01/rdf-schema#label>",
+    "object": "Escaped IRI",
+    "filterType": null
+  }]
+}

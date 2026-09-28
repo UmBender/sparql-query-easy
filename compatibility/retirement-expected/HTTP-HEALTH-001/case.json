@@ -1,0 +1,17 @@
+{
+  "caseId": "HTTP-HEALTH-001",
+  "captureKind": "black-box-host",
+  "method": "GET",
+  "route": "/health",
+  "request": null,
+  "http": {
+    "status": 200,
+    "contentType": "text/plain",
+    "bodyText": "Healthy",
+    "bodyJson": null
+  },
+  "generatedSparql": null,
+  "rawQueries": [],
+  "upstream": null,
+  "capturedAtUtc": "2026-09-27T21:58:26.0302844+00:00"
+}

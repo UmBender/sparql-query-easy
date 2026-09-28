@@ -1,0 +1,13 @@
+{
+  "caseId": "LOCAL-CACHE-MISS-001",
+  "turtleFixture": null,
+  "http": null,
+  "generatedSparql": null,
+  "rawQueries": [],
+  "graph": null,
+  "error": {
+    "category": "controller-or-query",
+    "type": "System.Exception"
+  },
+  "request": "{\n  \u0022endpointUrl\u0022: \u002211111111-1111-1111-1111-111111111111\u0022,\n  \u0022ignoreWikidata\u0022: true,\n  \u0022limit\u0022: 1,\n  \u0022variableName\u0022: \u0022?item\u0022,\n  \u0022where\u0022: []\n}"
+}

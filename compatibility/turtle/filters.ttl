@@ -1,0 +1,8 @@
+@prefix ex: <https://example.test/filter/> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix owl: <http://www.w3.org/2002/07/owl#> .
+
+ex:alpha a owl:Class ; rdfs:label "Alpha"@en ; ex:score 10 .
+ex:alphabet a owl:Class ; rdfs:label "Alphabet"@en ; ex:score 20 .
+ex:beta a owl:Class ; rdfs:label "Beta"@en ; ex:score 5 .
+ex:gamma a owl:Class ; rdfs:label "Gamma alpha"@en ; ex:score 15 .

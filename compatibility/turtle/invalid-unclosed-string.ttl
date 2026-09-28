@@ -1,0 +1,3 @@
+@prefix ex: <https://example.test/invalid/> .
+
+ex:item ex:value "this literal is never closed .

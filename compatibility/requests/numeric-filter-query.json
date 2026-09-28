@@ -1,0 +1,12 @@
+{
+  "endpointUrl": "__DATABASE_ID__",
+  "limit": 20,
+  "variableName": "?item",
+  "ignoreWikidata": true,
+  "where": [{
+    "subject": "?item",
+    "predicate": "<https://example.test/numeric/value>",
+    "object": "0",
+    "filterType": 2
+  }]
+}

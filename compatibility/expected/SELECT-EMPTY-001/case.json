@@ -1,0 +1,33 @@
+{
+  "caseId": "SELECT-EMPTY-001",
+  "turtleFixture": {
+    "name": "empty.ttl",
+    "sha256": "46480aa6f618ea50703dd83aa828547e7a215834e5733e1a8f001b1ea6ae3efe"
+  },
+  "http": {
+    "status": 200,
+    "body": {
+      "data": []
+    }
+  },
+  "generatedSparql": "PREFIX rdf: \u003Chttp://www.w3.org/1999/02/22-rdf-syntax-ns#\u003E\nPREFIX rdfs: \u003Chttp://www.w3.org/2000/01/rdf-schema#\u003E\nPREFIX owl: \u003Chttp://www.w3.org/2002/07/owl#\u003E\nSELECT DISTINCT ?item ?itemLabel ?itemRdfType ?itemType\nWHERE {\n?item \u003Chttps://example.test/missing\u003E ?value .\n?item rdf:type ?itemRdfType .\nOPTIONAL {\n?item rdfs:label ?itemLabel .\nFILTER (lang(?itemLabel) = \u0022en\u0022)\n}\n}\nLIMIT 20\n",
+  "rawQueries": [
+    {
+      "query": "PREFIX rdf: \u003Chttp://www.w3.org/1999/02/22-rdf-syntax-ns#\u003E\nPREFIX rdfs: \u003Chttp://www.w3.org/2000/01/rdf-schema#\u003E\nPREFIX owl: \u003Chttp://www.w3.org/2002/07/owl#\u003E\nSELECT DISTINCT ?item ?itemLabel ?itemRdfType ?itemType\nWHERE {\n?item \u003Chttps://example.test/missing\u003E ?value .\n?item rdf:type ?itemRdfType .\nOPTIONAL {\n?item rdfs:label ?itemLabel .\nFILTER (lang(?itemLabel) = \u0022en\u0022)\n}\n}\nLIMIT 20\n",
+      "result": {
+        "projectedVariables": [
+          "item",
+          "itemLabel",
+          "itemRdfType",
+          "itemType"
+        ],
+        "rows": []
+      }
+    }
+  ],
+  "graph": {
+    "statements": []
+  },
+  "error": null,
+  "request": "{\n  \u0022endpointUrl\u0022: \u0022__DATABASE_ID__\u0022,\n  \u0022ignoreWikidata\u0022: true,\n  \u0022limit\u0022: 20,\n  \u0022variableName\u0022: \u0022?item\u0022,\n  \u0022where\u0022: [\n    {\n      \u0022filterType\u0022: null,\n      \u0022object\u0022: \u0022?value\u0022,\n      \u0022predicate\u0022: \u0022\\u003Chttps://example.test/missing\\u003E\u0022,\n      \u0022subject\u0022: \u0022?item\u0022\n    }\n  ]\n}"
+}

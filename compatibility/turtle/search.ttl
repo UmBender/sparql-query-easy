@@ -1,0 +1,9 @@
+@prefix ex: <https://example.test/search/> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix owl: <http://www.w3.org/2002/07/owl#> .
+
+ex:alpha a owl:Class ; rdfs:label "Alpha class"@en .
+ex:alphabet a owl:Class ; rdfs:label "Alphabet class"@en .
+ex:beta a owl:Class ; rdfs:label "Beta class"@en .
+ex:unlabelled a owl:Class .
+ex:property a owl:ObjectProperty ; rdfs:label "Alpha property"@en .

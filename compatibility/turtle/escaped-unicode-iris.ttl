@@ -1,0 +1,8 @@
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix owl: <http://www.w3.org/2002/07/owl#> .
+
+<https://example.test/caf\u00E9> a owl:Class ;
+    rdfs:label "Escaped IRI"@en .
+
+<https://example.test/naïve> a owl:Class ;
+    rdfs:label "Unicode IRI"@en .

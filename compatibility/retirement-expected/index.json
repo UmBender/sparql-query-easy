@@ -1,0 +1,8 @@
+{
+  "schemaVersion": 1,
+  "cases": [
+    "HTTP-HEALTH-001",
+    "WIKIDATA-SEARCH-CSHARP-001",
+    "REMOTE-RELATIONSHIP-CSHARP-001"
+  ]
+}

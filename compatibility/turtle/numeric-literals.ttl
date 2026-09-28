@@ -1,0 +1,11 @@
+@prefix ex: <https://example.test/numeric/> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix owl: <http://www.w3.org/2002/07/owl#> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+
+ex:integer a owl:Class ; rdfs:label "Integer"@en ; ex:value 7 .
+ex:decimal a owl:Class ; rdfs:label "Decimal"@en ; ex:value 7.50 .
+ex:double a owl:Class ; rdfs:label "Double"@en ; ex:value 1.2E3 .
+ex:boolean-true a owl:Class ; rdfs:label "Boolean true"@en ; ex:value true .
+ex:boolean-false a owl:Class ; rdfs:label "Boolean false"@en ; ex:value false .
+ex:typed-integer a owl:Class ; rdfs:label "Typed integer"@en ; ex:value "08"^^xsd:integer .

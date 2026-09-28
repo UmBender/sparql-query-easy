@@ -1,0 +1,470 @@
+{
+  "caseId": "SELECT-FILTER-STARTS-001",
+  "turtleFixture": {
+    "name": "filters.ttl",
+    "sha256": "207ec543a9411be448edcc33ed954131ae5cf0e36d33232b23a8f7c270f22bcb"
+  },
+  "http": {
+    "status": 200,
+    "body": {
+      "data": [
+        {
+          "propertyClass": "\u003Chttp://www.w3.org/2002/07/owl#Class\u003E",
+          "propertyId": "\u003Chttps://example.test/filter/alpha\u003E",
+          "propertyLabel": "Alpha",
+          "propertyType": ""
+        },
+        {
+          "propertyClass": "\u003Chttp://www.w3.org/2002/07/owl#Class\u003E",
+          "propertyId": "\u003Chttps://example.test/filter/alphabet\u003E",
+          "propertyLabel": "Alphabet",
+          "propertyType": ""
+        }
+      ]
+    }
+  },
+  "generatedSparql": "PREFIX rdf: \u003Chttp://www.w3.org/1999/02/22-rdf-syntax-ns#\u003E\nPREFIX rdfs: \u003Chttp://www.w3.org/2000/01/rdf-schema#\u003E\nPREFIX owl: \u003Chttp://www.w3.org/2002/07/owl#\u003E\nSELECT DISTINCT ?item ?itemLabel ?itemRdfType ?itemType\nWHERE {\n?item \u003Chttp://www.w3.org/2000/01/rdf-schema#label\u003E ?literalValue__ID__ .\nFILTER (STRSTARTS(STR(?literalValue__ID__), \u0022Al\u0022))\n?item rdf:type ?itemRdfType .\nOPTIONAL {\n?item rdfs:label ?itemLabel .\nFILTER (lang(?itemLabel) = \u0022en\u0022)\n}\n}\nLIMIT 20\n",
+  "rawQueries": [
+    {
+      "query": "PREFIX rdf: \u003Chttp://www.w3.org/1999/02/22-rdf-syntax-ns#\u003E\nPREFIX rdfs: \u003Chttp://www.w3.org/2000/01/rdf-schema#\u003E\nPREFIX owl: \u003Chttp://www.w3.org/2002/07/owl#\u003E\nSELECT DISTINCT ?item ?itemLabel ?itemRdfType ?itemType\nWHERE {\n?item \u003Chttp://www.w3.org/2000/01/rdf-schema#label\u003E ?literalValue__ID__ .\nFILTER (STRSTARTS(STR(?literalValue__ID__), \u0022Al\u0022))\n?item rdf:type ?itemRdfType .\nOPTIONAL {\n?item rdfs:label ?itemLabel .\nFILTER (lang(?itemLabel) = \u0022en\u0022)\n}\n}\nLIMIT 20\n",
+      "result": {
+        "projectedVariables": [
+          "item",
+          "itemLabel",
+          "itemRdfType",
+          "itemType"
+        ],
+        "rows": [
+          {
+            "bindings": [
+              {
+                "variable": "item",
+                "present": true,
+                "bound": true,
+                "value": {
+                  "kind": "uri",
+                  "uri": "https://example.test/filter/alpha",
+                  "blankId": null,
+                  "lexicalForm": null,
+                  "datatype": null,
+                  "language": null
+                }
+              },
+              {
+                "variable": "itemLabel",
+                "present": true,
+                "bound": true,
+                "value": {
+                  "kind": "literal",
+                  "uri": null,
+                  "blankId": null,
+                  "lexicalForm": "Alpha",
+                  "datatype": "http://www.w3.org/1999/02/22-rdf-syntax-ns#langString",
+                  "language": "en"
+                }
+              },
+              {
+                "variable": "itemRdfType",
+                "present": true,
+                "bound": true,
+                "value": {
+                  "kind": "uri",
+                  "uri": "http://www.w3.org/2002/07/owl#Class",
+                  "blankId": null,
+                  "lexicalForm": null,
+                  "datatype": null,
+                  "language": null
+                }
+              },
+              {
+                "variable": "itemType",
+                "present": false,
+                "bound": false,
+                "value": null
+              }
+            ]
+          },
+          {
+            "bindings": [
+              {
+                "variable": "item",
+                "present": true,
+                "bound": true,
+                "value": {
+                  "kind": "uri",
+                  "uri": "https://example.test/filter/alphabet",
+                  "blankId": null,
+                  "lexicalForm": null,
+                  "datatype": null,
+                  "language": null
+                }
+              },
+              {
+                "variable": "itemLabel",
+                "present": true,
+                "bound": true,
+                "value": {
+                  "kind": "literal",
+                  "uri": null,
+                  "blankId": null,
+                  "lexicalForm": "Alphabet",
+                  "datatype": "http://www.w3.org/1999/02/22-rdf-syntax-ns#langString",
+                  "language": "en"
+                }
+              },
+              {
+                "variable": "itemRdfType",
+                "present": true,
+                "bound": true,
+                "value": {
+                  "kind": "uri",
+                  "uri": "http://www.w3.org/2002/07/owl#Class",
+                  "blankId": null,
+                  "lexicalForm": null,
+                  "datatype": null,
+                  "language": null
+                }
+              },
+              {
+                "variable": "itemType",
+                "present": false,
+                "bound": false,
+                "value": null
+              }
+            ]
+          }
+        ]
+      }
+    }
+  ],
+  "graph": {
+    "statements": [
+      {
+        "subject": {
+          "kind": "uri",
+          "uri": "https://example.test/filter/alphabet",
+          "blankId": null,
+          "lexicalForm": null,
+          "datatype": null,
+          "language": null
+        },
+        "predicate": {
+          "kind": "uri",
+          "uri": "http://www.w3.org/1999/02/22-rdf-syntax-ns#type",
+          "blankId": null,
+          "lexicalForm": null,
+          "datatype": null,
+          "language": null
+        },
+        "object": {
+          "kind": "uri",
+          "uri": "http://www.w3.org/2002/07/owl#Class",
+          "blankId": null,
+          "lexicalForm": null,
+          "datatype": null,
+          "language": null
+        },
+        "sortKey": "uri|https://example.test/filter/alphabet||||\u001Furi|http://www.w3.org/1999/02/22-rdf-syntax-ns#type\u001Furi|http://www.w3.org/2002/07/owl#Class||||"
+      },
+      {
+        "subject": {
+          "kind": "uri",
+          "uri": "https://example.test/filter/alphabet",
+          "blankId": null,
+          "lexicalForm": null,
+          "datatype": null,
+          "language": null
+        },
+        "predicate": {
+          "kind": "uri",
+          "uri": "http://www.w3.org/2000/01/rdf-schema#label",
+          "blankId": null,
+          "lexicalForm": null,
+          "datatype": null,
+          "language": null
+        },
+        "object": {
+          "kind": "literal",
+          "uri": null,
+          "blankId": null,
+          "lexicalForm": "Alphabet",
+          "datatype": "http://www.w3.org/1999/02/22-rdf-syntax-ns#langString",
+          "language": "en"
+        },
+        "sortKey": "uri|https://example.test/filter/alphabet||||\u001Furi|http://www.w3.org/2000/01/rdf-schema#label\u001Fliteral|||Alphabet|http://www.w3.org/1999/02/22-rdf-syntax-ns#langString|en"
+      },
+      {
+        "subject": {
+          "kind": "uri",
+          "uri": "https://example.test/filter/alphabet",
+          "blankId": null,
+          "lexicalForm": null,
+          "datatype": null,
+          "language": null
+        },
+        "predicate": {
+          "kind": "uri",
+          "uri": "https://example.test/filter/score",
+          "blankId": null,
+          "lexicalForm": null,
+          "datatype": null,
+          "language": null
+        },
+        "object": {
+          "kind": "literal",
+          "uri": null,
+          "blankId": null,
+          "lexicalForm": "20",
+          "datatype": "http://www.w3.org/2001/XMLSchema#integer",
+          "language": ""
+        },
+        "sortKey": "uri|https://example.test/filter/alphabet||||\u001Furi|https://example.test/filter/score\u001Fliteral|||20|http://www.w3.org/2001/XMLSchema#integer|"
+      },
+      {
+        "subject": {
+          "kind": "uri",
+          "uri": "https://example.test/filter/alpha",
+          "blankId": null,
+          "lexicalForm": null,
+          "datatype": null,
+          "language": null
+        },
+        "predicate": {
+          "kind": "uri",
+          "uri": "http://www.w3.org/1999/02/22-rdf-syntax-ns#type",
+          "blankId": null,
+          "lexicalForm": null,
+          "datatype": null,
+          "language": null
+        },
+        "object": {
+          "kind": "uri",
+          "uri": "http://www.w3.org/2002/07/owl#Class",
+          "blankId": null,
+          "lexicalForm": null,
+          "datatype": null,
+          "language": null
+        },
+        "sortKey": "uri|https://example.test/filter/alpha||||\u001Furi|http://www.w3.org/1999/02/22-rdf-syntax-ns#type\u001Furi|http://www.w3.org/2002/07/owl#Class||||"
+      },
+      {
+        "subject": {
+          "kind": "uri",
+          "uri": "https://example.test/filter/alpha",
+          "blankId": null,
+          "lexicalForm": null,
+          "datatype": null,
+          "language": null
+        },
+        "predicate": {
+          "kind": "uri",
+          "uri": "http://www.w3.org/2000/01/rdf-schema#label",
+          "blankId": null,
+          "lexicalForm": null,
+          "datatype": null,
+          "language": null
+        },
+        "object": {
+          "kind": "literal",
+          "uri": null,
+          "blankId": null,
+          "lexicalForm": "Alpha",
+          "datatype": "http://www.w3.org/1999/02/22-rdf-syntax-ns#langString",
+          "language": "en"
+        },
+        "sortKey": "uri|https://example.test/filter/alpha||||\u001Furi|http://www.w3.org/2000/01/rdf-schema#label\u001Fliteral|||Alpha|http://www.w3.org/1999/02/22-rdf-syntax-ns#langString|en"
+      },
+      {
+        "subject": {
+          "kind": "uri",
+          "uri": "https://example.test/filter/alpha",
+          "blankId": null,
+          "lexicalForm": null,
+          "datatype": null,
+          "language": null
+        },
+        "predicate": {
+          "kind": "uri",
+          "uri": "https://example.test/filter/score",
+          "blankId": null,
+          "lexicalForm": null,
+          "datatype": null,
+          "language": null
+        },
+        "object": {
+          "kind": "literal",
+          "uri": null,
+          "blankId": null,
+          "lexicalForm": "10",
+          "datatype": "http://www.w3.org/2001/XMLSchema#integer",
+          "language": ""
+        },
+        "sortKey": "uri|https://example.test/filter/alpha||||\u001Furi|https://example.test/filter/score\u001Fliteral|||10|http://www.w3.org/2001/XMLSchema#integer|"
+      },
+      {
+        "subject": {
+          "kind": "uri",
+          "uri": "https://example.test/filter/beta",
+          "blankId": null,
+          "lexicalForm": null,
+          "datatype": null,
+          "language": null
+        },
+        "predicate": {
+          "kind": "uri",
+          "uri": "http://www.w3.org/1999/02/22-rdf-syntax-ns#type",
+          "blankId": null,
+          "lexicalForm": null,
+          "datatype": null,
+          "language": null
+        },
+        "object": {
+          "kind": "uri",
+          "uri": "http://www.w3.org/2002/07/owl#Class",
+          "blankId": null,
+          "lexicalForm": null,
+          "datatype": null,
+          "language": null
+        },
+        "sortKey": "uri|https://example.test/filter/beta||||\u001Furi|http://www.w3.org/1999/02/22-rdf-syntax-ns#type\u001Furi|http://www.w3.org/2002/07/owl#Class||||"
+      },
+      {
+        "subject": {
+          "kind": "uri",
+          "uri": "https://example.test/filter/beta",
+          "blankId": null,
+          "lexicalForm": null,
+          "datatype": null,
+          "language": null
+        },
+        "predicate": {
+          "kind": "uri",
+          "uri": "http://www.w3.org/2000/01/rdf-schema#label",
+          "blankId": null,
+          "lexicalForm": null,
+          "datatype": null,
+          "language": null
+        },
+        "object": {
+          "kind": "literal",
+          "uri": null,
+          "blankId": null,
+          "lexicalForm": "Beta",
+          "datatype": "http://www.w3.org/1999/02/22-rdf-syntax-ns#langString",
+          "language": "en"
+        },
+        "sortKey": "uri|https://example.test/filter/beta||||\u001Furi|http://www.w3.org/2000/01/rdf-schema#label\u001Fliteral|||Beta|http://www.w3.org/1999/02/22-rdf-syntax-ns#langString|en"
+      },
+      {
+        "subject": {
+          "kind": "uri",
+          "uri": "https://example.test/filter/beta",
+          "blankId": null,
+          "lexicalForm": null,
+          "datatype": null,
+          "language": null
+        },
+        "predicate": {
+          "kind": "uri",
+          "uri": "https://example.test/filter/score",
+          "blankId": null,
+          "lexicalForm": null,
+          "datatype": null,
+          "language": null
+        },
+        "object": {
+          "kind": "literal",
+          "uri": null,
+          "blankId": null,
+          "lexicalForm": "5",
+          "datatype": "http://www.w3.org/2001/XMLSchema#integer",
+          "language": ""
+        },
+        "sortKey": "uri|https://example.test/filter/beta||||\u001Furi|https://example.test/filter/score\u001Fliteral|||5|http://www.w3.org/2001/XMLSchema#integer|"
+      },
+      {
+        "subject": {
+          "kind": "uri",
+          "uri": "https://example.test/filter/gamma",
+          "blankId": null,
+          "lexicalForm": null,
+          "datatype": null,
+          "language": null
+        },
+        "predicate": {
+          "kind": "uri",
+          "uri": "http://www.w3.org/1999/02/22-rdf-syntax-ns#type",
+          "blankId": null,
+          "lexicalForm": null,
+          "datatype": null,
+          "language": null
+        },
+        "object": {
+          "kind": "uri",
+          "uri": "http://www.w3.org/2002/07/owl#Class",
+          "blankId": null,
+          "lexicalForm": null,
+          "datatype": null,
+          "language": null
+        },
+        "sortKey": "uri|https://example.test/filter/gamma||||\u001Furi|http://www.w3.org/1999/02/22-rdf-syntax-ns#type\u001Furi|http://www.w3.org/2002/07/owl#Class||||"
+      },
+      {
+        "subject": {
+          "kind": "uri",
+          "uri": "https://example.test/filter/gamma",
+          "blankId": null,
+          "lexicalForm": null,
+          "datatype": null,
+          "language": null
+        },
+        "predicate": {
+          "kind": "uri",
+          "uri": "http://www.w3.org/2000/01/rdf-schema#label",
+          "blankId": null,
+          "lexicalForm": null,
+          "datatype": null,
+          "language": null
+        },
+        "object": {
+          "kind": "literal",
+          "uri": null,
+          "blankId": null,
+          "lexicalForm": "Gamma alpha",
+          "datatype": "http://www.w3.org/1999/02/22-rdf-syntax-ns#langString",
+          "language": "en"
+        },
+        "sortKey": "uri|https://example.test/filter/gamma||||\u001Furi|http://www.w3.org/2000/01/rdf-schema#label\u001Fliteral|||Gamma alpha|http://www.w3.org/1999/02/22-rdf-syntax-ns#langString|en"
+      },
+      {
+        "subject": {
+          "kind": "uri",
+          "uri": "https://example.test/filter/gamma",
+          "blankId": null,
+          "lexicalForm": null,
+          "datatype": null,
+          "language": null
+        },
+        "predicate": {
+          "kind": "uri",
+          "uri": "https://example.test/filter/score",
+          "blankId": null,
+          "lexicalForm": null,
+          "datatype": null,
+          "language": null
+        },
+        "object": {
+          "kind": "literal",
+          "uri": null,
+          "blankId": null,
+          "lexicalForm": "15",
+          "datatype": "http://www.w3.org/2001/XMLSchema#integer",
+          "language": ""
+        },
+        "sortKey": "uri|https://example.test/filter/gamma||||\u001Furi|https://example.test/filter/score\u001Fliteral|||15|http://www.w3.org/2001/XMLSchema#integer|"
+      }
+    ]
+  },
+  "error": null,
+  "request": "{\n  \u0022endpointUrl\u0022: \u0022__DATABASE_ID__\u0022,\n  \u0022ignoreWikidata\u0022: true,\n  \u0022limit\u0022: 20,\n  \u0022variableName\u0022: \u0022?item\u0022,\n  \u0022where\u0022: [\n    {\n      \u0022filterType\u0022: 0,\n      \u0022object\u0022: \u0022Al\u0022,\n      \u0022predicate\u0022: \u0022\\u003Chttp://www.w3.org/2000/01/rdf-schema#label\\u003E\u0022,\n      \u0022subject\u0022: \u0022?item\u0022\n    }\n  ]\n}"
+}

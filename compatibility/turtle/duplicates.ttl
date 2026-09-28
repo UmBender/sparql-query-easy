@@ -1,0 +1,9 @@
+@prefix ex: <https://example.test/duplicate/> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix owl: <http://www.w3.org/2002/07/owl#> .
+
+ex:item a owl:Class ;
+    rdfs:label "First label"@en, "Second label"@en ;
+    ex:tag ex:shared .
+
+ex:shared a owl:Class ; rdfs:label "Shared"@en .

@@ -1,0 +1,14 @@
+@prefix ex: <https://example.test/blank/> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix owl: <http://www.w3.org/2002/07/owl#> .
+
+ex:container a owl:Class ;
+    ex:member _:first, _:second .
+
+_:first a owl:Class ;
+    rdfs:label "First blank"@en ;
+    ex:rank 1 .
+
+_:second a owl:Class ;
+    rdfs:label "Second blank"@en ;
+    ex:rank 2 .

@@ -1,0 +1,12 @@
+{
+  "endpointUrl": "__DATABASE_ID__",
+  "limit": 99,
+  "variableName": "?item",
+  "ignoreWikidata": true,
+  "where": [{
+    "subject": "?item",
+    "predicate": "<https://example.test/order/score>",
+    "object": "ignored",
+    "filterType": 5
+  }]
+}

@@ -1,0 +1,10 @@
+build:
+  maxIssues: 0
+
+complexity:
+  LongParameterList:
+    active: false
+
+style:
+  MagicNumber:
+    active: false

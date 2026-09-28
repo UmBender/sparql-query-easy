@@ -1,0 +1,189 @@
+\documentclass[10pt,a4paper]{article}
+
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage[brazil]{babel}
+\usepackage{lmodern}
+\usepackage{microtype}
+\usepackage{geometry}
+\usepackage{setspace}
+\usepackage{booktabs}
+\usepackage{array}
+\usepackage{tabularx}
+\usepackage{enumitem}
+\usepackage{ragged2e}
+\usepackage[hidelinks]{hyperref}
+
+\geometry{top=2.0cm,bottom=2.0cm,left=2.0cm,right=2.0cm}
+\setstretch{1.0}
+\setlength{\parindent}{1.25cm}
+\setlength{\parskip}{0pt}
+\setlist[itemize]{leftmargin=1.0cm,itemsep=0.05em,topsep=0.1em}
+\setlist[enumerate]{leftmargin=1.0cm,itemsep=0.05em,topsep=0.1em}
+
+\begin{document}
+
+\begin{center}
+    {\large\bfseries Apoio à Construção e à Compreensão de Consultas SPARQL por Usuários Leigos por meio de Grandes Modelos de Linguagem e Visualizações Cognitivamente Eficazes\par}
+    \vspace{0.4em}
+    {\small Nome do aluno -- Curso / Instituição -- Orientador: Nome do orientador -- 2026}
+\end{center}
+\vspace{-0.5em}
+
+\section{Introdução}
+
+A Web Semântica foi proposta como uma extensão da Web na qual os dados são publicados de maneira estruturada e acompanhados de semântica explícita, permitindo que informações sejam interpretadas e processadas não apenas por seres humanos, mas também por sistemas computacionais \cite{berners2001}. Nesse contexto, tecnologias como o \textit{Resource Description Framework} (RDF), a \textit{Web Ontology Language} (OWL) e a linguagem de consultas SPARQL formam parte importante da infraestrutura utilizada para representar, descrever e consultar conhecimento na Web. Associada a esse paradigma, a iniciativa de Dados Abertos Ligados, ou \textit{Linked Open Data} (LOD), procura disponibilizar dados estruturados, semanticamente anotados, abertos e interligados, favorecendo reutilização, interoperabilidade e integração entre diferentes fontes \cite{isotani2015}.
+
+Apesar de seu potencial, o aproveitamento efetivo dessas bases ainda apresenta barreiras para usuários não especialistas. A recuperação de dados RDF é frequentemente realizada por meio da linguagem SPARQL, cuja utilização exige conhecimento de sua sintaxe, de operadores, de padrões de triplas e, em muitos casos, da própria estrutura da ontologia empregada na base consultada. O trabalho de referência \textit{Support for SPARQL graphical query development} identifica justamente a complexidade sintática e semântica de SPARQL como uma limitação à adoção de Dados Abertos Ligados por usuários leigos e propõe, como resposta, uma notação gráfica cognitivamente eficaz implementada na ferramenta web SPARQL EasyQuery \cite{easyquery}. A solução permite construir consultas do tipo \texttt{SELECT} por meio de elementos visuais que representam recursos, variáveis, literais e predicados, fundamentando suas escolhas de representação nos princípios da \textit{Physics of Notations} \cite{moody2009}.
+
+A abordagem apresenta resultados promissores de usabilidade, mas sua metodologia de avaliação oferece espaço para aprofundamento. O estudo reporta que 32 participantes, dos quais aproximadamente 75\% não possuíam conhecimento prévio de SPARQL/RDF, construíram em média 4,81 consultas dentre cinco tarefas propostas, além de apresentar resultados positivos em itens relacionados à usabilidade e à percepção da notação \cite{easyquery}. Entretanto, o instrumento de avaliação atribui papel central à percepção dos próprios participantes sobre facilidade de uso, confiança, clareza e adequação da representação. Embora a quantidade de tarefas concluídas tenha sido reportada, o artigo não descreve de forma suficientemente explícita um procedimento independente e sistemático, baseado em um oráculo, para verificar se cada consulta produzida era sintática e semanticamente correta para o problema correspondente. Essa distinção é relevante porque um usuário leigo pode considerar a experiência satisfatória por conseguir montar uma consulta com facilidade, ainda que a consulta resultante não expresse corretamente sua intenção ou produza resultados inadequados. Nesse cenário, satisfação percebida e sucesso objetivo podem divergir, produzindo uma impressão excessivamente otimista da eficácia da ferramenta.
+
+Além disso, a solução original coloca o diagrama no centro da construção da consulta. O avanço recente de Grandes Modelos de Linguagem (\textit{Large Language Models} -- LLMs) torna plausível investigar uma interação distinta: o usuário descreve sua necessidade em linguagem natural, um componente baseado em LLM traduz essa intenção para uma consulta SPARQL, mecanismos automáticos verificam a consulta gerada e a notação gráfica passa a ser utilizada principalmente como recurso de visualização, explicação e inspeção. Em vez de exigir do usuário leigo a construção direta de uma representação formal, pretende-se explorar a complementaridade entre linguagem natural, representação executável e visualização. Essa mudança também é coerente com a \textit{Physics of Notations}, segundo a qual diagramas devem ser projetados de acordo com capacidades cognitivas humanas e podem atuar de maneira complementar à representação textual, especialmente por meio de princípios como \textit{Dual Coding}, economia gráfica e gerenciamento de complexidade \cite{moody2009}.
+
+\subsection*{Objetivo geral}
+
+Desenvolver e avaliar uma abordagem para apoio à formulação e à compreensão de consultas SPARQL por usuários leigos, combinando Grandes Modelos de Linguagem para tradução de perguntas em linguagem natural, mecanismos objetivos de validação das consultas produzidas e visualizações cognitivamente eficazes inspiradas na SPARQL EasyQuery e na \textit{Physics of Notations}.
+
+\subsection*{Objetivos específicos}
+
+\begin{itemize}
+    \item analisar a solução SPARQL EasyQuery, sua notação gráfica, sua arquitetura e seu processo de avaliação;
+    \item investigar o uso de LLMs para traduzir perguntas em linguagem natural para consultas SPARQL condicionadas ao vocabulário de uma ontologia;
+    \item adaptar a representação gráfica existente para privilegiar visualização, explicação e inspeção da consulta, em vez de utilizá-la apenas como mecanismo primário de construção;
+    \item implementar mecanismos de validação sintática e de verificação objetiva dos resultados produzidos pelas consultas;
+    \item definir um conjunto de tarefas acompanhado de consultas e resultados de referência, permitindo medir corretude de maneira independente da satisfação declarada pelo usuário;
+    \item realizar uma avaliação experimental comparando medidas objetivas, como corretude, tempo e número de tentativas, com medidas subjetivas de usabilidade e compreensão.
+\end{itemize}
+
+\section{Fundamentação Teórica}
+
+\subsection{Resource Description Framework -- RDF}
+
+O RDF é um modelo de representação de informações concebido para descrever recursos na Web de forma estruturada e interoperável \cite{rdf2014}. Seu modelo conceitual baseia-se em afirmações na forma de triplas, compostas por sujeito, predicado e objeto. O sujeito identifica o recurso sobre o qual se faz uma afirmação; o predicado representa a propriedade ou relação; e o objeto corresponde ao valor ou recurso relacionado. Um conjunto de triplas pode ser naturalmente interpretado como um grafo dirigido e rotulado, no qual sujeitos e objetos formam vértices e os predicados formam arestas.
+
+Essa estrutura favorece a integração de informações provenientes de diferentes fontes, pois recursos podem ser identificados por IRIs e relacionados sem a necessidade de um esquema tabular único e rígido. Ao mesmo tempo, a flexibilidade do modelo transfere parte da complexidade para a etapa de consulta: para recuperar a informação desejada, o usuário precisa compreender os padrões de relacionamento presentes no grafo e formular adequadamente as condições que conectam seus elementos. A linguagem SPARQL explora diretamente esse caráter de grafo, utilizando padrões de triplas para descrever quais estruturas devem ser encontradas no conjunto RDF \cite{sparql2013}.
+
+No contexto deste projeto, RDF tem dupla importância. Primeiro, constitui o modelo sobre o qual as consultas serão realizadas. Segundo, sua natureza gráfica fornece uma base natural para a apresentação visual da consulta. A SPARQL EasyQuery explora essa correspondência ao representar recursos e variáveis como nós e predicados como conexões entre eles \cite{easyquery}. Na proposta deste TCC, essa visualização será preservada, mas deslocada de uma função predominantemente construtiva para uma função explicativa: o diagrama deverá permitir que o usuário compreenda quais entidades e relações foram inferidas a partir de sua pergunta em linguagem natural.
+
+\subsection{Web Ontology Language -- OWL}
+
+A OWL é uma linguagem padronizada pelo W3C para representação de ontologias na Web \cite{owl2012}. Ontologias descrevem explicitamente conceitos de um domínio, propriedades, relações e restrições que estruturam o conhecimento representado. Em um cenário de Web Semântica, elas funcionam como um vocabulário formal compartilhado, reduzindo ambiguidades e possibilitando que diferentes aplicações atribuam significado compatível aos mesmos recursos.
+
+A utilização de ontologias é particularmente relevante para a geração automática de consultas. Um LLM, quando empregado isoladamente, pode produzir uma consulta sintaticamente plausível, mas utilizar classes ou propriedades inexistentes no \textit{endpoint} consultado. O conhecimento extraído da ontologia pode, portanto, ser utilizado como contexto ou restrição para a geração, oferecendo ao modelo informações sobre os termos válidos do domínio e sobre possíveis relacionamentos entre eles. Além de aumentar a precisão da tradução da intenção do usuário, essa estratégia cria condições para uma validação semântica parcial da consulta antes de sua execução.
+
+Neste projeto, a ontologia será tratada não apenas como uma especificação passiva da base, mas como componente ativo da interação. Classes, propriedades de objeto, propriedades de dados e demais relações relevantes poderão ser recuperadas e fornecidas ao módulo de geração. A consulta produzida poderá, então, ser verificada em relação ao vocabulário disponível. Dessa forma, a combinação entre OWL e LLM busca reduzir um dos problemas centrais de sistemas generativos aplicados a linguagens formais: a produção de estruturas bem formadas, porém incompatíveis com o domínio real.
+
+\subsection{Web Semântica}
+
+A Web Semântica, conforme descrita por Berners-Lee, Hendler e Lassila \cite{berners2001}, propõe uma Web na qual o significado dos dados possa ser representado de maneira explícita, possibilitando processamento automatizado e integração entre aplicações. O objetivo não é substituir a Web documental, mas enriquecer a informação publicada com estruturas e relações que possam ser interpretadas computacionalmente. RDF fornece um modelo de representação; ontologias formalizam conceitos e relações; e linguagens de consulta, como SPARQL, permitem recuperar informação a partir desses grafos.
+
+Entretanto, a formalização que torna os dados processáveis por máquinas também cria uma distância entre a infraestrutura semântica e o usuário final. O usuário interessado em responder a uma pergunta sobre determinado conjunto de dados pode conhecer perfeitamente o domínio do problema, mas desconhecer a estrutura RDF, os identificadores utilizados, a ontologia e a sintaxe de SPARQL. Essa diferença entre conhecimento do domínio e conhecimento técnico constitui o principal problema de interação investigado neste trabalho.
+
+A proposta da SPARQL EasyQuery procura diminuir essa barreira por meio de uma linguagem visual. O presente projeto parte do mesmo problema, mas considera uma divisão diferente de responsabilidades. A linguagem natural será utilizada para expressar a intenção; SPARQL continuará sendo a representação formal e executável; e a notação gráfica será utilizada para tornar explícita a interpretação feita pelo sistema. Essa separação procura preservar as vantagens da formalização sem exigir que o usuário domine diretamente todas as suas convenções.
+
+\subsection{Dados Abertos Ligados -- Linked Open Data}
+
+Dados Abertos Ligados constituem uma aplicação dos princípios da Web Semântica à publicação de dados abertos e interconectados. A proposta busca disponibilizar dados de forma estruturada, utilizar identificadores globais para recursos e estabelecer relações entre diferentes conjuntos de dados, favorecendo descoberta e reutilização \cite{isotani2015}. Projetos como DBpedia, Wikidata e outros repositórios RDF ilustram a possibilidade de consultar grandes grafos de conhecimento por meio de \textit{endpoints} SPARQL.
+
+A existência de dados abertos, contudo, não implica automaticamente acessibilidade cognitiva. Uma base pode ser publicamente disponível e tecnicamente interoperável e, ainda assim, permanecer pouco acessível para um usuário que não saiba formular consultas. Esse problema é enfatizado pelo artigo da SPARQL EasyQuery, que associa a complexidade de SPARQL à limitação do alcance de iniciativas de LOD entre públicos não especializados \cite{easyquery}. Dessa perspectiva, democratizar o acesso não significa apenas disponibilizar os dados, mas também reduzir o custo cognitivo e técnico necessário para formular perguntas sobre eles.
+
+A utilização de LLMs oferece uma alternativa para essa camada de interação, pois permite que a intenção seja inicialmente expressa em linguagem natural. Contudo, a adoção de um modelo generativo não elimina a necessidade de transparência e validação. Uma resposta linguisticamente convincente pode ocultar uma consulta incorreta. Por isso, a arquitetura proposta combina geração com verificação objetiva e visualização da consulta, buscando evitar que a facilidade de interação seja confundida com corretude.
+
+\subsection{Física das Notações -- Physics of Notations}
+
+A \textit{Physics of Notations}, proposta por Moody \cite{moody2009}, é uma teoria de projeto voltada à construção e à avaliação de notações visuais cognitivamente eficazes. Seu ponto de partida é a constatação de que, em Engenharia de Software, decisões sobre sintaxe visual frequentemente são tratadas como questões estéticas ou intuitivas, sem justificativa teórica ou empírica suficiente. Moody propõe que a qualidade de uma notação seja analisada em termos de eficácia cognitiva, isto é, da velocidade, facilidade e precisão com que uma representação pode ser processada pela mente humana.
+
+Entre os princípios propostos estão clareza semiótica, discernimento perceptivo, transparência semântica, gerenciamento de complexidade, integração cognitiva, expressividade visual, \textit{Dual Coding}, economia gráfica e adequação cognitiva. A clareza semiótica procura estabelecer correspondência adequada entre construções semânticas e símbolos gráficos; o discernimento perceptivo exige que símbolos diferentes sejam visualmente distinguíveis; a transparência semântica favorece representações cuja aparência sugira seu significado; e a economia gráfica limita o tamanho do vocabulário visual para evitar sobrecarga da memória de trabalho. O gerenciamento de complexidade, por sua vez, procura fornecer mecanismos que impeçam que diagramas extensos se tornem cognitivamente intratáveis.
+
+O princípio de \textit{Dual Coding} é particularmente relevante para este TCC. Moody argumenta que texto e gráficos não devem ser tratados como representações mutuamente exclusivas: quando utilizados de forma complementar, podem reforçar a compreensão porque exploram canais cognitivos distintos \cite{moody2009}. Isso sustenta a proposta de utilizar linguagem natural para a expressão da intenção e elementos visuais para representar a estrutura formal inferida pelo sistema. A visualização não precisa codificar todos os detalhes da consulta; pode funcionar como uma abstração que destaca entidades, relações, filtros e variáveis relevantes.
+
+Outro aspecto importante é a adequação da representação ao perfil do usuário. Usuários iniciantes possuem menor familiaridade com convenções formais e tendem a ser mais sensíveis à complexidade gráfica. A teoria recomenda, para esse público, vocabulários visuais reduzidos, símbolos mais distinguíveis, maior transparência semântica e apoio textual. O artigo da SPARQL EasyQuery aplica explicitamente parte desses princípios à representação de consultas SPARQL, utilizando formas e cores diferentes para IRIs, literais, variáveis e resultados e buscando reduzir ambiguidades na leitura do diagrama \cite{easyquery}. O presente projeto pretende manter essa fundamentação, mas reposicionar o papel da notação: em vez de exigir que o usuário aprenda a manipular todos os elementos gráficos para expressar sua pergunta, o sistema utilizará a notação principalmente para tornar auditável a tradução realizada pelo LLM.
+
+Essa mudança é também coerente com a distinção entre facilidade de produção e facilidade de interpretação. Uma representação pode ser cognitivamente adequada para leitura, mas não necessariamente ser a forma mais simples de expressar uma intenção. Ao permitir que o usuário formule a pergunta em linguagem natural e depois visualize a consulta resultante, busca-se otimizar tarefas diferentes com representações diferentes. Assim, a \textit{Physics of Notations} não é apenas uma justificativa estética para a interface, mas uma base teórica para decidir que informação deve ser mostrada graficamente, como os elementos devem ser diferenciados e como a representação visual pode apoiar a detecção de interpretações equivocadas.
+
+\section{Metodologia}
+
+O projeto terá natureza aplicada e será conduzido por meio do desenvolvimento e da avaliação de um protótipo de software. O método parte dos objetivos definidos anteriormente e organiza o trabalho em atividades que combinam revisão conceitual, análise da solução existente, implementação, construção de um protocolo de avaliação e análise dos resultados. Considerando o período reduzido de execução, entre agosto e novembro, o escopo será concentrado em consultas SPARQL do tipo \texttt{SELECT} e em uma ontologia/base de dados controlada, permitindo que a corretude possa ser avaliada de forma objetiva.
+
+As atividades previstas são as seguintes:
+
+\begin{enumerate}
+    \item \textbf{Revisão bibliográfica e análise da solução de referência.} Estudo de RDF, OWL, SPARQL, Web Semântica, LOD, \textit{Physics of Notations}, da arquitetura da SPARQL EasyQuery e do processo de avaliação apresentado no trabalho anterior. Nesta etapa também serão delimitadas as limitações metodológicas que a nova avaliação deverá enfrentar.
+
+    \item \textbf{Definição da arquitetura e do protocolo de geração.} Especificação do fluxo entre pergunta em linguagem natural, recuperação de contexto da ontologia, geração da consulta por LLM, validação e execução. Será definida uma estratégia para fornecer ao modelo apenas vocabulário relevante da ontologia, reduzindo a ocorrência de classes e propriedades inexistentes.
+
+    \item \textbf{Implementação do protótipo e adaptação da visualização.} Desenvolvimento do módulo de tradução de linguagem natural para SPARQL e integração com o mecanismo de execução. A notação gráfica da SPARQL EasyQuery será reutilizada ou adaptada para apresentar a estrutura da consulta gerada, destacando entidades, relações, variáveis e filtros de forma compatível com os princípios da \textit{Physics of Notations}.
+
+    \item \textbf{Construção do conjunto de tarefas e do oráculo de avaliação.} Para cada pergunta experimental será preparada uma consulta SPARQL de referência e um conjunto de resultados esperados. A comparação não será baseada apenas na igualdade textual da consulta, pois consultas diferentes podem ser semanticamente equivalentes. A corretude será verificada prioritariamente pelo resultado retornado e, quando necessário, por inspeção da estrutura da consulta.
+
+    \item \textbf{Avaliação experimental.} Usuários com pouco ou nenhum conhecimento de SPARQL deverão resolver um conjunto controlado de tarefas. Serão coletadas métricas objetivas, como taxa de respostas corretas, tempo de conclusão, número de reformulações e ocorrência de consultas inválidas, além de medidas subjetivas de usabilidade, confiança e compreensão. Dessa forma, satisfação será tratada como uma dimensão complementar, e não como evidência suficiente de sucesso.
+
+    \item \textbf{Análise dos resultados e redação final.} Os dados obtidos serão analisados de forma quantitativa e qualitativa, identificando acertos, erros e limitações da abordagem. A discussão deverá considerar especialmente situações nas quais o usuário declare alta confiança ou satisfação apesar de a consulta estar incorreta, pois esse contraste permitirá examinar diretamente o viés identificado no trabalho anterior. Por fim, serão consolidadas as conclusões, ameaças à validade e possibilidades de continuidade do projeto.
+\end{enumerate}
+
+\section{Cronograma de Desenvolvimento}
+
+\begin{table}[ht]
+    \centering
+    \small
+    \renewcommand{\arraystretch}{1.25}
+    \begin{tabularx}{\textwidth}{>{\RaggedRight\arraybackslash}X c c c c}
+        \toprule
+        \textbf{Atividade} & \textbf{Ago.} & \textbf{Set.} & \textbf{Out.} & \textbf{Nov.} \\
+        \midrule
+        1. Revisão bibliográfica e análise da solução de referência & X & X &  &  \\
+        2. Definição da arquitetura e do protocolo de geração & X & X &  &  \\
+        3. Implementação do protótipo e adaptação da visualização &  & X & X &  \\
+        4. Construção das tarefas e do oráculo de avaliação &  & X & X &  \\
+        5. Avaliação experimental &  &  & X & X \\
+        6. Análise dos resultados e redação final &  &  & X & X \\
+        \bottomrule
+    \end{tabularx}
+    \caption{Cronograma proposto para o desenvolvimento do TCC.}
+\end{table}
+
+\begin{thebibliography}{99}
+
+\bibitem{berners2001}
+BERNERS-LEE, T.; HENDLER, J.; LASSILA, O.
+\textbf{The Semantic Web}.
+\textit{Scientific American}, v. 284, n. 5, p. 34--43, 2001.
+
+\bibitem{easyquery}
+AUTORIA OMITIDA NO MANUSCRITO FORNECIDO PARA REVISÃO CEGA.
+\textbf{Support for SPARQL graphical query development}.
+Artigo de referência fornecido para este projeto, s.d.
+
+\bibitem{rdf2014}
+CYGANIAK, R.; WOOD, D.; LANTHALER, M.
+\textbf{RDF 1.1 Concepts and Abstract Syntax}.
+W3C Recommendation, 2014.
+
+\bibitem{isotani2015}
+ISOTANI, S.; BITTENCOURT, I. I.
+\textbf{Dados Abertos Conectados}.
+São Paulo: Novatec Editora, 2015.
+
+\bibitem{larkin1987}
+LARKIN, J. H.; SIMON, H. A.
+\textbf{Why a Diagram Is (Sometimes) Worth Ten Thousand Words}.
+\textit{Cognitive Science}, v. 11, n. 1, p. 65--100, 1987.
+
+\bibitem{moody2009}
+MOODY, D. L.
+\textbf{The ``Physics'' of Notations: Toward a Scientific Basis for Constructing Visual Notations in Software Engineering}.
+\textit{IEEE Transactions on Software Engineering}, v. 35, n. 6, p. 756--779, 2009. DOI: 10.1109/TSE.2009.67.
+
+\bibitem{owl2012}
+WORLD WIDE WEB CONSORTIUM (W3C).
+\textbf{OWL 2 Web Ontology Language Document Overview (Second Edition)}.
+W3C Recommendation, 2012.
+
+\bibitem{sparql2013}
+W3C SPARQL WORKING GROUP.
+\textbf{SPARQL 1.1 Overview}.
+W3C Recommendation, 2013.
+
+\end{thebibliography}
+
+\end{document}

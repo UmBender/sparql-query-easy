@@ -1,0 +1,5 @@
+{
+  "endpointUrl": "https://query.wikidata.org/sparql",
+  "search": "Douglas Adams",
+  "limit": 2
+}
