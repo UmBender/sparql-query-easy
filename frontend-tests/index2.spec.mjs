@@ -158,7 +158,7 @@ test('SPARQL preview and query execution use their documented relative endpoints
   expect(server.requests.some(({ path }) => path === '/api/query')).toBe(true);
 });
 
-test('running a query with exactly two valid variables opens the staged exploration panel without an API request', async ({ page }) => {
+test('running a query with exactly two valid variables opens the staged exploration panel without a legacy query request', async ({ page }) => {
   await disableAutoLayout(page);
   await page.evaluate(() => {
     cy.add([
@@ -171,11 +171,11 @@ test('running a query with exactly two valid variables opens the staged explorat
 
   await page.locator('#run-query-btn').click();
 
-  const panel = page.getByRole('complementary', { name: 'Explore two variables' });
+  const panel = page.getByRole('complementary', { name: 'Explore query variables' });
   await expect(panel).toBeVisible();
   await expect(page.locator('#two-variable-list')).toHaveText('?alpha?zeta');
   await expect(panel).toContainText('Staged exploration');
-  await expect(page.getByRole('button', { name: 'Close two-variable exploration' })).toBeFocused();
+  await expect(page.getByRole('button', { name: 'Close query variable exploration' })).toBeFocused();
   expect(server.requests.filter(({ path }) => path === '/api/query').length).toBe(queryRequestsBefore);
 
   await page.keyboard.press('Escape');
@@ -184,7 +184,7 @@ test('running a query with exactly two valid variables opens the staged explorat
 
   await page.locator('#run-query-btn').click();
   await expect(panel).toBeVisible();
-  await page.getByRole('button', { name: 'Close two-variable exploration' }).click();
+  await page.getByRole('button', { name: 'Close query variable exploration' }).click();
   await expect(panel).toBeHidden();
 
   await page.locator('#run-query-btn').click();
@@ -348,7 +348,7 @@ test('a variable repeated as node and predicate is one block', async ({ page }) 
   await expect(blockNames(page)).toHaveText(['?x', '?y']);
 });
 
-test('keyboard reordering updates the stage order read by Run Query without requests', async ({ page }) => {
+test('keyboard reordering updates the stage order read by Run Query', async ({ page }) => {
   await addThreeVariableChain(page);
   await expect(blockNames(page)).toHaveText(['?a', '?b', '?c']);
   await expect(page.getByRole('button', { name: 'Move ?a earlier' })).toBeDisabled();
@@ -369,7 +369,9 @@ test('keyboard reordering updates the stage order read by Run Query without requ
   await page.locator('#run-query-btn').click();
   await expect(page.locator('#two-variable-list')).toHaveText('?c?a?b');
   expect(await page.evaluate(() => cy.elements().map(item => JSON.stringify(item.data())).sort())).toEqual(nodesBefore);
-  expect(server.requests.length).toBe(requestsBefore);
+  const newRequests = server.requests.slice(requestsBefore);
+  expect(newRequests.map(({ path }) => path)).toEqual(['/api/query/stage']);
+  expect(JSON.parse(newRequests[0].body).variableName).toBe('?c');
 });
 
 test('pointer dragging a block produces the same order as the keyboard controls', async ({ page }) => {
@@ -399,6 +401,154 @@ test('stage-order controls stay reachable at a narrow viewport width', async ({ 
   await page.keyboard.press('Enter');
   await expect(blockNames(page)).toHaveText(['?a', '?c', '?b']);
   await expect(page.locator('#variable-order-status')).toHaveText('?b moved to stage 3 of 3.');
+});
+
+const XSD_INTEGER = 'http://www.w3.org/2001/XMLSchema#integer';
+const RDF_LANG_STRING = 'http://www.w3.org/1999/02/22-rdf-syntax-ns#langString';
+const iri = (value, label = null) => ({ term: { type: 'iri', value, datatype: null, language: null }, label, selectable: true });
+
+function stagePage(request, candidates, hasMore = false) {
+  return { data: { variableName: request.variableName, offset: request.offset, limit: request.limit, hasMore, candidates } };
+}
+
+// Routes POST /api/query/stage through `respond(request, index)`, which returns
+// {status?, body} or a promise of it; every request body is recorded.
+async function routeStages(page, respond) {
+  const requests = [];
+  await page.route('**/api/query/stage', async route => {
+    const request = JSON.parse(route.request().postData());
+    requests.push(request);
+    const { status = 200, body } = await respond(request, requests.length - 1);
+    await route.fulfill({ status, contentType: 'application/json', body: JSON.stringify(body) }).catch(() => {});
+  });
+  return requests;
+}
+
+async function addTeamCityGraph(page) {
+  await disableAutoLayout(page);
+  await page.evaluate(() => {
+    cy.add([
+      { group: 'nodes', data: { id: '?team', value: '?team', label: '?', type: 'variable' }, position: { x: 150, y: 200 } },
+      { group: 'nodes', data: { id: '?city', value: '?city', label: '?', type: 'variable' }, position: { x: 450, y: 200 } },
+      { group: 'edges', data: { id: 'located', source: '?team', target: '?city', nodeId: '<https://example.test/city>', label: 'city' } },
+    ]);
+  });
+  await expect(page.locator('#variable-order')).toBeVisible();
+}
+
+const graphSnapshot = page => page.evaluate(() => cy.elements().map(item => JSON.stringify(item.data())).sort());
+const candidateButtons = page => page.locator('#stage-candidates .stage-candidate');
+
+test('the first stage requests typed candidates for the reordered first variable only', async ({ page }) => {
+  await addTeamCityGraph(page);
+  const requests = await routeStages(page, request => ({ body: stagePage(request, [
+    iri('https://example.test/gremio', 'Grêmio'),
+    { term: { type: 'literal', value: '1903', datatype: XSD_INTEGER, language: null }, label: null, selectable: true },
+    { term: { type: 'literal', value: 'Grêmio', datatype: RDF_LANG_STRING, language: 'pt' }, label: null, selectable: true },
+    { term: { type: 'bnode', value: 'b0', datatype: null, language: null }, label: null, selectable: false },
+  ]) }));
+  await page.getByRole('button', { name: 'Move ?team earlier' }).click();
+  const before = await graphSnapshot(page);
+
+  await page.locator('#run-query-btn').click();
+  await expect(page.locator('#stage-heading')).toHaveText('Stage 1 of 2: ?team');
+  await expect(candidateButtons(page)).toHaveText([/Grêmio\s*IRI/, /1903\s*literal integer/, /Grêmio\s*literal @pt/, /b0\s*blank node \(not selectable\)/]);
+  await expect(candidateButtons(page).nth(3)).toBeDisabled();
+  await expect(page.locator('#stage-status')).toHaveText('4 values for ?team.');
+  expect(requests).toEqual([{
+    endpointUrl: 'CampeonatoBrasileiro2023',
+    variableName: '?team',
+    where: [{ subject: '?team', predicate: '<https://example.test/city>', object: '?city', filterType: null }],
+    bindings: [],
+    limit: 50,
+    offset: 0,
+  }]);
+
+  await candidateButtons(page).first().click();
+  await expect(candidateButtons(page).first()).toHaveAttribute('aria-pressed', 'true');
+  await expect(page.locator('#stage-status')).toHaveText('Selected ?team = Grêmio.');
+  await candidateButtons(page).nth(3).click({ force: true });
+  await expect(candidateButtons(page).first()).toHaveAttribute('aria-pressed', 'true');
+  expect(requests).toHaveLength(1);
+  expect(await graphSnapshot(page)).toEqual(before);
+});
+
+test('a stage shows loading then empty states and reuses cached pages for the same query', async ({ page }) => {
+  await addTeamCityGraph(page);
+  let release;
+  const gate = new Promise(resolve => { release = resolve; });
+  const requests = await routeStages(page, async request => {
+    await gate;
+    return { body: stagePage(request, []) };
+  });
+  await page.locator('#input-max-results').fill('7');
+  await page.locator('#run-query-btn').click();
+  await expect(page.locator('#stage-status')).toHaveText('Loading values for ?city…');
+  release();
+  await expect(page.locator('#stage-status')).toHaveText('No values for ?city under the chosen bindings.');
+  expect(requests.map(({ limit }) => limit)).toEqual([7]);
+
+  await page.keyboard.press('Escape');
+  await page.locator('#run-query-btn').click();
+  await expect(page.locator('#stage-status')).toHaveText('No values for ?city under the chosen bindings.');
+  expect(requests).toHaveLength(1);
+});
+
+test('a stage error shows the server message and Retry requests the page again', async ({ page }) => {
+  await addTeamCityGraph(page);
+  const requests = await routeStages(page, (request, index) => index === 0
+    ? { status: 502, body: { error: 'Upstream SPARQL endpoint failed' } }
+    : { body: stagePage(request, [iri('https://example.test/porto-alegre', 'Porto Alegre')]) });
+  await page.locator('#run-query-btn').click();
+  await expect(page.locator('#stage-status')).toHaveText('Upstream SPARQL endpoint failed');
+  await expect(page.locator('#stage-candidates li')).toHaveCount(0);
+  await page.getByRole('button', { name: 'Retry' }).click();
+  await expect(candidateButtons(page)).toHaveText([/Porto Alegre/]);
+  await expect(page.getByRole('button', { name: 'Retry' })).toBeHidden();
+  expect(requests).toHaveLength(2);
+});
+
+test('Load more requests the next offset page and appends its candidates', async ({ page }) => {
+  await addTeamCityGraph(page);
+  await page.locator('#input-max-results').fill('2');
+  const requests = await routeStages(page, request => ({
+    body: request.offset === 0
+      ? stagePage(request, [iri('https://example.test/c1', 'City 1'), iri('https://example.test/c2', 'City 2')], true)
+      : stagePage(request, [iri('https://example.test/c3', 'City 3')], false),
+  }));
+  await page.locator('#run-query-btn').click();
+  await expect(candidateButtons(page)).toHaveCount(2);
+  await page.getByRole('button', { name: 'Load more' }).click();
+  await expect(candidateButtons(page)).toHaveText([/City 1/, /City 2/, /City 3/]);
+  await expect(page.getByRole('button', { name: 'Load more' })).toBeHidden();
+  expect(requests.map(({ offset, limit }) => [offset, limit])).toEqual([[0, 2], [2, 2]]);
+});
+
+test('reordering while a stage loads discards the stale response', async ({ page }) => {
+  await addTeamCityGraph(page);
+  const releases = [];
+  const requests = await routeStages(page, request => new Promise(resolve => {
+    releases.push(() => resolve({ body: stagePage(request, [iri(`https://example.test/${request.variableName.slice(1)}`, `${request.variableName} value`)]) }));
+  }));
+  await page.locator('#run-query-btn').click();
+  await expect.poll(() => requests.length).toBe(1);
+  await page.getByRole('button', { name: 'Move ?team earlier' }).click();
+  await expect.poll(() => requests.length).toBe(2);
+  await expect(page.locator('#two-variable-list')).toHaveText('?team?city');
+  releases[0]();
+  releases[1]();
+  await expect(candidateButtons(page)).toHaveText([/\?team value/]);
+  await expect(page.locator('#stage-heading')).toHaveText('Stage 1 of 2: ?team');
+  expect(requests.map(({ variableName }) => variableName)).toEqual(['?city', '?team']);
+});
+
+test('editing the graph closes the exploration panel', async ({ page }) => {
+  await addTeamCityGraph(page);
+  await routeStages(page, request => ({ body: stagePage(request, [iri('https://example.test/c1', 'City 1')]) }));
+  await page.locator('#run-query-btn').click();
+  await expect(candidateButtons(page)).toHaveCount(1);
+  await page.evaluate(() => { cy.getElementById('located').data('nodeId', '<https://example.test/stadiumCity>'); });
+  await expect(page.locator('#two-variable-panel')).toBeHidden();
 });
 
 test('parallel edges sharing one predicate variable bind together without staging', async ({ page }) => {

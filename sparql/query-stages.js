@@ -1,7 +1,7 @@
 /**
  * Pure state for ordered multi-variable exploration (DEC-008). The browser
  * adapter owns Cytoscape, the DOM and transport; this module only derives the
- * variable registry, the query signature and block order.
+ * variable registry, the query signature, block order and stage requests.
  * @typedef {{
  *   id?: string,
  *   value?: string,
@@ -11,9 +11,19 @@
  *   filterType?: number | string | null,
  * }} GraphItem
  * @typedef {{name: string, nodeIds: string[], edgeIds: string[]}} QueryVariableEntry
+ * @typedef {{type: 'iri' | 'literal' | 'bnode', value: string, datatype?: string | null, language?: string | null}} RdfTerm
+ * @typedef {{term: RdfTerm, label: string | null, selectable: boolean}} StageCandidate
+ * @typedef {{variableName: string, offset: number, limit: number, hasMore: boolean, candidates: StageCandidate[]}} StagePage
+ * @typedef {{variableName: string, term: RdfTerm}} StageBinding
+ * @typedef {{subject: string, predicate: string, object: string, filterType: number | null}} WhereItem
+ * @typedef {{endpointUrl: string, variableName: string, where: WhereItem[], bindings: StageBinding[], limit: number, offset: number}} StageRequest
  */
 
+export const MAX_STAGE_PAGE_SIZE = 50;
+
 const variablePattern = /^[?$][A-Za-z_][A-Za-z0-9_]*$/;
+const XSD_STRING = 'http://www.w3.org/2001/XMLSchema#string';
+const RDF_LANG_STRING = 'http://www.w3.org/1999/02/22-rdf-syntax-ns#langString';
 
 /**
  * One entry per distinct variable name, sorted; repeated node/predicate
@@ -62,6 +72,80 @@ export function moveItem(order, from, to) {
   const [moved] = next.splice(from, 1);
   next.splice(to, 0, moved);
   return next;
+}
+
+/**
+ * @param {number} limit
+ * @returns {number}
+ */
+export function stagePageSize(limit) {
+  return Number.isFinite(limit) ? Math.min(Math.max(Math.trunc(limit), 1), MAX_STAGE_PAGE_SIZE) : 20;
+}
+
+/**
+ * @param {{endpointUrl: string, where: WhereItem[], variableName: string, bindings: StageBinding[], limit: number, offset?: number}} input
+ * @returns {StageRequest}
+ */
+export function stageRequest({ endpointUrl, where, variableName, bindings, limit, offset = 0 }) {
+  return {
+    endpointUrl,
+    variableName,
+    where,
+    bindings: bindings.map(binding => ({ variableName: binding.variableName, term: binding.term })),
+    limit: stagePageSize(limit),
+    offset,
+  };
+}
+
+/**
+ * The cache key covers the signature and binding path because the request
+ * contains the endpoint, patterns, bindings, variable and page.
+ * @param {StageRequest} request
+ * @returns {string}
+ */
+export function stageCacheKey(request) {
+  return JSON.stringify(request);
+}
+
+/**
+ * @param {RdfTerm} term
+ * @returns {string}
+ */
+export function termKey(term) {
+  return JSON.stringify([term.type, term.value, term.datatype ?? null, term.language ?? null]);
+}
+
+/**
+ * @param {StageCandidate} candidate
+ * @returns {string}
+ */
+export function candidateText(candidate) {
+  return candidate.label || candidate.term.value;
+}
+
+/**
+ * Short type hint shown beside a candidate; never used as a binding.
+ * @param {RdfTerm} term
+ * @returns {string}
+ */
+export function termHint(term) {
+  if (term.type === 'iri') return 'IRI';
+  if (term.type === 'bnode') return 'blank node';
+  if (term.language) return `literal @${term.language}`;
+  if (term.datatype && term.datatype !== XSD_STRING && term.datatype !== RDF_LANG_STRING) {
+    return `literal ${term.datatype.slice(Math.max(term.datatype.lastIndexOf('#'), term.datatype.lastIndexOf('/')) + 1)}`;
+  }
+  return 'literal';
+}
+
+/**
+ * Value used by the legacy graph/query model when a binding is applied.
+ * IRIs keep angle brackets; literals use their lexical form like other literal nodes.
+ * @param {RdfTerm} term
+ * @returns {string}
+ */
+export function termGraphValue(term) {
+  return term.type === 'iri' ? `<${term.value}>` : term.value;
 }
 
 /**

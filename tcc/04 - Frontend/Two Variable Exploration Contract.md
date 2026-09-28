@@ -66,6 +66,13 @@ Responses are cached in memory per (query signature, ordered binding path,
 variable, offset) until the signature changes. The client never requests all
 candidate pairs.
 
+*Implemented (FE-005):* Run Query opens the panel ("Explore query variables")
+and requests only the first stage. `where` is captured once when the panel
+opens. A reorder while the panel is open restarts at stage 1; a signature
+change closes the panel and clears the cache. Candidate text is the label or,
+without one, the term value, with a type hint (IRI, literal datatype or
+language, blank node).
+
 **Terms.** Candidates are distinct typed RDF terms: IRI or literal with
 datatype/language preserved. Labels are display-only and never used as
 bindings. Unbound rows are dropped. Blank nodes are listed but not selectable,

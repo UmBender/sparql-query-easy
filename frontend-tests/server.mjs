@@ -18,7 +18,7 @@ export async function startFrontendTestServer() {
     if (url.pathname.startsWith('/api/') || url.pathname === '/health') {
       const body = await consume(request);
       requests.push({ method: request.method, path: url.pathname, body });
-      return respondApi(response, url.pathname);
+      return respondApi(response, url.pathname, body);
     }
     const relativePath = url.pathname === '/' ? 'index2.html' : url.pathname.slice(1);
     try {
@@ -38,7 +38,7 @@ export async function startFrontendTestServer() {
   };
 }
 
-function respondApi(response, path) {
+function respondApi(response, path, body) {
   if (path === '/health') return respond(response, { status: 'ok' });
   if (path === '/api/local-database') return respond(response, { data: 'uploaded-test-graph' });
   if (path === '/api/query/search') {
@@ -54,6 +54,13 @@ function respondApi(response, path) {
   if (path === '/api/query/relationship-value') {
     return respond(response, {
       data: [{ propertyId: 'Team A', propertyLabel: 'Team A', propertyType: 'text', propertyClass: null }],
+    });
+  }
+  if (path === '/api/query/stage') {
+    // Deterministic default: an empty first page; tests route specific pages.
+    const request = JSON.parse(body || '{}');
+    return respond(response, {
+      data: { variableName: request.variableName, offset: request.offset ?? 0, limit: request.limit ?? 20, hasMore: false, candidates: [] },
     });
   }
   if (path === '/api/query/sparql') return respond(response, { data: 'SELECT DISTINCT ?item WHERE { ?item ?p ?o } LIMIT 20' });

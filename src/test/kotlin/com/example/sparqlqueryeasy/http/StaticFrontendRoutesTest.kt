@@ -21,6 +21,7 @@ class StaticFrontendRoutesTest {
 
             page.status shouldBe HttpStatusCode.OK
             page.bodyAsText().contains("apiUrl('/api/query')") shouldBe true
+            page.bodyAsText().contains("apiUrl('/api/query/stage')") shouldBe true
         }
 
     @Test
