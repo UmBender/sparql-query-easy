@@ -261,7 +261,8 @@
             background: #e3f2fd;
         }
 
-        .node-action-menu-button.danger {
+        .node-action-menu-button.danger,
+        .edge-action-menu-button.danger {
             color: #c62828;
         }
 
@@ -2542,7 +2543,7 @@
                 const actions = edge.data('nodeId')?.startsWith('?')
                     ? []
                     : [{ id: 'convert-predicate-variable', label: 'Convert relation to variable' }];
-                return [...actions, { id: 'remove-relation', label: 'Remove relation' }];
+                return [...actions, { id: 'remove-relation', label: 'Remove relation', danger: true }];
             }
 
             function positionEdgeActionMenu() {
@@ -2600,7 +2601,7 @@
                     const item = document.createElement('li');
                     const button = document.createElement('button');
                     button.type = 'button';
-                    button.className = 'edge-action-menu-button';
+                    button.className = `edge-action-menu-button${action.danger ? ' danger' : ''}`;
                     button.dataset.action = action.id;
                     button.textContent = action.label;
                     item.appendChild(button);

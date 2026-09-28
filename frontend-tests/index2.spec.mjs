@@ -1098,6 +1098,8 @@ test('Remove relation deletes only the chosen edge', async ({ page }) => {
   await clickGraphEdge(page, 'located');
   const edgeMenu = page.locator('#edge-action-menu');
   await expect(edgeMenu.getByRole('button', { name: 'Convert relation to variable' })).toHaveCount(0);
+  await expect(edgeMenu.getByRole('button', { name: 'Remove relation' })).toHaveCSS('color', 'rgb(198, 40, 40)');
+  await expect(page.locator('#node-action-menu .danger')).toHaveCount(0);
   await edgeMenu.getByRole('button', { name: 'Remove relation' }).click();
 
   await expect(edgeMenu).toBeHidden();
@@ -1110,6 +1112,7 @@ test('Remove relation deletes only the chosen edge', async ({ page }) => {
 
   await clickGraphEdge(page, 'plays');
   await expect(edgeMenu.getByRole('button', { name: 'Convert relation to variable' })).toBeVisible();
+  await expect(edgeMenu.getByRole('button', { name: 'Convert relation to variable' })).not.toHaveCSS('color', 'rgb(198, 40, 40)');
   await expect(edgeMenu.getByRole('button', { name: 'Remove relation' })).toBeVisible();
 });
 
