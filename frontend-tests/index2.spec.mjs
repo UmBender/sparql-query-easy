@@ -253,6 +253,51 @@ test('two predicate variables on successive edges retain the staged chain flow',
   expect(server.requests.filter(({ path }) => path === '/api/query').length).toBe(requestsBefore);
 });
 
+test('three or more variables use the ordered staged flow instead of legacy projection', async ({ page }) => {
+  await disableAutoLayout(page);
+  await page.evaluate(() => {
+    cy.add([
+      { group: 'nodes', data: { id: '?team', value: '?team', label: '?', type: 'variable' } },
+      { group: 'nodes', data: { id: '?city', value: '?city', label: '?', type: 'variable' } },
+      { group: 'edges', data: { id: 'located', source: '?team', target: '?city', nodeId: '?relation', label: '?' } },
+    ]);
+  });
+  const requestsBefore = server.requests.filter(({ path }) => path === '/api/query').length;
+  await page.locator('#run-query-btn').click();
+  await expect(page.locator('#two-variable-panel')).toBeVisible();
+  await expect(page.locator('#two-variable-list')).toHaveText('?city?relation?team');
+  expect(server.requests.filter(({ path }) => path === '/api/query').length).toBe(requestsBefore);
+});
+
+test('variable order is session state that resets only when the query signature changes', async ({ page }) => {
+  await disableAutoLayout(page);
+  await page.evaluate(() => {
+    cy.add([
+      { group: 'nodes', data: { id: '?b', value: '?b', label: '?', type: 'variable' } },
+      { group: 'nodes', data: { id: '?a', value: '?a', label: '?', type: 'variable' } },
+      { group: 'edges', data: { id: 'rel', source: '?b', target: '?a', nodeId: '<https://example.test/p>', label: 'p' } },
+    ]);
+  });
+  await expect.poll(() => page.evaluate(() => getVariableOrder())).toEqual(['?a', '?b']);
+  await page.evaluate(() => setVariableOrder(['?b', '?a']));
+
+  await page.evaluate(() => { cy.getElementById('?a').data('label', 'renamed only'); });
+  await page.evaluate(() => { cy.getElementById('?a').position({ x: 400, y: 300 }); });
+  await page.evaluate(() => new Promise(resolve => setTimeout(resolve, 0)));
+  expect(await page.evaluate(() => getVariableOrder())).toEqual(['?b', '?a']);
+
+  await page.evaluate(() => { cy.getElementById('rel').data('nodeId', '<https://example.test/q>'); });
+  await expect.poll(() => page.evaluate(() => getVariableOrder())).toEqual(['?a', '?b']);
+
+  await page.evaluate(() => setVariableOrder(['?b', '?a']));
+  await page.locator('#input-endpoint-sparql').fill('https://example.test/sparql');
+  await expect.poll(() => page.evaluate(() => getVariableOrder())).toEqual(['?a', '?b']);
+
+  await page.evaluate(() => setVariableOrder(['?b', '?a']));
+  await page.evaluate(() => newQuery());
+  await expect.poll(() => page.evaluate(() => getVariableOrder())).toEqual([]);
+});
+
 test('parallel edges sharing one predicate variable bind together without staging', async ({ page }) => {
   await disableAutoLayout(page);
   await page.evaluate(() => {

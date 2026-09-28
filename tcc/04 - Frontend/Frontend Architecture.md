@@ -8,6 +8,7 @@
 | Confirmed prototype | `sparql/login.html` | Packaged static form, but it posts to removed `index.html`; approved authentication awaits `AUTH-000`/`AUTH-001`/`AUTH-002`. |
 | Confirmed | `sparql/grafos.css` | Graph-related styling. |
 | Confirmed | `sparql/query-calculations.js` | DOM-free query filter and variable calculations; checked with JSDoc/TypeScript. |
+| Confirmed | `sparql/query-stages.js` | DOM-free ordered-exploration state: variable registry, query signature and block moves; checked with JSDoc/TypeScript. |
 | Confirmed | `sparql/cytoscape.min.js` | Local graph rendering library. |
 | Confirmed | `sparql/cytoscape-cxtmenu.js` | Retained local plugin asset; the authoritative page no longer loads it. |
 
@@ -97,10 +98,16 @@ the planned user-visible conversion of an edge predicate into a projected
 SPARQL variable. Kotlin already accepts such predicates; `FE-003` exposes the
 capability through the graph interface.
 
-**Approved direction with open product choices:** [[Two Variable Exploration Contract]]
-records staged exploration for exactly two variables. `FE-004`
-implements only its no-request panel foundation; `DEC-008` gates live
-candidate/binding work.
+**Approved direction:** [[Two Variable Exploration Contract]] records
+ordered staged exploration for two or more variables (DEC-008). `FE-004`
+added the no-request panel. `FE-008` added the session-only variable
+registry in `index2.html` (`refreshVariableOrder`, `getVariableOrder`,
+`setVariableOrder`): one entry per distinct variable of the first component,
+sorted initially, reset when the exploration signature (endpoint plus element
+IDs, values, endpoints, predicates and filter types; not labels or positions)
+changes. Cytoscape `add`/`remove`/`data` events, endpoint input/change and
+Turtle upload schedule a refresh. Two or more variables open the panel with
+that order; candidate requests remain for `FE-005`+.
 
 **Potential issue:** Materialize, Intro.js, Google icons, and CSS are loaded from third-party CDNs, so local development is not fully offline.
 

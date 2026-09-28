@@ -627,7 +627,9 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/intro.js/7.2.0/intro.min.js"></script>
     <script type="module">
         import * as queryCalculations from './query-calculations.js';
+        import * as queryStages from './query-stages.js';
         window.queryCalculations = queryCalculations;
+        window.queryStages = queryStages;
     </script>
 
     <script>
@@ -1052,9 +1054,9 @@
                 toast('Parallel predicate variables between the same fixed subject and object do not form a chain. Keep one predicate variable for this pair.', 'error');
                 return;
             }
-            const queryVariables = getQueryVariables(component);
-            if (queryVariables.length === 2) {
-                openTwoVariablePanel(queryVariables);
+            const orderedVariables = refreshVariableOrder();
+            if (orderedVariables.length >= 2) {
+                openTwoVariablePanel(orderedVariables);
                 return;
             }
             const variableName = extractVariableName(component);
@@ -1078,8 +1080,39 @@
             })));
         }
 
-        function getQueryVariables(component) {
-            return window.queryCalculations.getQueryVariables(component.map(item => item.data()));
+        // ── Ordered variable registry (DEC-008) ───────────────────────────
+        // Session-only order of distinct query variables in the first graph component.
+        // It resets to sorted names whenever the query signature changes.
+        let variableOrderState = { signature: null, order: [], registry: [] };
+        const variableOrderListeners = [];
+
+        function queryComponent() {
+            const components = cy ? cy.elements().components() : [];
+            return components.length ? components[0] : null;
+        }
+
+        function refreshVariableOrder() {
+            const component = queryComponent();
+            const items = component ? component.map(item => item.data()) : [];
+            const registry = window.queryStages.buildVariableRegistry(items);
+            const signature = window.queryStages.explorationSignature(getEndpoint(), items);
+            const changed = signature !== variableOrderState.signature;
+            variableOrderState = {
+                signature,
+                registry,
+                order: changed ? registry.map(entry => entry.name) : variableOrderState.order,
+            };
+            variableOrderListeners.forEach(listener => listener(variableOrderState, changed));
+            return variableOrderState.order.slice();
+        }
+
+        function setVariableOrder(order) {
+            variableOrderState = { ...variableOrderState, order: order.slice() };
+            variableOrderListeners.forEach(listener => listener(variableOrderState, false));
+        }
+
+        function getVariableOrder() {
+            return variableOrderState.order.slice();
         }
 
         let twoVariablePanelReturnFocus = null;
@@ -1410,6 +1443,7 @@
                     success(response) {
                         hideLoading();
                         document.getElementById('input-endpoint-sparql').value = response.data;
+                        refreshVariableOrder();
                         toast('Triples uploaded — endpoint updated.', 'success');
                     },
                     error(err) {
@@ -2105,6 +2139,20 @@
                     closeTwoVariablePanel();
                 }
             });
+            let variableOrderRefreshPending = false;
+            function scheduleVariableOrderRefresh() {
+                if (variableOrderRefreshPending) return;
+                variableOrderRefreshPending = true;
+                queueMicrotask(() => {
+                    variableOrderRefreshPending = false;
+                    refreshVariableOrder();
+                });
+            }
+            cy.on('add remove data', scheduleVariableOrderRefresh);
+            document.getElementById('input-endpoint-sparql').addEventListener('input', scheduleVariableOrderRefresh);
+            document.getElementById('input-endpoint-sparql').addEventListener('change', scheduleVariableOrderRefresh);
+            refreshVariableOrder();
+
             cy.on('pan zoom resize layoutstop', () => {
                 positionNodeActionMenu();
                 positionEdgeActionMenu();

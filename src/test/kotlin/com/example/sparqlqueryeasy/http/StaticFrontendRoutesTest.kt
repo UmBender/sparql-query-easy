@@ -31,6 +31,7 @@ class StaticFrontendRoutesTest {
             val page = client.get("/index2.html")
             val stylesheet = client.get("/grafos.css")
             val queryModule = client.get("/query-calculations.js")
+            val stageModule = client.get("/query-stages.js")
 
             page.status shouldBe HttpStatusCode.OK
             page.bodyAsText().contains("apiUrl('/api/query')") shouldBe true
@@ -44,6 +45,8 @@ class StaticFrontendRoutesTest {
             stylesheet.status shouldBe HttpStatusCode.OK
             queryModule.status shouldBe HttpStatusCode.OK
             queryModule.bodyAsText().contains("export function buildFilters") shouldBe true
+            stageModule.status shouldBe HttpStatusCode.OK
+            stageModule.bodyAsText().contains("export function buildVariableRegistry") shouldBe true
         }
 
     @Test

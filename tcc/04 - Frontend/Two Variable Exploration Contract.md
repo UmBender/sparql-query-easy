@@ -41,6 +41,9 @@ pointer drag or by explicit Move up/Move down buttons (dragging is never the
 only control). The order is session-only and is not exported with the graph.
 It resets to the sorted order when the query signature changes: any graph
 add/remove/value/predicate edit, graph load, New Query, or endpoint change.
+*Implemented (FE-008):* labels and positions are excluded from the signature,
+so cosmetic edits keep the order; a variable in both node and predicate
+positions keeps its node and edge IDs in one registry entry.
 
 **Stages.** Stage *k* lists candidates for the *k*-th variable under the
 bindings committed for stages 1..*k*-1. Only the current stage is requested.
@@ -98,6 +101,7 @@ are bound in place. Closing the panel or Back leaves the graph unchanged.
 
 - `sparql/index2.html`
 - `sparql/query-calculations.js`
+- `sparql/query-stages.js`
 - `src/main/kotlin/com/example/sparqlqueryeasy/http/QueryHttpModels.kt`
 - `src/main/kotlin/com/example/sparqlqueryeasy/application/query/ResultFilteringService.kt`
 - `src/main/kotlin/com/example/sparqlqueryeasy/wikidata/client/WikidataHttpClient.kt`

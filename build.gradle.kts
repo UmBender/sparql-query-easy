@@ -73,7 +73,15 @@ tasks.test {
 
 tasks.named<Copy>("processResources") {
     from(layout.projectDirectory.dir("sparql")) {
-        include("index2.html", "login.html", "grafos.css", "cytoscape.min.js", "cytoscape-cxtmenu.js", "query-calculations.js")
+        include(
+            "index2.html",
+            "login.html",
+            "grafos.css",
+            "cytoscape.min.js",
+            "cytoscape-cxtmenu.js",
+            "query-calculations.js",
+            "query-stages.js",
+        )
         into("frontend")
     }
 }

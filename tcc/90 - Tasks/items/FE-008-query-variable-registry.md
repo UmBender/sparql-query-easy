@@ -1,7 +1,7 @@
 ---
 id: FE-008
 title: Build a stable registry of query variables and stages
-status: BACKLOG
+status: DONE
 priority: P1
 type: frontend
 depends_on: [DEV-001, DEC-008, FE-004]
@@ -41,11 +41,11 @@ DEV-001, DEC-008 and FE-004 review completion.
 
 ## Acceptance criteria
 
-- [ ] Registry follows the approved node/predicate/repeated-variable matrix.
-- [ ] IDs/order remain stable across redraw and invalidate safely on edits.
-- [ ] Two or more variables use stages; zero/one behavior and parallel-edge
+- [x] Registry follows the approved node/predicate/repeated-variable matrix.
+- [x] IDs/order remain stable across redraw and invalidate safely on edits.
+- [x] Two or more variables use stages; zero/one behavior and parallel-edge
       guard remain unchanged.
-- [ ] Relevant offline browser tests pass without live services.
+- [x] Relevant offline browser tests pass without live services.
 
 ## Verification commands
 
@@ -67,3 +67,15 @@ after graph edits could preview a different query than the graph shows.
 ## Execution log
 
 - 2026-09-27: Planned only; no frontend behavior changed.
+- 2026-09-28: Implemented. `sparql/query-stages.js` (packaged, type-checked)
+  derives the sorted registry (one entry per name, node and edge IDs kept),
+  a label/position-insensitive exploration signature and block moves.
+  `index2.html` keeps session-only order state, refreshed on Cytoscape
+  add/remove/data, endpoint edits and Turtle upload; the order resets only
+  when the signature changes. Run Query opens the panel for two or more
+  variables in that order; zero/one-variable and parallel-edge behavior are
+  unchanged. Stage-request and preview helpers drafted in the same session
+  were left out as FE-005/FE-006 scope. Validation: `npm run test:query`
+  (7), `check:frontend-types`, browser suite 25/25 offline, Kotlin
+  `ktlintCheck detekt test installDist`, and a built-distribution smoke of
+  `/query-stages.js` (200, `text/javascript`).
