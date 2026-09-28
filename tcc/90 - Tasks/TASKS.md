@@ -41,7 +41,7 @@ Ordered by dependencies, then priority among selection candidates. See [worker r
 | FE-011 | DONE | P1 | refactor | [Extract pure query calculations for ordered exploration](<items/FE-011-extract-query-calculations.md>) |
 | FE-012 | DONE | P1 | quality | [Pilot checked JavaScript for extracted query calculations](<items/FE-012-javascript-typing-pilot.md>) |
 | FE-013 | DONE | P1 | frontend | [Render variable relations consistently and allow removing a relation](<items/FE-013-consistent-relation-visuals-and-removal.md>) |
-| FE-014 | READY | P2 | frontend | [Make mouse-wheel zoom on the graph less sensitive](<items/FE-014-gentler-wheel-zoom.md>) |
+| FE-014 | DONE | P2 | frontend | [Make mouse-wheel zoom on the graph less sensitive](<items/FE-014-gentler-wheel-zoom.md>) |
 | INV-001 | DONE | P1 | investigation | [Investigate Ktor HTTP-client and runtime resource lifecycle](<items/INV-001-runtime-resource-lifecycle.md>) |
 | QUAL-001 | DONE | P1 | quality | [Replay recorded Wikidata success and controlled error route fixtures](<items/QUAL-001-recorded-wikidata-routes.md>) |
 | MIG-002 | DONE | P1 | migration | [Retire the C# project after compatibility and operations gates](<items/MIG-002-retire-csharp-project.md>) |

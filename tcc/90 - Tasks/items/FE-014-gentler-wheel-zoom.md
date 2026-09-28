@@ -1,7 +1,7 @@
 ---
 id: FE-014
 title: Make mouse-wheel zoom on the graph less sensitive
-status: READY
+status: DONE
 priority: P2
 type: frontend
 depends_on: []
@@ -40,14 +40,25 @@ already follows zoom events).
 
 ## Acceptance criteria
 
-- [ ] One wheel notch changes the zoom noticeably less than before; a
+- [x] One wheel notch changes the zoom noticeably less than before; a
       touchpad remains usable.
-- [ ] Zoom buttons, min/max limits and action-menu repositioning are
+- [x] Zoom buttons, min/max limits and action-menu repositioning are
       unchanged.
-- [ ] An offline browser test asserts the zoom change for a synthetic wheel
+- [x] An offline browser test asserts the zoom change for a synthetic wheel
       event stays within the chosen bound.
-- [ ] `npm run test:browser` and `git diff --check` pass.
+- [x] `npm run test:browser` and `git diff --check` pass.
 
 ## Execution log
 
 - 2026-09-28: Created at user request; not started.
+- 2026-09-28: Set Cytoscape `wheelSensitivity: 0.2`. Cytoscape zooms by
+  `10^(-deltaY/250 × sensitivity)` and multiplies line-mode deltas by 33, so
+  one mouse notch (100 px, or 3 lines in Firefox) went from 2.51× to about
+  1.20×, close to the 1.25× buttons. Touchpad deltas scale down by the same
+  factor. The one-time Cytoscape console warning for a non-default value is
+  accepted: a custom wheel handler would duplicate its wheel and pinch logic.
+  Buttons, pinch zoom and 0.15–3 limits are unchanged. A new browser test
+  dispatches pixel and line notches in both directions and bounds the factor
+  to 1.1–1.25; with the old value it failed at 2.51. Validation: browser
+  suite 49/49 offline, `git diff --check`. Physical mouse and touchpad feel
+  was not checked in this environment.

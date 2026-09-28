@@ -115,6 +115,10 @@ variables open the panel with that order. The panel runs one exploration
 **Apply to graph** (`applyExplorationToGraph`), the only step that edits
 Cytoscape.
 
+**Confirmed (FE-014):** mouse-wheel zoom uses Cytoscape
+`wheelSensitivity: 0.2` (about 1.2× per notch, near the 1.25× zoom buttons);
+Cytoscape logs an expected one-time warning for the non-default value.
+
 **Potential issue:** Materialize, Intro.js, Google icons, and CSS are loaded from third-party CDNs, so local development is not fully offline.
 
 ## Planned authentication boundary

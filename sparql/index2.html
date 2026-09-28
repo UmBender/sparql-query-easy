@@ -2097,6 +2097,10 @@
                 container:          document.getElementById('cy'),
                 zoomingEnabled:     true,
                 userZoomingEnabled: true,
+                // FE-014: one wheel notch zooms ~1.2x instead of ~2.5x, close to the
+                // 1.25x zoom buttons. Cytoscape logs a one-time console warning for
+                // any non-default value; that warning is expected.
+                wheelSensitivity:   0.2,
                 minZoom:            0.15,
                 maxZoom:            3,
                 elements:           [],

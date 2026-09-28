@@ -1113,6 +1113,30 @@ test('Remove relation deletes only the chosen edge', async ({ page }) => {
   await expect(edgeMenu.getByRole('button', { name: 'Remove relation' })).toBeVisible();
 });
 
+test('one mouse-wheel notch zooms gently in both directions and wheel modes', async ({ page }) => {
+  await disableAutoLayout(page);
+  // A Chromium-style pixel notch and a Firefox-style line notch.
+  for (const { deltaY, deltaMode } of [{ deltaY: 100, deltaMode: 0 }, { deltaY: 3, deltaMode: 1 }]) {
+    for (const direction of [-1, 1]) {
+      const ratio = await page.evaluate(({ deltaY, deltaMode }) => {
+        cy.zoom(1);
+        const canvas = document.querySelector('#cy canvas');
+        const box = canvas.getBoundingClientRect();
+        const before = cy.zoom();
+        canvas.dispatchEvent(new WheelEvent('wheel', {
+          deltaY, deltaMode, bubbles: true, cancelable: true,
+          clientX: box.left + box.width / 2, clientY: box.top + box.height / 2,
+        }));
+        return cy.zoom() / before;
+      }, { deltaY: deltaY * direction, deltaMode });
+      const factor = direction < 0 ? ratio : 1 / ratio;
+      expect(factor, `zoom factor for deltaY=${deltaY * direction}, deltaMode=${deltaMode}`).toBeGreaterThan(1.1);
+      expect(factor, `zoom factor for deltaY=${deltaY * direction}, deltaMode=${deltaMode}`).toBeLessThanOrEqual(1.25);
+    }
+  }
+  expect(await page.evaluate(() => [cy.minZoom(), cy.maxZoom()])).toEqual([0.15, 3]);
+});
+
 test('node action connects an existing subject variable to an existing object with a variable predicate', async ({ page }) => {
   await disableAutoLayout(page);
   await page.evaluate(() => { cy.add([
