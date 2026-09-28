@@ -169,6 +169,65 @@ data class SearchSelectQuery(val search: String, val limit: Int, val isLocal: Bo
     }
 }
 
+/** A typed RDF term applied to a staged query through VALUES; never parsed from query text. */
+sealed interface StageBindingValue {
+    fun render(): String
+}
+
+data class IriBindingValue(val iri: IriTerm) : StageBindingValue {
+    override fun render(): String = iri.render()
+}
+
+data class LiteralBindingValue(
+    val lexicalForm: String,
+    val datatype: IriTerm? = null,
+    val language: String? = null,
+) : StageBindingValue {
+    init {
+        language?.let { require(languageTag.matches(it)) { "Invalid language tag: $it" } }
+        require(language == null || datatype == null) { "A language-tagged literal cannot declare a datatype" }
+    }
+
+    // RDF 1.1 treats a simple literal and xsd:string as the same term; plain form also matches RDF 1.0 stores.
+    override fun render(): String {
+        val quoted = "\"${lexicalForm.escapeSparqlString()}\""
+        return when {
+            language != null -> "$quoted@$language"
+            datatype != null && datatype.value != XSD_STRING -> "$quoted^^${datatype.render()}"
+            else -> quoted
+        }
+    }
+
+    private companion object {
+        const val XSD_STRING = "http://www.w3.org/2001/XMLSchema#string"
+        val languageTag = Regex("[A-Za-z0-9]+(?:-[A-Za-z0-9]+)*")
+    }
+}
+
+data class StageBinding(
+    val variable: QueryVariable,
+    val value: StageBindingValue,
+)
+
+/** One bounded page of distinct values for [variable] under typed [bindings] (API-002). */
+data class StageCandidateQuery(
+    val variable: QueryVariable,
+    val patterns: List<TriplePattern>,
+    val bindings: List<StageBinding>,
+    val limit: Int,
+    val offset: Int,
+    val useWikidataLabels: Boolean,
+) : WikidataQuery {
+    init {
+        require(patterns.isNotEmpty()) { "A staged query requires at least one pattern" }
+        require(limit > 0) { "LIMIT must be positive" }
+        require(offset >= 0) { "OFFSET must not be negative" }
+        require(patterns.none { it.filter == Maximum || it.filter == Minimum }) {
+            "Maximum and Minimum filters are not supported in staged exploration"
+        }
+    }
+}
+
 interface WikidataQueryGenerator {
     fun generate(input: WikidataQuery): String
 }
@@ -182,6 +241,7 @@ class CSharpCompatibleWikidataQueryGenerator : WikidataQueryGenerator {
             is RelationshipQuery -> relationships(input)
             is RelationshipValueQuery -> relationshipValues(input)
             is SearchSelectQuery -> search(input)
+            is StageCandidateQuery -> stageCandidates(input)
         }
 
     private fun generalSelect(input: GeneralSelectQuery): String {
@@ -251,6 +311,35 @@ class CSharpCompatibleWikidataQueryGenerator : WikidataQueryGenerator {
             finishWhere()
             if (!input.isLocal) limit(input.limit)
         }.build()
+
+    private fun stageCandidates(input: StageCandidateQuery): String {
+        val variable = input.variable.render()
+        return QueryText(input.useWikidataLabels).apply {
+            val label =
+                if (input.useWikidataLabels) "COALESCE(?__stageLabel, ?__stageClaimLabel)" else "?__stageLabel"
+            line("SELECT $variable (SAMPLE($label) AS ?__stageLabelOut)")
+            line("WHERE {")
+            if (input.bindings.isNotEmpty()) {
+                val names = input.bindings.joinToString(" ") { it.variable.render() }
+                val values = input.bindings.joinToString(" ") { it.value.render() }
+                line("VALUES ($names) { ($values) }")
+            }
+            input.patterns.forEachIndexed { index, pattern -> pattern(pattern, index) }
+            line("OPTIONAL { $variable rdfs:label ?__stageLabel . FILTER (lang(?__stageLabel) = \"en\") }")
+            if (input.useWikidataLabels) {
+                line(
+                    "OPTIONAL { ?__stageClaim wikibase:directClaim $variable . " +
+                        "?__stageClaim rdfs:label ?__stageClaimLabel . FILTER (lang(?__stageClaimLabel) = \"en\") }",
+                )
+            }
+            line("}")
+            line("GROUP BY $variable")
+            line("ORDER BY $variable")
+            // One extra row tells the caller whether another page exists.
+            line("LIMIT ${input.limit + 1}")
+            line("OFFSET ${input.offset}")
+        }.build()
+    }
 
     private class QueryText(wikidata: Boolean) {
         private val lines =

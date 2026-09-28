@@ -1,7 +1,7 @@
 ---
 id: BE-001
 title: Implement a safe typed bounded stage-query service
-status: BACKLOG
+status: DONE
 priority: P1
 type: backend
 depends_on: [DEV-001, API-002]
@@ -43,9 +43,9 @@ DEV-001 and approved API-002.
 
 ## Acceptance criteria
 
-- [ ] Typed constraints cannot be injected via user-controlled values.
-- [ ] Result type and limits match API-002, including duplicates/unbound cases.
-- [ ] Existing capture comparator and focused service tests pass unchanged.
+- [x] Typed constraints cannot be injected via user-controlled values.
+- [x] Result type and limits match API-002, including duplicates/unbound cases.
+- [x] Existing capture comparator and focused service tests pass unchanged.
 
 ## Verification commands
 
@@ -67,3 +67,14 @@ API-002 must define the supported boundary. Avoid accidental Cartesian work.
 ## Execution log
 
 - 2026-09-27: Planned only; no implementation started.
+- 2026-09-28: Added `StageCandidateQuery` (typed `IriBindingValue` /
+  `LiteralBindingValue` rendered into one `VALUES` row, grouped by the target,
+  ordered, `LIMIT limit+1 OFFSET offset`, optional English/Wikidata claim
+  labels) and `StageQueryService` (validation, syntax check, typed page with
+  `hasMore`, unbound dropped, duplicates collapsed). 11 new tests against a
+  local Jena graph and fake executors cover subject/object/predicate bindings,
+  integer/language/xsd:string literals, blank nodes, paging, injection text,
+  Wikidata labels and invalid input. Kotlin gate: 127 tests, ktlint/detekt pass.
+  Found pre-existing non-void `runBlocking` tests that JUnit silently skips
+  (GeneralQueryServiceTest 10, SearchServiceTest 8,
+  WikidataEntitySearchHttpClientTest 2); not changed here.
