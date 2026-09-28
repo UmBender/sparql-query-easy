@@ -30,6 +30,7 @@ class StaticFrontendRoutesTest {
 
             val page = client.get("/index2.html")
             val stylesheet = client.get("/grafos.css")
+            val queryModule = client.get("/query-calculations.js")
 
             page.status shouldBe HttpStatusCode.OK
             page.bodyAsText().contains("apiUrl('/api/query')") shouldBe true
@@ -41,6 +42,8 @@ class StaticFrontendRoutesTest {
             page.bodyAsText().contains("else openNodeActionMenu(event.target);") shouldBe true
             page.bodyAsText().contains("<script src=\"cytoscape-cxtmenu.js\"></script>") shouldBe false
             stylesheet.status shouldBe HttpStatusCode.OK
+            queryModule.status shouldBe HttpStatusCode.OK
+            queryModule.bodyAsText().contains("export function buildFilters") shouldBe true
         }
 
     @Test

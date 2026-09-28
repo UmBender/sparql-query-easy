@@ -38,7 +38,7 @@ Ordered by dependencies, then priority among selection candidates. See [worker r
 | FE-007 | DONE | P1 | frontend | [Connect existing nodes with variable or defined predicates](<items/FE-007-node-predicate-connector.md>) |
 | FE-010 | BACKLOG | P1 | frontend | [Complete ordered exploration across three or more variables](<items/FE-010-multistage-query-completion.md>) |
 | QUAL-003 | DONE | P1 | quality | [Make browser tests fail on unexpected external traffic](<items/QUAL-003-browser-egress-isolation.md>) |
-| FE-011 | BACKLOG | P1 | refactor | [Extract pure query calculations for ordered exploration](<items/FE-011-extract-query-calculations.md>) |
+| FE-011 | DONE | P1 | refactor | [Extract pure query calculations for ordered exploration](<items/FE-011-extract-query-calculations.md>) |
 | FE-012 | BACKLOG | P1 | investigation | [Evaluate a limited JavaScript type-checking pilot](<items/FE-012-javascript-typing-pilot.md>) |
 | INV-001 | DONE | P1 | investigation | [Investigate Ktor HTTP-client and runtime resource lifecycle](<items/INV-001-runtime-resource-lifecycle.md>) |
 | QUAL-001 | DONE | P1 | quality | [Replay recorded Wikidata success and controlled error route fixtures](<items/QUAL-001-recorded-wikidata-routes.md>) |

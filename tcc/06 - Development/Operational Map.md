@@ -28,6 +28,7 @@ These are configured versions, not claims about a fresh successful build.
 | Kotlin closing gate | `GRADLE_USER_HOME=/tmp/sparql-query-easy-gradle ./gradlew ktlintCheck detekt test --no-daemon` |
 | Format Kotlin when changed | `GRADLE_USER_HOME=/tmp/sparql-query-easy-gradle ./gradlew ktlintFormat --no-daemon` then required checks |
 | Focused browser | `npm run test:browser -- --grep 'predicate'` (choose existing test title) |
+| Pure query calculations | `npm run test:query` |
 | Browser closing gate | `npm run test:browser` |
 | Distribution | `GRADLE_USER_HOME=/tmp/sparql-query-easy-gradle ./gradlew installDist --no-daemon` |
 | Run | `./gradlew run` or `./build/install/sparql-query-easy-kotlin/bin/sparql-query-easy-kotlin` |

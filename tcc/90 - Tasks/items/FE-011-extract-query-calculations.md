@@ -1,7 +1,7 @@
 ---
 id: FE-011
 title: Extract pure query calculations for ordered exploration
-status: BACKLOG
+status: DONE
 priority: P1
 type: refactor
 depends_on: [DEV-001, QUAL-003]
@@ -27,9 +27,9 @@ See [[../../04 - Frontend/Frontend Evolution Audit]] for reasoning and
 
 ## Acceptance criteria
 
-- [ ] Existing zero/one/two-variable and parallel-predicate behavior is unchanged; payload regression oracles pass.
-- [ ] Pure calculations run without browser DOM/Cytoscape; the new test command exists and is documented.
-- [ ] Browser suite, Kotlin gate, installDist and packaged JS HTTP smoke pass.
+- [x] Existing zero/one/two-variable and parallel-predicate behavior is unchanged; payload regression oracles pass.
+- [x] Pure calculations run without browser DOM/Cytoscape; the new test command exists and is documented.
+- [x] Browser suite, Kotlin gate, installDist and packaged JS HTTP smoke pass.
 
 ## Validation
 
@@ -54,3 +54,11 @@ Module globals and deferred initialization differ from classic scripts; retain t
 ## Execution log
 
 - 2026-09-28: Created by DEV-001 frontend audit; not started.
+- 2026-09-28: Extracted filter, variable and parallel-predicate calculations
+  to `sparql/query-calculations.js`; kept global adapters and query event order
+  in `index2.html`. Added four pure tests, `npm run test:query`, Gradle
+  packaging and a Ktor static-route regression. Validation: pure tests pass;
+  browser suite 23/23; Gradle `ktlintCheck detekt test installDist` passes;
+  packaged HTTP GET `/query-calculations.js` returned 200 with JavaScript
+  content type. Updated frontend architecture/audit, operational map, this
+  card and task index.

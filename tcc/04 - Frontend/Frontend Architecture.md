@@ -7,6 +7,7 @@
 | Confirmed | `sparql/index2.html` | Main graph-query UI and current client contract. |
 | Confirmed prototype | `sparql/login.html` | Packaged static form, but it posts to removed `index.html`; approved authentication awaits `AUTH-000`/`AUTH-001`/`AUTH-002`. |
 | Confirmed | `sparql/grafos.css` | Graph-related styling. |
+| Confirmed | `sparql/query-calculations.js` | DOM-free query filter and variable calculations; checked with JSDoc/TypeScript. |
 | Confirmed | `sparql/cytoscape.min.js` | Local graph rendering library. |
 | Confirmed | `sparql/cytoscape-cxtmenu.js` | Retained local plugin asset; the authoritative page no longer loads it. |
 
@@ -96,8 +97,8 @@ the planned user-visible conversion of an edge predicate into a projected
 SPARQL variable. Kotlin already accepts such predicates; `FE-003` exposes the
 capability through the graph interface.
 
-**Approved direction with open product choices:** [[Two Variable Exploration
-Contract]] records staged exploration for exactly two variables. `FE-004`
+**Approved direction with open product choices:** [[Two Variable Exploration Contract]]
+records staged exploration for exactly two variables. `FE-004`
 implements only its no-request panel foundation; `DEC-008` gates live
 candidate/binding work.
 

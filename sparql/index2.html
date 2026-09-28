@@ -625,6 +625,10 @@
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/2.1.1/jquery.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/js/materialize.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/intro.js/7.2.0/intro.min.js"></script>
+    <script type="module">
+        import * as queryCalculations from './query-calculations.js';
+        window.queryCalculations = queryCalculations;
+    </script>
 
     <script>
         'use strict';
@@ -711,7 +715,7 @@
          * Build a SPARQL filter list from a cytoscape component (connected set).
          */
         function buildFilters(component) {
-            const filters = [];
+            const items = [];
             for (let i = 0; i < component.length; i++) {
                 const item = component[i];
                 if (!item.data('source') || !item.data('target')) continue;
@@ -720,18 +724,17 @@
                 const targetNode   = cy.getElementById(item.data('target'));
                 const sourceValue  = sourceNode.data('value')  || item.data('source');
                 const targetValue  = targetNode.data('value')  || item.data('target');
-                const targetFilter = targetNode.data('filterType') != null
-                    ? +targetNode.data('filterType')
-                    : null;
-
-                filters.push({
-                    subject:    sourceValue,
-                    predicate:  item.data('nodeId') || `?empty_${Date.now()}`,
-                    object:     targetValue,
-                    filterType: targetFilter
+                items.push({
+                    source: item.data('source'),
+                    target: item.data('target'),
+                    sourceValue,
+                    targetValue,
+                    nodeId: item.data('nodeId'),
+                    filterType: targetNode.data('filterType'),
+                    fallbackPredicate: item.data('nodeId') || `?empty_${Date.now()}`
                 });
             }
-            return filters;
+            return window.queryCalculations.buildFilters(items);
         }
 
         /**
@@ -1055,33 +1058,7 @@
                 return;
             }
             const variableName = extractVariableName(component);
-            const filters      = [];
-
-            for (let i = 0; i < component.length; i++) {
-                const item      = component[i];
-                const hasEdge   = item.data('source') && item.data('target');
-                const isAlone   = item.data('id') && !item.data('source') && !item.data('target');
-
-                if (!hasEdge && !isAlone) continue;
-                if (!item.data('source') && !item.data('nodeId') && !item.data('target')) continue;
-
-                if (hasEdge) {
-                    const sourceNode   = cy.getElementById(item.data('source'));
-                    const targetNode   = cy.getElementById(item.data('target'));
-                    const sourceValue  = sourceNode.data('value')  || item.data('source');
-                    const targetValue  = targetNode.data('value')  || item.data('target');
-                    const targetFilter = targetNode.data('filterType') != null
-                        ? +targetNode.data('filterType')
-                        : null;
-
-                    filters.push({
-                        subject:    sourceValue,
-                        predicate:  item.data('nodeId') || `?empty_${Date.now()}`,
-                        object:     targetValue,
-                        filterType: targetFilter
-                    });
-                }
-            }
+            const filters      = buildFilters(component);
 
             if (!variableName) {
                 toast('Add at least one variable (?) node before running.', 'error');
@@ -1092,36 +1069,17 @@
         }
 
         function hasParallelPredicateVariables(component) {
-            const predicatesByEndpoints = new Map();
-            const variablePattern = /^[?$][A-Za-z_][A-Za-z0-9_]*$/;
-            for (const edge of component.edges()) {
-                const predicate = edge.data('nodeId');
-                if (!variablePattern.test(predicate)) continue;
-                const subject = edge.source().data('value') || edge.data('source');
-                const object = edge.target().data('value') || edge.data('target');
-                if (variablePattern.test(subject) || variablePattern.test(object)) continue;
-
-                const key = JSON.stringify([subject, object]);
-                const predicates = predicatesByEndpoints.get(key) || new Set();
-                predicates.add(predicate);
-                if (predicates.size > 1) return true;
-                predicatesByEndpoints.set(key, predicates);
-            }
-            return false;
+            return window.queryCalculations.hasParallelPredicateVariables(component.edges().map(edge => ({
+                nodeId: edge.data('nodeId'),
+                source: edge.data('source'),
+                target: edge.data('target'),
+                sourceValue: edge.source().data('value') || edge.data('source'),
+                targetValue: edge.target().data('value') || edge.data('target')
+            })));
         }
 
         function getQueryVariables(component) {
-            const variables = new Set();
-            const variablePattern = /^[?$][A-Za-z_][A-Za-z0-9_]*$/;
-            for (const item of component) {
-                const values = item.data('source') && item.data('target')
-                    ? [item.data('nodeId')]
-                    : [item.data('value') || item.data('id')];
-                for (const value of values) {
-                    if (typeof value === 'string' && variablePattern.test(value)) variables.add(value);
-                }
-            }
-            return [...variables].sort((left, right) => left < right ? -1 : left > right ? 1 : 0);
+            return window.queryCalculations.getQueryVariables(component.map(item => item.data()));
         }
 
         let twoVariablePanelReturnFocus = null;
