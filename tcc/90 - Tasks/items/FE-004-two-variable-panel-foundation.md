@@ -48,6 +48,9 @@ GRADLE_USER_HOME=/tmp/sparql-query-easy-gradle ./gradlew ktlintCheck detekt test
 
 ## Execution log
 
+- 2026-09-28: Card had been reopened to REVIEW in the working tree; human
+  re-review confirmed the panel foundation is fine. Status DONE again. No
+  code changed.
 - 2026-09-28: Human review accepted the no-request two-variable panel. With
   QUAL-003 evidence (browser suite 23/23 offline; Kotlin quality gate passed
   at commit `31f6624`), all acceptance criteria are verified. No code changed
