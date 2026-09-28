@@ -46,6 +46,15 @@ or requesting relationship values. Removed or rebound edges are ignored.
 The result table still routes ordinary node bindings to `replaceNodeVariable`
 and default-node exploration to `getRelationshipValue`.
 
+*Implemented (BUG-003):* `replaceNodeVariable` (`replaceWithNewNode`) reuses
+an existing node when the chosen value is already in the graph (typical in
+cycles) and moves the variable's edges to it with their IDs and data. Each
+other outgoing target is still removed and replaced through
+`/api/query/relationship-value`; an edge that becomes a loop on the chosen
+node is kept and sends no request. `addNodeWithRelationship` reuses an
+existing node and gives its edge the first free ID (`<predicate><index>_<n>`)
+instead of throwing on a duplicate.
+
 Before staging or execution, the main Run Query action rejects two or more
 distinct predicate variables between the same fixed subject/object values.
 It shows a message without modifying the graph or sending an API request.

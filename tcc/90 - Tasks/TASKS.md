@@ -23,6 +23,7 @@ Ordered by dependencies, then priority among selection candidates. See [worker r
 | BE-001 | DONE | P1 | backend | [Implement a safe typed bounded stage-query service](<items/BE-001-typed-bounded-stage-query.md>) |
 | BE-002 | DONE | P1 | backend | [Expose the typed stage-query service over Ktor](<items/BE-002-staged-candidate-http-route.md>) |
 | BUG-002 | DONE | P1 | bug | [Map relationship executor failures to the approved JSON 502 contract](<items/BUG-002-relationship-upstream-error-mapping.md>) |
+| BUG-003 | DONE | P1 | bug | [Keep result-table selection working when the value is already in a cyclic graph](<items/BUG-003-result-selection-in-cyclic-graphs.md>) |
 | COM-001 | DONE | P1 | frontend-backend | [Characterize frontend-to-backend request flows](<items/COM-001-frontend-backend-contract.md>) |
 | DATA-001 | DONE | P2 | decision | [Decide canonical Brazilian football dataset behavior](<items/DATA-001-brazilian-dataset-decision.md>) |
 | OPS-001 | DONE | P2 | operations | [Define container and JVM runtime packaging](<items/OPS-001-container-runtime.md>) |

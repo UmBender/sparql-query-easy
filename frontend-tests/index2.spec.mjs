@@ -1458,6 +1458,92 @@ test('selecting a node-variable result still replaces the variable node', async 
   }]);
 });
 
+// BUG-003: a triangle A→B→C→A whose B was converted to a variable.
+async function runQueryOnConvertedCycleNode(page, choice, relationshipValue) {
+  const errors = [];
+  page.on('pageerror', error => errors.push(String(error)));
+  await disableAutoLayout(page);
+  await page.evaluate(() => {
+    const node = (id, x, y) => ({ group: 'nodes', data: { id, value: id, label: id.slice(-2, -1), type: 'node' }, position: { x, y } });
+    const edge = (id, source, target) => ({ group: 'edges', data: { id, source, target, nodeId: `<https://example.test/${id}>`, label: id } });
+    cy.add([node('<https://e/A>', 150, 150), node('<https://e/B>', 400, 150), node('<https://e/C>', 275, 350),
+      edge('ab', '<https://e/A>', '<https://e/B>'), edge('bc', '<https://e/B>', '<https://e/C>'), edge('ca', '<https://e/C>', '<https://e/A>')]);
+  });
+  await page.route('**/api/query', route => route.fulfill({ contentType: 'application/json',
+    body: JSON.stringify({ data: [{ propertyId: choice, propertyLabel: 'Choice', propertyType: 'object', propertyClass: null }] }) }));
+  const valueRequests = [];
+  await page.route('**/api/query/relationship-value', route => {
+    valueRequests.push(route.request().postDataJSON());
+    return route.fulfill({ contentType: 'application/json',
+      body: JSON.stringify({ data: [{ propertyId: relationshipValue, propertyLabel: 'Value', propertyType: 'object' }] }) });
+  });
+  await page.evaluate(() => { cy.getElementById('<https://e/B>').emit('tap'); });
+  await page.getByRole('button', { name: 'Convert to variable' }).click();
+  await page.getByRole('button', { name: 'Run query', exact: true }).click();
+  await expect(page.locator('#table-results-body')).toContainText('Choice');
+  await page.locator('#table-results-body tr.query-row').dispatchEvent('click');
+  return { errors, valueRequests };
+}
+
+const graphEdges = page => page.evaluate(() => cy.edges()
+  .map(edge => `${edge.id()}:${edge.source().id()}->${edge.target().id()}`).sort());
+
+test('choosing a result already in a cyclic graph merges the variable into that node', async ({ page }) => {
+  const { errors, valueRequests } = await runQueryOnConvertedCycleNode(page, '<https://e/A>', '<https://e/C>');
+  await expect(page.locator('#grid-resultado-consulta')).toBeHidden();
+  // ?B→C is replaced through the value request, whose answer C is added back;
+  // A→?B becomes a loop on A and is kept.
+  await expect.poll(() => graphEdges(page)).toEqual([
+    '<https://example.test/bc>0:<https://e/A>-><https://e/C>',
+    'ab:<https://e/A>-><https://e/A>',
+  ]);
+  expect(await page.evaluate(() => cy.nodes().map(node => node.id()).sort())).toEqual(['<https://e/A>', '<https://e/C>']);
+  expect(await page.evaluate(() => cy.getElementById('<https://e/A>').data())).toEqual({
+    id: '<https://e/A>', value: '<https://e/A>', label: 'A', type: 'node',
+  });
+  expect(valueRequests.map(({ subjectId, predicateId }) => [subjectId, predicateId]))
+    .toEqual([['<https://e/A>', '<https://example.test/bc>']]);
+  expect(errors).toEqual([]);
+});
+
+test('a relationship value already in the graph reuses its node and a free edge ID', async ({ page }) => {
+  const { errors } = await runQueryOnConvertedCycleNode(page, '<https://e/X>', '<https://e/A>');
+  await expect(page.locator('#grid-resultado-consulta')).toBeHidden();
+  await expect.poll(() => graphEdges(page)).toEqual([
+    '<https://example.test/bc>0:<https://e/X>-><https://e/A>',
+    'ab:<https://e/A>-><https://e/X>',
+  ]);
+  await page.evaluate(() => addNodeWithRelationship(cy, '<https://e/A>', 'A', 'object', '<https://e/X>', '<https://example.test/bc>', 'bc'));
+  expect(await graphEdges(page)).toContain('<https://example.test/bc>0_1:<https://e/X>-><https://e/A>');
+  expect(await page.evaluate(() => cy.nodes().map(node => node.id()).sort())).toEqual(['<https://e/A>', '<https://e/X>']);
+  expect(errors).toEqual([]);
+});
+
+test('a self-loop on the variable survives result selection', async ({ page }) => {
+  await disableAutoLayout(page);
+  await page.evaluate(() => {
+    cy.add([
+      { group: 'nodes', data: { id: '?loop', value: '?loop', label: '?', type: 'variable' }, position: { x: 220, y: 200 } },
+      { group: 'edges', data: { id: 'self', source: '?loop', target: '?loop', nodeId: '<https://example.test/p>', label: 'p' } },
+    ]);
+  });
+  const errors = [];
+  page.on('pageerror', error => errors.push(String(error)));
+  let valueRequests = 0;
+  await page.route('**/api/query/relationship-value', route => { valueRequests += 1; return route.abort(); });
+  await page.route('**/api/query', route => route.fulfill({ contentType: 'application/json',
+    body: JSON.stringify({ data: [{ propertyId: '<https://e/L>', propertyLabel: 'L', propertyType: 'object', propertyClass: null }] }) }));
+  await page.locator('#run-query-btn').click();
+  await expect(page.locator('#table-results-body')).toContainText('L');
+  await page.locator('#table-results-body tr.query-row').dispatchEvent('click');
+  expect(await graphEdges(page)).toEqual(['self:<https://e/L>-><https://e/L>']);
+  expect(await page.evaluate(() => cy.getElementById('self').data())).toEqual({
+    id: 'self', source: '<https://e/L>', target: '<https://e/L>', nodeId: '<https://example.test/p>', label: 'p',
+  });
+  expect(valueRequests).toBe(0);
+  expect(errors).toEqual([]);
+});
+
 for (const change of ['removed', 'rebound']) {
   test(`a stale predicate result does not recreate a ${change} edge or add a node`, async ({ page }) => {
     await disableAutoLayout(page);

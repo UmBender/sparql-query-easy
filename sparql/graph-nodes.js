@@ -34,31 +34,35 @@ function replaceWithNewNode(theCy, varName, nodeId, nodeLabel, propertyType, pro
     let nodeValue = nodeId;
     if (propertyType === 'default') { nodeType = 'default'; nodeValue = propertyClass; }
 
-    const oldPos = oldElement.position();
-    cy.add({
-        group: 'nodes',
-        data:  { id: nodeId, value: nodeValue, label: nodeLabel, type: nodeType },
-        position: oldPos
-    });
+    if (!oldElement.length) return;
+    // BUG-003: a value already in the graph (common in cycles) is reused, as
+    // Apply to graph does; adding a second element with its ID would throw.
+    if (!cy.getElementById(nodeId).length) {
+        cy.add({
+            group: 'nodes',
+            data:  { id: nodeId, value: nodeValue, label: nodeLabel, type: nodeType },
+            position: oldElement.position()
+        });
+    }
     nodeActionMenuController?.retarget(oldId, nodeId);
 
-    cy.edges().forEach(edge => {
-        if (edge.data('source') === oldId) {
-            const data = edge.data();
-            const { target, label: eLabel, nodeId: eNodeId } = data;
-            edge.remove();
-            cy.add({ group: 'edges', data: { ...data, source: nodeId } });
-            cy.getElementById(target).remove();
-            getRelationshipValueChange(nodeId, eNodeId, eLabel);
-        }
-        if (edge.data('target') === oldId) {
-            const data = edge.data();
-            edge.remove();
-            cy.add({ group: 'edges', data: { ...data, target: nodeId } });
-        }
+    // Edges keep their IDs and data. Each outgoing target is then replaced by
+    // the chosen value's own relationship value, except the replacement node
+    // itself (a loop after the merge), which stays with its edge.
+    const outgoing = [];
+    oldElement.connectedEdges().forEach(edge => {
+        const ends = {};
+        if (edge.data('source') === oldId) ends.source = nodeId;
+        if (edge.data('target') === oldId) ends.target = nodeId;
+        edge.move(ends);
+        if (ends.source && edge.data('target') !== nodeId) outgoing.push(edge.data());
     });
-
     oldElement.remove();
+
+    outgoing.forEach(({ target, label: eLabel, nodeId: eNodeId }) => {
+        cy.getElementById(target).remove();
+        getRelationshipValueChange(nodeId, eNodeId, eLabel);
+    });
     updateStatusBar();
 }
 
@@ -70,19 +74,24 @@ function addNodeWithRelationship(theCy, id, text, type, sourceNodeId, predicateI
     const theSource = theSubject || sourceNodeId;
     const theTarget = theSource === sourceNodeId ? id : sourceNodeId;
 
-    theCy.add([
-        {
+    // BUG-003: a value already in the graph reuses its node, and the edge takes
+    // the first free ID instead of throwing on a duplicate.
+    if (!theCy.getElementById(id).length) {
+        theCy.add({
             group: 'nodes',
             data:  { id, value: id, label: newText, type: nodeType, isLink, href: text,
                      color: type === 'many-results' ? 'gray' : '' },
             position: { x: 200, y: 200 }
-        },
-        {
-            group: 'edges',
-            data:  { nodeId: predicateId, id: predicateId + predicateIndex,
-                     label: predicateLabel, source: theSource, target: theTarget }
-        }
-    ]);
+        });
+    }
+    const baseEdgeId = predicateId + predicateIndex;
+    let edgeId = baseEdgeId;
+    for (let suffix = 1; theCy.getElementById(edgeId).length; suffix++) edgeId = `${baseEdgeId}_${suffix}`;
+    theCy.add({
+        group: 'edges',
+        data:  { nodeId: predicateId, id: edgeId,
+                 label: predicateLabel, source: theSource, target: theTarget }
+    });
 
     if (document.getElementById('auto-layout').checked) theCy.layout({ name: 'cose' }).run();
     updateStatusBar();
