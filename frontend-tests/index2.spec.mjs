@@ -1,8 +1,10 @@
 import { expect, test } from '@playwright/test';
+import { readFileSync } from 'node:fs';
 import { CYTOSCAPE_HTML_LABEL_STUB, INTRO_STUB, JQUERY_STUB, MATERIALIZE_STUB } from './cdn-stubs.mjs';
 import { startFrontendTestServer } from './server.mjs';
 
 let server;
+const materializeCss = readFileSync(new URL('../node_modules/materialize-css/dist/css/materialize.min.css', import.meta.url), 'utf8');
 
 test.beforeAll(async () => {
   server = await startFrontendTestServer();
@@ -13,11 +15,53 @@ test.afterAll(async () => {
 });
 
 test.beforeEach(async ({ page }) => {
-  await page.route('**/jquery.min.js', (route) => route.fulfill({ contentType: 'text/javascript', body: JQUERY_STUB }));
-  await page.route('**/materialize.min.js', (route) => route.fulfill({ contentType: 'text/javascript', body: MATERIALIZE_STUB }));
-  await page.route('**/intro.min.js', (route) => route.fulfill({ contentType: 'text/javascript', body: INTRO_STUB }));
-  await page.route('**/cytoscape-html-label*', (route) => route.fulfill({ contentType: 'text/javascript', body: CYTOSCAPE_HTML_LABEL_STUB }));
+  const unexpected = [];
+  page.__unexpectedExternalRequests = unexpected;
+  await page.route('**/*', (route) => {
+    const url = new URL(route.request().url());
+    if (url.origin === server.baseUrl) return route.continue();
+    const fixture = externalAssetFixture(url);
+    if (fixture) return route.fulfill(fixture);
+    unexpected.push(url.href);
+    return route.abort('blockedbyclient');
+  });
   await page.goto(server.baseUrl);
+});
+
+test.afterEach(async ({ page }) => {
+  expect(page.__unexpectedExternalRequests, 'Unexpected external browser requests').toEqual([]);
+});
+
+function externalAssetFixture(url) {
+  const key = `${url.hostname}${url.pathname}`;
+  const scripts = new Map([
+    ['ajax.googleapis.com/ajax/libs/jquery/2.1.1/jquery.min.js', JQUERY_STUB],
+    ['cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/js/materialize.min.js', MATERIALIZE_STUB],
+    ['cdnjs.cloudflare.com/ajax/libs/intro.js/7.2.0/intro.min.js', INTRO_STUB],
+    ['unpkg.com/cytoscape-html-label@1.1.7/dist/cytoscape-html-label.js', CYTOSCAPE_HTML_LABEL_STUB],
+  ]);
+  if (scripts.has(key)) return { contentType: 'text/javascript', body: scripts.get(key) };
+  if (key === 'fonts.googleapis.com/icon') {
+    // Keep icon glyph boxes the same size as Material Icons without fetching font files.
+    return { contentType: 'text/css', body: '.material-icons { display: inline-block; width: 24px; height: 24px; overflow: hidden; font-size: 0; line-height: 24px; vertical-align: middle; }' };
+  }
+  if (key === 'cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/css/materialize.min.css') {
+    return { contentType: 'text/css', body: materializeCss };
+  }
+  if (key === 'cdnjs.cloudflare.com/ajax/libs/intro.js/7.2.0/introjs.css') {
+    // The Intro.js test stub does not render tooltips; keep its stylesheet local.
+    return { contentType: 'text/css', body: '.introjs-overlay, .introjs-tooltip { position: fixed; }' };
+  }
+  if (key === 'cygri.github.io/rdf-logos/svg/sparql.svg') {
+    return { contentType: 'image/svg+xml', body: '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24"/>' };
+  }
+  return null;
+}
+
+test('unexpected external browser traffic is rejected', async ({ page }) => {
+  await page.evaluate(() => fetch('https://unexpected.example.test/asset.js').catch(() => {}));
+  expect(page.__unexpectedExternalRequests).toEqual(['https://unexpected.example.test/asset.js']);
+  page.__unexpectedExternalRequests.length = 0;
 });
 
 async function disableAutoLayout(page) {
@@ -25,18 +69,41 @@ async function disableAutoLayout(page) {
     const checkbox = document.getElementById('auto-layout');
     checkbox.checked = false;
     checkbox.dispatchEvent(new Event('change', { bubbles: true }));
+    // The startup layout may fit an empty graph at either zoom extreme.
+    cy.zoom(1);
+    cy.pan({ x: 0, y: 0 });
   });
 }
 
 async function clickGraphNode(page, nodeId) {
-  await page.evaluate(() => new Promise((resolve) => {
-    requestAnimationFrame(() => requestAnimationFrame(resolve));
-  }));
-  const position = await page.evaluate((id) => {
-    const rendered = cy.getElementById(id).renderedPosition();
-    return { x: rendered.x + 30, y: rendered.y };
-  }, nodeId);
-  await page.locator('#cy').click({ position });
+  const pendingBeforeClick = await page.locator('#connection-preview').isVisible();
+  for (const fraction of [0, 0.2, -0.2]) {
+    const position = await page.evaluate(async ({ id, fraction }) => {
+      const node = cy.getElementById(id);
+      await new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve)));
+      let rendered = node.renderedPosition();
+      if (rendered.x < 40 || rendered.x > cy.width() - 40 || rendered.y < 40 || rendered.y > cy.height() - 40) {
+        cy.center(node);
+        await new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve)));
+        rendered = node.renderedPosition();
+      }
+      if (window.__testGraphTapHandler) cy.off('tap', window.__testGraphTapHandler);
+      window.__testGraphTap = null;
+      window.__testGraphTapHandler = event => {
+        window.__testGraphTap = event.target === cy ? 'background' : event.target.id();
+      };
+      cy.on('tap', window.__testGraphTapHandler);
+      return { x: rendered.x + node.renderedWidth() * fraction, y: rendered.y };
+    }, { id: nodeId, fraction });
+    await page.locator('#cy').click({ position });
+    const target = await page.evaluate(() => {
+      cy.off('tap', window.__testGraphTapHandler);
+      return window.__testGraphTap;
+    });
+    if (target === nodeId) return;
+    if (pendingBeforeClick) throw new Error(`Graph click hit ${target ?? 'nothing'} instead of ${nodeId} while connecting`);
+  }
+  throw new Error(`Graph click did not reach node ${nodeId} after three pointer positions`);
 }
 
 async function clickGraphEdge(page, edgeId) {

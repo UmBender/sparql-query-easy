@@ -50,8 +50,8 @@ These are configured versions, not claims about a fresh successful build.
 
 Dependencies must already be available; gates do not authorize installation or
 live Wikidata. Report environment failures distinctly. The browser harness
-currently stubs external JS but leaves CSS/fonts on the network; QUAL-003 tracks
-explicit egress isolation. Do not call the browser suite fully offline yet.
+rejects unexpected external requests and uses local deterministic JavaScript,
+CSS, logo and icon-layout fixtures. This does not vendor production assets.
 
 ## Canonical facts and navigation
 

@@ -1,7 +1,7 @@
 ---
 id: QUAL-003
 title: Make browser tests fail on unexpected external traffic
-status: BACKLOG
+status: DONE
 priority: P1
 type: quality
 depends_on: [DEV-001]
@@ -27,9 +27,9 @@ See [[../../04 - Frontend/Frontend Evolution Audit]] for reasoning and
 
 ## Acceptance criteria
 
-- [ ] All existing browser tests pass with external requests explicitly blocked and unexpected requests treated as failures.
-- [ ] A deliberately unhandled external URL fails the guard; expected local and explicit fixture requests succeed.
-- [ ] FE-003/FE-004 offline-review evidence is updated without changing their product assertions.
+- [x] All existing browser tests pass with external requests explicitly blocked and unexpected requests treated as failures.
+- [x] A deliberately unhandled external URL fails the guard; expected local and explicit fixture requests succeed.
+- [x] FE-003/FE-004 offline-review evidence is updated without changing their product assertions.
 
 ## Validation
 
@@ -53,3 +53,14 @@ Avoid masking layout regressions with empty styles. Local fixtures must preserve
 ## Execution log
 
 - 2026-09-28: Created by DEV-001 frontend audit; not started.
+- 2026-09-28: Added a deny-by-default page request route and explicit external
+  JavaScript/CSS/logo/icon fixtures. Materialize 1.0.0 CSS comes from a pinned
+  dev dependency; Intro.js test styling is local because its JS stub renders
+  no tooltip. Service workers are blocked in
+  Playwright. A deliberate unhandled external fetch is rejected by the guard.
+  Initial empty CSS fixtures exposed menu layout failures and were replaced
+  with the real local styles. Stabilized node pointer tests by checking real
+  Cytoscape tap targets without weakening product assertions. Full browser
+  gate passed: 23/23. Changed `frontend-tests/index2.spec.mjs`,
+  `playwright.config.mjs`, `package.json`, `package-lock.json`, this card,
+  FE-003/FE-004 notes and the task index.

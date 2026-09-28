@@ -48,6 +48,11 @@ GRADLE_USER_HOME=/tmp/sparql-query-easy-gradle ./gradlew ktlintCheck detekt test
 
 ## Execution log
 
+- 2026-09-28: QUAL-003 closed the external browser traffic gap with local
+  deterministic fixtures and a deny-by-default guard. The full 23-case
+  browser suite and Kotlin quality gate pass with the current no-request
+  two-variable panel. This card remains REVIEW for its existing human review.
+
 - 2026-09-27: Started in `feature/two-variable-panel-foundation`.
 - 2026-09-27: Implemented in isolated branch
   `feature/two-variable-panel-foundation`, commit `4d35a9c`. Its complete

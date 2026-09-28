@@ -6,5 +6,6 @@ export default defineConfig({
   use: {
     browserName: 'firefox',
     headless: true,
+    serviceWorkers: 'block',
   },
 });

@@ -108,6 +108,12 @@ cause a node-only menu action or silently project the wrong variable.
 
 ## Predicate-result follow-up (2026-09-27)
 
+2026-09-28 offline-test follow-up: QUAL-003 now rejects unexpected external
+browser traffic and supplies local deterministic CSS/font-layout fixtures.
+The full 23-case browser suite and Kotlin quality gate pass with the current
+predicate-variable behavior. This removes the historical browser-egress
+limitation; this card remains REVIEW for its existing human validation.
+
 The result-selection path still used node replacement after predicate queries.
 A nonempty mocked result reproduced an extra node while the edge remained a
 variable. Predicate results now bind the existing edge in place, preserving
