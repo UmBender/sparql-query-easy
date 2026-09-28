@@ -77,6 +77,7 @@ tasks.named<Copy>("processResources") {
             "index2.html",
             "login.html",
             "grafos.css",
+            "index2.css",
             "cytoscape.min.js",
             "cytoscape-cxtmenu.js",
             "query-calculations.js",

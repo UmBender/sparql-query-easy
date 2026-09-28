@@ -46,7 +46,7 @@ Ordered by dependencies, then priority among selection candidates. See [worker r
 | FE-016 | DONE | P2 | frontend | [Show the Remove relation action in red](<items/FE-016-red-remove-relation-action.md>) |
 | FE-017 | DONE | P1 | frontend | [Show the possible graph in its own window while exploring stages](<items/FE-017-possible-graph-window.md>) |
 | FE-018 | DONE | P1 | analysis | [Analyze index2.html size and plan agent-sized frontend files](<items/FE-018-index2-size-audit.md>) |
-| FE-019 | BACKLOG | P2 | refactor | [Move index2 inline CSS to its own stylesheet](<items/FE-019-extract-index2-css.md>) |
+| FE-019 | DONE | P2 | refactor | [Move index2 inline CSS to its own stylesheet](<items/FE-019-extract-index2-css.md>) |
 | FE-020 | BACKLOG | P1 | refactor | [Split the index2 top-level script into ordered classic files](<items/FE-020-split-index2-top-level-script.md>) |
 | FE-021 | BACKLOG | P2 | refactor | [Move pure possible-graph and menu decisions into checked modules](<items/FE-021-pure-possible-graph-and-menu-logic.md>) |
 | FE-022 | BACKLOG | P2 | refactor | [Move graph action menus into a controller file](<items/FE-022-graph-menu-controller.md>) |

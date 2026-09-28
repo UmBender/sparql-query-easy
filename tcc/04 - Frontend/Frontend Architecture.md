@@ -7,6 +7,7 @@
 | Confirmed | `sparql/index2.html` | Main graph-query UI and current client contract. |
 | Confirmed prototype | `sparql/login.html` | Packaged static form, but it posts to removed `index.html`; approved authentication awaits `AUTH-000`/`AUTH-001`/`AUTH-002`. |
 | Confirmed | `sparql/grafos.css` | Graph-related styling. |
+| Confirmed | `sparql/index2.css` | Page layout, menus, panels, modals and toolbar styles for `index2.html`; loaded last. |
 | Confirmed | `sparql/query-calculations.js` | DOM-free query filter and variable calculations; checked with JSDoc/TypeScript. |
 | Confirmed | `sparql/query-stages.js` | DOM-free ordered-exploration state: variable registry, query signature and block moves; checked with JSDoc/TypeScript. |
 | Confirmed | `sparql/cytoscape.min.js` | Local graph rendering library. |
