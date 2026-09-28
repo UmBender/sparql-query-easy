@@ -464,12 +464,9 @@ test('the first stage requests typed candidates for the reordered first variable
     offset: 0,
   }]);
 
-  await candidateButtons(page).first().click();
-  await expect(candidateButtons(page).first()).toHaveAttribute('aria-pressed', 'true');
-  await expect(page.locator('#stage-status')).toHaveText('Selected ?team = Grêmio.');
   await candidateButtons(page).nth(3).click({ force: true });
-  await expect(candidateButtons(page).first()).toHaveAttribute('aria-pressed', 'true');
-  expect(requests).toHaveLength(1);
+  await expect(page.locator('#stage-heading')).toHaveText('Stage 1 of 2: ?team');
+  expect(requests.map(({ variableName }) => variableName)).not.toContain('?city');
   expect(await graphSnapshot(page)).toEqual(before);
 });
 
@@ -549,6 +546,138 @@ test('editing the graph closes the exploration panel', async ({ page }) => {
   await expect(candidateButtons(page)).toHaveCount(1);
   await page.evaluate(() => { cy.getElementById('located').data('nodeId', '<https://example.test/stadiumCity>'); });
   await expect(page.locator('#two-variable-panel')).toBeHidden();
+});
+
+// ?city is stage 1 (sorted order); ?team candidates depend on the assumed city.
+function cityTeamResponder({ hold } = {}) {
+  return async request => {
+    if (hold) await hold(request);
+    if (request.variableName === '?city') {
+      return { body: stagePage(request, [iri('https://example.test/poa', 'Porto Alegre'), iri('https://example.test/rio', 'Rio')]) };
+    }
+    const city = request.bindings.find(binding => binding.variableName === '?city')?.term.value ?? 'none';
+    const team = city.endsWith('/poa') ? 'Grêmio' : 'Flamengo';
+    return { body: stagePage(request, [iri(`https://example.test/${team}`, team)]) };
+  };
+}
+
+const previewRequests = requests => requests.filter(({ variableName }) => variableName === '?team');
+
+test('hovering a candidate previews the next variable under that typed assumption', async ({ page }) => {
+  await addTeamCityGraph(page);
+  const requests = await routeStages(page, cityTeamResponder());
+  await page.locator('#run-query-btn').click();
+  await expect(candidateButtons(page)).toHaveCount(2);
+  const before = await graphSnapshot(page);
+
+  await candidateButtons(page).first().hover();
+  await expect(page.locator('#stage-preview-heading')).toHaveText('If ?city = Porto Alegre, ?team could be:');
+  await expect(page.locator('#stage-preview-list')).toHaveText('Grêmio (IRI)');
+  expect(previewRequests(requests)).toEqual([{
+    endpointUrl: 'CampeonatoBrasileiro2023',
+    variableName: '?team',
+    where: [{ subject: '?team', predicate: '<https://example.test/city>', object: '?city', filterType: null }],
+    bindings: [{ variableName: '?city', term: { type: 'iri', value: 'https://example.test/poa', datatype: null, language: null } }],
+    limit: 50,
+    offset: 0,
+  }]);
+  expect(await graphSnapshot(page)).toEqual(before);
+});
+
+test('keyboard focus produces the same preview and Enter commits and advances', async ({ page }) => {
+  await addTeamCityGraph(page);
+  const requests = await routeStages(page, cityTeamResponder());
+  await page.locator('#run-query-btn').click();
+  await expect(candidateButtons(page)).toHaveCount(2);
+  await candidateButtons(page).nth(1).focus();
+  await expect(page.locator('#stage-preview-heading')).toHaveText('If ?city = Rio, ?team could be:');
+  await expect(page.locator('#stage-preview-list')).toHaveText('Flamengo (IRI)');
+  const requestsBeforeCommit = requests.length;
+
+  await page.keyboard.press('Enter');
+  await expect(page.locator('#stage-heading')).toHaveText('Stage 2 of 2: ?team');
+  await expect(page.locator('#stage-heading')).toBeFocused();
+  await expect(page.locator('#stage-commitments')).toHaveText('?city = Rio');
+  await expect(candidateButtons(page)).toHaveText([/Flamengo/]);
+  await expect(page.locator('#stage-preview')).toBeHidden();
+  expect(requests.length).toBe(requestsBeforeCommit);
+});
+
+test('rapid pointer movement sends only the settled preview request', async ({ page }) => {
+  await addTeamCityGraph(page);
+  const requests = await routeStages(page, cityTeamResponder());
+  await page.locator('#run-query-btn').click();
+  await expect(candidateButtons(page)).toHaveCount(2);
+  // One synchronous burst: Playwright hover() itself can take longer than the delay.
+  await page.evaluate(() => {
+    const [first, second] = document.querySelectorAll('#stage-candidates .stage-candidate');
+    for (let i = 0; i < 3; i += 1) {
+      for (const button of [first, second]) {
+        button.dispatchEvent(new MouseEvent('mouseenter'));
+        button.dispatchEvent(new MouseEvent('mouseleave'));
+      }
+    }
+    second.dispatchEvent(new MouseEvent('mouseenter'));
+  });
+  await expect(page.locator('#stage-preview-list')).toHaveText('Flamengo (IRI)');
+  await page.waitForTimeout(500);
+  expect(previewRequests(requests).map(({ bindings }) => bindings[0].term.value)).toEqual(['https://example.test/rio']);
+});
+
+test('a superseded preview response is never displayed', async ({ page }) => {
+  await addTeamCityGraph(page);
+  const releases = new Map();
+  const requests = await routeStages(page, cityTeamResponder({
+    hold: request => request.variableName === '?team'
+      ? new Promise(resolve => releases.set(request.bindings[0].term.value, resolve))
+      : undefined,
+  }));
+  await page.locator('#run-query-btn').click();
+  await expect(candidateButtons(page)).toHaveCount(2);
+  await candidateButtons(page).first().hover();
+  await expect.poll(() => previewRequests(requests).length).toBe(1);
+  await candidateButtons(page).nth(1).hover();
+  await expect.poll(() => previewRequests(requests).length).toBe(2);
+  releases.get('https://example.test/rio')();
+  await expect(page.locator('#stage-preview-list')).toHaveText('Flamengo (IRI)');
+  releases.get('https://example.test/poa')();
+  await page.waitForTimeout(200);
+  await expect(page.locator('#stage-preview-heading')).toHaveText('If ?city = Rio, ?team could be:');
+  await expect(page.locator('#stage-preview-list')).toHaveText('Flamengo (IRI)');
+});
+
+test('a failed preview shows its error without changing the stage', async ({ page }) => {
+  await addTeamCityGraph(page);
+  const ok = cityTeamResponder();
+  await routeStages(page, request => request.variableName === '?team'
+    ? { status: 502, body: { error: 'Preview endpoint failed' } }
+    : ok(request));
+  await page.locator('#run-query-btn').click();
+  await candidateButtons(page).first().hover();
+  await expect(page.locator('#stage-preview-status')).toHaveText('Preview endpoint failed');
+  await expect(page.locator('#stage-heading')).toHaveText('Stage 1 of 2: ?city');
+});
+
+test('Back clears the commitment and reordering restarts without stale state', async ({ page }) => {
+  await addTeamCityGraph(page);
+  const requests = await routeStages(page, cityTeamResponder());
+  await page.locator('#run-query-btn').click();
+  await candidateButtons(page).first().click();
+  await expect(page.locator('#stage-commitments')).toHaveText('?city = Porto Alegre');
+  await expect(candidateButtons(page)).toHaveText([/Grêmio/]);
+
+  await page.getByRole('button', { name: 'Back to previous stage' }).click();
+  await expect(page.locator('#stage-heading')).toHaveText('Stage 1 of 2: ?city');
+  await expect(page.locator('#stage-commitments li')).toHaveCount(0);
+  await expect(page.getByRole('button', { name: 'Back to previous stage' })).toBeHidden();
+  await expect(candidateButtons(page).first()).toHaveAttribute('aria-pressed', 'false');
+
+  await candidateButtons(page).nth(1).click();
+  await expect(page.locator('#stage-commitments')).toHaveText('?city = Rio');
+  await page.getByRole('button', { name: 'Move ?team earlier' }).click();
+  await expect(page.locator('#stage-heading')).toHaveText('Stage 1 of 2: ?team');
+  await expect(page.locator('#stage-commitments li')).toHaveCount(0);
+  expect(requests.at(-1)).toMatchObject({ variableName: '?team', bindings: [] });
 });
 
 test('parallel edges sharing one predicate variable bind together without staging', async ({ page }) => {

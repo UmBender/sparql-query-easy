@@ -1,7 +1,7 @@
 ---
 id: FE-006
 title: Explore the second variable under an assumed first binding
-status: BACKLOG
+status: DONE
 priority: P1
 type: frontend
 depends_on: [DEV-001, DEC-008, FE-005]
@@ -42,13 +42,13 @@ DEV-001, DEC-008, FE-005.
 
 ## Acceptance criteria
 
-- [ ] Hover and keyboard focus produce equivalent next-stage previews.
-- [ ] Only one bounded assumption path is requested at a time; rapid pointer
+- [x] Hover and keyboard focus produce equivalent next-stage previews.
+- [x] Only one bounded assumption path is requested at a time; rapid pointer
       movement cannot flood the API or display a stale response.
-- [ ] Typed binding display and commitment match DEC-008/API-002.
-- [ ] Changing an assumption clears dependent state safely; no graph mutation
+- [x] Typed binding display and commitment match DEC-008/API-002.
+- [x] Changing an assumption clears dependent state safely; no graph mutation
       occurs during preview.
-- [ ] Offline browser and Kotlin checks pass.
+- [x] Offline browser and Kotlin checks pass.
 
 ## Verification commands
 
@@ -73,3 +73,15 @@ refund a request already sent. Use hard request budgets and delayed dispatch.
 - 2026-09-27: Created; originally described a selected first binding.
 - 2026-09-27: Re-scoped for hover/focus preview followed by explicit
   commitment; no implementation started.
+- 2026-09-28: Implemented. `createPreviewScheduler` (pure, unit-tested with
+  mock timers) delays previews by 300 ms, keeps one in flight, aborts and
+  ignores superseded ones and shares the stage cache. The panel previews the
+  next variable on hover/focus, commits on click/Enter, lists commitments,
+  and offers Back (clears that and later commitments); reorder restarts at
+  stage 1. On the last stage a click stays a selection until FE-010. The
+  FE-005 selection test was updated for commit-and-advance. The rapid-hover
+  browser test dispatches one synchronous event burst because Playwright
+  `hover()` can exceed the delay (it was flaky before). Validation:
+  `npm run test:query` (13), `check:frontend-types`, browser suite 42/42
+  offline, 5x repeats of the timing-sensitive tests, `git diff --check`.
+  Kotlin code is unchanged since the FE-005 gate passed.

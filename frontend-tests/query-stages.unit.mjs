@@ -3,6 +3,7 @@ import { test } from 'node:test';
 import {
   buildVariableRegistry,
   candidateText,
+  createPreviewScheduler,
   explorationSignature,
   moveItem,
   stageCacheKey,
@@ -70,4 +71,94 @@ test('terms keep their type in hints and graph values; labels are display only',
   assert.equal(termGraphValue(integer), '1903');
   assert.equal(candidateText({ term: integer, label: null, selectable: true }), '1903');
   assert.equal(candidateText({ term: integer, label: 'Founded', selectable: true }), 'Founded');
+});
+
+function schedulerHarness(t) {
+  t.mock.timers.enable({ apis: ['setTimeout'] });
+  const requests = [];
+  const updates = [];
+  const cache = new Map();
+  const scheduler = createPreviewScheduler({
+    cache,
+    delay: 300,
+    onUpdate: state => updates.push(state),
+    fetchPage: (request, signal) => new Promise((resolve, reject) => {
+      requests.push({ request, signal, resolve, reject });
+    }),
+  });
+  const request = value => stageRequest({
+    endpointUrl: 'graph',
+    where: [],
+    variableName: '?next',
+    bindings: [{ variableName: '?current', term: { type: 'iri', value } }],
+    limit: 20,
+  });
+  const page = value => ({ variableName: '?next', offset: 0, limit: 20, hasMore: false, candidates: [{ term: { type: 'iri', value }, label: null, selectable: true }] });
+  return { scheduler, requests, updates, cache, request, page };
+}
+
+test('rapid hover changes dispatch only the settled assumption after the delay', t => {
+  const { scheduler, requests, request } = schedulerHarness(t);
+  for (const value of ['a', 'b', 'c', 'd']) {
+    scheduler.schedule(request(value));
+    t.mock.timers.tick(100);
+  }
+  assert.equal(requests.length, 0);
+  t.mock.timers.tick(200);
+  assert.equal(requests.length, 1);
+  assert.equal(requests[0].request.bindings[0].term.value, 'd');
+});
+
+test('a superseded in-flight preview is aborted and its late response is ignored', async t => {
+  const { scheduler, requests, updates, request, page } = schedulerHarness(t);
+  scheduler.schedule(request('a'));
+  t.mock.timers.tick(300);
+  scheduler.schedule(request('b'));
+  assert.equal(requests[0].signal.aborted, true);
+  t.mock.timers.tick(300);
+  assert.equal(requests.length, 2);
+
+  requests[0].resolve(page('stale'));
+  requests[1].resolve(page('fresh'));
+  await Promise.resolve();
+  await Promise.resolve();
+
+  const loaded = updates.filter(update => update.status === 'loaded');
+  assert.equal(loaded.length, 1);
+  assert.equal(loaded[0].page.candidates[0].term.value, 'fresh');
+});
+
+test('cached assumptions render immediately without another request', async t => {
+  const { scheduler, requests, updates, request, page } = schedulerHarness(t);
+  scheduler.schedule(request('a'));
+  t.mock.timers.tick(300);
+  requests[0].resolve(page('a'));
+  await Promise.resolve();
+  scheduler.schedule(request('b'));
+  scheduler.schedule(request('a'));
+  assert.equal(requests.length, 1);
+  assert.equal(updates.at(-1).status, 'loaded');
+  assert.equal(updates.at(-1).page.candidates[0].term.value, 'a');
+});
+
+test('settle drops an undispatched preview and errors allow a later retry', async t => {
+  const { scheduler, requests, updates, request } = schedulerHarness(t);
+  scheduler.schedule(request('a'));
+  scheduler.settle();
+  t.mock.timers.tick(1000);
+  assert.equal(requests.length, 0);
+
+  scheduler.schedule(request('a'));
+  t.mock.timers.tick(300);
+  requests[0].reject(new Error('upstream failed'));
+  await Promise.resolve();
+  await Promise.resolve();
+  assert.deepEqual(updates.at(-1), { key: updates.at(-1).key, status: 'error', error: 'upstream failed' });
+
+  scheduler.schedule(request('a'));
+  t.mock.timers.tick(300);
+  assert.equal(requests.length, 2);
+  scheduler.cancel();
+  assert.equal(requests[1].signal.aborted, true);
+  assert.deepEqual(updates.at(-1), { key: null, status: 'idle' });
 });

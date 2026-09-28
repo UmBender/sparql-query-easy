@@ -73,6 +73,13 @@ change closes the panel and clears the cache. Candidate text is the label or,
 without one, the term value, with a type hint (IRI, literal datatype or
 language, blank node).
 
+*Implemented (FE-006):* hover and keyboard focus call the same preview path;
+a preview uses the same request shape and page size as the next stage, so a
+committed candidate's next stage is usually served from cache. Leaving a
+candidate before the delay drops its preview; a preview error shows the server
+text inside the preview only. After a commit, focus moves to the new stage
+heading; Enter inside the panel never triggers the global Run Query shortcut.
+
 **Terms.** Candidates are distinct typed RDF terms: IRI or literal with
 datatype/language preserved. Labels are display-only and never used as
 bindings. Unbound rows are dropped. Blank nodes are listed but not selectable,

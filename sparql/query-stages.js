@@ -1,7 +1,8 @@
 /**
  * Pure state for ordered multi-variable exploration (DEC-008). The browser
  * adapter owns Cytoscape, the DOM and transport; this module only derives the
- * variable registry, the query signature, block order and stage requests.
+ * variable registry, the query signature, block order and stage requests, and
+ * budgets preview requests through injected timer/fetch functions.
  * @typedef {{
  *   id?: string,
  *   value?: string,
@@ -17,9 +18,11 @@
  * @typedef {{variableName: string, term: RdfTerm}} StageBinding
  * @typedef {{subject: string, predicate: string, object: string, filterType: number | null}} WhereItem
  * @typedef {{endpointUrl: string, variableName: string, where: WhereItem[], bindings: StageBinding[], limit: number, offset: number}} StageRequest
+ * @typedef {{key: string | null, status: 'idle' | 'loading' | 'loaded' | 'error', page?: StagePage, error?: string}} PreviewState
  */
 
 export const MAX_STAGE_PAGE_SIZE = 50;
+export const PREVIEW_DELAY_MS = 300;
 
 const variablePattern = /^[?$][A-Za-z_][A-Za-z0-9_]*$/;
 const XSD_STRING = 'http://www.w3.org/2001/XMLSchema#string';
@@ -146,6 +149,93 @@ export function termHint(term) {
  */
 export function termGraphValue(term) {
   return term.type === 'iri' ? `<${term.value}>` : term.value;
+}
+
+/**
+ * Budgeted hover/focus preview: one delayed request at a time, superseded
+ * requests are aborted and their responses ignored, and results are cached.
+ * @param {{
+ *   fetchPage: (request: StageRequest, signal: AbortSignal) => Promise<StagePage>,
+ *   onUpdate: (state: PreviewState) => void,
+ *   cache: Map<string, StagePage>,
+ *   delay?: number,
+ *   setTimer?: (callback: () => void, delay: number) => unknown,
+ *   clearTimer?: (handle: any) => void,
+ * }} options
+ */
+export function createPreviewScheduler({ fetchPage, onUpdate, cache, delay = PREVIEW_DELAY_MS, setTimer = setTimeout, clearTimer = clearTimeout }) {
+  /** @type {string | null} */
+  let currentKey = null;
+  /** @type {unknown} */
+  let timer = null;
+  /** @type {AbortController | null} */
+  let inFlight = null;
+
+  function stopPending() {
+    if (timer !== null) clearTimer(timer);
+    timer = null;
+    inFlight?.abort();
+    inFlight = null;
+  }
+
+  /** @param {StageRequest} request */
+  function dispatch(request) {
+    const key = stageCacheKey(request);
+    const controller = new AbortController();
+    inFlight = controller;
+    onUpdate({ key, status: 'loading' });
+    fetchPage(request, controller.signal).then(
+      page => {
+        if (controller.signal.aborted) return;
+        cache.set(key, page);
+        if (inFlight === controller) inFlight = null;
+        if (currentKey === key) onUpdate({ key, status: 'loaded', page });
+      },
+      error => {
+        if (controller.signal.aborted) return;
+        if (inFlight === controller) inFlight = null;
+        if (currentKey !== key) return;
+        // Forget the failed key so hovering the same value again can retry after the delay.
+        currentKey = null;
+        onUpdate({ key, status: 'error', error: error instanceof Error ? error.message : String(error) });
+      },
+    );
+  }
+
+  return {
+    /** @param {StageRequest} request */
+    schedule(request) {
+      const key = stageCacheKey(request);
+      if (key === currentKey) return;
+      stopPending();
+      currentKey = key;
+      const cached = cache.get(key);
+      if (cached) {
+        onUpdate({ key, status: 'loaded', page: cached });
+        return;
+      }
+      timer = setTimer(() => {
+        timer = null;
+        dispatch(request);
+      }, delay);
+    },
+    /** Drop an undispatched preview (pointer left before the delay); a dispatched one completes. */
+    settle() {
+      if (timer === null) return;
+      clearTimer(timer);
+      timer = null;
+      currentKey = null;
+    },
+    /** Cancel an undispatched or in-flight preview and forget the current assumption. */
+    cancel() {
+      stopPending();
+      currentKey = null;
+      onUpdate({ key: null, status: 'idle' });
+    },
+    get currentKey() {
+      return currentKey;
+    },
+  };
 }
 
 /**

@@ -106,6 +106,15 @@
         .stage-candidate[aria-pressed="true"] { border-color: #1565c0; background: #bbdefb; font-weight: 600; }
         .stage-candidate:disabled { color: #9e9e9e; cursor: not-allowed; background: #fafafa; }
         .stage-candidate-hint { color: #607d8b; font-size: 11px; white-space: nowrap; }
+        #stage-commitments { margin: 0 0 4px; padding-left: 20px; font-size: 13px; }
+        #stage-commitments:empty { display: none; }
+        #stage-commitments li { list-style: decimal; }
+        #stage-preview { margin-top: 8px; padding: 8px; border-left: 3px solid #90caf9; background: #f5f9fd; }
+        #stage-preview-heading { margin: 0 0 4px; font-size: 13px; font-weight: 600; }
+        #stage-preview-status { margin: 0 0 4px; color: #546e7a; font-size: 12px; }
+        #stage-preview-status.error { color: #c62828; }
+        #stage-preview-list { margin: 0; padding-left: 18px; font-size: 12px; }
+        #stage-preview-list li { list-style: disc; }
 
         /* ── Numbered stage-order blocks next to Run Query ───────── */
         .run-query-cell {
@@ -635,11 +644,18 @@
                 <ul id="two-variable-list" aria-label="Variables in this query"></ul>
                 <p id="two-variable-panel-description">Staged exploration: choose one value per variable in stage order.</p>
                 <section id="stage-view" aria-labelledby="stage-heading">
-                    <h3 id="stage-heading"></h3>
+                    <ol id="stage-commitments" aria-label="Committed bindings"></ol>
+                    <button id="stage-back" type="button" class="btn-small btn-flat" aria-label="Back to previous stage" hidden>Back</button>
+                    <h3 id="stage-heading" tabindex="-1"></h3>
                     <p id="stage-status" role="status" aria-live="polite"></p>
                     <button id="stage-retry" type="button" class="btn-small" hidden>Retry</button>
                     <ul id="stage-candidates" aria-labelledby="stage-heading"></ul>
                     <button id="stage-load-more" type="button" class="btn-small btn-flat" hidden>Load more</button>
+                    <section id="stage-preview" hidden aria-labelledby="stage-preview-heading" aria-live="polite">
+                        <h4 id="stage-preview-heading"></h4>
+                        <p id="stage-preview-status"></p>
+                        <ul id="stage-preview-list"></ul>
+                    </section>
                 </section>
             </aside>
 
@@ -1371,26 +1387,44 @@
                 where: buildFilters(component),
                 stage: 0,
                 bindings: [],
+                labels: [],
                 pages: [],
+                preview: { key: null, status: 'idle' },
+                previewCandidate: null,
                 selected: null,
                 status: 'loading',
                 error: null,
                 controller: null,
             };
+            const current = exploration;
+            current.previews = window.queryStages.createPreviewScheduler({
+                cache: stageCache,
+                fetchPage: fetchStagePage,
+                onUpdate: state => {
+                    if (exploration !== current) return;
+                    current.preview = state;
+                    renderStagePreview();
+                },
+            });
             loadStagePage(0);
         }
 
         function stopExploration() {
             exploration?.controller?.abort();
+            exploration?.previews.cancel();
             exploration = null;
         }
 
         function currentStageRequest(offset) {
+            return stageRequestFor(exploration.stage, exploration.bindings, offset);
+        }
+
+        function stageRequestFor(stage, bindings, offset) {
             return window.queryStages.stageRequest({
                 endpointUrl: getEndpoint(),
                 where: exploration.where,
-                variableName: exploration.order[exploration.stage],
-                bindings: exploration.bindings,
+                variableName: exploration.order[stage],
+                bindings,
                 limit: getLimit(),
                 offset,
             });
@@ -1448,10 +1482,92 @@
             return exploration.pages.flatMap(page => page.candidates);
         }
 
+        function isLastStage() {
+            return exploration.stage === exploration.order.length - 1;
+        }
+
+        // Click/Enter commits the candidate and advances; on the last stage it is a selection.
         function selectStageCandidate(candidate) {
             if (!candidate.selectable) return;
-            exploration.selected = candidate;
-            renderStage();
+            if (isLastStage()) {
+                exploration.selected = candidate;
+                renderStage();
+                return;
+            }
+            exploration.previews.cancel();
+            exploration.previewCandidate = null;
+            exploration.bindings = [...exploration.bindings, { variableName: exploration.order[exploration.stage], term: candidate.term }];
+            exploration.labels = [...exploration.labels, window.queryStages.candidateText(candidate)];
+            enterStage(exploration.stage + 1);
+        }
+
+        // Back clears the previous stage's commitment and every later one.
+        function backToPreviousStage() {
+            if (!exploration || exploration.stage === 0) return;
+            exploration.previews.cancel();
+            exploration.previewCandidate = null;
+            const stage = exploration.stage - 1;
+            exploration.bindings = exploration.bindings.slice(0, stage);
+            exploration.labels = exploration.labels.slice(0, stage);
+            enterStage(stage);
+        }
+
+        function enterStage(stage) {
+            exploration.controller?.abort();
+            exploration.controller = null;
+            exploration.stage = stage;
+            exploration.pages = [];
+            exploration.selected = null;
+            document.getElementById('stage-heading').focus();
+            loadStagePage(0);
+        }
+
+        // Hover/focus temporarily assumes a candidate and previews the next variable.
+        function previewStageCandidate(candidate) {
+            if (!exploration || !candidate.selectable || isLastStage()) return;
+            exploration.previewCandidate = candidate;
+            const bindings = [...exploration.bindings, { variableName: exploration.order[exploration.stage], term: candidate.term }];
+            const request = stageRequestFor(exploration.stage + 1, bindings, 0);
+            exploration.previewKey = window.queryStages.stageCacheKey(request);
+            exploration.previews.schedule(request);
+            renderStagePreview();
+        }
+
+        function settleStagePreview() {
+            exploration?.previews.settle();
+            if (exploration && exploration.previews.currentKey === null) {
+                exploration.previewCandidate = null;
+                exploration.preview = { key: null, status: 'idle' };
+                renderStagePreview();
+            }
+        }
+
+        function renderStagePreview() {
+            const section = document.getElementById('stage-preview');
+            const candidate = exploration?.previewCandidate;
+            if (!exploration || !candidate) {
+                section.hidden = true;
+                return;
+            }
+            const { order, stage, preview } = exploration;
+            const nextName = order[stage + 1];
+            const status = document.getElementById('stage-preview-status');
+            const list = document.getElementById('stage-preview-list');
+            section.hidden = false;
+            document.getElementById('stage-preview-heading').textContent =
+                `If ${order[stage]} = ${window.queryStages.candidateText(candidate)}, ${nextName} could be:`;
+            const current = preview.key === exploration.previewKey ? preview : { status: 'loading' };
+            const candidates = current.status === 'loaded' ? current.page.candidates : [];
+            status.classList.toggle('error', current.status === 'error');
+            if (current.status === 'error') status.textContent = current.error;
+            else if (current.status !== 'loaded') status.textContent = `Loading values for ${nextName}\u2026`;
+            else if (!candidates.length) status.textContent = `No values for ${nextName} under this assumption.`;
+            else status.textContent = current.page.hasMore ? `First ${candidates.length} values:` : `${candidates.length} value${candidates.length === 1 ? '' : 's'}:`;
+            list.replaceChildren(...candidates.map(item => {
+                const entry = document.createElement('li');
+                entry.textContent = `${window.queryStages.candidateText(item)} (${window.queryStages.termHint(item.term)})`;
+                return entry;
+            }));
         }
 
         function renderStage() {
@@ -1462,6 +1578,13 @@
             const list = document.getElementById('stage-candidates');
             const focusedKey = list.contains(document.activeElement) ? document.activeElement.dataset.term : null;
             document.getElementById('stage-heading').textContent = `Stage ${stage + 1} of ${order.length}: ${variableName}`;
+            document.getElementById('stage-commitments').replaceChildren(...exploration.bindings.map((binding, index) => {
+                const item = document.createElement('li');
+                item.textContent = `${binding.variableName} = ${exploration.labels[index]}`;
+                item.title = binding.term.value;
+                return item;
+            }));
+            document.getElementById('stage-back').hidden = stage === 0;
             const candidates = status === 'error' ? [] : stageCandidates();
             statusLine.classList.toggle('error', status === 'error');
             if (status === 'loading' && !candidates.length) statusLine.textContent = `Loading values for ${variableName}\u2026`;
@@ -1491,10 +1614,15 @@
                 button.append(text, hint);
                 button.title = candidate.term.value;
                 button.addEventListener('click', () => selectStageCandidate(candidate));
+                button.addEventListener('mouseenter', () => previewStageCandidate(candidate));
+                button.addEventListener('focus', () => previewStageCandidate(candidate));
+                button.addEventListener('mouseleave', settleStagePreview);
+                button.addEventListener('blur', settleStagePreview);
                 item.append(button);
                 return item;
             }));
             if (focusedKey) list.querySelector(`[data-term="${CSS.escape(focusedKey)}"]`)?.focus();
+            renderStagePreview();
         }
 
         function invalidateExploration(state, signatureChanged) {
@@ -1734,6 +1862,7 @@
                     return;
                 }
                 const tag = document.activeElement.tagName;
+                if (document.getElementById('two-variable-panel').contains(document.activeElement)) return;
                 if (e.key === 'Enter' && tag !== 'INPUT' && tag !== 'TEXTAREA' && tag !== 'BUTTON') {
                     runQuery();
                 }
@@ -2524,6 +2653,7 @@
                 });
             }
             variableOrderListeners.push(renderVariableOrder, invalidateExploration);
+            document.getElementById('stage-back').addEventListener('click', backToPreviousStage);
             document.getElementById('stage-retry').addEventListener('click', () => loadStagePage(exploration?.retryOffset ?? 0));
             document.getElementById('stage-load-more').addEventListener('click', () => {
                 const lastPage = exploration?.pages[exploration.pages.length - 1];
