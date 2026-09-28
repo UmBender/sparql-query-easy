@@ -39,7 +39,7 @@ Ordered by dependencies, then priority among selection candidates. See [worker r
 | FE-010 | BACKLOG | P1 | frontend | [Complete ordered exploration across three or more variables](<items/FE-010-multistage-query-completion.md>) |
 | QUAL-003 | DONE | P1 | quality | [Make browser tests fail on unexpected external traffic](<items/QUAL-003-browser-egress-isolation.md>) |
 | FE-011 | DONE | P1 | refactor | [Extract pure query calculations for ordered exploration](<items/FE-011-extract-query-calculations.md>) |
-| FE-012 | BACKLOG | P1 | investigation | [Evaluate a limited JavaScript type-checking pilot](<items/FE-012-javascript-typing-pilot.md>) |
+| FE-012 | DONE | P1 | quality | [Pilot checked JavaScript for extracted query calculations](<items/FE-012-javascript-typing-pilot.md>) |
 | INV-001 | DONE | P1 | investigation | [Investigate Ktor HTTP-client and runtime resource lifecycle](<items/INV-001-runtime-resource-lifecycle.md>) |
 | QUAL-001 | DONE | P1 | quality | [Replay recorded Wikidata success and controlled error route fixtures](<items/QUAL-001-recorded-wikidata-routes.md>) |
 | MIG-002 | DONE | P1 | migration | [Retire the C# project after compatibility and operations gates](<items/MIG-002-retire-csharp-project.md>) |

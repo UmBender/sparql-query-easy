@@ -19,7 +19,8 @@ when the task crosses that responsibility. This is the canonical command map.
 ## Commands confirmed in repository
 
 Run from repository root. JDK 21; Kotlin 2.2.20, Ktor 3.5.1, Jena 6.2.0 are
-declared in build.gradle.kts. npm has Playwright 1.63.0 and one browser script.
+declared in build.gradle.kts. npm has Playwright 1.63.0 and a checked-JavaScript
+query-module pilot.
 These are configured versions, not claims about a fresh successful build.
 
 | Purpose | Command |
@@ -29,6 +30,7 @@ These are configured versions, not claims about a fresh successful build.
 | Format Kotlin when changed | `GRADLE_USER_HOME=/tmp/sparql-query-easy-gradle ./gradlew ktlintFormat --no-daemon` then required checks |
 | Focused browser | `npm run test:browser -- --grep 'predicate'` (choose existing test title) |
 | Pure query calculations | `npm run test:query` |
+| Checked JavaScript boundary | `npm run check:frontend-types` |
 | Browser closing gate | `npm run test:browser` |
 | Distribution | `GRADLE_USER_HOME=/tmp/sparql-query-easy-gradle ./gradlew installDist --no-daemon` |
 | Run | `./gradlew run` or `./build/install/sparql-query-easy-kotlin/bin/sparql-query-easy-kotlin` |
@@ -41,8 +43,8 @@ These are configured versions, not claims about a fresh successful build.
 - Documentation/skills: changed links, YAML/task index/skill shape, instruction
   consistency, diff; validate skill discovery when changing the suite.
 - Kotlin: focused checks while editing; ktlintCheck, detekt and test before commit.
-- Frontend: focused browser case while editing; complete browser suite and any
-  configured frontend checks before commit. No standalone type checker is configured.
+- Frontend: focused browser case while editing; complete browser suite before
+  commit, plus pure query tests and the type checker when query code changes.
 - HTTP/fullstack: union of Kotlin/browser gates; OpenAPI and capture tests are
   already included in Gradle test. Do not weaken their assertions.
 - Packaging/assets/dependencies: relevant area gates plus installDist and a local

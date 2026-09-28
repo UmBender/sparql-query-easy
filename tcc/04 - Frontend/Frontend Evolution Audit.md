@@ -1,7 +1,33 @@
 # Frontend Evolution Audit
 
 DEV-001, 2026-09-28. Analysis only: no application code, dependency or bundler
-was changed. Recommendation is proposed; follow-up cards remain BACKLOG.
+was changed. At audit time, follow-up cards remained BACKLOG.
+
+## Incremental Option B follow-up (2026-09-28)
+
+The user selected a bounded Option B step and deferred a full frontend port.
+`sparql/query-calculations.js` now owns pure filter construction, distinct
+variable discovery and parallel-predicate detection. `sparql/index2.html`
+retains Cytoscape, event handling and global adapters; browser assets remain
+unbundled and are served by Ktor. `tsconfig.frontend.json` checks only the new
+module with TypeScript 5.9.3, JSDoc, `checkJs` and `noEmit`; no runtime TypeScript
+artifact or Vite build exists. `npm run test:query` executes DOM-free tests and
+`npm run check:frontend-types` runs the static check.
+
+The checked shape distinguishes optional graph fields and a numeric or null
+filter result, so an incompatible query-item field or return type is a static
+error inside the module. The existing inline Cytoscape adapter, HTTP response
+shapes, asynchronous preview state and menu lifecycle are still unchecked.
+Extending Option B will require typed adapters/API DTOs and a deliberate
+packaging decision if a bundler is introduced. Type checking is not evidence
+of race safety. Browser tests now fail on unexpected external requests and
+serve pinned local Materialize CSS and deterministic Intro styling fixtures;
+production still references
+CDN assets and remains a separate offline-packaging decision.
+
+Source files: `sparql/query-calculations.js`, `sparql/index2.html`,
+`tsconfig.frontend.json`, `package.json`, `frontend-tests/query-calculations.unit.mjs`,
+`frontend-tests/index2.spec.mjs`, `build.gradle.kts`.
 
 ## Evidence and concentration
 
@@ -60,8 +86,9 @@ limited pilot without converting all files. See [TypeScript JavaScript checking]
 Vite's backend integration uses build artifacts/manifest and a distinct dev
 entry; adopting it would require deliberate Gradle/Ktor packaging changes.
 See [Vite backend integration](https://vite.dev/guide/backend-integration).
-These docs establish mechanisms, not tested compatibility with this project;
-no new dependency version is selected or installed. C is not a finalist because
+These docs established mechanisms, not tested compatibility with this project
+at audit time; dependency selection occurred only in the follow-up above.
+C is not a finalist because
 the four scenarios do not demonstrate a need to replace the rendering stack.
 
 ## Recommended boundaries and first delivery

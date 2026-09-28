@@ -4,10 +4,12 @@
   "type": "module",
   "scripts": {
     "test:browser": "playwright test",
-    "test:query": "node --test frontend-tests/query-calculations.unit.mjs"
+    "test:query": "node --test frontend-tests/query-calculations.unit.mjs",
+    "check:frontend-types": "tsc --project tsconfig.frontend.json"
   },
   "devDependencies": {
     "@playwright/test": "1.63.0",
-    "materialize-css": "1.0.0"
+    "materialize-css": "1.0.0",
+    "typescript": "5.9.3"
   }
 }
