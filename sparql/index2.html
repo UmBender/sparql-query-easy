@@ -199,49 +199,39 @@
             white-space: nowrap;
         }
 
-        /* ── Concrete-graph preview over the canvas (FE-015) ───────── */
-        #concrete-preview {
+        /* ── Possible-graph window beside the exploration panel ──── */
+        #possible-graph-window {
             position: absolute;
-            inset: 0;
-            z-index: 105;
-            overflow: hidden;
-            pointer-events: none;
+            z-index: 125;
+            top: 12px;
+            right: calc(min(340px, 100% - 24px) + 24px);
+            width: min(380px, calc(100% - 400px));
+            padding: 10px 12px;
+            border: 1px solid rgba(106, 27, 154, 0.35);
+            border-radius: 8px;
+            background: rgba(255, 255, 255, 0.98);
+            box-shadow: 0 4px 18px rgba(0, 0, 0, 0.24);
         }
 
-        #concrete-preview[hidden] { display: none; }
+        #possible-graph-window[hidden] { display: none; }
+        #possible-graph-title { margin: 0 0 4px; font-size: 15px; font-weight: 600; }
+        #possible-graph-canvas { width: 100%; height: 240px; border: 1px solid #eceff1; border-radius: 4px; background: #fafafa; }
+        #possible-graph-caption { margin: 6px 0 0; font-size: 12px; color: #37474f; }
+        #possible-graph-legend { display: flex; flex-wrap: wrap; gap: 4px 10px; margin: 6px 0 0; padding: 0; font-size: 11px; color: #546e7a; }
+        #possible-graph-legend li { display: inline-flex; align-items: center; gap: 4px; list-style: none; }
+        .possible-swatch { display: inline-block; width: 12px; height: 12px; border-radius: 50%; }
+        .possible-swatch.committed { background: #4472C4; }
+        .possible-swatch.assumed { background: #4472C4; box-shadow: 0 0 0 2px #FF6F00; }
+        .possible-swatch.possible { background: #8E24AA; }
+        .possible-swatch.open { background: #A9D18E; }
 
-        .concrete-chip {
-            position: absolute;
-            transform: translate(-50%, -50%);
-            max-width: 180px;
-            padding: 4px 8px;
-            overflow: hidden;
-            border: 2px solid transparent;
-            border-radius: 14px;
-            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.25);
-            font-size: 12px;
-            line-height: 16px;
-            text-align: center;
-            text-overflow: ellipsis;
-            white-space: nowrap;
+        /* Narrow screens: the window is a fixed-height bottom sheet and the panel stays above it. */
+        @media (max-width: 800px) {
+            #possible-graph-window { top: auto; right: 12px; bottom: 12px; left: 12px; width: auto; height: 180px; box-sizing: border-box; }
+            #possible-graph-canvas { height: 110px; }
+            #possible-graph-legend { display: none; }
+            #possible-graph-window:not([hidden]) ~ #two-variable-panel { max-height: calc(100% - 216px); }
         }
-
-        .concrete-chip.iri { background: #4472C4; color: #fff; }
-        .concrete-chip.literal { border-radius: 3px; background: #F48FB1; color: #212121; }
-        /* Bound nodes are drawn at node size so the canvas reads as the concrete graph. */
-        .concrete-chip.node-shape {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            max-width: none;
-            padding: 4px;
-            white-space: normal;
-            word-break: break-word;
-        }
-        .concrete-chip.node-shape.iri { border-radius: 50%; }
-        .concrete-chip.edge { border-radius: 3px; background: #fff; color: #4472C4; border-color: #4472C4; }
-        .concrete-chip.assumed { border-style: dashed; border-color: #FF6F00; box-shadow: 0 0 0 3px rgba(255, 111, 0, 0.35); }
-        .concrete-chip.pending { background: #FFF8E1; color: #5D4037; border-color: #FFB300; border-style: dotted; }
 
         #connection-preview {
             position: absolute;
@@ -683,7 +673,17 @@
                 <ul id="edge-action-menu-list"></ul>
             </aside>
 
-            <div id="concrete-preview" hidden aria-hidden="true"></div>
+            <section id="possible-graph-window" hidden aria-labelledby="possible-graph-title">
+                <h2 id="possible-graph-title">Possible graph</h2>
+                <div id="possible-graph-canvas" role="img" aria-label="Possible consolidated query graph"></div>
+                <p id="possible-graph-caption" aria-live="polite"></p>
+                <ul id="possible-graph-legend">
+                    <li><span class="possible-swatch committed"></span>Chosen</li>
+                    <li><span class="possible-swatch assumed"></span>Option under the cursor</li>
+                    <li><span class="possible-swatch possible"></span>Possible next value</li>
+                    <li><span class="possible-swatch open"></span>Open variable</li>
+                </ul>
+            </section>
 
             <aside id="two-variable-panel" hidden aria-labelledby="two-variable-panel-title" aria-describedby="two-variable-panel-description">
                 <button id="two-variable-panel-close" type="button" class="btn-flat" aria-label="Close query variable exploration" title="Back to graph">Close</button>
@@ -1413,34 +1413,7 @@
             renderExplorationOrder(variables);
             panel.hidden = false;
             document.getElementById('two-variable-panel-close').focus();
-            revealQueryBesidePanel(component);
             startExploration(variables, component);
-        }
-
-        // Viewport only (FE-015): if the panel covers part of the query, pan/zoom
-        // so the whole component fits in the canvas area left of the panel.
-        function revealQueryBesidePanel(component) {
-            const panelRect = document.getElementById('two-variable-panel').getBoundingClientRect();
-            const canvasRect = document.getElementById('cy').getBoundingClientRect();
-            const box = component.renderedBoundingBox();
-            const visibleWidth = panelRect.left - canvasRect.left;
-            const covered = box.x2 > visibleWidth || box.x1 < 0 || box.y1 < 0 || box.y2 > canvasRect.height;
-            if (!covered || visibleWidth < 160) return;
-            const padding = 24;
-            const model = component.boundingBox();
-            const zoom = Math.min(
-                cy.zoom(),
-                (visibleWidth - 2 * padding) / Math.max(model.w, 1),
-                (canvasRect.height - 2 * padding) / Math.max(model.h, 1),
-            );
-            const level = Math.max(cy.minZoom(), Math.min(cy.maxZoom(), zoom));
-            cy.viewport({
-                zoom: level,
-                pan: {
-                    x: visibleWidth / 2 - (model.x1 + model.w / 2) * level,
-                    y: canvasRect.height / 2 - (model.y1 + model.h / 2) * level,
-                },
-            });
         }
 
         function renderExplorationOrder(variables) {
@@ -1504,86 +1477,127 @@
             exploration?.controller?.abort();
             exploration?.previews.cancel();
             exploration = null;
-            renderConcretePreview();
+            renderPossibleGraph();
         }
 
-        // Visual-only "concreted" graph (FE-015): chips over the variables' nodes
-        // and predicate edges for committed values, the hovered/focused
-        // assumption and the next variable's preview state. Cytoscape data,
-        // classes and styles are never touched.
-        function concretePreviewAssignments() {
+        // ── Possible-graph window (FE-017) ────────────────────────────────
+        // A separate read-only Cytoscape copy of the query: committed values,
+        // the option under the cursor and, cycling every 3 s, up to three
+        // possible values of the next variable. The main graph is never touched.
+        const POSSIBLE_VALUE_CYCLE_MS = 3000;
+        let possibleCy = null;
+        let possibleCycle = { key: null, index: 0, timer: null };
+
+        function stopPossibleCycle() {
+            clearInterval(possibleCycle.timer);
+            possibleCycle = { key: null, index: 0, timer: null };
+        }
+
+        function possibleGraphStyle() {
+            return [
+                { selector: 'node', style: {
+                    'label': 'data(label)', 'width': 60, 'height': 60, 'font-size': 11,
+                    'text-valign': 'center', 'text-halign': 'center', 'text-wrap': 'ellipsis', 'text-max-width': 70,
+                    'color': '#fff', 'background-color': '#4472C4', 'border-width': 0,
+                } },
+                { selector: 'node.literal', style: { 'shape': 'rectangle', 'height': 26, 'background-color': '#F48FB1', 'color': '#212121' } },
+                { selector: 'node.open', style: { 'background-color': '#A9D18E', 'color': '#1b5e20' } },
+                { selector: 'node.assumed', style: { 'border-width': 4, 'border-color': '#FF6F00', 'border-style': 'dashed' } },
+                { selector: 'node.possible', style: { 'background-color': '#8E24AA', 'color': '#fff', 'border-width': 3, 'border-color': '#4A148C', 'border-style': 'dashed' } },
+                { selector: 'edge', style: {
+                    'label': 'data(label)', 'font-size': 10, 'width': 2, 'curve-style': 'bezier',
+                    'target-arrow-shape': 'triangle', 'line-color': '#4472C4', 'target-arrow-color': '#4472C4',
+                    'text-background-color': '#fff', 'text-background-opacity': 1, 'text-background-padding': 2, 'color': '#4472C4',
+                } },
+                { selector: 'edge.open', style: { 'color': '#1b5e20', 'text-background-color': '#A9D18E' } },
+                { selector: 'edge.assumed', style: { 'line-style': 'dashed', 'line-color': '#FF6F00', 'target-arrow-color': '#FF6F00' } },
+                { selector: 'edge.possible', style: { 'line-color': '#8E24AA', 'target-arrow-color': '#8E24AA', 'color': '#fff', 'text-background-color': '#8E24AA' } },
+            ];
+        }
+
+        // Committed values, the assumed option and the current possible value of the next variable.
+        function possibleGraphState() {
             const assignments = new Map();
             exploration.bindings.forEach((binding, index) => {
                 assignments.set(binding.variableName, { term: binding.term, text: exploration.labels[index], state: 'committed' });
             });
             const candidate = exploration.previewCandidate;
-            if (!candidate || isExplorationComplete()) return assignments;
-            const { order, stage, preview } = exploration;
-            assignments.set(order[stage], { term: candidate.term, text: window.queryStages.candidateText(candidate), state: 'assumed' });
-            const nextName = order[stage + 1];
-            if (nextName) {
-                const current = preview.key === exploration.previewKey ? preview : { status: 'loading' };
-                const count = current.status === 'loaded' ? current.page.candidates.length : 0;
-                const text = current.status === 'error' ? `${nextName}: error`
-                    : current.status !== 'loaded' ? `${nextName}: loading\u2026`
-                    : !count ? `${nextName}: no values`
-                    : `${nextName}: ${count}${current.page.hasMore ? '+' : ''} value${count === 1 ? '' : 's'}`;
-                assignments.set(nextName, { term: null, text, state: 'pending' });
+            if (!candidate || isExplorationComplete()) {
+                stopPossibleCycle();
+                return { assignments, caption: isExplorationComplete() ? 'All variables chosen.' : 'Hover or focus an option to preview it.' };
             }
-            return assignments;
+            const { order, stage, preview } = exploration;
+            const candidateText = window.queryStages.candidateText(candidate);
+            assignments.set(order[stage], { term: candidate.term, text: candidateText, state: 'assumed' });
+            const assumed = `If ${order[stage]} = ${candidateText}`;
+            const nextName = order[stage + 1];
+            if (!nextName) {
+                stopPossibleCycle();
+                return { assignments, caption: `${assumed}.` };
+            }
+            const current = preview.key === exploration.previewKey ? preview : { status: 'loading' };
+            const values = current.status === 'loaded' ? window.queryStages.possibleValues(current.page) : [];
+            if (!values.length) {
+                stopPossibleCycle();
+                const reason = current.status === 'error' ? `the preview failed: ${current.error}`
+                    : current.status === 'loaded' ? `${nextName} has no values` : `loading ${nextName}\u2026`;
+                return { assignments, caption: `${assumed}, ${reason}.` };
+            }
+            if (possibleCycle.key !== exploration.previewKey) {
+                stopPossibleCycle();
+                possibleCycle.key = exploration.previewKey;
+                if (values.length > 1) {
+                    possibleCycle.timer = setInterval(() => {
+                        possibleCycle.index += 1;
+                        renderPossibleGraph();
+                    }, POSSIBLE_VALUE_CYCLE_MS);
+                }
+            }
+            const index = possibleCycle.index % values.length;
+            const value = values[index];
+            const valueText = window.queryStages.candidateText(value);
+            assignments.set(nextName, { term: value.term, text: valueText, state: 'possible' });
+            return {
+                assignments,
+                caption: `${assumed}, ${nextName} could be ${valueText} (${index + 1} of ${values.length}).`,
+            };
         }
 
-        function renderConcretePreview() {
-            const layer = document.getElementById('concrete-preview');
-            if (!exploration || !cy) {
-                layer.hidden = true;
-                layer.replaceChildren();
+        function renderPossibleGraph() {
+            const windowElement = document.getElementById('possible-graph-window');
+            if (!exploration) {
+                stopPossibleCycle();
+                windowElement.hidden = true;
+                possibleCy?.elements().remove();
                 return;
             }
-            const wrapperRect = document.getElementById('cy-wrapper').getBoundingClientRect();
-            const canvasRect = document.getElementById('cy').getBoundingClientRect();
-            const offset = { x: canvasRect.left - wrapperRect.left, y: canvasRect.top - wrapperRect.top };
-            const chips = [];
-            const chip = (variableName, assignment, kind, position, size) => {
-                const element = document.createElement('div');
-                const nodeShape = Boolean(size && kind);
-                element.className = `concrete-chip ${kind} ${assignment.state}${nodeShape ? ' node-shape' : ''}`;
-                element.dataset.variable = variableName;
-                element.textContent = assignment.text;
-                element.title = assignment.term ? assignment.term.value : assignment.text;
-                element.style.left = `${offset.x + position.x}px`;
-                element.style.top = `${offset.y + position.y}px`;
-                if (nodeShape) {
-                    // Same geometry as the real node: 120px disc for IRIs, 120x50 rectangle for literals.
-                    const width = Math.max(size.width, 24);
-                    element.style.width = `${width}px`;
-                    element.style.height = `${kind === 'iri' ? width : width * 50 / 120}px`;
-                    element.style.fontSize = `${Math.min(Math.max(14 * cy.zoom(), 9), 18)}px`;
-                } else if (size) {
-                    element.style.maxWidth = `${Math.max(size.width, 60)}px`;
-                }
-                chips.push(element);
-            };
-            for (const [variableName, assignment] of concretePreviewAssignments()) {
-                const entry = variableOrderState.registry.find(item => item.name === variableName);
-                if (!entry) continue;
-                const valueKind = assignment.state === 'pending' ? '' : assignment.term.type === 'iri' ? 'iri' : 'literal';
-                entry.nodeIds.forEach(id => {
-                    const node = cy.getElementById(id);
-                    if (node.length) chip(variableName, assignment, valueKind, node.renderedPosition(), { width: node.renderedWidth() });
+            const wasHidden = windowElement.hidden;
+            windowElement.hidden = false;
+            if (!possibleCy) {
+                possibleCy = cytoscape({
+                    container: document.getElementById('possible-graph-canvas'),
+                    style: possibleGraphStyle(),
+                    userZoomingEnabled: false,
+                    userPanningEnabled: false,
+                    boxSelectionEnabled: false,
+                    autoungrabify: true,
+                    autounselectify: true,
                 });
-                entry.edgeIds.forEach(id => {
-                    const edge = cy.getElementById(id);
-                    if (!edge.length || (assignment.term && assignment.term.type !== 'iri')) return;
-                    const midpoint = edge.midpoint();
-                    const zoom = cy.zoom();
-                    const pan = cy.pan();
-                    chip(variableName, assignment, assignment.state === 'pending' ? '' : 'edge',
-                        { x: midpoint.x * zoom + pan.x, y: midpoint.y * zoom + pan.y });
-                });
+            } else if (wasHidden) {
+                possibleCy.resize();
             }
-            layer.replaceChildren(...chips);
-            layer.hidden = chips.length === 0;
+            const { assignments, caption } = possibleGraphState();
+            const component = queryComponent();
+            const items = component ? component.map(item => ({
+                ...item.data(),
+                ...(item.isNode() ? { position: { ...item.position() } } : {}),
+            })) : [];
+            possibleCy.batch(() => {
+                possibleCy.elements().remove();
+                possibleCy.add(window.queryStages.consolidatedGraphElements(items, assignments));
+            });
+            possibleCy.fit(undefined, 16);
+            document.getElementById('possible-graph-caption').textContent = caption;
         }
 
         function currentStageRequest(offset) {
@@ -1707,7 +1721,7 @@
             if (!exploration || !candidate.selectable) return;
             exploration.previewCandidate = candidate;
             if (isLastStage()) {
-                // No next variable to request; the assumption only concretes the canvas.
+                // No next variable to request; the assumption only updates the possible graph.
                 exploration.previews.cancel();
                 exploration.previewCandidate = candidate;
                 exploration.previewKey = null;
@@ -1721,17 +1735,17 @@
             renderStagePreview();
         }
 
+        // Leaving an option drops its assumption (and the possible-value cycle);
+        // an already dispatched preview still completes into the cache.
         function settleStagePreview() {
-            exploration?.previews.settle();
-            if (exploration && exploration.previews.currentKey === null) {
-                exploration.previewCandidate = null;
-                exploration.preview = { key: null, status: 'idle' };
-                renderStagePreview();
-            }
+            if (!exploration) return;
+            exploration.previews.settle();
+            exploration.previewCandidate = null;
+            renderStagePreview();
         }
 
         function renderStagePreview() {
-            renderConcretePreview();
+            renderPossibleGraph();
             const section = document.getElementById('stage-preview');
             const candidate = exploration?.previewCandidate;
             if (!exploration || !candidate) {
@@ -2912,9 +2926,6 @@
             document.getElementById('input-endpoint-sparql').addEventListener('change', scheduleVariableOrderRefresh);
             refreshVariableOrder();
 
-            cy.on('pan zoom resize layoutstop position', () => {
-                if (exploration) renderConcretePreview();
-            });
             cy.on('pan zoom resize layoutstop', () => {
                 positionNodeActionMenu();
                 positionEdgeActionMenu();
@@ -2935,7 +2946,7 @@
                 if (event.target.id() === selectedMenuEdgeId) closeEdgeActionMenu();
             });
             window.addEventListener('resize', () => {
-                if (exploration) requestAnimationFrame(renderConcretePreview);
+                if (exploration) requestAnimationFrame(() => { possibleCy?.resize(); possibleCy?.fit(undefined, 16); });
                 positionNodeActionMenuAfterLayout();
                 requestAnimationFrame(() => requestAnimationFrame(positionEdgeActionMenu));
             });

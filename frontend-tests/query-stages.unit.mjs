@@ -3,9 +3,11 @@ import { test } from 'node:test';
 import {
   buildVariableRegistry,
   candidateText,
+  consolidatedGraphElements,
   createPreviewScheduler,
   explorationSignature,
   moveItem,
+  possibleValues,
   stageCacheKey,
   stagePageSize,
   stageRequest,
@@ -161,4 +163,47 @@ test('settle drops an undispatched preview and errors allow a later retry', asyn
   scheduler.cancel();
   assert.equal(requests[1].signal.aborted, true);
   assert.deepEqual(updates.at(-1), { key: null, status: 'idle' });
+});
+
+test('the consolidated graph substitutes every occurrence and keeps open variables', () => {
+  const alpha = { type: 'iri', value: 'https://example.test/a1' };
+  const founded = { type: 'iri', value: 'https://example.test/founded' };
+  const year = { type: 'literal', value: '1903', datatype: 'http://www.w3.org/2001/XMLSchema#integer', language: null };
+  const assignments = new Map([
+    ['?a', { term: alpha, text: 'Alpha', state: 'committed' }],
+    ['?b', { term: founded, text: 'founded', state: 'assumed' }],
+    ['?c', { term: year, text: '1903', state: 'possible' }],
+  ]);
+  const elements = consolidatedGraphElements([
+    { id: '?a', value: '?a', label: '?', type: 'variable', position: { x: 1, y: 2 } },
+    { id: '?c', value: '?c', label: '?', type: 'variable' },
+    { id: 'fixed', value: '<https://example.test/city>', label: 'City', type: 'node' },
+    { id: 'name', value: 'Grêmio', label: 'Grêmio', type: 'label' },
+    { id: '?open', value: '?open', label: '?', type: 'variable' },
+    { id: 'rel', source: '?a', target: '?c', nodeId: '?b', label: '?' },
+    { id: 'lit-pred', source: '?a', target: 'fixed', nodeId: '?c', label: '?' },
+    { id: 'fixed-rel', source: '?a', target: 'fixed', nodeId: '<https://example.test/p>', label: 'p' },
+    { id: 'drawn', source: '?a', target: '?open', label: '?' },
+  ], assignments);
+  assert.deepEqual(elements, [
+    { group: 'nodes', position: { x: 1, y: 2 }, data: { id: 'node:?a', label: 'Alpha' }, classes: 'committed iri' },
+    { group: 'nodes', data: { id: 'node:?c', label: '1903' }, classes: 'possible literal' },
+    { group: 'nodes', data: { id: 'node:fixed', label: 'City' }, classes: 'fixed iri' },
+    { group: 'nodes', data: { id: 'node:name', label: 'Grêmio' }, classes: 'fixed literal' },
+    { group: 'nodes', data: { id: 'node:?open', label: '?open' }, classes: 'open' },
+    { group: 'edges', data: { id: 'edge:rel', source: 'node:?a', target: 'node:?c', label: 'founded' }, classes: 'assumed' },
+    { group: 'edges', data: { id: 'edge:lit-pred', source: 'node:?a', target: 'node:fixed', label: '?c' }, classes: 'open' },
+    { group: 'edges', data: { id: 'edge:fixed-rel', source: 'node:?a', target: 'node:fixed', label: 'p' }, classes: 'fixed' },
+    { group: 'edges', data: { id: 'edge:drawn', source: 'node:?a', target: 'node:?open', label: '?' }, classes: 'open' },
+  ]);
+});
+
+test('possible values are at most three selectable candidates', () => {
+  const candidate = (value, selectable = true) => ({ term: { type: 'iri', value }, label: null, selectable });
+  assert.deepEqual(possibleValues(undefined), []);
+  assert.deepEqual(
+    possibleValues({ variableName: '?x', offset: 0, limit: 20, hasMore: false, candidates: [candidate('b0', false), candidate('1'), candidate('2'), candidate('3'), candidate('4')] })
+      .map(item => item.term.value),
+    ['1', '2', '3'],
+  );
 });

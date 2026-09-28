@@ -44,6 +44,7 @@ Ordered by dependencies, then priority among selection candidates. See [worker r
 | FE-014 | DONE | P2 | frontend | [Make mouse-wheel zoom on the graph less sensitive](<items/FE-014-gentler-wheel-zoom.md>) |
 | FE-015 | DONE | P1 | frontend | [Preview the concrete graph on the canvas while exploring stages](<items/FE-015-concrete-graph-hover-preview.md>) |
 | FE-016 | DONE | P2 | frontend | [Show the Remove relation action in red](<items/FE-016-red-remove-relation-action.md>) |
+| FE-017 | DONE | P1 | frontend | [Show the possible graph in its own window while exploring stages](<items/FE-017-possible-graph-window.md>) |
 | INV-001 | DONE | P1 | investigation | [Investigate Ktor HTTP-client and runtime resource lifecycle](<items/INV-001-runtime-resource-lifecycle.md>) |
 | QUAL-001 | DONE | P1 | quality | [Replay recorded Wikidata success and controlled error route fixtures](<items/QUAL-001-recorded-wikidata-routes.md>) |
 | MIG-002 | DONE | P1 | migration | [Retire the C# project after compatibility and operations gates](<items/MIG-002-retire-csharp-project.md>) |

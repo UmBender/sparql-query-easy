@@ -19,7 +19,13 @@
  * @typedef {{subject: string, predicate: string, object: string, filterType: number | null}} WhereItem
  * @typedef {{endpointUrl: string, variableName: string, where: WhereItem[], bindings: StageBinding[], limit: number, offset: number}} StageRequest
  * @typedef {{key: string | null, status: 'idle' | 'loading' | 'loaded' | 'error', page?: StagePage, error?: string}} PreviewState
+ * @typedef {'committed' | 'assumed' | 'possible'} AssignmentState
+ * @typedef {{term: RdfTerm, text: string, state: AssignmentState}} Assignment
+ * @typedef {GraphItem & {label?: string, type?: string, position?: {x: number, y: number}}} ConsolidationItem
+ * @typedef {{group: 'nodes' | 'edges', data: Record<string, string>, classes: string, position?: {x: number, y: number}}} ConsolidatedElement
  */
+
+export const MAX_POSSIBLE_VALUES = 3;
 
 export const MAX_STAGE_PAGE_SIZE = 50;
 export const PREVIEW_DELAY_MS = 300;
@@ -236,6 +242,51 @@ export function createPreviewScheduler({ fetchPage, onUpdate, cache, delay = PRE
       return currentKey;
     },
   };
+}
+
+/**
+ * Up to three selectable candidates of the next variable, cycled in the
+ * possible-graph window to hint at the states that variable can take.
+ * @param {StagePage | undefined} page
+ * @returns {StageCandidate[]}
+ */
+export function possibleValues(page) {
+  return (page?.candidates ?? []).filter(candidate => candidate.selectable).slice(0, MAX_POSSIBLE_VALUES);
+}
+
+/**
+ * A read-only copy of the query graph with assigned variables replaced by
+ * their values. Every occurrence of a variable (node or predicate) gets its
+ * assignment; unassigned variables stay open. The classes carry the
+ * assignment state (committed/assumed/possible) and the value kind
+ * (iri/literal) for styling. Predicates only take IRI values.
+ * @param {ConsolidationItem[]} items
+ * @param {Map<string, Assignment>} assignments
+ * @returns {ConsolidatedElement[]}
+ */
+export function consolidatedGraphElements(items, assignments) {
+  return items.map(item => {
+    const isEdge = Boolean(item.source && item.target);
+    const name = isEdge ? item.nodeId : (item.value || item.id);
+    const isVariable = typeof name === 'string' && variablePattern.test(name);
+    const assignment = isVariable ? assignments.get(/** @type {string} */ (name)) : undefined;
+    const usable = assignment && !(isEdge && assignment.term.type !== 'iri');
+    if (isEdge) {
+      const data = { id: `edge:${item.id}`, source: `node:${item.source}`, target: `node:${item.target}` };
+      if (usable) return { group: 'edges', data: { ...data, label: assignment.text }, classes: assignment.state };
+      if (isVariable || !item.nodeId) return { group: 'edges', data: { ...data, label: name || '?' }, classes: 'open' };
+      return { group: 'edges', data: { ...data, label: item.label || item.nodeId || '' }, classes: 'fixed' };
+    }
+    const node = { group: /** @type {const} */ ('nodes'), ...(item.position ? { position: { ...item.position } } : {}) };
+    const id = `node:${item.id}`;
+    if (usable) {
+      const kind = assignment.term.type === 'iri' ? 'iri' : 'literal';
+      return { ...node, data: { id, label: assignment.text }, classes: `${assignment.state} ${kind}` };
+    }
+    if (isVariable) return { ...node, data: { id, label: /** @type {string} */ (name) }, classes: 'open' };
+    const kind = item.type === 'label' || item.type === 'label-filter' ? 'literal' : 'iri';
+    return { ...node, data: { id, label: item.label || item.value || item.id || '' }, classes: `fixed ${kind}` };
+  });
 }
 
 /**

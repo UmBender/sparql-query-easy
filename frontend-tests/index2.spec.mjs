@@ -743,88 +743,92 @@ test('empty and failed later stages keep the committed path and recover', async 
   expectOnlyNextStageRequests(requests, ['?a', '?b', '?c']);
 });
 
-const concreteChips = page => page.locator('#concrete-preview .concrete-chip');
-const chipSummary = page => page.evaluate(() => [...document.querySelectorAll('#concrete-preview .concrete-chip')]
-  .map(chip => `${chip.dataset.variable}|${chip.className.replace('concrete-chip ', '').replace(' node-shape', '').trim()}|${chip.textContent}`).sort());
+const possibleGraph = page => page.evaluate(() => possibleCy.elements()
+  .map(element => `${element.id()}|${element.classes().join(' ')}|${element.data('label')}`).sort());
+const possibleCaption = page => page.locator('#possible-graph-caption');
 
-test('hovering a candidate renders the concreted graph on the canvas without mutating it', async ({ page }) => {
+// ?b under ?a = Alpha has four candidates, so the window cycles through three.
+function cyclingResponder() {
+  const base = threeStageResponder();
+  return request => request.variableName === '?b' && request.bindings[0]?.term.value === 'https://example.test/a1'
+    ? { body: stagePage(request, ['founded', 'named', 'located', 'owned'].map(name => iri(`https://example.test/${name}`, name))) }
+    : base(request);
+}
+
+test('the possible graph renders in its own window with the assumed option and a next value in another color', async ({ page }) => {
   await addThreeVariableChain(page);
   await routeStages(page, threeStageResponder());
   const before = await graphSnapshot(page);
-  await page.evaluate(() => { cy.zoom(1); cy.pan({ x: cy.width() - 250, y: 0 }); });
+  const viewport = await page.evaluate(() => ({ zoom: cy.zoom(), pan: cy.pan() }));
   await page.locator('#run-query-btn').click();
   await expect(candidateButtons(page)).toHaveCount(2);
-  await expect(page.locator('#concrete-preview')).toBeHidden();
-  // Opening the panel moves only the viewport so the query sits beside it.
-  expect(await page.evaluate(() => {
-    const panelLeft = document.getElementById('two-variable-panel').getBoundingClientRect().left
-      - document.getElementById('cy').getBoundingClientRect().left;
-    const box = cy.elements().renderedBoundingBox();
-    return box.x1 >= 0 && box.x2 <= panelLeft;
-  })).toBe(true);
+  const window = page.getByRole('region', { name: 'Possible graph' });
+  await expect(window).toBeVisible();
+  await expect(possibleCaption(page)).toHaveText('Hover or focus an option to preview it.');
+  expect(await possibleGraph(page)).toEqual(['edge:rel|open|?b', 'node:?a|open|?a', 'node:?c|open|?c']);
 
   await candidateButtons(page).first().hover();
-  await expect(concreteChips(page).filter({ hasText: 'Alpha' })).toHaveCount(1);
-  await expect.poll(() => chipSummary(page)).toEqual(['?a|iri assumed|Alpha', '?b|pending|?b: 1 value']);
-  // The chip sits on the ?a node.
-  const [chipCenter, nodeCenter] = await page.evaluate(() => {
-    const chip = document.querySelector('#concrete-preview [data-variable="?a"]').getBoundingClientRect();
-    const canvas = document.getElementById('cy').getBoundingClientRect();
-    const node = cy.getElementById('?a').renderedPosition();
-    return [[chip.left + chip.width / 2, chip.top + chip.height / 2], [canvas.left + node.x, canvas.top + node.y]];
-  });
-  expect(Math.abs(chipCenter[0] - nodeCenter[0])).toBeLessThan(2);
-  expect(Math.abs(chipCenter[1] - nodeCenter[1])).toBeLessThan(2);
+  await expect(possibleCaption(page)).toHaveText('If ?a = Alpha, ?b could be founded (1 of 1).');
+  expect(await possibleGraph(page)).toEqual(['edge:rel|possible|founded', 'node:?a|assumed iri|Alpha', 'node:?c|open|?c']);
+  expect(await page.evaluate(() => possibleCy.getElementById('edge:rel').style('line-color')))
+    .not.toBe(await page.evaluate(() => possibleCy.getElementById('node:?a').style('background-color')));
+
+  // The window does not overlap the exploration panel, and the main graph is untouched.
+  const [windowBox, panelBox] = await Promise.all([window.boundingBox(), page.locator('#two-variable-panel').boundingBox()]);
+  expect(windowBox.x + windowBox.width).toBeLessThanOrEqual(panelBox.x);
+  expect(await graphSnapshot(page)).toEqual(before);
+  expect(await page.evaluate(() => ({ zoom: cy.zoom(), pan: cy.pan() }))).toEqual(viewport);
 
   await candidateButtons(page).nth(1).hover();
-  await expect.poll(() => chipSummary(page)).toEqual(['?a|iri assumed|Beta', '?b|pending|?b: no values']);
-  expect(await graphSnapshot(page)).toEqual(before);
+  await expect(possibleCaption(page)).toHaveText('If ?a = Beta, ?b has no values.');
+  expect(await possibleGraph(page)).toEqual(['edge:rel|open|?b', 'node:?a|assumed iri|Beta', 'node:?c|open|?c']);
 });
 
-test('committed values stay concreted through later stages, pan, zoom and close', async ({ page }) => {
+test('holding the cursor on an option cycles up to three possible next values every three seconds', async ({ page }) => {
+  await addThreeVariableChain(page);
+  await routeStages(page, cyclingResponder());
+  await page.locator('#run-query-btn').click();
+  await expect(candidateButtons(page)).toHaveCount(2);
+  await candidateButtons(page).first().hover();
+  await expect(possibleCaption(page)).toHaveText('If ?a = Alpha, ?b could be founded (1 of 3).');
+  const started = Date.now();
+  await expect(possibleCaption(page)).toHaveText('If ?a = Alpha, ?b could be named (2 of 3).', { timeout: 4000 });
+  expect(Date.now() - started).toBeGreaterThan(2000);
+  expect(await possibleGraph(page)).toContain('edge:rel|possible|named');
+  await expect(possibleCaption(page)).toHaveText('If ?a = Alpha, ?b could be located (3 of 3).', { timeout: 4000 });
+  await expect(possibleCaption(page)).toHaveText('If ?a = Alpha, ?b could be founded (1 of 3).', { timeout: 4000 });
+
+  await page.locator('#two-variable-panel h2').hover();
+  await expect(possibleCaption(page)).toHaveText('Hover or focus an option to preview it.');
+  await page.waitForTimeout(3500);
+  await expect(possibleCaption(page)).toHaveText('Hover or focus an option to preview it.');
+  expect(await possibleGraph(page)).toEqual(['edge:rel|open|?b', 'node:?a|open|?a', 'node:?c|open|?c']);
+});
+
+test('the possible graph keeps committed values and hides with the panel', async ({ page }) => {
   await addThreeVariableChain(page);
   await routeStages(page, threeStageResponder());
   const before = await graphSnapshot(page);
   await page.locator('#run-query-btn').click();
   await candidateButtons(page).first().click();
   await expect(page.locator('#stage-heading')).toHaveText('Stage 2 of 3: ?b');
-  await expect.poll(() => chipSummary(page)).toEqual(['?a|iri committed|Alpha']);
+  expect(await possibleGraph(page)).toEqual(['edge:rel|open|?b', 'node:?a|committed iri|Alpha', 'node:?c|open|?c']);
 
   await candidateButtons(page).first().focus();
-  await expect.poll(() => chipSummary(page)).toEqual(['?a|iri committed|Alpha', '?b|edge assumed|founded', '?c|pending|?c: 1 value']);
-
-  const chipPosition = () => page.evaluate(() => {
-    const chip = document.querySelector('#concrete-preview [data-variable="?c"]').getBoundingClientRect();
-    return { x: chip.left + chip.width / 2, y: chip.top + chip.height / 2 };
-  });
-  const first = await chipPosition();
-  await page.evaluate(() => { cy.panBy({ x: 40, y: 25 }); });
-  await expect.poll(async () => {
-    const moved = await chipPosition();
-    return [Math.round(moved.x - first.x), Math.round(moved.y - first.y)];
-  }).toEqual([40, 25]);
-  await page.evaluate(() => { cy.zoom({ level: 0.5, renderedPosition: { x: 0, y: 0 } }); });
-  await expect.poll(async () => page.evaluate(() => {
-    const chip = document.querySelector('#concrete-preview [data-variable="?c"]').getBoundingClientRect();
-    const canvas = document.getElementById('cy').getBoundingClientRect();
-    const node = cy.getElementById('?c').renderedPosition();
-    return Math.round(Math.hypot(chip.left + chip.width / 2 - canvas.left - node.x, chip.top + chip.height / 2 - canvas.top - node.y));
-  })).toBeLessThan(2);
+  await expect(possibleCaption(page)).toHaveText('If ?b = founded, ?c could be 1903 (1 of 1).');
+  expect(await possibleGraph(page)).toEqual(['edge:rel|assumed|founded', 'node:?a|committed iri|Alpha', 'node:?c|possible literal|1903']);
 
   await page.keyboard.press('Enter');
   await expect(page.locator('#stage-heading')).toHaveText('Stage 3 of 3: ?c');
-  const stageRequests = await page.evaluate(() => performance.getEntriesByType('resource').filter(entry => entry.name.endsWith('/api/query/stage')).length);
   await candidateButtons(page).first().hover();
-  await expect.poll(() => chipSummary(page)).toEqual(['?a|iri committed|Alpha', '?b|edge committed|founded', '?c|literal assumed|1903']);
-  await expect(page.locator('#stage-preview')).toBeHidden();
-  expect(await page.evaluate(() => performance.getEntriesByType('resource').filter(entry => entry.name.endsWith('/api/query/stage')).length)).toBe(stageRequests);
+  await expect(possibleCaption(page)).toHaveText('If ?c = 1903.');
+  expect(await possibleGraph(page)).toEqual(['edge:rel|committed|founded', 'node:?a|committed iri|Alpha', 'node:?c|assumed literal|1903']);
   await candidateButtons(page).first().click();
-  await expect(page.locator('#stage-heading')).toHaveText('All variables chosen');
-  await expect.poll(() => chipSummary(page)).toEqual(['?a|iri committed|Alpha', '?b|edge committed|founded', '?c|literal committed|1903']);
+  await expect(possibleCaption(page)).toHaveText('All variables chosen.');
+  expect(await possibleGraph(page)).toEqual(['edge:rel|committed|founded', 'node:?a|committed iri|Alpha', 'node:?c|committed literal|1903']);
 
   await page.getByRole('button', { name: 'Close query variable exploration' }).click();
-  await expect(page.locator('#concrete-preview')).toBeHidden();
-  await expect(concreteChips(page)).toHaveCount(0);
+  await expect(page.getByRole('region', { name: 'Possible graph' })).toBeHidden();
   expect(await graphSnapshot(page)).toEqual(before);
 });
 
@@ -1390,4 +1394,16 @@ test('the node action list remains inside the graph viewport after movement pan 
         menu.right <= canvas.right && menu.bottom <= canvas.bottom;
     })).toBe(true);
   }
+});
+
+test('on a narrow screen the possible graph is a bottom sheet below the exploration panel', async ({ page }) => {
+  await page.setViewportSize({ width: 390, height: 800 });
+  await addThreeVariableChain(page);
+  await routeStages(page, threeStageResponder());
+  await page.locator('#run-query-btn').click();
+  const window = page.getByRole('region', { name: 'Possible graph' });
+  await expect(window).toBeVisible();
+  const [windowBox, panelBox] = await Promise.all([window.boundingBox(), page.locator('#two-variable-panel').boundingBox()]);
+  expect(panelBox.y + panelBox.height).toBeLessThanOrEqual(windowBox.y);
+  expect(await possibleGraph(page)).toEqual(['edge:rel|open|?b', 'node:?a|open|?a', 'node:?c|open|?c']);
 });

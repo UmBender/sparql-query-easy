@@ -122,6 +122,23 @@ and node moves, and clears on close, Back, reorder and Apply. It changes no
 Cytoscape data, class or style. When the panel would cover the query,
 opening it changes only the viewport so the component fits beside the panel.
 
+*Superseded by FE-017:* the canvas overlay and the viewport reveal were
+removed. While the panel is open, a separate "Possible graph" window
+(`#possible-graph-window`, a region left of the panel; bottom sheet under
+800px) holds a read-only, non-interactive Cytoscape copy of the query
+component (`possibleCy`, built by `queryStages.consolidatedGraphElements`).
+Every occurrence of an assigned variable (node or predicate edge) shows its
+value: committed values solid, the hovered/focused option with a dashed
+orange outline, and one possible value of the next variable in purple.
+Predicates only take IRI values; unassigned variables stay green and open.
+While the cursor stays on an option, the window cycles every 3 s through up
+to three selectable candidates of the next variable
+(`queryStages.possibleValues`) from the already loaded preview page, with a
+caption such as "If ?a = Alpha, ?b could be founded (1 of 3)." Leaving the
+option stops the cycle and drops the assumption; the last stage shows only
+the assumption. No extra requests are sent, the main graph's data and
+viewport are unchanged, and the window hides when the panel closes.
+
 ## Typed data findings (INV-002, 2026-09-28)
 
 - Remote Wikidata JSON (`WikidataHttpClient`) and local Jena results both map
