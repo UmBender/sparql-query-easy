@@ -153,6 +153,28 @@ internal fun Route.documentGeneralQuery(): Route =
         includeUpstreamFailure = true,
     )
 
+internal fun Route.documentStageQuery(): Route =
+    describe {
+        operationId = "listStageCandidates"
+        summary = "List typed candidates for one exploration stage"
+        description =
+            "Returns one bounded, ordered page of distinct typed RDF terms for variableName under previously " +
+            "committed typed bindings. Labels are display-only. " +
+            "Maximum/Minimum filters and blank-node bindings are rejected."
+        tag("Query")
+        requestBody {
+            required = true
+            ContentType.Application.Json { schema = jsonSchema<StageQueryHttpRequest>() }
+        }
+        responses {
+            HttpStatusCode.OK {
+                description = "One page of typed candidates."
+                schema = jsonSchema<DataResponse<StageCandidatesHttpResponse>>()
+            }
+            commonQueryErrors(includeUpstreamFailure = true)
+        }
+    }
+
 internal fun Route.documentSparqlGeneration(): Route =
     describe {
         operationId = "generateSparql"

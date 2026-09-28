@@ -3,12 +3,20 @@
 package com.example.sparqlqueryeasy.http
 
 import com.example.sparqlqueryeasy.application.query.PropertyResult
+import com.example.sparqlqueryeasy.application.query.StageCandidatePage
+import com.example.sparqlqueryeasy.application.query.StageQueryRequest
+import com.example.sparqlqueryeasy.domain.model.BlankNode
+import com.example.sparqlqueryeasy.domain.model.Iri
+import com.example.sparqlqueryeasy.domain.model.Literal
+import com.example.sparqlqueryeasy.domain.model.RdfValue
 import com.example.sparqlqueryeasy.wikidata.query.AnyBlankNode
 import com.example.sparqlqueryeasy.wikidata.query.Contains
 import com.example.sparqlqueryeasy.wikidata.query.GreaterOrEqual
+import com.example.sparqlqueryeasy.wikidata.query.IriBindingValue
 import com.example.sparqlqueryeasy.wikidata.query.IriSequencePath
 import com.example.sparqlqueryeasy.wikidata.query.IriTerm
 import com.example.sparqlqueryeasy.wikidata.query.LessOrEqual
+import com.example.sparqlqueryeasy.wikidata.query.LiteralBindingValue
 import com.example.sparqlqueryeasy.wikidata.query.LiteralObject
 import com.example.sparqlqueryeasy.wikidata.query.Maximum
 import com.example.sparqlqueryeasy.wikidata.query.Minimum
@@ -16,6 +24,8 @@ import com.example.sparqlqueryeasy.wikidata.query.QueryFilter
 import com.example.sparqlqueryeasy.wikidata.query.QueryObject
 import com.example.sparqlqueryeasy.wikidata.query.QueryTerm
 import com.example.sparqlqueryeasy.wikidata.query.QueryVariable
+import com.example.sparqlqueryeasy.wikidata.query.StageBinding
+import com.example.sparqlqueryeasy.wikidata.query.StageBindingValue
 import com.example.sparqlqueryeasy.wikidata.query.StartsWith
 import com.example.sparqlqueryeasy.wikidata.query.TermObject
 import com.example.sparqlqueryeasy.wikidata.query.TriplePattern
@@ -85,6 +95,54 @@ data class PropertyDtoResponse(
     val propertyLabel: String,
     val propertyType: String? = null,
     val propertyClass: String? = null,
+)
+
+@Serializable
+data class RdfTermHttp(
+    @JsonSchema.Enum("iri", "literal", "bnode")
+    val type: String,
+    @JsonSchema.Description("IRI without angle brackets, literal lexical form, or blank-node label.")
+    val value: String,
+    val datatype: String? = null,
+    val language: String? = null,
+)
+
+@Serializable
+data class StageBindingHttpRequest(
+    val variableName: String? = null,
+    val term: RdfTermHttp? = null,
+)
+
+@Serializable
+data class StageQueryHttpRequest(
+    @JsonSchema.Default("\"$DEFAULT_ENDPOINT_URL\"")
+    val endpointUrl: String = DEFAULT_ENDPOINT_URL,
+    val variableName: String? = null,
+    val where: List<WhereHttpRequest>? = null,
+    @JsonSchema.Description("Committed typed bindings; blank nodes are rejected.")
+    val bindings: List<StageBindingHttpRequest> = emptyList(),
+    @JsonSchema.Default("20")
+    @JsonSchema.Description("Page size, 1 to 50.")
+    val limit: Int = DEFAULT_LIMIT,
+    @JsonSchema.Default("0")
+    @JsonSchema.Description("Page offset, 0 to 10000.")
+    val offset: Int = 0,
+)
+
+@Serializable
+data class StageCandidateHttpResponse(
+    val term: RdfTermHttp,
+    val label: String?,
+    val selectable: Boolean,
+)
+
+@Serializable
+data class StageCandidatesHttpResponse(
+    val variableName: String,
+    val offset: Int,
+    val limit: Int,
+    val hasMore: Boolean,
+    val candidates: List<StageCandidateHttpResponse>,
 )
 
 internal class HttpRequestValidationFailure(
@@ -172,3 +230,51 @@ internal fun PropertyResult.toRelationshipValueResponse(isLiteral: Boolean) =
     PropertyDtoResponse(propertyId, propertyLabel, propertyType = if (isLiteral) propertyType else null)
 
 internal fun PropertyResult.toSearchResponse() = PropertyDtoResponse(propertyId, propertyLabel, propertyType = propertyType)
+
+internal fun StageQueryHttpRequest.toStageRequest(): StageQueryRequest =
+    StageQueryRequest(
+        variable = QueryVariable(requireValue(variableName, "variableName").removePrefix("?")),
+        patterns = requireNotNull(where) { "Missing required field: where" }.map(WhereHttpRequest::toPattern),
+        bindings = bindings.map(StageBindingHttpRequest::toBinding),
+        limit = limit,
+        offset = offset,
+    )
+
+private fun StageBindingHttpRequest.toBinding(): StageBinding =
+    StageBinding(
+        QueryVariable(requireValue(variableName, "bindings.variableName").removePrefix("?")),
+        (term ?: throw HttpRequestValidationFailure("Missing required field: bindings.term")).toBindingValue(),
+    )
+
+private fun RdfTermHttp.toBindingValue(): StageBindingValue =
+    when (type) {
+        "iri" -> IriBindingValue(IriTerm(value))
+        "literal" ->
+            LiteralBindingValue(
+                lexicalForm = value,
+                // rdf:langString is implied by a language tag; the tag alone identifies the term.
+                datatype = datatype?.takeUnless { language != null && it == Literal.RDF_LANG_STRING.value }?.let(::IriTerm),
+                language = language,
+            )
+        "bnode" -> throw HttpRequestValidationFailure("Blank node terms cannot be bound")
+        else -> throw HttpRequestValidationFailure("Unsupported term type: $type")
+    }
+
+internal fun StageCandidatePage.toResponse() =
+    StageCandidatesHttpResponse(
+        variableName = variable.render(),
+        offset = offset,
+        limit = limit,
+        hasMore = hasMore,
+        candidates =
+            candidates.map { candidate ->
+                StageCandidateHttpResponse(candidate.value.toTermResponse(), candidate.label, candidate.value !is BlankNode)
+            },
+    )
+
+private fun RdfValue.toTermResponse(): RdfTermHttp =
+    when (this) {
+        is Iri -> RdfTermHttp("iri", value)
+        is Literal -> RdfTermHttp("literal", lexicalForm, datatype?.value, language)
+        is BlankNode -> RdfTermHttp("bnode", identifier)
+    }

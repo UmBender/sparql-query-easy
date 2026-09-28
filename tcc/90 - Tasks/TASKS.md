@@ -21,7 +21,7 @@ Ordered by dependencies, then priority among selection candidates. See [worker r
 | INV-002 | DONE | P1 | investigation | [Characterize typed staged-query data and safe binding options](<items/INV-002-staged-query-data-feasibility.md>) |
 | API-002 | DONE | P1 | documentation | [Specify additive typed and bounded staged-candidate API](<items/API-002-staged-candidate-contract.md>) |
 | BE-001 | DONE | P1 | backend | [Implement a safe typed bounded stage-query service](<items/BE-001-typed-bounded-stage-query.md>) |
-| BE-002 | BACKLOG | P1 | backend | [Expose the typed stage-query service over Ktor](<items/BE-002-staged-candidate-http-route.md>) |
+| BE-002 | DONE | P1 | backend | [Expose the typed stage-query service over Ktor](<items/BE-002-staged-candidate-http-route.md>) |
 | BUG-002 | DONE | P1 | bug | [Map relationship executor failures to the approved JSON 502 contract](<items/BUG-002-relationship-upstream-error-mapping.md>) |
 | COM-001 | DONE | P1 | frontend-backend | [Characterize frontend-to-backend request flows](<items/COM-001-frontend-backend-contract.md>) |
 | DATA-001 | DONE | P2 | decision | [Decide canonical Brazilian football dataset behavior](<items/DATA-001-brazilian-dataset-decision.md>) |

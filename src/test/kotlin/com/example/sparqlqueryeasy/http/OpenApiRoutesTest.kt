@@ -72,6 +72,7 @@ class OpenApiRoutesTest {
                     "/api/query/relationships" to setOf("post"),
                     "/api/query/search" to setOf("post"),
                     "/api/query/sparql" to setOf("post"),
+                    "/api/query/stage" to setOf("post"),
                 ),
                 document.operationInventory(),
             )
@@ -93,6 +94,21 @@ class OpenApiRoutesTest {
                 )
             assertNotNull(parseResult.openAPI, "Swagger Parser did not produce an OpenAPI model: ${parseResult.messages}")
             assertTrue(parseResult.messages.isNullOrEmpty(), "Swagger Parser validation messages: ${parseResult.messages}")
+        }
+
+    @Test
+    fun `OpenAPI documents the staged candidate route with typed terms and paging bounds`() =
+        testApplication {
+            application { module() }
+            val document = Json.parseToJsonElement(client.get("/openapi.json").bodyAsText()).jsonObject
+            val stage = document.operation("/api/query/stage", "post")
+            assertEquals(setOf("200", "400", "404", "502"), stage.requiredObject("responses").keys)
+            val stageSchema = document.requestSchema(stage, "application/json")
+            assertTrue(document.resolve(stageSchema.property("limit")).requiredString("description").contains("1 to 50"))
+            val stageData = document.resolve(document.responseSchema(stage, "200", "application/json").property("data"))
+            val candidate = document.resolve(document.resolve(stageData.property("candidates")).requiredObject("items"))
+            val term = document.resolve(candidate.property("term"))
+            assertEquals(listOf("iri", "literal", "bnode"), document.resolve(term.property("type")).requiredArray("enum").strings())
         }
 
     @Test

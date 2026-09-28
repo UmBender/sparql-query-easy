@@ -231,6 +231,23 @@ class QueryRoutesTest {
             response.bodyAsText().contains("fake upstream failure") shouldBe true
         }
 
+    @Test
+    fun `POST stage maps executor failures to bad gateway like the general query route`() =
+        testApplication {
+            application { queryTestModule(failingExecution()) }
+
+            val response =
+                client.post("/api/query/stage") {
+                    jsonBody(
+                        """{"endpointUrl":"$BRASILEIRAO_ENDPOINT_ID","variableName":"?item","where":[""" +
+                            """{"subject":"?item","predicate":"<https://example.test/p>","object":"?value"}]}""",
+                    )
+                }
+
+            response.status shouldBe HttpStatusCode.BadGateway
+            response.bodyAsText().contains("fake upstream failure") shouldBe true
+        }
+
     private fun Application.queryTestModule(execution: RecordingExecution) {
         val resolver =
             EndpointContextResolver(

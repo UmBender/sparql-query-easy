@@ -19,6 +19,8 @@ import com.example.sparqlqueryeasy.application.query.GeneralQueryRequest
 import com.example.sparqlqueryeasy.application.query.GeneralQueryResult
 import com.example.sparqlqueryeasy.application.query.GeneralQueryService
 import com.example.sparqlqueryeasy.application.query.ResultFilteringService
+import com.example.sparqlqueryeasy.application.query.StageQueryResult
+import com.example.sparqlqueryeasy.application.query.StageQueryService
 import com.example.sparqlqueryeasy.application.querygeneration.SparqlQueryGenerationRequest
 import com.example.sparqlqueryeasy.application.querygeneration.SparqlQueryGenerationResult
 import com.example.sparqlqueryeasy.application.querygeneration.SparqlQueryGenerationService
@@ -77,6 +79,8 @@ data class QueryHttpDependencies(
     val searchService: SearchService,
     val generalQueryService: GeneralQueryService,
     val sparqlQueryGenerationService: SparqlQueryGenerationService,
+    val stageQueryService: StageQueryService =
+        StageQueryService(CSharpCompatibleWikidataQueryGenerator(), JenaSparqlSyntaxValidator()),
 )
 
 data class HttpDependencies(
@@ -112,6 +116,7 @@ fun defaultHttpDependencies(): HttpDependencies {
             SearchService(generator, filtering, KtorWikidataEntitySearchClient("https://www.wikidata.org/w/api.php", httpClient)),
             GeneralQueryService(generator, JenaSparqlSyntaxValidator(), filtering),
             SparqlQueryGenerationService(generator, JenaSparqlSyntaxValidator()),
+            StageQueryService(generator, JenaSparqlSyntaxValidator()),
         ),
         ownedResources = listOf(httpClient),
     )
@@ -233,6 +238,25 @@ private fun Route.queryRoutes(dependencies: QueryHttpDependencies) {
                 }
             }
         }.documentGeneralQuery()
+        post("stage") {
+            runQueryRoute {
+                val request = call.receive<StageQueryHttpRequest>()
+                when (
+                    val result =
+                        dependencies.stageQueryService.execute(
+                            request.toStageRequest(),
+                            dependencies.endpointContextResolver.resolve(request.endpointUrl),
+                        )
+                ) {
+                    is StageQueryResult.Success -> call.respond(DataResponse(result.page.toResponse()))
+                    is StageQueryResult.InvalidInput -> badRequest(result.diagnostic)
+                    is StageQueryResult.InvalidQuery -> badRequest(result.diagnostic)
+                    is StageQueryResult.LocalGraphUnavailable -> notFound(result.endpointUrl)
+                    is StageQueryResult.InvalidEndpoint -> badRequest(result.diagnostic)
+                    is StageQueryResult.ExecutionFailure -> upstreamFailure(result.diagnostic)
+                }
+            }
+        }.documentStageQuery()
         post("sparql") {
             runQueryRoute {
                 val request = call.receive<GeneralQueryHttpRequest>()

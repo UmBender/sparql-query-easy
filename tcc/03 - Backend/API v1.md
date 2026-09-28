@@ -334,7 +334,8 @@ Success (`200 OK`):
 Candidates keep server order (ordered by term), are distinct by term, and omit
 unbound values. `hasMore` reports whether another page exists. An empty page is
 `200` with `"candidates": []`. Invalid input returns `400`, an unavailable
-local graph `404`, and execution failure `502`, with the shared error envelope.
+local graph `404`, and execution failure `502` (diagnostic text as in
+`/api/query`), with the shared error envelope.
 Normal tests use local graphs or fake executors only.
 
 ## Endpoint selection
@@ -370,8 +371,10 @@ alternative.
 - `src/main/kotlin/com/example/sparqlqueryeasy/http/OpenApiModule.kt`
 - `src/main/kotlin/com/example/sparqlqueryeasy/application/query/ResultFilteringService.kt`
 - `src/main/kotlin/com/example/sparqlqueryeasy/application/query/GeneralQueryService.kt`
+- `src/main/kotlin/com/example/sparqlqueryeasy/application/query/StageQueryService.kt`
 - `src/main/kotlin/com/example/sparqlqueryeasy/application/querygeneration/SparqlQueryGenerationService.kt`
 - `src/test/kotlin/com/example/sparqlqueryeasy/http/QueryRoutesTest.kt`
+- `src/test/kotlin/com/example/sparqlqueryeasy/http/StageQueryRoutesTest.kt`
 - `src/test/kotlin/com/example/sparqlqueryeasy/http/LocalDatabaseRoutesTest.kt`
 - `src/test/kotlin/com/example/sparqlqueryeasy/http/OpenApiRoutesTest.kt`
 - `src/test/kotlin/com/example/sparqlqueryeasy/ApplicationTest.kt`

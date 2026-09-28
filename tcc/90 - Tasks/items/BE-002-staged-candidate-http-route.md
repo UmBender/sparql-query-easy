@@ -1,7 +1,7 @@
 ---
 id: BE-002
 title: Expose the typed stage-query service over Ktor
-status: BACKLOG
+status: DONE
 priority: P1
 type: backend
 depends_on: [DEV-001, API-002, BE-001]
@@ -40,9 +40,9 @@ DEV-001, API-002, BE-001.
 
 ## Acceptance criteria
 
-- [ ] Route, response, validation and error tests match API-002.
-- [ ] OpenAPI 3.1 exposes the new operation and all existing operations.
-- [ ] Normal test suite uses no live Wikidata; legacy comparators pass.
+- [x] Route, response, validation and error tests match API-002.
+- [x] OpenAPI 3.1 exposes the new operation and all existing operations.
+- [x] Normal test suite uses no live Wikidata; legacy comparators pass.
 
 ## Verification commands
 
@@ -64,3 +64,11 @@ contract break. Keep all existing OpenAPI and capture assertions intact.
 ## Execution log
 
 - 2026-09-27: Planned only; no route added.
+- 2026-09-28: Added `StageQueryHttpRequest`/`RdfTermHttp`/candidate DTOs,
+  typed term conversion (bnode and unknown types rejected; langString datatype
+  implied by the tag), `POST /api/query/stage` and `listStageCandidates`
+  OpenAPI metadata. OpenAPI inventory now has nine operations. New
+  `StageQueryRoutesTest` uploads a local Turtle graph and asserts exact typed
+  JSON, paging, bnode output, validation and 404; `QueryRoutesTest` covers 502.
+  Kotlin gate: 133 tests, ktlint/detekt pass. MIGRATION.md not appended: this
+  is an ordinary additive feature per AGENTS.md.
