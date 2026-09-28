@@ -1,5 +1,22 @@
 # Project Blockers
 
+## DEV-002 and DEC-008 — Ordered query exploration is paused
+
+The user will revise `AGENTS.md`, the development loop, testing/branch policy,
+and per-task commit practice before any new ordered-query implementation task
+starts. `DEV-002` remains `BLOCKED` until that process is available and
+approved. `DEC-008` remains `BLOCKED` until the exact 2+ variable behavior is
+approved. The intended numbered Scratch-like order menu and hover/focus
+next-variable preview are recorded, but limits, RDF binding contract, final
+result action, and the node-versus-predicate-variable scope are unresolved.
+Do not run `INV-002`, `API-002`, `BE-001/002`, `FE-005/006/008/009/010`, or
+`QUAL-002` under the old task loop.
+
+**Decision question after the workflow update:** Should ordering and preview
+include predicate variables as well as variable nodes, and should hover show
+only the next variable's candidates (recommended) or also mutate a temporary
+graph preview? Confirm request caps and final selection behavior in DEC-008.
+
 ## MIG-002 — Resolved C# removal gate
 
 DEC-009 is resolved: the user approved Kotlin's `200 application/json`

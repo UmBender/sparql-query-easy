@@ -1,12 +1,17 @@
 # Task Index
 
-Tasks are ordered by dependency, then priority. `BLOCKED` tasks need information or review before work begins.
+Tasks are ordered by dependency, then priority. `BLOCKED` tasks need information
+or review before work begins. The ordered-query implementation cards remain
+`BACKLOG` until `DEV-002` and `DEC-008` are approved; creating them does not
+authorize implementation under the current worker loop.
 
 | ID | Status | Priority | Type | Title |
 |---|---|---:|---|---|
 | DOC-001 | DONE | P0 | documentation | Bootstrap project, architecture, backend, frontend, API, development, operations, quality, and decision notes |
 | DEC-001 | DONE | P0 | decision | Resolve vault ownership, login page scope, and OpenAPI scope |
-| DEC-008 | BLOCKED | P1 | decision | Decide the two-variable query exploration contract |
+| DEV-002 | BLOCKED | P0 | development | Approve the revised feature delivery workflow |
+| INV-002 | BACKLOG | P1 | investigation | Characterize typed staged-query data and safe binding options |
+| DEC-008 | BLOCKED | P1 | decision | Decide the ordered multi-variable query exploration contract |
 | DEC-009 | DONE | P1 | decision | Decide captured C# versus Kotlin health response contract |
 | AUTH-000 | BLOCKED | P0 | decision | Decide the authentication and authorization contract |
 | OAPI-000 | DONE | P0 | decision | Decide the Swagger and OpenAPI publication contract |
@@ -14,6 +19,9 @@ Tasks are ordered by dependency, then priority. `BLOCKED` tasks need information
 | AUTH-001 | READY | P0 | security | Implement the approved Ktor authentication backend |
 | AUTH-002 | READY | P0 | frontend | Integrate the login and logout frontend flow |
 | OAPI-001 | DONE | P0 | documentation | Implement and verify Kotlin Swagger/OpenAPI documentation |
+| API-002 | BACKLOG | P1 | documentation | Specify additive typed and bounded staged-candidate API |
+| BE-001 | BACKLOG | P1 | backend | Implement a safe typed bounded stage-query service |
+| BE-002 | BACKLOG | P1 | backend | Expose the typed stage-query service over Ktor |
 | BUG-001 | DONE | P0 | bug | Repair C# local-search capture instrumentation and recapture reviewed baselines |
 | MIG-001 | DONE | P0 | migration | Complete valid capture-driven C# to Kotlin compatibility coverage |
 | BUG-002 | DONE | P1 | bug | Map relationship executor failures to the approved JSON 502 contract |
@@ -25,8 +33,12 @@ Tasks are ordered by dependency, then priority. `BLOCKED` tasks need information
 | FE-003 | REVIEW | P1 | frontend | Let users convert a graph relation into a projected predicate variable |
 | FE-004 | REVIEW | P1 | frontend | Add the two-variable query exploration panel foundation |
 | FE-007 | DONE | P1 | frontend | Connect existing nodes with variable or defined predicates |
+| FE-008 | BACKLOG | P1 | frontend | Build a stable registry of query variables and stages |
+| FE-009 | BACKLOG | P1 | frontend | Add numbered Scratch-like reorderable query blocks |
 | FE-005 | BACKLOG | P1 | frontend | Fetch bounded candidates for the first query variable |
 | FE-006 | BACKLOG | P1 | frontend | Explore the second variable under an assumed first binding |
+| FE-010 | BACKLOG | P1 | frontend | Complete ordered exploration across three or more variables |
+| QUAL-002 | BACKLOG | P1 | quality | Verify ordered query exploration end to end offline |
 | SEC-001 | BACKLOG | P1 | security | Decide and implement production remote endpoint/upload policy |
 | INV-001 | DONE | P1 | investigation | Define lifecycle ownership for Ktor HTTP clients and runtime resources |
 | DATA-001 | DONE | P2 | decision | Decide canonical Brazilian football dataset behavior |

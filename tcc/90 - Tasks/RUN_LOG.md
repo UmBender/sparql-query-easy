@@ -1,5 +1,17 @@
 # Task Worker Run Log
 
+## 2026-09-27 — Ordered multi-variable query planning only
+
+- User requested a numbered, reorderable Scratch-like query menu beside Run
+  Query for 2+ variables, with hover/focus preview of the next variable under
+  a candidate assumption. User also paused implementation until revising
+  `AGENTS.md`, tests, branches, and per-task commits.
+- Inspected current `index2.html`, browser tests, Kotlin one-variable query
+  request/response, existing DEC-008 and FE-004/005/006 cards. Created
+  process/contract/investigation/backend/frontend/quality cards and dependency
+  gates; expanded DEC-008 and FE-005/006. No application code, tests, Git
+  branches, or deployment state changed.
+
 ## 2026-09-27 — MIG-002 publication decision
 
 - Compared the staged removal with the approved 24-file manifest and confirmed

@@ -34,6 +34,22 @@ backend SPARQL contract.
 supported positions, typed binding substitution, final preview, and behavior
 outside exactly two variables before live candidate requests are added.
 
+## Proposed extension, not implemented
+
+The user now wants a numbered, reorderable, Scratch-like variable menu next to
+Run Query for two or more variable nodes. Exploration should follow that user
+order: show bounded candidates for the current variable; hovering or focusing
+a candidate temporarily assumes it and previews possible values of the next
+variable; selection commits the assumption and advances. The exact treatment
+of predicate variables, repeated names, disconnected components, final query
+results, and persisted order remains a `DEC-008` decision.
+
+The existing `/api/query` response is display-oriented and projects one
+variable. A safe preview may need an additive typed-binding API rather than
+reconstructing an RDF term from its label. Implementation tasks are gated on
+the revised development workflow and an approved contract; no current API or
+frontend behavior is changed by this note.
+
 ## Source files
 
 - `sparql/index2.html`
