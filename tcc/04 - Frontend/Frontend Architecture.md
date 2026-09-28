@@ -8,12 +8,18 @@
 | Confirmed prototype | `sparql/login.html` | Packaged static form, but it posts to removed `index.html`; approved authentication awaits `AUTH-000`/`AUTH-001`/`AUTH-002`. |
 | Confirmed | `sparql/grafos.css` | Graph-related styling. |
 | Confirmed | `sparql/index2.css` | Page layout, menus, panels, modals and toolbar styles for `index2.html`; loaded last. |
+| Confirmed | `sparql/app-core.js` | Classic script: config, shared state (`cy`, `searches`, `trData`), utilities, modals, API calls, `runQuery` and graph operations. |
+| Confirmed | `sparql/stage-order.js` | Classic script: ordered variable registry bridge, stage-order blocks and the exploration panel. |
+| Confirmed | `sparql/stage-exploration.js` | Classic script: staged exploration requests/state and the possible-graph window. |
+| Confirmed | `sparql/graph-nodes.js` | Classic script: node factory, connection discovery, intro hint and change-value modal. |
 | Confirmed | `sparql/query-calculations.js` | DOM-free query filter and variable calculations; checked with JSDoc/TypeScript. |
 | Confirmed | `sparql/query-stages.js` | DOM-free ordered-exploration state: variable registry, query signature and block moves; checked with JSDoc/TypeScript. |
 | Confirmed | `sparql/cytoscape.min.js` | Local graph rendering library. |
 | Confirmed | `sparql/cytoscape-cxtmenu.js` | Retained local plugin asset; the authoritative page no longer loads it. |
 
 ## State and interaction
+
+**Confirmed:** `index2.html` loads the four classic scripts in order after the pure modules' bridge and before its inline `DOMContentLoaded` bootstrap. Top-level functions remain globals for inline `onclick` handlers and tests.
 
 **Confirmed:** Browser state is maintained in JavaScript variables such as `cy` (Cytoscape graph), `searches` (autocomplete result map), and `trData` (selected result metadata). There is no frontend router or separate state-management framework.
 

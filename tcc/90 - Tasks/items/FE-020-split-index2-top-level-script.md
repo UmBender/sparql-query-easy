@@ -1,7 +1,7 @@
 ---
 id: FE-020
 title: Split the index2 top-level script into ordered classic files
-status: BACKLOG
+status: DONE
 priority: P1
 type: refactor
 depends_on: [FE-018]
@@ -29,6 +29,20 @@ naming or logic change; `DOMContentLoaded` stays inline in this slice.
 
 ## Acceptance criteria
 
-- [ ] Browser suite and `npm run test:query` pass unchanged.
-- [ ] Each new file is served by Ktor with a JavaScript content type.
-- [ ] No moved file exceeds about 500 lines.
+- [x] Browser suite and `npm run test:query` pass unchanged.
+- [x] Each new file is served by Ktor with a JavaScript content type.
+- [x] No moved file exceeds about 500 lines.
+
+## Execution log
+
+- 2026-09-28: Moved `index2.html` lines 335–1598 unchanged into
+  `app-core.js` (466 lines), `stage-order.js` (154), `stage-exploration.js`
+  (469) and `graph-nodes.js` (190), each `'use strict'`, loaded in that order
+  after the module bridge. Only indentation changed outside template literals,
+  and all 46 template literals are byte-identical (scripted check). Packaged
+  in `build.gradle.kts`; `StaticFrontendRoutesTest` checks each script's
+  JavaScript content type and include, and reads API flow strings from the
+  page plus scripts. Updated Operational Map, Frontend Architecture and the
+  `tcc-frontend` skill. `index2.html`: 2,514 → 1,256 lines.
+  Validation: `npm run test:browser` 53/53, `npm run test:e2e` 3/3 (built
+  Ktor distribution), `./gradlew ktlintCheck detekt test` passed.

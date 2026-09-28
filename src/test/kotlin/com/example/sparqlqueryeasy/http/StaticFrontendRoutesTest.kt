@@ -8,6 +8,7 @@ import io.ktor.client.request.get
 import io.ktor.client.statement.bodyAsText
 import io.ktor.http.HttpStatusCode
 import io.ktor.server.application.Application
+import io.ktor.server.testing.ApplicationTestBuilder
 import io.ktor.server.testing.testApplication
 import org.junit.jupiter.api.Test
 
@@ -18,10 +19,12 @@ class StaticFrontendRoutesTest {
             application { frontendModule() }
 
             val page = client.get("/")
+            val source = frontendSource()
 
             page.status shouldBe HttpStatusCode.OK
-            page.bodyAsText().contains("apiUrl('/api/query')") shouldBe true
-            page.bodyAsText().contains("apiUrl('/api/query/stage')") shouldBe true
+            page.bodyAsText().contains("<script src=\"app-core.js\"></script>") shouldBe true
+            source.contains("apiUrl('/api/query')") shouldBe true
+            source.contains("apiUrl('/api/query/stage')") shouldBe true
         }
 
     @Test
@@ -36,8 +39,9 @@ class StaticFrontendRoutesTest {
             val stageModule = client.get("/query-stages.js")
 
             page.status shouldBe HttpStatusCode.OK
-            page.bodyAsText().contains("apiUrl('/api/query')") shouldBe true
-            page.bodyAsText().contains("const API_BASE = ''") shouldBe true
+            val source = frontendSource()
+            source.contains("apiUrl('/api/query')") shouldBe true
+            source.contains("const API_BASE = ''") shouldBe true
             page.bodyAsText().contains("onAutocomplete: addSearchResultNode") shouldBe true
             page.bodyAsText().contains("id=\"node-action-menu\"") shouldBe true
             page.bodyAsText().contains("cy.on('tap', 'node', event => {") shouldBe true
@@ -53,6 +57,12 @@ class StaticFrontendRoutesTest {
             queryModule.bodyAsText().contains("export function buildFilters") shouldBe true
             stageModule.status shouldBe HttpStatusCode.OK
             stageModule.bodyAsText().contains("export function buildVariableRegistry") shouldBe true
+            pageScripts.forEach { script ->
+                val response = client.get("/$script")
+                response.status shouldBe HttpStatusCode.OK
+                response.headers["Content-Type"]?.startsWith("text/javascript") shouldBe true
+                page.bodyAsText().contains("<script src=\"$script\"></script>") shouldBe true
+            }
         }
 
     @Test
@@ -60,7 +70,7 @@ class StaticFrontendRoutesTest {
         testApplication {
             application { frontendModule() }
 
-            val page = client.get("/index2.html").bodyAsText()
+            val page = frontendSource()
 
             listOf(
                 "apiUrl('/health')",
@@ -76,6 +86,12 @@ class StaticFrontendRoutesTest {
             page.contains("formData.append('ttlFile', this.files[0])") shouldBe true
             page.contains("const API_BASE = ''") shouldBe true
         }
+
+    // Classic scripts that index2.html loads in order before its inline bootstrap.
+    private val pageScripts = listOf("app-core.js", "stage-order.js", "stage-exploration.js", "graph-nodes.js")
+
+    private suspend fun ApplicationTestBuilder.frontendSource(): String =
+        (listOf("index2.html") + pageScripts).map { client.get("/$it").bodyAsText() }.joinToString("\n")
 
     private fun Application.frontendModule() {
         configureSerialization()
