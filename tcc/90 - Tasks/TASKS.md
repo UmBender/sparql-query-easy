@@ -54,6 +54,7 @@ Ordered by dependencies, then priority among selection candidates. See [worker r
 | QUAL-001 | DONE | P1 | quality | [Replay recorded Wikidata success and controlled error route fixtures](<items/QUAL-001-recorded-wikidata-routes.md>) |
 | MIG-002 | DONE | P1 | migration | [Retire the C# project after compatibility and operations gates](<items/MIG-002-retire-csharp-project.md>) |
 | QUAL-002 | DONE | P1 | quality | [Verify ordered query exploration end to end offline](<items/QUAL-002-ordered-query-end-to-end-regressions.md>) |
+| QUAL-004 | DONE | P1 | quality | [Make browser tests wait for the startup layout before setting the viewport](<items/QUAL-004-startup-layout-viewport-race.md>) |
 | SEC-001 | BACKLOG | P1 | security | [Decide and implement production endpoint, upload, and cache boundaries](<items/SEC-001-production-boundaries.md>) |
 | DOC-002 | DONE | P2 | documentation | [Reconcile migration and compatibility documentation](<items/DOC-002-reconcile-migration-docs.md>) |
 | OPS-002 | BLOCKED | P2 | operations | [Define DNS TLS reverse-proxy and production CORS policy](<items/OPS-002-dns-tls-cors.md>) |

@@ -14,6 +14,32 @@ test.afterAll(async () => {
 
 test.beforeEach(async ({ page }) => {
   page.__unexpectedExternalRequests = await guardExternalTraffic(page, server.baseUrl);
+  await page.addInitScript(() => {
+    // The animated startup cose layout fits the whole graph when it stops, which
+    // can happen after page load. Its stop callback marks the point after which a
+    // test may set the viewport.
+    let startupLayoutStopped;
+    window.__startupLayoutDone = new Promise(resolve => { startupLayoutStopped = resolve; });
+    let factory;
+    Object.defineProperty(window, 'cytoscape', {
+      configurable: true,
+      get: () => factory,
+      set(value) {
+        factory = new Proxy(value, {
+          apply(target, self, [options, ...rest]) {
+            if (options?.layout) {
+              const stop = options.layout.stop;
+              options = { ...options, layout: { ...options.layout, stop(...args) {
+                stop?.apply(this, args);
+                startupLayoutStopped();
+              } } };
+            }
+            return Reflect.apply(target, self, [options, ...rest]);
+          },
+        });
+      },
+    });
+  });
   await page.goto(server.baseUrl);
 });
 
@@ -29,11 +55,12 @@ test('unexpected external browser traffic is rejected', async ({ page }) => {
 });
 
 async function disableAutoLayout(page) {
+  await page.evaluate(() => window.__startupLayoutDone);
   await page.evaluate(() => {
     const checkbox = document.getElementById('auto-layout');
     checkbox.checked = false;
     checkbox.dispatchEvent(new Event('change', { bubbles: true }));
-    // The startup layout may fit an empty graph at either zoom extreme.
+    // The stopped startup layout may have fit an empty graph at either zoom extreme.
     cy.zoom(1);
     cy.pan({ x: 0, y: 0 });
   });
