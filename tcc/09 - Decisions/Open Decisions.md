@@ -1,5 +1,8 @@
 # Open Decisions
 
+For active development use [[Current Contracts]] and [[Development Workflow]].
+The decision index and dated approvals below provide rationale and history.
+
 | ID | Status | Decision needed |
 |---|---|---|
 | DATA-001 | Approved | Keep the C# Brazilian football asset as the sole canonical built-in dataset. |

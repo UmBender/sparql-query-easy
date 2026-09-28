@@ -1,53 +1,78 @@
-# Migration Instructions
+# SPARQL EasyQuery development
 
-## Scope and target
+## Scope and entry
+- Extend the Kotlin/JVM + Ktor application and its authoritative frontend.
+- Start with applicable AGENTS.md, the selected task, and one primary skill.
+- Use [Operational Map](<tcc/06 - Development/Operational Map.md>) for paths and gates.
+- Use [Current Contracts](<tcc/09 - Decisions/Current Contracts.md>) when changing behavior.
+- MIGRATION.md and MIGRATION_REPORT.md are historical evidence: read relevant
+  sections only. Ordinary features do not require appending migration history.
 
-- The migration target is Kotlin/JVM with Ktor.
-- Apache Jena is the initial replacement candidate for dotNetRDF.
-- Preserve observable behavior unless a change is explicitly documented and
-  approved.
-- Avoid unrelated refactoring during the migration.
+## Execution
+- Work on one task or coherent slice at a time, with one agent by default.
+- Do not spawn agents without an explicit request. Batch independent reads;
+  sequence edits, gates and commits by their dependencies.
+- An authorized task includes implementation, appropriate validation,
+  affected documentation and a local commit. Continue without repeated consent.
+- Resolve reversible local details by judgment. Ask only for missing decisions
+  that change expected behavior or authorized scope.
+- Use rg and targeted source reads. Expand investigation when evidence requires it.
+- Avoid unrelated refactoring. Documentation/planning does not authorize
+  production behavior changes.
+- Use existing task cards/statuses under tcc/90 - Tasks; do not create a second backlog.
+- Explicitly requested tasks may be selected directly; otherwise follow WORKER_PROMPT.
+- Mark a selected card IN_PROGRESS; keep product decision gates intact.
 
-## Migration workflow
+## Contracts and evidence
+- Preserve observable behavior unless a task or current decision authorizes change.
+  Record and test the approved change in its canonical contract.
+- Keep Jena types in RDF infrastructure and application-owned types at boundaries.
+  Preserve request-local endpoint context and shared-client lifecycle ownership.
+- Do not use default Jena rendering as the public RDF node format.
+- Preserve capture corpora, provenance, RDF terms, binding presence and duplicates.
+- Never change goldens just to silence failures; investigate implementation and oracle.
+- Compare unordered result rows as multisets where applicable; preserve order only
+  where the contract specifies it, such as ORDER BY.
+- Ordinary tests must not call live Wikidata or other external services.
+  Live integration tests are separate, opt-in and excluded from normal gates.
+- Consult current contracts for routes, JSON, errors, SPARQL and graph interactions.
+  Do not reopen approved decisions without evidence of a conflict.
 
-- Migrate one functional slice at a time.
-- Port or create tests together with every migrated component.
-- Run compilation, formatting, and the relevant tests after every change.
-- Stop a phase if its compatibility tests fail; investigate and resolve the
-  failure before continuing.
-- Update `MIGRATION.md` after every completed phase.
-- Do not update golden test results merely to make failing tests pass. First
-  determine whether the implementation or the compatibility expectation is
-  wrong; document and explicitly approve any intentional behavior change.
+## Validation
+- During editing, run the smallest meaningful regression or focused check.
+- Before completion, run the mandatory area/risk gate in the operational map.
+- Reuse valid checks for unchanged code. Repeat when relevant changes or failures
+  justify it; do not use clean or duplicate final gates routinely.
+- Relevant failures block DONE. Distinguish new, pre-existing and environment failures.
+- Add tests with changed behavior. Documentation/skills changes require documentation
+  checks, not the product test suite.
 
-## Boundaries and contracts
+## Git and completion
+- Inspect initial branch, status and diff. Preserve unrelated work, including
+  local IDE files and Obsidian workspace state.
+- By default keep the current branch for a sequential task; do not create a branch
+  per edit. If isolation is needed, use one task-named branch/worktree from the
+  verified intended base. Never silently switch/reset unrelated work.
+- After acceptance and gates, review the diff, stage explicit task paths/hunks,
+  and create one focused local commit prefixed with the task ID.
+- A dirty worktree alone is not a reason to skip a commit: exclude unrelated files.
+  Mixed overlapping edits require preserving them and reporting the concrete issue.
+- Do not use indiscriminate git add ., amend, destructive reset, force-push,
+  hook bypass or global Git configuration changes.
+- Local commit authorization does not imply push, merge or deploy; honor explicit
+  session authorization for those actions.
+- Report test/hook/identity failures honestly; do not fabricate a completed commit.
+- Update the task and affected canonical note; refresh TASKS.md for lifecycle changes.
+  Use BLOCKERS.md only for active blockers. Do not copy every completion into RUN_LOG.
+- DONE requires verified acceptance and a local commit; REVIEW is for human validation.
+- Report result, validation, commit hash and actual remaining limitations.
 
-- Do not expose Apache Jena types outside the RDF infrastructure package.
-- Use application-owned domain types for RDF values and SPARQL results.
-- Do not change HTTP, serialization, or SPARQL contracts silently. Document,
-  review, and approve any change to routes, status codes, request/response
-  shapes, JSON defaults, query text, filtering, ordering, or error behavior.
-- Do not assume RDF serialization order or SPARQL result order is stable unless
-  the contract explicitly defines that order.
-- Document every known difference between dotNetRDF and Apache Jena, including
-  parser behavior, IRI/base resolution, blank-node identity, literal handling,
-  query semantics, result bindings, ordering, and error behavior.
-
-## External services and tests
-
-- Do not contact live Wikidata in ordinary unit tests. Use recorded fixtures,
-  deterministic fakes, or a local test server. Live integration tests must be
-  separately identified, opt-in, and never required for normal validation.
-- Preserve the existing Wikidata entity/property identifier and label behavior
-  unless an approved contract change says otherwise.
-- Compatibility tests must cover user-controlled SPARQL values, Turtle parsing,
-  RDF node formatting, unbound variables, duplicate results, `DISTINCT`,
-  `OPTIONAL`, `FILTER`, property paths, and ordering where relevant.
-
-## Change discipline
-
-- Do not modify production code when the task is documentation, analysis, or
-  migration planning only.
-- Keep each phase independently reviewable and verifiable.
-- Record failed compatibility checks and their cause in the phase notes or
-  `MIGRATION.md`; do not conceal failures by weakening assertions.
+## Repository skills
+Skills live in .agents/skills/<name>/SKILL.md. Read only the selected procedure:
+- Specification/backlog: tcc-plan-task.
+- Kotlin/API/RDF implementation: tcc-backend.
+- Browser/graph interaction: tcc-frontend.
+- One feature crossing API and browser: tcc-fullstack.
+- Preparatory behavior-preserving extraction: tcc-refactor.
+- Failing tests, regression design or gate selection: tcc-test.
+- Frontend architecture/tooling decisions: tcc-frontend-audit.

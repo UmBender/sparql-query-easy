@@ -4,10 +4,10 @@ title: Build a stable registry of query variables and stages
 status: BACKLOG
 priority: P1
 type: frontend
-depends_on: [DEV-002, DEC-008, FE-004]
+depends_on: [DEV-001, DEC-008, FE-004]
 human_gate: false
 created: 2026-09-27
-updated: 2026-09-27
+updated: 2026-09-28
 ---
 # Build a stable registry of query variables and stages
 
@@ -37,7 +37,7 @@ rendering.
 
 ## Dependencies
 
-DEV-002, DEC-008 and FE-004 review completion.
+DEV-001, DEC-008 and FE-004 review completion.
 
 ## Acceptance criteria
 

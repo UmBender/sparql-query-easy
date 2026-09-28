@@ -4,10 +4,10 @@ title: Characterize typed staged-query data and safe binding options
 status: BACKLOG
 priority: P1
 type: investigation
-depends_on: [DEV-002]
+depends_on: [DEV-001]
 human_gate: false
 created: 2026-09-27
-updated: 2026-09-27
+updated: 2026-09-28
 ---
 # Characterize typed staged-query data and safe binding options
 
@@ -38,7 +38,7 @@ New routes, frontend UI, live Wikidata, changing captures, production code.
 
 ## Dependencies
 
-DEV-002, so this investigation follows the revised workflow.
+DEV-001, so this investigation follows the revised workflow.
 
 ## Acceptance criteria
 

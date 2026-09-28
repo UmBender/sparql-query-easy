@@ -1,6 +1,6 @@
 ---
 title: SPARQL EasyQuery Thesis Knowledge Base
-updated: 2026-09-27
+updated: 2026-09-28
 ---
 
 # SPARQL EasyQuery
@@ -9,6 +9,9 @@ This vault is the evidence-based working knowledge base for the undergraduate th
 
 ## Start here
 
+- [[06 - Development/Operational Map|Operational map and validation gates]]
+- [[09 - Decisions/Current Contracts|Current development contracts]]
+- [[04 - Frontend/Frontend Evolution Audit|Frontend evolution audit]]
 - [[01 - Project/Workspace Inventory|Workspace inventory]]
 - [[02 - Architecture/System Architecture|System architecture]]
 - [[03 - Backend/API Contract|Current API contract]]
@@ -40,7 +43,8 @@ MIG-002 diff and remain recoverable from Git commit `0f20091`. The corpus contai
 reviewed C# harness captures; after the `BUG-001` repair, both local-search
 cases are included with every other valid capture in the passing offline
 comparator. Six exception-only captures remain documented intentional
-non-equivalences. Browser flows are covered by offline Playwright tests.
+non-equivalences. Browser flows have Playwright coverage; external CSS/fonts
+remain a test-isolation limitation tracked by QUAL-003.
 Current remaining work is tracked in `remaining.md` and the task index rather
 than in historical phase notes.
 

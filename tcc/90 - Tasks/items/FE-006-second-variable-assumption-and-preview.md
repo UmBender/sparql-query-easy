@@ -4,10 +4,10 @@ title: Explore the second variable under an assumed first binding
 status: BACKLOG
 priority: P1
 type: frontend
-depends_on: [DEV-002, DEC-008, FE-005]
+depends_on: [DEV-001, DEC-008, FE-005]
 human_gate: false
 created: 2026-09-27
-updated: 2026-09-27
+updated: 2026-09-28
 ---
 # Explore the second variable under an assumed first binding
 
@@ -38,7 +38,7 @@ replacement on hover, changing legacy `/api/query`, or live Wikidata tests.
 
 ## Dependencies
 
-DEV-002, DEC-008, FE-005.
+DEV-001, DEC-008, FE-005.
 
 ## Acceptance criteria
 

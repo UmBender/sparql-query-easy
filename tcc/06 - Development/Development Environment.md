@@ -2,15 +2,12 @@
 
 ## Build and run
 
-| Component | Command / configuration |
-|---|---|
-| Kotlin quality gate | `GRADLE_USER_HOME=/tmp/sparql-query-easy-gradle ./gradlew ktlintCheck detekt test --no-daemon` |
-| Kotlin application | `./gradlew run` |
-| Kotlin JVM distribution | `./gradlew installDist`, then `./build/install/sparql-query-easy-kotlin/bin/sparql-query-easy-kotlin` |
-| Optional local container | `docker build -t sparql-query-easy:local .` (daemon and network required) |
-| OpenAPI JSON | `http://localhost:8080/openapi.json` |
-| Swagger UI | `http://localhost:8080/swagger` |
-| Historical C# harness/application | Removed locally under MIG-002; commands in compatibility notes are provenance only. Recover source from Git commit `0f20091` if an approved recapture is ever required. |
+Use [[Operational Map]] for canonical build, focused-test and closing-gate
+commands. See [[../07 - Operations/Local JVM and Container Runtime]] for the
+optional local container. Swagger and OpenAPI are available at
+`http://localhost:8080/swagger` and `/openapi.json` when the app is running.
+Historical C# commands are provenance only; source is recoverable from Git
+commit `0f20091` for an explicitly approved recapture.
 
 ## Configuration
 

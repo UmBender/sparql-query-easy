@@ -4,10 +4,10 @@ title: Complete ordered exploration across three or more variables
 status: BACKLOG
 priority: P1
 type: frontend
-depends_on: [DEV-002, FE-006]
+depends_on: [DEV-001, FE-006]
 human_gate: false
 created: 2026-09-27
-updated: 2026-09-27
+updated: 2026-09-28
 ---
 # Complete ordered exploration across three or more variables
 
@@ -38,7 +38,7 @@ authentication, live upstream tests, and changing the legacy one-variable UI.
 
 ## Dependencies
 
-DEV-002 and FE-006 (which establishes two-stage hover/focus semantics).
+DEV-001 and FE-006 (which establishes two-stage hover/focus semantics).
 
 ## Acceptance criteria
 

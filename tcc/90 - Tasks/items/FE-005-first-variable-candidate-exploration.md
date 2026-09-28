@@ -4,10 +4,10 @@ title: Fetch bounded candidates for the first query variable
 status: BACKLOG
 priority: P1
 type: frontend
-depends_on: [DEV-002, DEC-008, FE-009, BE-002]
+depends_on: [DEV-001, DEC-008, FE-009, BE-002]
 human_gate: false
 created: 2026-09-27
-updated: 2026-09-27
+updated: 2026-09-28
 ---
 # Fetch bounded candidates for the first query variable
 
@@ -38,7 +38,7 @@ calls, or changing the old `/api/query` response.
 
 ## Dependencies
 
-DEV-002, DEC-008, FE-009, BE-002.
+DEV-001, DEC-008, FE-009, BE-002.
 
 ## Acceptance criteria
 

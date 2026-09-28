@@ -4,10 +4,10 @@ title: Expose the typed stage-query service over Ktor
 status: BACKLOG
 priority: P1
 type: backend
-depends_on: [DEV-002, API-002, BE-001]
+depends_on: [DEV-001, API-002, BE-001]
 human_gate: false
 created: 2026-09-27
-updated: 2026-09-27
+updated: 2026-09-28
 ---
 # Expose the typed stage-query service over Ktor
 
@@ -36,7 +36,7 @@ the eight existing OpenAPI operations and C# baselines.
 
 ## Dependencies
 
-DEV-002, API-002, BE-001.
+DEV-001, API-002, BE-001.
 
 ## Acceptance criteria
 

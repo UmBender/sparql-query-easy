@@ -4,10 +4,10 @@ title: Add numbered Scratch-like reorderable query blocks
 status: BACKLOG
 priority: P1
 type: frontend
-depends_on: [DEV-002, FE-008]
+depends_on: [DEV-001, FE-008]
 human_gate: false
 created: 2026-09-27
-updated: 2026-09-27
+updated: 2026-09-28
 ---
 # Add numbered Scratch-like reorderable query blocks
 
@@ -37,7 +37,7 @@ or importing Scratch runtime/assets.
 
 ## Dependencies
 
-DEV-002 and FE-008.
+DEV-001 and FE-008.
 
 ## Acceptance criteria
 

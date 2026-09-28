@@ -3,8 +3,9 @@ Execute the documentation task described in the selected task file.
 Before writing:
 
 1. Read all applicable `AGENTS.md` files.
-2. Read `MIGRATION.md`.
-3. Read the selected task file and every dependency linked from it.
+2. Read the selected task and one primary skill; use the Operational Map for paths.
+3. Check dependency status and read relevant dependency conclusions only.
+   Consult migration history only when the task requires that evidence.
 4. Inspect the actual source code, tests, build files, configuration and Git history relevant to the task.
 5. Search for all call sites before describing a component or contract.
 
@@ -57,5 +58,6 @@ When finished:
 3. Update the task's acceptance criteria.
 4. Change its status to `REVIEW` if the content is complete but needs human validation.
 5. Change its status to `DONE` only when every acceptance criterion is objectively verified.
-6. Append commands, results and changed files to the execution log.
+6. Record commands, results and changed files in the task conclusion. Follow
+   root AGENTS.md for the selective local commit; do not duplicate history.
 7. Regenerate `tcc/90 - Tasks/TASKS.md`.

@@ -1,5 +1,9 @@
 # Kotlin/JVM + Ktor Migration Assessment
 
+Development policy is now in [AGENTS.md](AGENTS.md) and the
+[Operational Map](<tcc/06 - Development/Operational Map.md>). This file
+preserves migration evidence; ordinary extension tasks read relevant sections only.
+
 **Current note (2026-09-27):** The initial assessment and C# command examples
 below are historical. The 24-file C# project/solution/harness removal was
 applied later in this document's timeline; source is recoverable from Git

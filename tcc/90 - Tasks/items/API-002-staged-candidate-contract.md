@@ -4,10 +4,10 @@ title: Specify additive typed and bounded staged-candidate API
 status: BACKLOG
 priority: P1
 type: documentation
-depends_on: [DEV-002, DEC-008, INV-002]
+depends_on: [DEV-001, DEC-008, INV-002]
 human_gate: true
 created: 2026-09-27
-updated: 2026-09-27
+updated: 2026-09-28
 ---
 # Specify additive typed and bounded staged-candidate API
 
@@ -39,7 +39,7 @@ Wikidata calls, authentication policy, or unbounded raw SPARQL.
 
 ## Dependencies
 
-DEV-002, DEC-008, INV-002; this is a human contract gate before BE-001.
+DEV-001, DEC-008, INV-002; this is a human contract gate before BE-001.
 
 ## Acceptance criteria
 

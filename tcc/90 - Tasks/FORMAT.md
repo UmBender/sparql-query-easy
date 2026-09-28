@@ -1,48 +1,39 @@
+# Task card format
+
+Keep existing YAML/status vocabulary. Use only as much body detail as the
+task's risk needs; a one-line documentation correction needs no large plan.
+
+```yaml
 ---
-id: MIG-001
-title: Port local database upload
-status: READY
-priority: high
-type: migration
+id: AREA-001
+title: Observable result
+status: BACKLOG
+priority: P1
+type: frontend
 depends_on: []
 human_gate: false
-created: 2026-09-16
-updated: 2026-09-16
+created: YYYY-MM-DD
+updated: YYYY-MM-DD
 ---
+```
 
-# Objective
+Statuses: BACKLOG, READY, IN_PROGRESS, BLOCKED, REVIEW, DONE, CANCELLED.
+Priority: P0 before P1 before P2. `human_gate` means a specific human judgment,
+not another request to execute already-authorized routine work.
 
-Port the local database upload use case from C# to Kotlin while preserving observable behavior.
+## Body template
 
-# Evidence
+- Objective/motivation and expected examples.
+- Main skill, confirmed entry paths/symbols and relevant contract link.
+- Scope/exclusions; dependencies and genuine pending decisions.
+- Acceptance criteria stated as observable results.
+- Validation: existing focused command, closing gate from the Operational Map,
+  and expected oracle for new cases.
+- Conclusion/execution log: changes, actual commands/results, limitations and
+  local commit. Write “completion commit for this task” inside that commit;
+  report its hash in chat rather than creating a self-reference-only commit.
 
-- C# entry point:
-- Relevant C# files:
-- Relevant Kotlin files:
-- Existing documentation:
-- Compatibility fixtures:
-
-# Scope
-
-- [ ] ...
-- [ ] ...
-
-# Out of scope
-
-- ...
-
-# Acceptance criteria
-
-- [ ] ...
-- [ ] ...
-
-# Verification
-
-- Command:
-- Expected result:
-
-# Execution log
-
-## Attempt 1
-
-Not started.
+Do not invent commands, implementations or requirement details before inspection.
+Keep evidence-backed facts separate from intended behavior.
+Index lifecycle changes in TASKS.md. Historical cards need not be mechanically
+rewritten to this template; apply it as they are touched.

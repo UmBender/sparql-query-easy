@@ -4,10 +4,10 @@ title: Implement a safe typed bounded stage-query service
 status: BACKLOG
 priority: P1
 type: backend
-depends_on: [DEV-002, API-002]
+depends_on: [DEV-001, API-002]
 human_gate: false
 created: 2026-09-27
-updated: 2026-09-27
+updated: 2026-09-28
 ---
 # Implement a safe typed bounded stage-query service
 
@@ -39,7 +39,7 @@ updating captured C# expected results.
 
 ## Dependencies
 
-DEV-002 and approved API-002.
+DEV-001 and approved API-002.
 
 ## Acceptance criteria
 

@@ -1,5 +1,9 @@
 # Compatibility Audit Report
 
+For current development decisions use
+[Current Contracts](<tcc/09 - Decisions/Current Contracts.md>).
+This report preserves historical audit and compatibility evidence.
+
 Original audit date: 2026-09-10
 Documentation reconciled: 2026-09-21
 Original audited Kotlin revision: `720e9c3`

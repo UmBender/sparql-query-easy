@@ -1,4 +1,78 @@
+---
+id: DEV-001
+title: Tornar o desenvolvimento econômico, autônomo e verificável
+status: DONE
+priority: P0
+type: development
+depends_on: []
+human_gate: false
+created: 2026-09-28
+updated: 2026-09-28
+---
 # DEV-001 — Tornar o desenvolvimento do TCC econômico, autônomo e verificável
+
+## Execution record
+
+**Conclusion (2026-09-28):** Implemented in the completion commit for DEV-001.
+The specification below remains historical input; operational policy now lives
+in root AGENTS and the linked canonical notes, not in the proposed sample text.
+
+- [x] Root AGENTS addresses extension work, sequential ownership and automatic
+  selective local task commits; 78 lines, with no mandatory full-vault read.
+- [x] Seven repository skills validated by skill-creator's `quick_validate.py`.
+  Direct local Codex `skills/list` discovered all seven as enabled. The
+  `tcc-frontend-audit` procedure was read and used for the actual audit.
+- [x] Operational Map (75 lines), Current Contracts and Development Workflow
+  own commands, active decisions and policy. Worker/document/template and
+  vault home links are reconciled. Historical migration evidence is retained.
+- [x] Backend, frontend, fullstack and planning requests route to distinct main
+  skills; auxiliary procedures load only for the relevant phase.
+- [x] Frontend audit compares three approaches against two backlog features
+  and two fixed regressions. It recommends small native-module extractions;
+  official module/TypeScript/Vite docs were checked, no stack was installed.
+- [x] QUAL-003, FE-011 and FE-012 are new BACKLOG cards. DEV-002 is superseded;
+  feature dependencies point to DEV-001 and product gate DEC-008 remains.
+- [x] Calibration table is ready for the next three real tasks; no cost or
+  performance measurements were invented.
+- [x] Product code, test configuration, capture bodies and goldens unchanged.
+  Unrelated `.idea/` and Obsidian workspace changes excluded from staging.
+
+Verification performed:
+
+- `node scripts/check-project-docs.mjs`: 46 task records/dependencies/index
+  entries and changed-document links checked. The initial run correctly
+  rejected five missing/stale index entries; regeneration resolved them.
+- `node scripts/check-skill-discovery.mjs`: all seven repository skills
+  discovered/enabled via local app-server API; no thread/model request.
+- `python3 /home/bender/.codex/skills/.system/skill-creator/scripts/quick_validate.py <skill-folder>`:
+  all seven passed (the validator is an environment tool, not a repo dependency).
+- `node --check scripts/check-project-docs.mjs` and
+  `node --check scripts/check-skill-discovery.mjs`: passed.
+- `git diff --check`: passed. The Mermaid flow was manually inspected;
+  `mmdc` is unavailable, so no automated Mermaid syntax result is claimed.
+- Read-only Node child-process checks initially hit sandbox EPERM; approved
+  execution outside the sandbox succeeded. The first discovery checker
+  expected absolute paths from a diagnostic that uses aliases; replacing it
+  with `skills/list` resolved the verification mismatch.
+- The staged diff check caught trailing blank lines in the seven new skills
+  (untracked files were not covered by the earlier worktree diff); removed
+  the blank lines and reran the staged check before committing.
+- No product gate was rerun because changes are documentation/skills/support
+  scripts only. Browser CSS/font egress remains the explicitly planned QUAL-003.
+
+Main artifacts: `AGENTS.md`, `.agents/skills/`, `scripts/check-project-docs.mjs`,
+`scripts/check-skill-discovery.mjs`,
+[[../../06 - Development/Operational Map]],
+[[../../09 - Decisions/Current Contracts]],
+[[../../09 - Decisions/Development Workflow]],
+[[../../04 - Frontend/Frontend Evolution Audit]], and the task index/cards.
+
+- 2026-09-28: User authorized implementation after committing and pushing the
+  proposal. Proposal published to `main` as `d4276fa`. Initial unrelated
+  changes: `tcc/.obsidian/workspace.json` and `.idea/`; preserve both.
+- Source inspection confirms root AGENTS migration rules conflict with the
+  requested extension workflow. No nested AGENTS or repository skills found.
+  The supplied proposal below is retained as specification/history.
 
 ## Resumo do pedido
 

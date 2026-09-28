@@ -4,10 +4,10 @@ title: Verify ordered query exploration end to end offline
 status: BACKLOG
 priority: P1
 type: quality
-depends_on: [DEV-002, BE-002, FE-010]
+depends_on: [DEV-001, BE-002, FE-010]
 human_gate: false
 created: 2026-09-27
-updated: 2026-09-27
+updated: 2026-09-28
 ---
 # Verify ordered query exploration end to end offline
 
@@ -39,7 +39,7 @@ Wikidata, performance deployment, or production load testing.
 
 ## Dependencies
 
-DEV-002, BE-002, FE-010.
+DEV-001, BE-002, FE-010.
 
 ## Acceptance criteria
 

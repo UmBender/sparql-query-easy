@@ -1,15 +1,20 @@
 ---
 id: DEV-002
 title: Approve the revised feature delivery workflow
-status: BLOCKED
+status: CANCELLED
 priority: P0
 type: development
 depends_on: []
 human_gate: true
 created: 2026-09-27
-updated: 2026-09-27
+updated: 2026-09-28
 ---
 # Approve the revised feature delivery workflow
+
+**Superseded by DEV-001 (2026-09-28).** The user's TASK-DEV-001 supplies and
+authorizes the new policy. Active feature dependencies now point to DEV-001;
+DEC-008 remains the product decision gate. This older gate is retained as
+history, not another required approval or a feature-start authorization.
 
 ## Objective
 
