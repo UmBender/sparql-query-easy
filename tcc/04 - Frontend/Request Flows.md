@@ -88,7 +88,8 @@ SPARQL-preview, query-execution, real left-click node-menu opening, retargeting,
 keyboard action activation, background dismissal, the node-type action matrix,
 conversion/removal, edge rewiring, viewport positioning, edge-menu isolation,
 predicate-variable conversion, and the exact `POST /api/query` predicate-query
-payload.
+payload. Staged exploration is covered with routed stage responses and, end
+to end against Ktor and a local Turtle fixture, by `npm run test:e2e`.
 
 ## Source files
 

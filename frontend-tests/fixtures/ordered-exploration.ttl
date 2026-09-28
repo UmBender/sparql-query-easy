@@ -1,0 +1,15 @@
+@prefix ex: <https://example.test/> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+
+ex:gremio ex:city ex:poa ;
+    ex:founded "1903"^^xsd:integer ;
+    rdfs:label "Grêmio"@en .
+ex:inter ex:city ex:poa ;
+    ex:founded "1909"^^xsd:integer ;
+    rdfs:label "Internacional"@en .
+ex:flamengo ex:city ex:rio ;
+    ex:founded "1895"^^xsd:integer ;
+    rdfs:label "Flamengo"@en .
+ex:poa rdfs:label "Porto Alegre"@en .
+ex:rio rdfs:label "Rio de Janeiro"@en .

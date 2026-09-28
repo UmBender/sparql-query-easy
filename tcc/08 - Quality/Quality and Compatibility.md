@@ -44,6 +44,20 @@ viewport positioning; run `npm run test:browser`. Broader visual-regression
 and accessibility auditing remains outside the current suite. See
 [[04 - Frontend/Request Flows]].
 
+Ordered multi-variable exploration has two layers (QUAL-002). The browser
+suite routes `POST /api/query/stage` per test to assert block order, request
+bodies and budgets (one current stage, one delayed preview, next-variable
+binding prefixes), stale-response and abort races, loading/empty/error/Retry,
+Load more, commitment/Back/reorder invalidation, graph/endpoint edits and
+Apply to graph. `npm run test:e2e` (`playwright.e2e.config.mjs`) builds and
+starts the real Ktor distribution, uploads `frontend-tests/fixtures/ordered-
+exploration.ttl`, and drives reordered 3-stage explorations through local
+Jena: predicate, typed-literal and IRI bindings, collapsed duplicates, preview
+by hover and focus, Apply to graph, and the unchanged one-variable table. Both
+suites share the external-traffic guard in `frontend-tests/external-assets.mjs`
+and contact no live endpoint. Backend stage semantics (unbound rows, paging,
+injection, errors) stay in `StageQueryServiceTest` and `StageQueryRoutesTest`.
+
 ## Coverage gaps
 
 - `DEC-009` approved Kotlin JSON health as an intentional difference from the

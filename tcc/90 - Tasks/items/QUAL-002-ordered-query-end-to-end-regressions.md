@@ -1,7 +1,7 @@
 ---
 id: QUAL-002
 title: Verify ordered query exploration end to end offline
-status: BACKLOG
+status: DONE
 priority: P1
 type: quality
 depends_on: [DEV-001, BE-002, FE-010]
@@ -43,10 +43,10 @@ DEV-001, BE-002, FE-010.
 
 ## Acceptance criteria
 
-- [ ] Browser and Kotlin suites pass with deterministic fixture data.
-- [ ] Request budget and stale-response behavior are asserted, not inferred.
-- [ ] Capture-driven comparator and OpenAPI operation inventory remain green.
-- [ ] Diff and task documentation reviewed under the new per-task commit rule.
+- [x] Browser and Kotlin suites pass with deterministic fixture data.
+- [x] Request budget and stale-response behavior are asserted, not inferred.
+- [x] Capture-driven comparator and OpenAPI operation inventory remain green.
+- [x] Diff and task documentation reviewed under the new per-task commit rule.
 
 ## Verification commands
 
@@ -63,9 +63,24 @@ git diff --check
 
 ## Risks
 
-External CSS/font requests make the current browser suite not fully offline;
-the revised test loop should address this before relying on it as a gate.
+Resolved by QUAL-003: both browser suites fulfill third-party assets locally
+and fail on any other external request.
 
 ## Execution log
 
 - 2026-09-27: Planned only; no test modified or run.
+- 2026-09-28: Added `npm run test:e2e` (`playwright.e2e.config.mjs`,
+  `frontend-tests/e2e/ordered-exploration.spec.mjs`,
+  `frontend-tests/fixtures/ordered-exploration.ttl`). It builds and starts
+  the Ktor distribution on 127.0.0.1:18090, uploads the fixture and runs
+  reordered 3-stage explorations through local Jena. They cover predicate,
+  typed-literal and IRI bindings, duplicate collapse, hover and focus
+  previews, Apply to graph, the unchanged one-variable table, and
+  next-stage-only request budgets. The routed browser suite (FE-005..FE-010)
+  covers races, empty/error states, graph/endpoint edits and the
+  parallel-predicate guard. The external-asset guard moved to
+  `frontend-tests/external-assets.mjs` for both suites; the default
+  Playwright config ignores `e2e/`. No golden or capture changed.
+  Validation: `npm run test:e2e` 3/3, browser suite 46/46, Kotlin
+  `ktlintCheck detekt test` (capture comparator 2/2, OpenAPI 5/5 green),
+  `git diff --check`.

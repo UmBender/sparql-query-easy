@@ -11,7 +11,7 @@ when the task crosses that responsibility. This is the canonical command map.
 | RDF domain/ports/Jena | `src/main/kotlin/com/example/sparqlqueryeasy/{domain/model,rdf,rdf/jena}/` |
 | SPARQL/remote and Wikidata search | `src/main/kotlin/com/example/sparqlqueryeasy/wikidata/{query,client,entitysearch}/` |
 | Graph UI and its owner | `sparql/index2.html`: `cy`, `buildFilters`, `runQuery`, menu controllers, DOMContentLoaded |
-| Browser oracles | `frontend-tests/index2.spec.mjs`, `server.mjs`, `cdn-stubs.mjs` |
+| Browser oracles | `frontend-tests/index2.spec.mjs`, `server.mjs`, `cdn-stubs.mjs`, `external-assets.mjs`; end-to-end `frontend-tests/e2e/` with `fixtures/` |
 | Kotlin tests/captures | `src/test/kotlin/`, `compatibility/expected/`, `compatibility/retirement-expected/` |
 | Packaging | `build.gradle.kts` processResources explicit frontend includes; `Dockerfile` |
 | Work selection and cards | [[../90 - Tasks/TASKS]], [[../90 - Tasks/WORKER_PROMPT]], [[../90 - Tasks/FORMAT]] |
@@ -32,6 +32,7 @@ These are configured versions, not claims about a fresh successful build.
 | Pure query calculations | `npm run test:query` |
 | Checked JavaScript boundary | `npm run check:frontend-types` |
 | Browser closing gate | `npm run test:browser` |
+| Ordered exploration end to end (builds and starts Ktor on port 18090; offline) | `npm run test:e2e` |
 | Distribution | `GRADLE_USER_HOME=/tmp/sparql-query-easy-gradle ./gradlew installDist --no-daemon` |
 | Run | `./gradlew run` or `./build/install/sparql-query-easy-kotlin/bin/sparql-query-easy-kotlin` |
 | Docs/skills | `node scripts/check-project-docs.mjs`; `git diff --check` |
@@ -46,7 +47,8 @@ These are configured versions, not claims about a fresh successful build.
 - Frontend: focused browser case while editing; complete browser suite before
   commit, plus pure query tests and the type checker when query code changes.
 - HTTP/fullstack: union of Kotlin/browser gates; OpenAPI and capture tests are
-  already included in Gradle test. Do not weaken their assertions.
+  already included in Gradle test. Do not weaken their assertions. Changes to
+  staged exploration or `POST /api/query/stage` also run `npm run test:e2e`.
 - Packaging/assets/dependencies: relevant area gates plus installDist and a local
   HTTP/static-resource smoke of the built distribution.
 - No product tests are required for purely operational documentation changes.
