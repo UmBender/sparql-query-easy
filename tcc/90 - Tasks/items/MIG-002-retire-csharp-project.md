@@ -22,7 +22,7 @@ and the [[../../05 - Migration/CSharp Removal Review|24-file removal diff]].
 `build.gradle.kts` now packages a Kotlin-owned, byte-identical Turtle file;
 `.github/archived-workflows/master_sparql-query-easy.yml` preserves the former
 .NET deployment configuration outside the active workflow directory on the
-Kotlin branch; `master` still tracks the old YAML, but the user reports no
+Kotlin migration tree and the integrated `main` tree; the user reports no
 enabled workflow in the fork's GitHub Actions UI. The compatibility harness
 references the C# project.
 

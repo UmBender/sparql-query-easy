@@ -11,9 +11,9 @@ middleware-error equivalence was explicitly waived. The user approved the
 locally and post-deletion tests passed. After the diff was checked against the
 approved manifest, the user requested commit and push. See
 [[../05 - Migration/CSharp Removal Review]].
-The .NET YAML is archived on `kotlin`; although
-`master` still tracks the old file, the user reports no enabled workflow in
-the fork's Actions UI. The archive change should accompany the removal diff;
+The .NET YAML is archived in the integrated `main` tree, outside
+`.github/workflows/`. The user reports no enabled workflow in the fork's
+Actions UI. The archive change accompanies the removal diff;
 remote workflow disablement is not a separate blocker. Production deployment
 decisions remain deferred.
 

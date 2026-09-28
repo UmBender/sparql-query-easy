@@ -31,7 +31,7 @@
 - **Approved (2026-09-27):** Archive the legacy .NET workflow outside the
   active GitHub Actions directory on `kotlin`, retain its configuration, and
   create no Kotlin deployment workflow until hosting and release choices are
-  made. `master` still needs the archive change integrated; the user reports
+  made. The archive change is included in the direct `main` integration; the user reports
   no enabled workflow in this fork's GitHub Actions UI.
   See [[../07 - Operations/Archived .NET Deployment Workflow]] and OPS-005.
 

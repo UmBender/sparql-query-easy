@@ -4,12 +4,12 @@
 
 **Confirmed:** The legacy ASP.NET deployment configuration is retained at
 `.github/archived-workflows/master_sparql-query-easy.yml`. It was moved out of
-`.github/workflows/` on the Kotlin branch, so this branch contains no active
+`.github/workflows/` during Kotlin migration, so the integrated tree contains no active
 GitHub Actions workflow. GitHub Actions discovers repository workflows from
 `.github/workflows/`, not the archive directory.
 
-**Important boundary:** `master` and `origin/master` still contain the legacy
-YAML file until this change is integrated there. The user reports that GitHub
+**Important boundary:** The legacy YAML is preserved only in the archive,
+not under the active workflow directory of the integrated `main` tree. The user reports that GitHub
 Actions shows no runnable workflow for this fork. The file's presence alone
 does not prove an enabled workflow; remote execution state was not independently
 queried. No remote workflow setting, Azure app, deployment, or credential was

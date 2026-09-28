@@ -795,8 +795,8 @@ Recommended boundaries:
   remains open under `SEC-001` and `OPS-002`.
 - [ ] Design a new Kotlin deployment workflow only after the hosting and
   release method are approved (OPS-005). The local artifact and `/health` are
-  verified under OPS-001. The legacy .NET workflow was archived on `kotlin`,
-  and its default-branch YAML remains until integration. The user reports no
+  verified under OPS-001. The legacy .NET workflow was archived on `kotlin`
+  and is included in the direct `main` integration. The user reports no
   enabled workflow in the fork's Actions UI; no production cutover is approved.
 
 ## Kotlin scaffold commands
@@ -1856,8 +1856,8 @@ legacy C# GitHub Actions YAML was moved from
 `.github/archived-workflows/master_sparql-query-easy.yml` on `kotlin`, with its
 trigger, .NET jobs, artifact transfer, Azure Web App target, and publish-profile
 secret reference retained as historical evidence. The secret value was never
-present in the file. This branch has no workflow YAML in the active directory;
-`master` still tracks the old file. The user reports no enabled GitHub Actions
+present in the file. The integrated `main` tree has no workflow YAML in the
+active directory. The user reports no enabled GitHub Actions
 workflow in the fork, so the file's presence was not evidence of a running
 deployment. No GitHub setting or Azure resource was changed and no deployment
 was attempted.

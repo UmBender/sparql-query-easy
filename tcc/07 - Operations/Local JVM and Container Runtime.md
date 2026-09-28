@@ -85,10 +85,9 @@ of these decisions is implied by a working local container.
 **Confirmed retirement boundary:** The approved C# solution, project, and
 harness source files have been removed locally under MIG-002. Kotlin's Gradle
 distribution and container remain independent of them. The old .NET workflow
-is preserved under `.github/archived-workflows/` on `kotlin`; `master` still
-tracks the old YAML, but the user reports no enabled Actions workflow on the
-fork. Integrate the archive change with the removal diff. Human diff review
-remains before commit/push. Keeping OPS-002–OPS-004 for a future production
+is preserved under `.github/archived-workflows/` in the integrated `main`
+tree, not under `.github/workflows/`. The user reports no enabled Actions
+workflow on the fork. Keeping OPS-002–OPS-004 for a future production
 launch does not require deploying before repository-level C# retirement. See
 [[Archived .NET Deployment Workflow]] and
 [[../05 - Migration/CSharp Removal Review]].

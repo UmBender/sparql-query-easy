@@ -40,8 +40,8 @@ JSON `400`/`404`/`502` contract is approved.
 - `OPS-001` provides local JVM/container packaging. `OPS-002`–`OPS-004`
   still define hosting, DNS/TLS, restrictive production CORS, deployment,
   monitoring, backup, and recovery. The legacy .NET GitHub workflow is archived
-  outside the active directory on `kotlin`; `master` still tracks the old YAML
-  until integration, but the user reports no enabled workflow on the fork.
+  outside the active directory in the integrated `main` tree; the user reports
+  no enabled workflow on the fork.
   `OPS-005` will design Kotlin
   CI/CD from scratch after the hosting/release decision.
 - `REPO-001`: stop tracking thesis reference PDFs while preserving local

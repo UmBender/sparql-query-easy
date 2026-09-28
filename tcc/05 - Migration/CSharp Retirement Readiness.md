@@ -25,11 +25,10 @@ comparators remain. The user approved the 24-file scope and rollback plan in
 [[CSharp Removal Review]]; the user then requested commit and push. MIG-002 is
 DONE for repository-level retirement, not for production deployment.
 
-**Workflow status:** The .NET YAML is archived on `kotlin`. `master` still
-tracks the old YAML, but the user reports no enabled workflow in this fork's
-GitHub Actions UI; the remote execution state was not independently queried.
-Merging the removal change should include the archive so the old YAML does not
-remain under `.github/workflows/`. A new Kotlin workflow awaits the hosting
+**Workflow status:** The .NET YAML is archived in the integrated `main` tree,
+with no copy under `.github/workflows/`. The user reports no enabled workflow
+in this fork's GitHub Actions UI; the remote execution state was not
+independently queried. A new Kotlin workflow awaits the hosting
 decision under OPS-005.
 
 **Capture decision completed (2026-09-27):** The user requested actual C#

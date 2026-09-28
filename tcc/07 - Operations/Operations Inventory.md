@@ -2,11 +2,11 @@
 
 ## Deployment artifacts
 
-**Confirmed:** The Kotlin branch has no active GitHub Actions workflow. The
+**Confirmed:** The integrated Kotlin tree has no active GitHub Actions workflow. The
 former .NET/Windows/Azure deployment YAML is retained outside the active
 workflow directory at `.github/archived-workflows/master_sparql-query-easy.yml`.
-See [[Archived .NET Deployment Workflow]]. The default `master` branch still
-tracks the old YAML until this change is integrated. The user reports no
+See [[Archived .NET Deployment Workflow]]. The default `main` branch includes
+the archive and removal changes. The user reports no
 enabled workflow in the fork's GitHub Actions UI; remote execution state was
 not independently queried.
 
