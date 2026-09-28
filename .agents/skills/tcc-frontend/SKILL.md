@@ -17,6 +17,6 @@ contracts at `tcc/09 - Decisions/Current Contracts.md` when needed.
 7. Preserve keyboard focus, Escape and dismissal semantics of the specific menu being changed; do not impose one menu's dismissal rule on another.
 8. Test transformations with deterministic data and important interactions through Playwright with simulated/local API. Use the browser gate from the operational map.
 
-Known ownership: `app-core.js` declares `cy`, `trData` and API actions; `index2.html` initializes `cy` and the menus. Classic scripts share globals in load order. The Ktor distribution copies an explicit list of frontend assets in `build.gradle.kts`; new files require packaging checks.
+Known ownership: `app-core.js` declares `cy`, `trData` and API actions; `index2.html` initializes `cy`; `graph-menus.js` owns the menus. Classic scripts share globals in load order. The Ktor distribution copies an explicit list of frontend assets in `build.gradle.kts`; new files require packaging checks.
 
 Do not change framework, bundler or transport library without its own task. Update the affected contract and make the scoped local commit.

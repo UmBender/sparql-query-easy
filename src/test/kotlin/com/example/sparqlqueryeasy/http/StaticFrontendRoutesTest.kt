@@ -45,9 +45,9 @@ class StaticFrontendRoutesTest {
             source.contains("const API_BASE = ''") shouldBe true
             page.bodyAsText().contains("onAutocomplete: addSearchResultNode") shouldBe true
             page.bodyAsText().contains("id=\"node-action-menu\"") shouldBe true
-            page.bodyAsText().contains("cy.on('tap', 'node', event => {") shouldBe true
-            page.bodyAsText().contains("if (pendingConnection) completeConnection(event.target);") shouldBe true
-            page.bodyAsText().contains("else openNodeActionMenu(event.target);") shouldBe true
+            source.contains("cy.on('tap', 'node', event => {") shouldBe true
+            source.contains("if (pendingConnection) completeConnection(event.target);") shouldBe true
+            source.contains("else openNodeActionMenu(event.target);") shouldBe true
             page.bodyAsText().contains("<script src=\"cytoscape-cxtmenu.js\"></script>") shouldBe false
             stylesheet.status shouldBe HttpStatusCode.OK
             page.bodyAsText().contains("<link rel=\"stylesheet\" href=\"index2.css\">") shouldBe true
@@ -91,7 +91,8 @@ class StaticFrontendRoutesTest {
         }
 
     // Classic scripts that index2.html loads in order before its inline bootstrap.
-    private val pageScripts = listOf("app-core.js", "stage-order.js", "stage-exploration.js", "graph-nodes.js")
+    private val pageScripts =
+        listOf("app-core.js", "stage-order.js", "stage-exploration.js", "graph-nodes.js", "graph-menus.js")
 
     private suspend fun ApplicationTestBuilder.frontendSource(): String =
         (listOf("index2.html") + pageScripts).map { client.get("/$it").bodyAsText() }.joinToString("\n")

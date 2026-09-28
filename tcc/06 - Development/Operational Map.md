@@ -10,7 +10,7 @@ when the task crosses that responsibility. This is the canonical command map.
 | Services and endpoint/cache state | `src/main/kotlin/com/example/sparqlqueryeasy/application/` |
 | RDF domain/ports/Jena | `src/main/kotlin/com/example/sparqlqueryeasy/{domain/model,rdf,rdf/jena}/` |
 | SPARQL/remote and Wikidata search | `src/main/kotlin/com/example/sparqlqueryeasy/wikidata/{query,client,entitysearch}/` |
-| Graph UI and its owner | `sparql/index2.html` (markup, DOMContentLoaded: `cy` init, menu controllers) and classic scripts `app-core.js` (state, API, `runQuery`), `stage-order.js`, `stage-exploration.js`, `graph-nodes.js`; pure modules `query-calculations.js`, `query-stages.js`, `graph-actions.js` |
+| Graph UI and its owner | `sparql/index2.html` (markup, DOMContentLoaded bootstrap: `cy` init) and classic scripts `app-core.js` (state, API, `runQuery`), `stage-order.js`, `stage-exploration.js`, `graph-nodes.js`, `graph-menus.js` (menus, connection, Alt+drag); pure modules `query-calculations.js`, `query-stages.js`, `graph-actions.js` |
 | Browser oracles | `frontend-tests/index2.spec.mjs`, `server.mjs`, `cdn-stubs.mjs`, `external-assets.mjs`; end-to-end `frontend-tests/e2e/` with `fixtures/` |
 | Kotlin tests/captures | `src/test/kotlin/`, `compatibility/expected/`, `compatibility/retirement-expected/` |
 | Packaging | `build.gradle.kts` processResources explicit frontend includes; `Dockerfile` |

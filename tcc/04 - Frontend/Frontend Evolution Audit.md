@@ -67,6 +67,12 @@ under `sparql/`. No bundler or framework is needed for this.
 | FE-021 | Move pure possible-graph, menu-action and naming decisions into checked modules | New unit tests |
 | FE-022 | Move node/edge menus and connection preview out of `DOMContentLoaded` into a controller that owns its state | Page ≈330 lines (markup + includes) |
 
+**Outcome (2026-09-28):** FE-019–FE-022 are done. `index2.html` is 672 lines
+(markup, script includes and bootstrap). The largest application scripts are
+`graph-menus.js` (582 lines, both menus plus connection handling) and
+`stage-exploration.js` (444). QUAL-004 fixed a startup-layout race in the
+browser tests found while validating these slices.
+
 Acceptance for each slice: identical browser suite, `npm run test:query`,
 `npm run check:frontend-types` where modules change, and the Gradle packaged-
 resource test. Rollback is reverting that slice's commit. Expected end state:
