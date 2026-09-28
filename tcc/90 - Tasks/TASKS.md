@@ -29,8 +29,8 @@ Ordered by dependencies, then priority among selection candidates. See [worker r
 | DEC-009 | DONE | P1 | decision | [Decide captured C# versus Kotlin health response contract](<items/DEC-009-health-response-contract.md>) |
 | FE-001 | DONE | P1 | frontend | [Add browser-level tests for authoritative frontend flows](<items/FE-001-browser-frontend-flow-tests.md>) |
 | FE-002 | DONE | P1 | frontend | [Replace the node radial menu with a persistent left-click action list](<items/FE-002-left-click-node-action-menu.md>) |
-| FE-003 | REVIEW | P1 | frontend | [Let users convert a graph relation into a projected predicate variable](<items/FE-003-predicate-variable-edge.md>) |
-| FE-004 | REVIEW | P1 | frontend | [Add the two-variable query exploration panel foundation](<items/FE-004-two-variable-panel-foundation.md>) |
+| FE-003 | DONE | P1 | frontend | [Let users convert a graph relation into a projected predicate variable](<items/FE-003-predicate-variable-edge.md>) |
+| FE-004 | DONE | P1 | frontend | [Add the two-variable query exploration panel foundation](<items/FE-004-two-variable-panel-foundation.md>) |
 | FE-008 | BACKLOG | P1 | frontend | [Build a stable registry of query variables and stages](<items/FE-008-query-variable-registry.md>) |
 | FE-009 | BACKLOG | P1 | frontend | [Add numbered Scratch-like reorderable query blocks](<items/FE-009-reorderable-query-block-menu.md>) |
 | FE-005 | BACKLOG | P1 | frontend | [Fetch bounded candidates for the first query variable](<items/FE-005-first-variable-candidate-exploration.md>) |

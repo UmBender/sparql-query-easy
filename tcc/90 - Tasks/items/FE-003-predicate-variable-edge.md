@@ -1,13 +1,13 @@
 ---
 id: FE-003
 title: Let users convert a graph relation into a projected predicate variable
-status: REVIEW
+status: DONE
 priority: P1
 type: frontend
 depends_on: [API-001, FE-002]
 human_gate: false
 created: 2026-09-27
-updated: 2026-09-27
+updated: 2026-09-28
 ---
 # Let users convert a graph relation into a projected predicate variable
 
@@ -54,16 +54,16 @@ connects known subject and object values.
 
 ## Acceptance criteria
 
-- [ ] A user can left-click an edge and select **Convert relation to variable**.
-- [ ] The converted edge preserves its topology/metadata and holds a valid
+- [x] A user can left-click an edge and select **Convert relation to variable**.
+- [x] The converted edge preserves its topology/metadata and holds a valid
       `?predicate_…` value used by query construction.
-- [ ] Running the graph submits a general-query request that projects the edge
+- [x] Running the graph submits a general-query request that projects the edge
       predicate variable while retaining its known subject and object.
-- [ ] Node action-list behavior and graph-background-only dismissal remain
+- [x] Node action-list behavior and graph-background-only dismissal remain
       intact.
-- [ ] Playwright coverage is deterministic and offline; Kotlin quality checks
+- [x] Playwright coverage is deterministic and offline; Kotlin quality checks
       and browser tests pass.
-- [ ] Frontend architecture/request-flow documentation is updated.
+- [x] Frontend architecture/request-flow documentation is updated.
 
 ## Verification commands
 
@@ -105,6 +105,11 @@ cause a node-only menu action or silently project the wrong variable.
   Kotlin quality gate and JavaScript syntax check passed. Remains `REVIEW`
   solely because the required Playwright browser run cannot start without its
   uninstalled dependency; no dependency was installed during integration.
+
+- 2026-09-28: Human review accepted the implemented behavior. The last
+  blocking evidence gap closed with QUAL-003 (browser suite 23/23 under the
+  external-request guard; Kotlin quality gate passed at commit `31f6624`).
+  No code changed during closure. Status DONE.
 
 ## Predicate-result follow-up (2026-09-27)
 
