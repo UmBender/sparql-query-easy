@@ -670,7 +670,7 @@ test('Back clears the commitment and reordering restarts without stale state', a
   await expect(page.locator('#stage-heading')).toHaveText('Stage 1 of 2: ?city');
   await expect(page.locator('#stage-commitments li')).toHaveCount(0);
   await expect(page.getByRole('button', { name: 'Back to previous stage' })).toBeHidden();
-  await expect(candidateButtons(page).first()).toHaveAttribute('aria-pressed', 'false');
+  await expect(page.locator('#stage-preview')).toBeHidden();
 
   await candidateButtons(page).nth(1).click();
   await expect(page.locator('#stage-commitments')).toHaveText('?city = Rio');
@@ -678,6 +678,117 @@ test('Back clears the commitment and reordering restarts without stale state', a
   await expect(page.locator('#stage-heading')).toHaveText('Stage 1 of 2: ?team');
   await expect(page.locator('#stage-commitments li')).toHaveCount(0);
   expect(requests.at(-1)).toMatchObject({ variableName: '?team', bindings: [] });
+});
+
+// Stage order ?a, ?b (edge predicate), ?c. Choosing a2 leaves no ?b values.
+function threeStageResponder({ failStageThreeOnce = false } = {}) {
+  let failed = false;
+  return request => {
+    const bound = Object.fromEntries(request.bindings.map(({ variableName, term }) => [variableName, term.value]));
+    if (request.variableName === '?a') {
+      return { body: stagePage(request, [iri('https://example.test/a1', 'Alpha'), iri('https://example.test/a2', 'Beta')]) };
+    }
+    if (request.variableName === '?b') {
+      return { body: stagePage(request, bound['?a'] === 'https://example.test/a1' ? [iri('https://example.test/p1', 'founded')] : []) };
+    }
+    if (failStageThreeOnce && !failed) {
+      failed = true;
+      return { status: 502, body: { error: 'Stage three failed' } };
+    }
+    return { body: stagePage(request, [{ term: { type: 'literal', value: '1903', datatype: XSD_INTEGER, language: null }, label: null, selectable: true }]) };
+  };
+}
+
+function expectOnlyNextStageRequests(requests, order) {
+  for (const request of requests) {
+    expect(request.variableName).toBe(order[request.bindings.length]);
+    expect(request.bindings.map(({ variableName }) => variableName)).toEqual(order.slice(0, request.bindings.length));
+  }
+}
+
+test('three ordered stages end in a summary and only Apply to graph changes the graph', async ({ page }) => {
+  await addThreeVariableChain(page);
+  const requests = await routeStages(page, threeStageResponder());
+  const before = await graphSnapshot(page);
+  await page.locator('#run-query-btn').click();
+  await expect(candidateButtons(page)).toHaveCount(2);
+  await candidateButtons(page).first().click();
+  await expect(page.locator('#stage-heading')).toHaveText('Stage 2 of 3: ?b');
+  await candidateButtons(page).first().click();
+  await expect(page.locator('#stage-heading')).toHaveText('Stage 3 of 3: ?c');
+  await expect(page.locator('#stage-commitments li')).toHaveText(['?a = Alpha', '?b = founded']);
+  await candidateButtons(page).first().click();
+
+  await expect(page.locator('#stage-heading')).toHaveText('All variables chosen');
+  await expect(page.locator('#stage-commitments li')).toHaveText(['?a = Alpha', '?b = founded', '?c = 1903']);
+  await expect(candidateButtons(page)).toHaveCount(0);
+  await expect(page.getByRole('button', { name: 'Apply to graph' })).toBeVisible();
+  expect(await graphSnapshot(page)).toEqual(before);
+  expectOnlyNextStageRequests(requests, ['?a', '?b', '?c']);
+  expect(requests.map(({ variableName }) => variableName)).toContain('?c');
+
+  await page.getByRole('button', { name: 'Apply to graph' }).click();
+  await expect(page.locator('#two-variable-panel')).toBeHidden();
+  const graph = await page.evaluate(() => ({
+    nodes: cy.nodes().map(node => ({ id: node.id(), value: node.data('value'), label: node.data('label'), type: node.data('type') })).sort((a, b) => a.id.localeCompare(b.id)),
+    edges: cy.edges().map(edge => ({ id: edge.id(), source: edge.data('source'), target: edge.data('target'), nodeId: edge.data('nodeId'), label: edge.data('label'), type: edge.data('type') })),
+  }));
+  expect(graph).toEqual({
+    nodes: [
+      { id: '<https://example.test/a1>', value: '<https://example.test/a1>', label: 'Alpha', type: 'node' },
+      { id: '1903', value: '1903', label: '1903', type: 'label' },
+    ],
+    edges: [{ id: 'rel', source: '<https://example.test/a1>', target: '1903', nodeId: '<https://example.test/p1>', label: 'founded', type: undefined }],
+  });
+  await expect(page.locator('#variable-order')).toBeHidden();
+});
+
+test('Back and Close from the summary leave the graph unchanged', async ({ page }) => {
+  await addThreeVariableChain(page);
+  await routeStages(page, threeStageResponder());
+  const before = await graphSnapshot(page);
+  await page.locator('#run-query-btn').click();
+  for (const heading of ['Stage 2 of 3: ?b', 'Stage 3 of 3: ?c', 'All variables chosen']) {
+    await candidateButtons(page).first().click();
+    await expect(page.locator('#stage-heading')).toHaveText(heading);
+  }
+  await page.getByRole('button', { name: 'Back to previous stage' }).click();
+  await expect(page.locator('#stage-heading')).toHaveText('Stage 3 of 3: ?c');
+  await expect(page.locator('#stage-commitments li')).toHaveText(['?a = Alpha', '?b = founded']);
+  await expect(page.getByRole('button', { name: 'Apply to graph' })).toBeHidden();
+  await candidateButtons(page).first().click();
+  await expect(page.locator('#stage-heading')).toHaveText('All variables chosen');
+  await page.getByRole('button', { name: 'Close query variable exploration' }).click();
+  await expect(page.locator('#two-variable-panel')).toBeHidden();
+  expect(await graphSnapshot(page)).toEqual(before);
+});
+
+test('empty and failed later stages keep the committed path and recover', async ({ page }) => {
+  await addThreeVariableChain(page);
+  const requests = await routeStages(page, threeStageResponder({ failStageThreeOnce: true }));
+  await page.locator('#run-query-btn').click();
+  await candidateButtons(page).nth(1).click();
+  await expect(page.locator('#stage-status')).toHaveText('No values for ?b under the chosen bindings.');
+  await page.getByRole('button', { name: 'Back to previous stage' }).click();
+  await candidateButtons(page).first().click();
+  await candidateButtons(page).first().click();
+  await expect(page.locator('#stage-status')).toHaveText('Stage three failed');
+  await expect(page.locator('#stage-commitments li')).toHaveText(['?a = Alpha', '?b = founded']);
+  await page.getByRole('button', { name: 'Retry' }).click();
+  await expect(candidateButtons(page)).toHaveText([/1903\s*literal integer/]);
+  expectOnlyNextStageRequests(requests, ['?a', '?b', '?c']);
+});
+
+test('an endpoint change during exploration closes the panel without graph changes', async ({ page }) => {
+  await addThreeVariableChain(page);
+  await routeStages(page, threeStageResponder());
+  const before = await graphSnapshot(page);
+  await page.locator('#run-query-btn').click();
+  await candidateButtons(page).first().click();
+  await expect(page.locator('#stage-heading')).toHaveText('Stage 2 of 3: ?b');
+  await page.locator('#input-endpoint-sparql').fill('https://example.test/sparql');
+  await expect(page.locator('#two-variable-panel')).toBeHidden();
+  expect(await graphSnapshot(page)).toEqual(before);
 });
 
 test('parallel edges sharing one predicate variable bind together without staging', async ({ page }) => {

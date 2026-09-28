@@ -36,7 +36,7 @@ Ordered by dependencies, then priority among selection candidates. See [worker r
 | FE-005 | DONE | P1 | frontend | [Fetch bounded candidates for the first query variable](<items/FE-005-first-variable-candidate-exploration.md>) |
 | FE-006 | DONE | P1 | frontend | [Explore the second variable under an assumed first binding](<items/FE-006-second-variable-assumption-and-preview.md>) |
 | FE-007 | DONE | P1 | frontend | [Connect existing nodes with variable or defined predicates](<items/FE-007-node-predicate-connector.md>) |
-| FE-010 | BACKLOG | P1 | frontend | [Complete ordered exploration across three or more variables](<items/FE-010-multistage-query-completion.md>) |
+| FE-010 | DONE | P1 | frontend | [Complete ordered exploration across three or more variables](<items/FE-010-multistage-query-completion.md>) |
 | QUAL-003 | DONE | P1 | quality | [Make browser tests fail on unexpected external traffic](<items/QUAL-003-browser-egress-isolation.md>) |
 | FE-011 | DONE | P1 | refactor | [Extract pure query calculations for ordered exploration](<items/FE-011-extract-query-calculations.md>) |
 | FE-012 | DONE | P1 | quality | [Pilot checked JavaScript for extracted query calculations](<items/FE-012-javascript-typing-pilot.md>) |

@@ -1,7 +1,7 @@
 ---
 id: FE-010
 title: Complete ordered exploration across three or more variables
-status: BACKLOG
+status: DONE
 priority: P1
 type: frontend
 depends_on: [DEV-001, FE-006]
@@ -42,11 +42,11 @@ DEV-001 and FE-006 (which establishes two-stage hover/focus semantics).
 
 ## Acceptance criteria
 
-- [ ] 3+ stages respect user order and issue only budgeted next-stage requests.
-- [ ] Backtracking/reordering invalidates dependent data and never shows stale
+- [x] 3+ stages respect user order and issue only budgeted next-stage requests.
+- [x] Backtracking/reordering invalidates dependent data and never shows stale
       preview or silently mutates nodes/edges.
-- [ ] Final action and zero/one/two-variable regressions match DEC-008.
-- [ ] Offline browser and Kotlin gates pass.
+- [x] Final action and zero/one/two-variable regressions match DEC-008.
+- [x] Offline browser and Kotlin gates pass.
 
 ## Verification commands
 
@@ -70,3 +70,13 @@ binding path and one bounded preview request at a time.
 ## Execution log
 
 - 2026-09-27: Planned only; final-result behavior awaits DEC-008.
+- 2026-09-28: Implemented. The staged flow is generic over the block order:
+  each commit requests only the next variable under the committed path (the
+  tests assert every request's variable and binding prefix). The last commit
+  shows a summary with Back and Apply to graph. Apply binds predicate edges
+  in place and replaces variable nodes with rewired edges; Close/Back never
+  mutate. Endpoint/graph edits close the panel; reorder restarts it.
+  Validation: browser suite 46/46 offline (3-stage completion and Apply,
+  Back/Close from the summary, empty middle stage, stage-3 error and Retry,
+  endpoint change), visual check of the stage/preview/summary panel, and
+  `git diff --check`. Kotlin code is unchanged since the FE-005 gate passed.

@@ -651,6 +651,7 @@
                     <button id="stage-retry" type="button" class="btn-small" hidden>Retry</button>
                     <ul id="stage-candidates" aria-labelledby="stage-heading"></ul>
                     <button id="stage-load-more" type="button" class="btn-small btn-flat" hidden>Load more</button>
+                    <button id="stage-apply" type="button" class="btn-small green darken-1" hidden>Apply to graph</button>
                     <section id="stage-preview" hidden aria-labelledby="stage-preview-heading" aria-live="polite">
                         <h4 id="stage-preview-heading"></h4>
                         <p id="stage-preview-status"></p>
@@ -1391,7 +1392,6 @@
                 pages: [],
                 preview: { key: null, status: 'idle' },
                 previewCandidate: null,
-                selected: null,
                 status: 'loading',
                 error: null,
                 controller: null,
@@ -1486,18 +1486,28 @@
             return exploration.stage === exploration.order.length - 1;
         }
 
-        // Click/Enter commits the candidate and advances; on the last stage it is a selection.
+        function isExplorationComplete() {
+            return exploration.stage === exploration.order.length;
+        }
+
+        // Click/Enter commits the candidate and advances; after the last stage
+        // the panel shows the complete binding summary (FE-010).
         function selectStageCandidate(candidate) {
             if (!candidate.selectable) return;
-            if (isLastStage()) {
-                exploration.selected = candidate;
-                renderStage();
-                return;
-            }
             exploration.previews.cancel();
             exploration.previewCandidate = null;
             exploration.bindings = [...exploration.bindings, { variableName: exploration.order[exploration.stage], term: candidate.term }];
             exploration.labels = [...exploration.labels, window.queryStages.candidateText(candidate)];
+            if (isLastStage()) {
+                exploration.controller?.abort();
+                exploration.controller = null;
+                exploration.stage += 1;
+                exploration.pages = [];
+                exploration.status = 'complete';
+                document.getElementById('stage-heading').focus();
+                renderStage();
+                return;
+            }
             enterStage(exploration.stage + 1);
         }
 
@@ -1517,7 +1527,6 @@
             exploration.controller = null;
             exploration.stage = stage;
             exploration.pages = [];
-            exploration.selected = null;
             document.getElementById('stage-heading').focus();
             loadStagePage(0);
         }
@@ -1572,12 +1581,16 @@
 
         function renderStage() {
             if (!exploration) return;
-            const { order, stage, status, selected } = exploration;
+            const { order, stage, status } = exploration;
             const variableName = order[stage];
             const statusLine = document.getElementById('stage-status');
             const list = document.getElementById('stage-candidates');
             const focusedKey = list.contains(document.activeElement) ? document.activeElement.dataset.term : null;
-            document.getElementById('stage-heading').textContent = `Stage ${stage + 1} of ${order.length}: ${variableName}`;
+            const complete = isExplorationComplete();
+            document.getElementById('stage-heading').textContent = complete
+                ? 'All variables chosen'
+                : `Stage ${stage + 1} of ${order.length}: ${variableName}`;
+            document.getElementById('stage-apply').hidden = !complete;
             document.getElementById('stage-commitments').replaceChildren(...exploration.bindings.map((binding, index) => {
                 const item = document.createElement('li');
                 item.textContent = `${binding.variableName} = ${exploration.labels[index]}`;
@@ -1590,13 +1603,12 @@
             if (status === 'loading' && !candidates.length) statusLine.textContent = `Loading values for ${variableName}\u2026`;
             else if (status === 'loading') statusLine.textContent = 'Loading more values\u2026';
             else if (status === 'error') statusLine.textContent = exploration.error;
+            else if (complete) statusLine.textContent = 'Apply to graph replaces the variables with these values. Close or Back leaves the graph unchanged.';
             else if (!candidates.length) statusLine.textContent = `No values for ${variableName} under the chosen bindings.`;
-            else if (selected) statusLine.textContent = `Selected ${variableName} = ${window.queryStages.candidateText(selected)}.`;
             else statusLine.textContent = `${candidates.length} value${candidates.length === 1 ? '' : 's'} for ${variableName}.`;
             document.getElementById('stage-retry').hidden = status !== 'error';
             const lastPage = exploration.pages[exploration.pages.length - 1];
             document.getElementById('stage-load-more').hidden = !(status === 'loaded' && lastPage?.hasMore);
-            const selectedKey = selected ? window.queryStages.termKey(selected.term) : null;
             list.replaceChildren(...candidates.map(candidate => {
                 const item = document.createElement('li');
                 const button = document.createElement('button');
@@ -1605,7 +1617,6 @@
                 button.className = 'stage-candidate';
                 button.dataset.term = key;
                 button.disabled = !candidate.selectable;
-                button.setAttribute('aria-pressed', String(key === selectedKey));
                 const text = document.createElement('span');
                 text.textContent = window.queryStages.candidateText(candidate);
                 const hint = document.createElement('span');
@@ -1623,6 +1634,54 @@
             }));
             if (focusedKey) list.querySelector(`[data-term="${CSS.escape(focusedKey)}"]`)?.focus();
             renderStagePreview();
+        }
+
+        // The only exploration action that changes the graph (DEC-008 final action):
+        // variable nodes become the chosen IRI/literal nodes with their edges rewired,
+        // and predicate-variable edges are bound in place, keeping edge IDs.
+        function applyExplorationToGraph() {
+            if (!exploration || !isExplorationComplete()) return;
+            const registry = variableOrderState.registry;
+            const choices = exploration.bindings.map((binding, index) => ({ ...binding, label: exploration.labels[index] }));
+            closeTwoVariablePanel();
+            cy.batch(() => {
+                for (const { variableName, term, label } of choices) {
+                    const entry = registry.find(item => item.name === variableName);
+                    if (!entry) continue;
+                    const value = window.queryStages.termGraphValue(term);
+                    if (term.type === 'iri') {
+                        entry.edgeIds.forEach(id => {
+                            const edge = cy.getElementById(id);
+                            if (!edge.length || edge.data('nodeId') !== variableName) return;
+                            edge.data({ nodeId: value, label });
+                            if (edge.data('type') === 'variable') edge.removeData('type');
+                        });
+                    }
+                    entry.nodeIds.forEach(id => replaceVariableNodeWithTerm(id, term, value, label));
+                }
+            });
+            updateStatusBar();
+            toast(`Applied ${choices.length} bindings to the graph.`, 'success');
+        }
+
+        function replaceVariableNodeWithTerm(oldId, term, value, label) {
+            const oldNode = cy.getElementById(oldId);
+            if (!oldNode.length || oldNode.id() === value) return;
+            if (!cy.getElementById(value).length) {
+                cy.add({
+                    group: 'nodes',
+                    data: { id: value, value, label, type: term.type === 'iri' ? 'node' : 'label' },
+                    position: { ...oldNode.position() },
+                });
+            }
+            oldNode.connectedEdges().forEach(edge => {
+                const ends = {};
+                if (edge.data('source') === oldId) ends.source = value;
+                if (edge.data('target') === oldId) ends.target = value;
+                edge.move(ends);
+            });
+            nodeActionMenuController?.retarget(oldId, value);
+            oldNode.remove();
         }
 
         function invalidateExploration(state, signatureChanged) {
@@ -2654,6 +2713,7 @@
             }
             variableOrderListeners.push(renderVariableOrder, invalidateExploration);
             document.getElementById('stage-back').addEventListener('click', backToPreviousStage);
+            document.getElementById('stage-apply').addEventListener('click', applyExplorationToGraph);
             document.getElementById('stage-retry').addEventListener('click', () => loadStagePage(exploration?.retryOffset ?? 0));
             document.getElementById('stage-load-more').addEventListener('click', () => {
                 const lastPage = exploration?.pages[exploration.pages.length - 1];

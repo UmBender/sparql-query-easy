@@ -98,6 +98,18 @@ changes the graph: variable nodes are replaced by the chosen IRI/literal nodes
 (edges rewired as in the legacy node replacement) and predicate-variable edges
 are bound in place. Closing the panel or Back leaves the graph unchanged.
 
+*Implemented (FE-010):* committing the last stage shows "All variables
+chosen" with the numbered commitments, Back and **Apply to graph**. Apply
+closes the panel first, then in one Cytoscape batch binds each IRI to its
+predicate-variable edges (`nodeId` and label, edge ID kept) and replaces
+each variable node with a node whose ID and value are `termGraphValue(term)`
+(IRI `<…>` type `node`, literal lexical form type `label`, candidate text as
+label). Connected edges move to it with their IDs and data. An existing node
+with that ID is reused. Unlike the legacy result-table replacement, Apply
+sends no relationship-value request and removes no neighboring nodes.
+Literal datatype/language are not stored in graph nodes, matching other
+literal nodes in the legacy query model.
+
 ## Typed data findings (INV-002, 2026-09-28)
 
 - Remote Wikidata JSON (`WikidataHttpClient`) and local Jena results both map

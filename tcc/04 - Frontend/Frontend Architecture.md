@@ -109,7 +109,11 @@ changes. Cytoscape `add`/`remove`/`data` events, endpoint input/change and
 Turtle upload schedule a refresh. `FE-009` renders that order as numbered
 blocks in `#variable-order` beside Run Query (`renderVariableOrder`,
 `moveVariableBlock`, pointer drag in `initVariableOrderDrag`). Two or more
-variables open the panel with that order.
+variables open the panel with that order. The panel runs one exploration
+(`startExploration`): one current stage request, a shared page cache, the
+`createPreviewScheduler` preview budget, commitments with Back, and a final
+**Apply to graph** (`applyExplorationToGraph`), the only step that edits
+Cytoscape.
 
 **Potential issue:** Materialize, Intro.js, Google icons, and CSS are loaded from third-party CDNs, so local development is not fully offline.
 
