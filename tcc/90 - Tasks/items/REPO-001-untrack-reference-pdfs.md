@@ -1,13 +1,13 @@
 ---
 id: REPO-001
 title: Stop tracking thesis reference PDFs
-status: READY
+status: DONE
 priority: P0
 type: repository
 depends_on: [DEC-001]
 human_gate: false
 created: 2026-09-21
-updated: 2026-09-21
+updated: 2026-09-28
 ---
 # Stop tracking thesis reference PDFs
 
@@ -48,12 +48,12 @@ remember an open PDF and must not be used as repository content evidence.
 
 ## Acceptance criteria
 
-- [ ] `git ls-files 'tcc/PDF/*.pdf'` returns no paths.
-- [ ] All three local files still exist immediately after index removal.
-- [ ] `git check-ignore` proves future PDF files under `tcc/PDF/` are ignored.
-- [ ] No tracked Markdown/JSON link falsely promises that a PDF is present in a
+- [x] `git ls-files 'tcc/PDF/*.pdf'` returns no paths.
+- [x] All three local files still exist immediately after index removal.
+- [x] `git check-ignore` proves future PDF files under `tcc/PDF/` are ignored.
+- [x] No tracked Markdown/JSON link falsely promises that a PDF is present in a
       clean checkout.
-- [ ] No history rewrite is performed without a separate approval.
+- [x] No history rewrite is performed without a separate approval.
 
 ## Verification commands
 
@@ -82,3 +82,12 @@ index deletion.
 - 2026-09-21: Created after confirming all three PDFs are currently tracked,
   their sizes, their introduction commit, the absence of ignore rules, and the
   absence of Markdown links to them.
+- 2026-09-28: Implemented. Added the `.gitignore` rule
+  `tcc/PDF/*.[Pp][Dd][Ff]` and ran `git rm --cached` on the three PDFs; all
+  three local files remain. Updated the workspace inventory, open decisions
+  and repository-scope decision, including how contributors obtain copies
+  (from the thesis author or original publishers, no URLs embedded). History
+  was not rewritten. Validation: `git ls-files 'tcc/PDF/*.pdf'` is empty,
+  `find` lists the three local files, `git check-ignore -v` matches them and a
+  hypothetical `new.PDF`, `rg` finds no Markdown/JSON link to a PDF path,
+  `node scripts/check-project-docs.mjs` and `git diff --check` pass.

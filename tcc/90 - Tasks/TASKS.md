@@ -15,7 +15,7 @@ Ordered by dependencies, then priority among selection candidates. See [worker r
 | MIG-001 | DONE | P0 | migration | [Complete valid capture-driven C# to Kotlin compatibility coverage](<items/MIG-001-valid-capture-compatibility.md>) |
 | OAPI-000 | DONE | P0 | decision | [Decide the Swagger and OpenAPI publication contract](<items/OAPI-000-swagger-contract-decision.md>) |
 | OAPI-001 | DONE | P0 | documentation | [Implement and verify Kotlin Swagger/OpenAPI documentation](<items/OAPI-001-ktor-swagger-openapi.md>) |
-| REPO-001 | READY | P0 | repository | [Stop tracking thesis reference PDFs](<items/REPO-001-untrack-reference-pdfs.md>) |
+| REPO-001 | DONE | P0 | repository | [Stop tracking thesis reference PDFs](<items/REPO-001-untrack-reference-pdfs.md>) |
 | API-001 | DONE | P1 | documentation | [Publish versioned API contract from source evidence](<items/API-001-versioned-api-documentation.md>) |
 | DEC-008 | DONE | P1 | decision | [Decide the ordered multi-variable query exploration contract](<items/DEC-008-two-variable-exploration-contract.md>) |
 | INV-002 | DONE | P1 | investigation | [Characterize typed staged-query data and safe binding options](<items/INV-002-staged-query-data-feasibility.md>) |

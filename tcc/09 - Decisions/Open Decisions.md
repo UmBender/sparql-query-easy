@@ -6,7 +6,7 @@ The decision index and dated approvals below provide rationale and history.
 | ID | Status | Decision needed |
 |---|---|---|
 | DATA-001 | Approved | Keep the C# Brazilian football asset as the sole canonical built-in dataset. |
-| DEC-002 | Approved | Version the Markdown vault; keep PDF binaries external to Git. `REPO-001` applies the decision. |
+| DEC-002 | Approved | Version the Markdown vault; keep PDF binaries external to Git. Applied by `REPO-001`. |
 | DEC-003 | Decision required | Production hosting platform, domain, DNS, TLS termination, and frontend origin. |
 | DEC-004 | Decision required | Production remote-SPARQL endpoint policy: arbitrary endpoint versus allow-list. |
 | DEC-005 | Decision required | Upload graph size, cache size, persistence, retention, and access-control policy. |
@@ -20,7 +20,7 @@ The decision index and dated approvals below provide rationale and history.
 - **Intended:** Explicit JSON `400`/`404`/`502` errors are the Kotlin contract.
 - **Intended:** `index2.html` is the authoritative frontend client contract.
 - **Approved (2026-09-21):** The Markdown Obsidian vault remains versioned;
-  PDF binaries are external and will be untracked by `REPO-001` without a
+  PDF binaries are external; `REPO-001` untracked and ignored them without a
   history rewrite.
 - **Approved direction (2026-09-21):** Implement authentication and
   Swagger/OpenAPI after their decision-first tasks are approved.

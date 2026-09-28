@@ -7,13 +7,13 @@ explicitly identified below.
 
 The Markdown Obsidian vault is the persistent project knowledge/task system and
 remains versioned. PDF binaries under `tcc/PDF/` do not belong in Git.
-`REPO-001` will remove the three current PDFs from tracking while preserving
-local copies and adding an ignore rule. Published history will not be rewritten
-without separate explicit approval.
-
-**Confirmed evidence:** all three PDFs are currently tracked, total about 7.7
-MB, were introduced in commit `f1bcf5a`, and are not referenced from Markdown
-notes. This decision has not yet removed them.
+`REPO-001` removed the three PDFs (about 7.7 MB, introduced in commit
+`f1bcf5a`) from tracking, kept the local copies, and added the `.gitignore`
+rule `tcc/PDF/*.[Pp][Dd][Ff]`. A clean checkout therefore contains no PDFs;
+contributors obtain reference copies from the thesis author or the original
+publishers and place them under `tcc/PDF/`. No Markdown note links to them.
+Published history was not rewritten; that still requires separate explicit
+approval.
 
 ## Login — implementation approved, contract decision pending
 

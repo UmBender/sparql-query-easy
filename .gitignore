@@ -370,3 +370,6 @@ MigrationBackup/
 
 # Fody - auto-generated XML schema
 FodyWeavers.xsd
+
+# Thesis reference PDFs are kept locally outside Git (REPO-001)
+tcc/PDF/*.[Pp][Dd][Ff]

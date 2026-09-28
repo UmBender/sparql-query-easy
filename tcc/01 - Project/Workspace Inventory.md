@@ -9,7 +9,7 @@
 | Confirmed | `compatibility/` | Turtle/request fixtures and preserved C# captured outputs; the executable C# harness was removed locally under MIG-002. |
 | Confirmed | `sparql/` | Static browser client; `index2.html` is the documented authoritative page. |
 | Confirmed | `tcc/` | Versioned Obsidian Markdown knowledge base and task system. |
-| Decision pending execution | `tcc/PDF/` | Three currently tracked reference PDFs; approved to become external/untracked under `REPO-001`. |
+| Confirmed | `tcc/PDF/` | Local-only folder for thesis reference PDFs. Untracked and ignored since `REPO-001`; a clean checkout has no PDFs. Obtain copies from the thesis author or the original publishers and place them here. |
 | Confirmed | `files/` | Turtle source files not referenced by current Kotlin runtime packaging. |
 | Confirmed | `.github/archived-workflows/` | Historical, inactive Azure-oriented .NET GitHub Actions YAML on `kotlin`. |
 
