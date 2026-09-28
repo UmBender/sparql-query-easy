@@ -569,6 +569,16 @@
                         }
                     },
                     {
+                        // FE-023: halo behind a variable's nodes/relations while its
+                        // stage-order block is hovered or focused, or while one is hovered.
+                        selector: '.variable-emphasis',
+                        style: {
+                            'underlay-color':   '#00B8D4',
+                            'underlay-opacity': 0.55,
+                            'underlay-padding': 10
+                        }
+                    },
+                    {
                         selector: 'edge.edge-menu-target',
                         style: {
                             'line-color': '#1565C0',
@@ -652,6 +662,7 @@
                 if (lastPage) loadStagePage(lastPage.offset + lastPage.limit);
             });
             initVariableOrderDrag();
+            initVariableEmphasis();
             cy.on('add remove data', scheduleVariableOrderRefresh);
             document.getElementById('input-endpoint-sparql').addEventListener('input', scheduleVariableOrderRefresh);
             document.getElementById('input-endpoint-sparql').addEventListener('change', scheduleVariableOrderRefresh);

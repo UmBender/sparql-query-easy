@@ -50,6 +50,7 @@ Ordered by dependencies, then priority among selection candidates. See [worker r
 | FE-020 | DONE | P1 | refactor | [Split the index2 top-level script into ordered classic files](<items/FE-020-split-index2-top-level-script.md>) |
 | FE-021 | DONE | P2 | refactor | [Move pure possible-graph and menu decisions into checked modules](<items/FE-021-pure-possible-graph-and-menu-logic.md>) |
 | FE-022 | DONE | P2 | refactor | [Move graph action menus into a controller file](<items/FE-022-graph-menu-controller.md>) |
+| FE-023 | DONE | P1 | frontend | [Emphasize a variable in the graph and the stage order together on hover](<items/FE-023-variable-order-hover-emphasis.md>) |
 | INV-001 | DONE | P1 | investigation | [Investigate Ktor HTTP-client and runtime resource lifecycle](<items/INV-001-runtime-resource-lifecycle.md>) |
 | QUAL-001 | DONE | P1 | quality | [Replay recorded Wikidata success and controlled error route fixtures](<items/QUAL-001-recorded-wikidata-routes.md>) |
 | MIG-002 | DONE | P1 | migration | [Retire the C# project after compatibility and operations gates](<items/MIG-002-retire-csharp-project.md>) |

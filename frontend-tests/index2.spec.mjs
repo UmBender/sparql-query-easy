@@ -339,6 +339,89 @@ test('a variable repeated as node and predicate is one block', async ({ page }) 
   await expect(blockNames(page)).toHaveText(['?x', '?y']);
 });
 
+const emphasizedBlocks = page => page.locator('#variable-order-list .variable-block.variable-emphasis .variable-block-name');
+const emphasizedElements = page => page.evaluate(() => cy.elements('.variable-emphasis').map(element => element.id()).sort());
+
+async function hoverGraphElement(page, id) {
+  const position = await page.evaluate(id => {
+    const element = cy.getElementById(id);
+    return element.isEdge() ? element.renderedMidpoint() : element.renderedPosition();
+  }, id);
+  await page.locator('#cy').hover({ position });
+}
+
+test('hovering a variable node or relation emphasizes its stage-order block', async ({ page }) => {
+  await addThreeVariableChain(page);
+  await page.evaluate(() => { cy.add([
+    { group: 'nodes', data: { id: 'fixed', value: '<https://example.test/f>', label: 'F', type: 'node' }, position: { x: 450, y: 450 } },
+    { group: 'edges', data: { id: 'c-fixed', source: '?c', target: 'fixed', nodeId: '<https://example.test/p>', label: 'p' } },
+  ]); });
+  await expect(blockNames(page)).toHaveText(['?a', '?b', '?c']);
+
+  await hoverGraphElement(page, '?a');
+  await expect(emphasizedBlocks(page)).toHaveText(['?a']);
+  expect(await emphasizedElements(page)).toEqual(['?a']);
+
+  await hoverGraphElement(page, 'rel');
+  await expect(emphasizedBlocks(page)).toHaveText(['?b']);
+  expect(await emphasizedElements(page)).toEqual(['rel']);
+
+  await page.locator('#cy').hover({ position: { x: 300, y: 40 } });
+  await expect(emphasizedBlocks(page)).toHaveCount(0);
+  expect(await emphasizedElements(page)).toEqual([]);
+
+  await hoverGraphElement(page, 'fixed');
+  await expect(page.locator('#cy')).toBeVisible();
+  await expect(emphasizedBlocks(page)).toHaveCount(0);
+  expect(await emphasizedElements(page)).toEqual([]);
+});
+
+test('hovering or focusing a stage-order block emphasizes every node and relation of that variable', async ({ page }) => {
+  await disableAutoLayout(page);
+  await page.evaluate(() => { cy.add([
+    { group: 'nodes', data: { id: '?x', value: '?x', label: '?', type: 'variable' }, position: { x: 150, y: 200 } },
+    { group: 'nodes', data: { id: '?y', value: '?y', label: '?', type: 'variable' }, position: { x: 450, y: 200 } },
+    { group: 'edges', data: { id: 'x-y', source: '?x', target: '?y', nodeId: '?x', label: '?' } },
+  ]); });
+  const block = name => page.locator(`#variable-order-list .variable-block[data-variable="${name}"]`);
+  const before = await page.evaluate(() => JSON.stringify(cy.json().elements));
+
+  await block('?x').hover();
+  expect(await emphasizedElements(page)).toEqual(['?x', 'x-y']);
+  await expect(emphasizedBlocks(page)).toHaveText(['?x']);
+  expect(await page.evaluate(() => cy.getElementById('x-y').style('underlay-opacity'))).not.toBe('0');
+  await expect(block('?x')).toHaveCSS('outline-color', 'rgb(0, 184, 212)');
+
+  await block('?y').hover();
+  expect(await emphasizedElements(page)).toEqual(['?y']);
+  await page.locator('#cy').hover({ position: { x: 300, y: 40 } });
+  await expect(emphasizedBlocks(page)).toHaveCount(0);
+  expect(await emphasizedElements(page)).toEqual([]);
+
+  // Keyboard focus follows the block through a reorder.
+  await page.getByRole('button', { name: 'Move ?x later' }).focus();
+  expect(await emphasizedElements(page)).toEqual(['?x', 'x-y']);
+  await page.keyboard.press('Enter');
+  await expect(blockNames(page)).toHaveText(['?y', '?x']);
+  await expect(emphasizedBlocks(page)).toHaveText(['?x']);
+  expect(await emphasizedElements(page)).toEqual(['?x', 'x-y']);
+  await page.locator('#run-query-btn').focus();
+  await expect(emphasizedBlocks(page)).toHaveCount(0);
+  expect(await emphasizedElements(page)).toEqual([]);
+
+  // Emphasis is visual only: once cleared, the graph is exactly as before.
+  expect(await page.evaluate(() => JSON.stringify(cy.json().elements))).toBe(before);
+});
+
+test('a single-variable query emphasizes nothing', async ({ page }) => {
+  await disableAutoLayout(page);
+  await page.evaluate(() => { cy.add({ group: 'nodes', data: { id: '?solo', value: '?solo', label: '?', type: 'variable' }, position: { x: 300, y: 200 } }); });
+  await expect(page.locator('#variable-order')).toBeHidden();
+  await hoverGraphElement(page, '?solo');
+  await page.evaluate(() => new Promise(resolve => requestAnimationFrame(resolve)));
+  expect(await emphasizedElements(page)).toEqual([]);
+});
+
 test('keyboard reordering updates the stage order read by Run Query', async ({ page }) => {
   await addThreeVariableChain(page);
   await expect(blockNames(page)).toHaveText(['?a', '?b', '?c']);

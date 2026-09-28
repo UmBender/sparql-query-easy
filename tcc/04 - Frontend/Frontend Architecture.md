@@ -117,7 +117,10 @@ IDs, values, endpoints, predicates and filter types; not labels or positions)
 changes. Cytoscape `add`/`remove`/`data` events, endpoint input/change and
 Turtle upload schedule a refresh. `FE-009` renders that order as numbered
 blocks in `#variable-order` beside Run Query (`renderVariableOrder`,
-`moveVariableBlock`, pointer drag in `initVariableOrderDrag`). Two or more
+`moveVariableBlock`, pointer drag in `initVariableOrderDrag`). `FE-023`
+links hover/focus emphasis between blocks and the variable's Cytoscape
+elements (`initVariableEmphasis`, `applyVariableEmphasis`, class
+`variable-emphasis`). Two or more
 variables open the panel with that order. The panel runs one exploration
 (`startExploration`): one current stage request, a shared page cache, the
 `createPreviewScheduler` preview budget, commitments with Back, and a final

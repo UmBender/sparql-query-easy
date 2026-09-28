@@ -149,6 +149,12 @@ main {
 }
 
 .variable-block.dragging { opacity: 0.6; cursor: grabbing; }
+/* FE-023: same cyan as the graph halo of this variable's nodes/relations. */
+.variable-block.variable-emphasis {
+    outline: 3px solid #00B8D4;
+    outline-offset: 1px;
+    box-shadow: 0 0 8px 2px rgba(0, 184, 212, 0.7);
+}
 .variable-block.drop-target { outline: 2px dashed #fff; outline-offset: 1px; }
 
 .variable-block-number {

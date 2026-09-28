@@ -50,6 +50,11 @@ row is horizontal, the explicit controls are **Move earlier**/**Move later**
 buttons (the Move up/Move down equivalents). Pointer-event dragging works for
 mouse and touch; both controls call the same move, announce the new stage
 through a polite live region, and never touch graph topology or positions.
+*Implemented (FE-023):* while the blocks are shown, hovering a variable node
+or relation emphasizes its block, and hovering or keyboard-focusing a block
+emphasizes every node and relation of that variable (a node and a predicate
+sharing it together). Fixed elements and single-variable queries emphasize
+nothing. Emphasis is a class on both sides only and follows re-rendered blocks.
 
 **Stages.** Stage *k* lists candidates for the *k*-th variable under the
 bindings committed for stages 1..*k*-1. Only the current stage is requested.

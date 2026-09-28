@@ -72,6 +72,10 @@ function renderVariableOrder(state) {
         const earlier = variableBlockButton('earlier', `Move ${name} earlier`, '\u25C0', index === 0, () => moveVariableBlock(index, index - 1));
         const later = variableBlockButton('later', `Move ${name} later`, '\u25B6', index === state.order.length - 1, () => moveVariableBlock(index, index + 1));
         block.append(number, label, earlier, later);
+        block.addEventListener('mouseenter', () => setVariableEmphasis(name, 'block-hover'));
+        block.addEventListener('mouseleave', () => clearVariableEmphasis('block-hover'));
+        block.addEventListener('focusin', () => setVariableEmphasis(name, 'block-focus'));
+        block.addEventListener('focusout', () => clearVariableEmphasis('block-focus'));
         return block;
     }));
     if (focusedName) {
@@ -80,6 +84,7 @@ function renderVariableOrder(state) {
         const target = button && !button.disabled ? button : block?.querySelector('button:not(:disabled)');
         target?.focus();
     }
+    applyVariableEmphasis();
 }
 
 function variableBlockButton(action, label, text, disabled, onClick) {
@@ -124,6 +129,57 @@ function initVariableOrderDrag() {
     };
     list.addEventListener('pointerup', finish);
     list.addEventListener('pointercancel', finish);
+}
+
+// ── Variable emphasis between graph and stage order (FE-023) ─────
+// Hovering a variable node/relation emphasizes its stage-order block, and
+// hovering or focusing a block emphasizes every node/relation carrying that
+// variable. Only variables with a visible block are emphasized; the emphasis
+// is a class on both sides and changes nothing else.
+let variableEmphasis = null;
+
+function variableNameOf(element) {
+    const id = element.id();
+    const key = element.isEdge() ? 'edgeIds' : 'nodeIds';
+    return variableOrderState.registry.find(entry => entry[key].includes(id))?.name ?? null;
+}
+
+function setVariableEmphasis(name, source) {
+    variableEmphasis = { name, source };
+    applyVariableEmphasis();
+}
+
+function clearVariableEmphasis(source) {
+    if (variableEmphasis?.source !== source) return;
+    variableEmphasis = null;
+    applyVariableEmphasis();
+}
+
+function applyVariableEmphasis() {
+    const list = document.getElementById('variable-order-list');
+    const visible = !document.getElementById('variable-order').hidden;
+    const name = visible ? variableEmphasis?.name : null;
+    const entry = variableOrderState.registry.find(item => item.name === name);
+    // A removed element may never report mouseout; forget a vanished variable.
+    if (variableEmphasis && !variableOrderState.registry.some(item => item.name === variableEmphasis.name)) {
+        variableEmphasis = null;
+    }
+    list.querySelectorAll('.variable-block').forEach(block => {
+        block.classList.toggle('variable-emphasis', Boolean(entry) && block.dataset.variable === name);
+    });
+    if (!cy) return;
+    cy.batch(() => {
+        cy.elements('.variable-emphasis').removeClass('variable-emphasis');
+        entry?.nodeIds.concat(entry.edgeIds).forEach(id => cy.getElementById(id).addClass('variable-emphasis'));
+    });
+}
+
+function initVariableEmphasis() {
+    cy.on('mouseover', 'node, edge', event => {
+        const name = variableNameOf(event.target);
+        if (name) setVariableEmphasis(name, 'graph');
+    });
+    cy.on('mouseout', 'node, edge', () => clearVariableEmphasis('graph'));
 }
 
 let twoVariablePanelReturnFocus = null;
