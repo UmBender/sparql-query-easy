@@ -2,7 +2,13 @@
 
 ## Deployment artifacts
 
-**Confirmed:** The only CI/CD artifact is a GitHub Actions workflow that builds/publishes the .NET application on Windows and deploys it to Azure App Service `sparql-query-easy` using a GitHub secret.
+**Confirmed:** The Kotlin branch has no active GitHub Actions workflow. The
+former .NET/Windows/Azure deployment YAML is retained outside the active
+workflow directory at `.github/archived-workflows/master_sparql-query-easy.yml`.
+See [[Archived .NET Deployment Workflow]]. The default `master` branch still
+tracks the old YAML until this change is integrated. The user reports no
+enabled workflow in the fork's GitHub Actions UI; remote execution state was
+not independently queried.
 
 **Confirmed:** `Dockerfile` and `.dockerignore` define a local-only Kotlin
 container build. See [[Local JVM and Container Runtime]]. No image is deployed.
@@ -11,10 +17,9 @@ container build. See [[Local JVM and Container Runtime]]. No image is deployed.
 
 ```mermaid
 flowchart LR
-  Push[Push to master] --> GH[GitHub Actions]
-  GH --> Dotnet[dotnet build/publish]
-  Dotnet --> Azure[Azure App Service]
-  Kotlin[Kotlin local JVM/container artifact] -. no deployment path .-> Unknown[Decision required]
+  Archive[Archived .NET workflow] -. reference only .-> Decision[Future deployment design]
+  Kotlin[Kotlin local JVM/container artifact] -. no deployment path .-> Decision
+  Decision --> Unknown[Hosting target undecided]
 ```
 
 ## CORS and TLS
@@ -25,8 +30,8 @@ flowchart LR
 
 ## Source files
 
-- `.github/workflows/master_sparql-query-easy.yml`
-- `Sparql.QueryEasy/Program.cs`
+- `.github/archived-workflows/master_sparql-query-easy.yml`
+- `Sparql.QueryEasy/Program.cs` (historical, Git commit `0f20091`)
 - `MIGRATION.md`
 - `Dockerfile`
 - `.dockerignore`

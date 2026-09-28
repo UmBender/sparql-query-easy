@@ -7,8 +7,9 @@
 The approved dataset is the exact byte sequence originally captured from
 `Sparql.QueryEasy/futebol_completo.ttl`. The `CampeonatoBrasileiro2023`
 endpoint continues to resolve that dataset. Kotlin owns a byte-identical copy
-at `src/main/resources/futebol_completo.ttl`; the C# copy remains in place
-while the original implementation is retained.
+at `src/main/resources/futebol_completo.ttl`; the former C# copy was removed
+locally with the original implementation and remains recoverable from Git
+commit `0f20091`.
 `sparql/databases/brasileirao2023.ttl` is reference-only and is not an
 interchangeable runtime dataset. Replacing the canonical asset requires an
 explicit decision and reviewed C# baseline recapture.
@@ -17,12 +18,12 @@ explicit decision and reviewed C# baseline recapture.
 
 | Asset | Role | SHA-256 | Packaging |
 |---|---|---|---|
-| `Sparql.QueryEasy/futebol_completo.ttl` | C# runtime built-in graph and historical baseline | `2345428c9513651dcf184835538fa910abae6c95fcb399e508709d646af7993f` | C# output only |
+| `Sparql.QueryEasy/futebol_completo.ttl` (historical Git path) | Original C# runtime built-in graph and byte baseline | `2345428c9513651dcf184835538fa910abae6c95fcb399e508709d646af7993f` | Removed locally; recover from commit `0f20091` |
 | `src/main/resources/futebol_completo.ttl` | Kotlin-owned byte-identical runtime copy | `2345428c9513651dcf184835538fa910abae6c95fcb399e508709d646af7993f` | Gradle main resources and distribution |
 | `files/dados-campeonato-brasileiro-2023.ttl` | Source copy of C# runtime data | `2345428c9513651dcf184835538fa910abae6c95fcb399e508709d646af7993f` | Not referenced by runtime packaging |
 | `sparql/databases/brasileirao2023.ttl` | Frontend-associated data asset | `56f9609aa7b4f3e732abc263d58c0cfbf71baded42641a1ce32a7b6e24fc802a` | Not copied by `build.gradle.kts` |
 
-The C# and Kotlin runtime copies are identical. The distinct frontend asset
+The historical C# and current Kotlin runtime copies have identical bytes. The distinct frontend asset
 differs in ontology declarations, base URI, predicates,
 and data content. Treating them as interchangeable would change query results
 and invalidate C# compatibility baselines.
@@ -41,7 +42,7 @@ and invalidate C# compatibility baselines.
 
 ## Source files
 
-- `Sparql.QueryEasy/futebol_completo.ttl`
+- `Sparql.QueryEasy/futebol_completo.ttl` (historical, Git commit `0f20091`)
 - `src/main/resources/futebol_completo.ttl`
 - `files/dados-campeonato-brasileiro-2023.ttl`
 - `sparql/databases/brasileirao2023.ttl`

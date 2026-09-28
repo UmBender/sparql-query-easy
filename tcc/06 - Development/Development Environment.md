@@ -10,13 +10,13 @@
 | Optional local container | `docker build -t sparql-query-easy:local .` (daemon and network required) |
 | OpenAPI JSON | `http://localhost:8080/openapi.json` |
 | Swagger UI | `http://localhost:8080/swagger` |
-| C# harness | `dotnet run --project compatibility/Compatibility.Harness/Compatibility.Harness.csproj` |
-| C# application | `dotnet run --project Sparql.QueryEasy/Sparql.QueryEasy.csproj --launch-profile https` |
+| Historical C# harness/application | Removed locally under MIG-002; commands in compatibility notes are provenance only. Recover source from Git commit `0f20091` if an approved recapture is ever required. |
 
 ## Configuration
 
 - **Confirmed:** Kotlin uses `application.conf`; default port is `8080`.
-- **Confirmed:** C# launch profiles define `http://localhost:5242` and `https://localhost:7070` with `ASPNETCORE_ENVIRONMENT=Development`.
+- **Historical:** Removed C# launch profiles defined `http://localhost:5242`
+  and `https://localhost:7070` with `ASPNETCORE_ENVIRONMENT=Development`.
 - **Confirmed:** `RUN_WIKIDATA_INTEGRATION=true` enables the opt-in live integration test. Normal tests do not call live Wikidata.
 - **Confirmed:** The default runtime owns one shared CIO HTTP client and closes
   it on Ktor `ApplicationStopped`. Do not close individual remote-SPARQL or
@@ -35,5 +35,5 @@
 - `Dockerfile`
 - `src/main/resources/futebol_completo.ttl`
 - `src/main/resources/application.conf`
-- `Sparql.QueryEasy/Properties/launchSettings.json`
+- `Sparql.QueryEasy/Properties/launchSettings.json` (historical, Git commit `0f20091`)
 - `src/integrationTest/kotlin/com/example/sparqlqueryeasy/wikidata/client/WikidataLiveIntegrationTest.kt`

@@ -3,7 +3,13 @@
 Original audit date: 2026-09-10
 Documentation reconciled: 2026-09-21
 Original audited Kotlin revision: `720e9c3`
-Original C# project: retained in `Sparql.QueryEasy/`
+Original C# project: retired from the worktree; recoverable from Git commit
+`0f20091`
+
+The user approved the exact 24-file C# removal scope and repository rollback
+plan on 2026-09-27. The deletion diff was checked against that scope and the
+user requested commit and push. Neither capture corpus nor expected output was
+changed. No deployment occurred.
 
 ## Executive summary
 
@@ -18,8 +24,9 @@ unordered-result comparison rule.
 On 2026-09-27, three additional success captures were recorded separately
 under `compatibility/retirement-expected/`, leaving the original 34 intact.
 Kotlin matches the C# Wikidata and controlled generic remote SPARQL outputs.
-The C# health status matches but its plain-text body differs from Kotlin JSON;
-`DEC-009` is the remaining health-contract decision.
+The C# health status matches but its plain-text body differs from Kotlin JSON.
+The user approved retaining Kotlin JSON under `DEC-009` as an intentional
+difference, not as equivalent output.
 
 Successful local fixture comparisons now include graph isomorphism, Kotlin's
 actually executed SPARQL, projected variables, result-row multiplicity,
@@ -59,6 +66,10 @@ was changed.
 | `dotnet run --project compatibility/Compatibility.Harness/Compatibility.Harness.csproj --no-build -- --retirement-success` | Captured the three separately indexed C# retirement success cases on 2026-09-27 with .NET SDK 8.0.131 and no live upstream request. |
 | `./gradlew ktlintFormat test --tests 'com.example.sparqlqueryeasy.http.RetirementSuccessCompatibilityTest' --tests 'com.example.sparqlqueryeasy.wikidata.client.WikidataHttpClientTest' --no-daemon` | Passed offline after mapping language-tagged remote SPARQL JSON literals to `rdf:langString`. |
 | `./gradlew ktlintCheck detekt test --no-daemon` | Passed the full offline Kotlin gate on 2026-09-27 after the retirement captures and parser correction. |
+| `./gradlew ktlintCheck detekt test installDist --no-daemon` | Passed on 2026-09-27 for the C# removal preflight; the distribution was rebuilt. |
+| `npm run test:browser` | Passed 22/22 tests on 2026-09-27; external CSS/fonts remain a separate offline-determinism limitation. |
+| Installed Kotlin distribution HTTP smoke | `/health` returned `200 application/json {"status":"ok"}`; `/index2.html` and `/openapi.json` returned HTTP 200. |
+| `dotnet build compatibility/Compatibility.Harness/Compatibility.Harness.csproj --no-restore --verbosity quiet` | Final historical harness build passed with 0 errors and 20 existing warnings; no recapture. |
 
 The opt-in live Wikidata integration task was intentionally not run. Ordinary
 verification must remain offline.
@@ -93,7 +104,7 @@ normalized.
 | Query boundaries | offset, generated-path, ASK/CONSTRUCT unavailable, injection-path | Generated-path capture where available | Offline generated-query comparator | Injection capture is generated-query evidence only; unsupported raw operations remain outside the public API |
 | Relationships/filtering | `RELATIONSHIPS-LOCAL-001`, `RELATIONSHIP-LITERAL-001`, `RELATIONSHIP-RESOURCE-001`, `QUERY-EMPTY-WHERE-001` | Captured route/raw results | Offline route/raw-result comparator | Valid captures compared |
 | Search/endpoints | `SEARCH-LOCAL-001`, `BUILTIN-GRAPH-001`, `LOCAL-CACHE-MISS-001` | Reviewed local-branch captures or exception capture | Offline route/raw-result comparator and deterministic service tests | Search captures compared; cache-miss exception remains intentionally non-equivalent |
-| HTTP | Original exception captures; separate `HTTP-HEALTH-001` | Real ASP.NET host returned `200 text/plain Healthy` | Kotlin health route returns `200` JSON `{"status":"ok"}` | Status matches; body/content type differ pending explicit decision. Middleware-error equivalence was waived. |
+| HTTP | Original exception captures; separate `HTTP-HEALTH-001` | Real ASP.NET host returned `200 text/plain Healthy` | Kotlin health route returns `200 application/json {"status":"ok"}` | Status matches; body/content type intentionally differ under approved DEC-009. Middleware-error equivalence was waived. |
 | Wikidata | `WIKIDATA-GENERATION-001`; separate `WIKIDATA-SEARCH-CSHARP-001`; recorded success and controlled fault bodies | C# controller/service captured with the recorded public success body injected by a fail-closed handler | Ktor route replays the same body offline | Success status/JSON match; non-2xx JSON `502` remains an approved intentional difference. |
 | Generic remote SPARQL | Separate `REMOTE-RELATIONSHIP-CSHARP-001` | C# controller/service/`RemoteQueryExecutor` with controlled SPARQL JSON; generated query, raw result, and response captured | Kotlin remote transport and route replay same body offline | Response, query, projected variables, binding presence, and RDF terms match; language literal `rdf:langString` mapping fixed without weakening assertions. |
 
@@ -187,7 +198,8 @@ either C# capture or Kotlin route assertions.
   approved intentional change, not missing parity.
 - The C# health response was captured from the actual ASP.NET host. Its
   `text/plain Healthy` body differs from Kotlin's JSON `{"status":"ok"}`;
-  `DEC-009` must approve the Kotlin change or align it to C#.
+  the user approved retaining JSON under `DEC-009` as an intentional change.
+  Response equivalence is not claimed.
 - The user explicitly waived additional C# middleware-error equivalence
   captures. Existing exception-only evidence remains intact; no claim of
   equivalent error status/body is made.
@@ -225,9 +237,20 @@ either C# capture or Kotlin route assertions.
 
 ## Deployment and rollback recommendations
 
-- Do not remove the C# project until the health-body decision, .NET workflow
-  replacement/disablement, local gates, capture preservation, and removal diff
-  are reviewed. Production traffic remains a separate, deferred decision.
+- The health-body decision is complete. The .NET deployment YAML was archived
+  outside `.github/workflows/` on `kotlin`, while the default branch still
+  tracks the old YAML. The user reports no enabled workflow in this fork's
+  GitHub Actions UI; tracked YAML alone was not evidence of active deployment.
+  Include the archive change when merging. The user approved the 24-file
+  removal scope and rollback plan; local checks passed before and after
+  deletion. The user authorized publication after the diff check. Production traffic
+  remains a separate, deferred decision; OPS-005 will design new Kotlin CI/CD
+  only after a hosting/release decision.
+- The exact 24-file C# project/solution/harness removal scope, preserved
+  captures and dataset, pre-removal Git anchors, and repository rollback plan
+  are documented in `tcc/05 - Migration/CSharp Removal Review.md`. The user
+  approved the scope/plan; the 24 files were deleted and the exact diff was
+  reviewed before the requested commit and push.
 - A future Kotlin deployment needs its own approved rollback plan; do not
   assume the C# artifact remains deployable after repository-level retirement.
 - Monitor route status distribution, upload parse failures, cache misses,

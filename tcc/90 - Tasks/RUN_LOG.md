@@ -1,5 +1,86 @@
 # Task Worker Run Log
 
+## 2026-09-27 — MIG-002 publication decision
+
+- Compared the staged removal with the approved 24-file manifest and confirmed
+  exactly 24 C# solution/project/harness paths are deleted. The user requested
+  commit and push after the local deletion review.
+- Committed the approved JSON health contract, tests, and archived .NET
+  workflow separately as pre-removal rollback anchor `03d8057`. The removal
+  and current documentation form the next, separately reversible commit.
+- `git diff --check` and `git diff --cached --check` passed. The post-deletion
+  Kotlin, browser, and HTTP smoke results recorded below remain the final
+  application verification. No deployment was performed.
+
+## 2026-09-27 — MIG-002 C# removal preflight
+
+- Inspected the 19 tracked C# application files, solution, four harness
+  files, Gradle/Docker references, source-data files, fixture indexes, and
+  provenance ledger. The 34 original plus three retirement capture IDs
+  matched the 37 ledger IDs; result files were unchanged. Built-in Turtle
+  bytes matched across C#, Kotlin resources, processed resources, and the
+  installed application JAR (SHA-256 `2345428c9513651dcf184835538fa910abae6c95fcb399e508709d646af7993f`).
+- The first Gradle invocation was interrupted by an accidental user click
+  before a result; no process remained. The resumed
+  `ktlintCheck detekt test installDist --no-daemon` run passed. Playwright
+  passed 22/22. The temporary local distribution returned HTTP 200 for
+  JSON `/health`, frontend, and OpenAPI, then was stopped. The C# harness
+  built offline with zero errors and 20 existing warnings.
+- Added [[../05 - Migration/CSharp Removal Review]] with the exact 24-file
+  proposed deletion, preservation inventory, recovery anchors, and rollback
+  steps. No C# or capture file was deleted. MIG-002 awaits human approval and
+  a separate removal implementation diff; no production deployment occurred.
+
+## 2026-09-27 — MIG-002 approved deletion applied for review
+
+- User approved the exact 24-file scope and repository rollback plan in
+  [[../05 - Migration/CSharp Removal Review]]. Deleted only the C# solution,
+  project, and harness source/docs. Preserved both capture corpora, provenance,
+  `files/` Turtle sources, Kotlin-owned built-in data, and archived workflow.
+- Post-deletion `ktlintCheck detekt test installDist --no-daemon` passed,
+  Playwright passed 22/22, and the installed distribution returned HTTP 200
+  for `/health`, frontend, and OpenAPI before being stopped. Current
+  compatibility and development docs now
+  label C# commands as historical and identify Git commit `0f20091` for
+  recovery. No commit, push, deployment, or GitHub setting change occurred.
+- MIG-002 moved to REVIEW. The actual deletion diff still needs human review;
+  no test assertion or capture baseline was weakened.
+
+## 2026-09-27 — Archive legacy .NET deployment workflow
+
+- User deferred selecting a Kotlin hosting/deployment path and asked that the
+  old .NET workflow be disabled while preserving its configuration. Moved the
+  YAML from `.github/workflows/` to `.github/archived-workflows/` on `kotlin`;
+  the archived jobs and settings remain available for historical reference.
+- Documented the old trigger, .NET build, artifact, and Azure deploy flow in
+  [[../07 - Operations/Archived .NET Deployment Workflow]]. No secret values,
+  remote workflow settings, Azure resources, or C# project files were changed.
+  `master` still tracks the old YAML until this change is integrated. Created
+  OPS-005 for a new workflow after a hosting
+  decision rather than assuming a deployment target now.
+- Normalized comparison against the Git-tracked original showed the archived
+  YAML retains the original configuration (apart from the archive comment).
+  `rg --files .github` found only the archived YAML; `git diff --check` and
+  `GRADLE_USER_HOME=/tmp/sparql-query-easy-gradle ./gradlew ktlintCheck detekt test --no-daemon`
+  passed. No commit or push was made in this task.
+- User then clarified that the repository is a fork with no enabled workflow
+  visible in GitHub Actions. Corrected the notes: tracked YAML on `master`
+  does not establish that a workflow is running or enabled. Remote
+  disablement is not a separate removal gate on the reported fork state.
+
+## 2026-09-27 — DEC-009 health response decision
+
+- User approved retaining Kotlin `GET /health` as `200 application/json`
+  `{"status":"ok"}` instead of C# `200 text/plain Healthy`. This is an
+  intentional difference, not a claim of equivalent responses. The original
+  C# health capture and all 34 earlier captures remain unchanged.
+- Strengthened status/body/MIME and OpenAPI schema tests; updated API,
+  operations, compatibility, migration, and task notes. The Docker probe
+  remains an HTTP-success check, not an external-service readiness check.
+- `GRADLE_USER_HOME=/tmp/sparql-query-easy-gradle ./gradlew ktlintCheck detekt test --no-daemon`
+  and `git diff --check` passed. DEC-009 is DONE; MIG-002 still requires
+  separate approval and the remaining removal gates.
+
 ## 2026-09-27 — FE-003 review follow-up
 
 - Strengthened the predicate-edge Playwright assertion to compare the complete

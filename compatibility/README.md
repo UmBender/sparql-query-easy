@@ -1,16 +1,19 @@
 # C# Characterization Corpus
 
-This directory is a baseline corpus for the existing ASP.NET Core/.NET 8
-application. It contains inputs, execution recipes, and reviewed captures from
-the in-process C# harness. It deliberately contains no invented response,
-status, or query-output golden files.
+This directory preserves a baseline corpus from the retired ASP.NET Core/.NET 8
+application. It contains inputs, historical execution recipes, and reviewed
+captures from the in-process C# harness. The harness and C# application source
+were removed from the current worktree after review; they remain recoverable
+from Git commit `0f20091`. No response, status, or query-output golden was
+invented for the retirement.
 
 The case catalogue is [cases/manifest.md](cases/manifest.md). Every case has a
 stable ID, input files, C# route, behavior being characterized, and rationale.
 `expected/` contains the original 34-case baseline; `retirement-expected/`
 contains three additional success captures. Both sets are recorded in
-`cases/capture-status.tsv`. New or changed cases must still be captured from
-the running C# application; never hand-author expected output.
+`cases/capture-status.tsv`. Do not hand-author or update C# expected output
+from Kotlin behavior. A future recapture would require deliberately restoring
+the historical C# source and reviewing the baseline change.
 
 ## Layout
 
@@ -51,13 +54,19 @@ upstream body, and a C# generic remote-SPARQL relationship success with a
 controlled upstream response. `RetirementSuccessCompatibilityTest` replays
 both query routes offline against the C# outputs and raw remote RDF result.
 The health status matches, but its body does not: C# returns `text/plain`
-`Healthy`, Kotlin returns JSON `{"status":"ok"}`. This is an unresolved
-health-contract decision, not a passing equivalence. The user waived further
-C# middleware-error equivalence captures; existing exception evidence remains.
+`Healthy`, Kotlin returns JSON `{"status":"ok"}`. DEC-009 approved the Kotlin
+response as an intentional difference, not a passing equivalence. The user
+waived further C# middleware-error equivalence captures; existing exception
+evidence remains.
 
-## Running a fixture against C#
+## Historical C# capture procedure (not runnable in this checkout)
 
-The preferred capture path is the in-process production harness:
+The original preferred capture path was the in-process production harness.
+The following commands are preserved as historical evidence; they cannot run
+from the current checkout because the C# project and harness were removed.
+To inspect their source without rewriting this worktree, use
+`git show 0f20091:compatibility/Compatibility.Harness/README.md` and
+`git show 0f20091:Sparql.QueryEasy/Program.cs`.
 
 ```sh
 dotnet run --project compatibility/Compatibility.Harness/Compatibility.Harness.csproj
@@ -67,13 +76,13 @@ It invokes the production controllers, endpoint service, query builder, and
 local executor, writing structured captures to `expected/`. It additionally
 captures parsed graph statements and raw `SparqlResultSet` bindings so RDF node
 type, lexical form, datatype, language, variable order, row duplicates, and
-unbound values remain observable. See
-[Compatibility.Harness/README.md](Compatibility.Harness/README.md).
+unbound values remain observable. The historical harness README is available
+from the pre-removal Git commit above.
 
-The direct HTTP procedure below remains useful when a full middleware response
-(for example a developer exception page or `/health`) must be recorded.
+The direct HTTP procedure below likewise describes the historical C# setup;
+it is not a command for the current Kotlin runtime.
 
-Run the existing project in one terminal. The HTTPS launch profile avoids an
+The C# HTTPS launch profile avoided an
 HTTP-to-HTTPS redirect changing the captured request.
 
 ```sh

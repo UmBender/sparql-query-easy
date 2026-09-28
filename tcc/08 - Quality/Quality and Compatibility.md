@@ -4,7 +4,10 @@
 
 **Confirmed:** Kotlin tests cover domain values, Jena parsing/execution, graph cache/upload, endpoint selection, query generation, filtering, relationships, search, HTTP routes, static frontend serving, and Wikidata clients.
 
-**Confirmed:** C# has no ordinary application test project. `compatibility/Compatibility.Harness` is the characterization mechanism.
+**Historical:** C# had no ordinary application test project. Its removed
+`Compatibility.Harness` produced the preserved characterization captures;
+source is recoverable from Git commit `0f20091`. Normal validation now uses
+Kotlin's offline capture comparators and route tests.
 
 **Confirmed:** `HttpModuleLifecycleTest` verifies that an owned application
 resource is closed exactly once when the Ktor application stops. It prevents
@@ -43,8 +46,8 @@ and accessibility auditing remains outside the current suite. See
 
 ## Coverage gaps
 
-- `DEC-009`: choose the observed C# plain-text versus Kotlin JSON health
-  response contract. The status matches, but the body/content type do not.
+- `DEC-009` approved Kotlin JSON health as an intentional difference from the
+  C# plain-text response. The status matches, but body/content type do not.
 - CORS, TLS/reverse-proxy, deployment, resource-limit, backup, and monitoring
   tests.
 - Explicit production behavior for remote endpoint policy and uploads.

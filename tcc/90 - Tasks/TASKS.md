@@ -7,7 +7,7 @@ Tasks are ordered by dependency, then priority. `BLOCKED` tasks need information
 | DOC-001 | DONE | P0 | documentation | Bootstrap project, architecture, backend, frontend, API, development, operations, quality, and decision notes |
 | DEC-001 | DONE | P0 | decision | Resolve vault ownership, login page scope, and OpenAPI scope |
 | DEC-008 | BLOCKED | P1 | decision | Decide the two-variable query exploration contract |
-| DEC-009 | BLOCKED | P1 | decision | Decide captured C# versus Kotlin health response contract |
+| DEC-009 | DONE | P1 | decision | Decide captured C# versus Kotlin health response contract |
 | AUTH-000 | BLOCKED | P0 | decision | Decide the authentication and authorization contract |
 | OAPI-000 | DONE | P0 | decision | Decide the Swagger and OpenAPI publication contract |
 | REPO-001 | READY | P0 | repository | Stop tracking thesis reference PDFs |
@@ -34,7 +34,8 @@ Tasks are ordered by dependency, then priority. `BLOCKED` tasks need information
 | OPS-002 | BLOCKED | P2 | operations | Define DNS, TLS, reverse proxy, and production CORS |
 | OPS-003 | BLOCKED | P2 | operations | Produce AWS deployment plan |
 | OPS-004 | BLOCKED | P2 | operations | Define monitoring, backup, and recovery |
-| MIG-002 | BLOCKED | P1 | migration | Retire the C# project after compatibility and operations gates |
+| OPS-005 | BLOCKED | P2 | operations | Design a new Kotlin deployment workflow after hosting is chosen |
+| MIG-002 | DONE | P1 | migration | Retire the C# project after compatibility and operations gates |
 | DOC-002 | DONE | P2 | documentation | Reconcile migration and compatibility documentation |
 
 See individual files in `items/` for acceptance criteria and logs.

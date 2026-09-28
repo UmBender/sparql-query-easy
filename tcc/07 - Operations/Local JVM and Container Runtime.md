@@ -10,9 +10,10 @@ byte-identical built-in Turtle resource. Java 21 is required. Ktor's
 `GET /health` returns `200 {"status":"ok"}`; it is a process check, not a
 readiness claim about external SPARQL endpoints or Wikidata.
 The captured original ASP.NET host returns `200 text/plain Healthy` instead;
-the body/content-type decision remains open under
-[[../90 - Tasks/items/DEC-009-health-response-contract]]. The container probe
-checks HTTP success only, so either approved representation can serve it.
+the user approved retaining Kotlin `application/json` as an intentional
+difference under [[../90 - Tasks/items/DEC-009-health-response-contract]].
+The container probe checks HTTP success only; it does not inspect the JSON
+body or prove external-service readiness.
 
 **Confirmed:** The local Dockerfile builds that distribution from Kotlin
 sources, then runs it on a Java 21 JRE as numeric non-root user `10001`.
@@ -81,13 +82,16 @@ assumptions. `OPS-004` must define telemetry, backups and recovery objectives.
 `SEC-001` must approve remote endpoints, uploads and cache boundaries. None
 of these decisions is implied by a working local container.
 
-**Confirmed retirement boundary:** `Sparql.QueryEasy/` is no longer a Gradle
-resource input, but `.github/workflows/master_sparql-query-easy.yml` still
-builds and deploys .NET, and `compatibility/Compatibility.Harness` still
-references the C# project. Do not delete the C# tree until `MIG-002` decides
-remaining captures and replaces or disables the .NET workflow in a separately
-reviewed change. Keeping OPS-002–OPS-004 for a future production launch does
-not by itself require deploying before repository-level C# retirement.
+**Confirmed retirement boundary:** The approved C# solution, project, and
+harness source files have been removed locally under MIG-002. Kotlin's Gradle
+distribution and container remain independent of them. The old .NET workflow
+is preserved under `.github/archived-workflows/` on `kotlin`; `master` still
+tracks the old YAML, but the user reports no enabled Actions workflow on the
+fork. Integrate the archive change with the removal diff. Human diff review
+remains before commit/push. Keeping OPS-002–OPS-004 for a future production
+launch does not require deploying before repository-level C# retirement. See
+[[Archived .NET Deployment Workflow]] and
+[[../05 - Migration/CSharp Removal Review]].
 
 ## Source files
 
@@ -100,5 +104,5 @@ not by itself require deploying before repository-level C# retirement.
 - `src/main/kotlin/com/example/sparqlqueryeasy/http/HttpModule.kt`
 - `src/main/kotlin/com/example/sparqlqueryeasy/application/endpoints/EndpointContextResolver.kt`
 - `src/test/kotlin/com/example/sparqlqueryeasy/application/endpoints/EndpointContextResolverTest.kt`
-- `.github/workflows/master_sparql-query-easy.yml`
-- `compatibility/Compatibility.Harness/Compatibility.Harness.csproj`
+- `.github/archived-workflows/master_sparql-query-easy.yml`
+- `compatibility/Compatibility.Harness/Compatibility.Harness.csproj` (historical, Git commit `0f20091`)

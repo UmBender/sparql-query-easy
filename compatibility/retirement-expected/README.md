@@ -8,11 +8,12 @@ observations are recorded in `../cases/capture-status.tsv`.
 
 | Case | Capture boundary | Controlled inputs | Kotlin comparison |
 |---|---|---|---|
-| `HTTP-HEALTH-001` | Actual ASP.NET host, Production mode, loopback `GET /health` | No upstream request | Status matches; body does **not**: C# `text/plain` `Healthy`, Kotlin JSON `{"status":"ok"}`. No equivalence claim pending explicit decision. |
+| `HTTP-HEALTH-001` | Actual ASP.NET host, Production mode, loopback `GET /health` | No upstream request | Status matches; body does **not**: C# `text/plain` `Healthy`, Kotlin JSON `{"status":"ok"}`. DEC-009 approved this intentional difference, not equivalence. |
 | `WIKIDATA-SEARCH-CSHARP-001` | Original C# controller and `EndpointService` | Previously recorded public MediaWiki success JSON, injected by a fail-closed handler | Route status and JSON result match Kotlin with the same recorded body. |
 | `REMOTE-RELATIONSHIP-CSHARP-001` | Original C# controller, `EndpointService`, and `RemoteQueryExecutor` | Controlled SPARQL JSON response from a fail-closed handler; no external request | Route status/JSON, generated and executed SPARQL, projected variables, row count, binding presence and RDF values match Kotlin. |
 
-Run only the new mode while C# remains available:
+Historical capture command (not runnable from the post-removal checkout;
+the harness source is recoverable from Git commit `0f20091`):
 
 ```sh
 dotnet run --project compatibility/Compatibility.Harness/Compatibility.Harness.csproj -- --retirement-success
@@ -27,15 +28,15 @@ response header was observed; this is intentional because C# middleware
 errors were explicitly waived. The injected handlers reject unexpected hosts
 or paths, so no live Wikidata or remote SPARQL traffic occurs.
 
-The captured C# health body is a newly proven compatibility difference. It
-must be resolved by approving Kotlin JSON as an intentional change or aligning
-Kotlin with C# before claiming full health-response parity. The frontend only
-checks success for its health warmup, but the public body remains observable.
+The captured C# health body is a proven compatibility difference. The user
+approved retaining Kotlin JSON under DEC-009 as an intentional change; full
+health-response parity is not claimed. The frontend only checks success for
+its health warmup, but the public body remains observable.
 
 ## Source files
 
-- `compatibility/Compatibility.Harness/RetirementCaptureHarness.cs`
-- `compatibility/Compatibility.Harness/Program.cs`
+- `compatibility/Compatibility.Harness/RetirementCaptureHarness.cs` (historical, Git commit `0f20091`)
+- `compatibility/Compatibility.Harness/Program.cs` (historical, Git commit `0f20091`)
 - `compatibility/cases/capture-status.tsv`
 - `compatibility/requests/wikidata-search-success.json`
 - `compatibility/requests/remote-relationship-success.json`

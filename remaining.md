@@ -28,12 +28,22 @@ JSON `400`/`404`/`502` contract is approved.
   and one generic remote SPARQL route are now captured separately from the
   original 34 and compared with Kotlin; middleware-error equivalence was
   explicitly waived.
-- `DEC-009`: decide whether to approve Kotlin's JSON `/health` response as an
-  intentional change or align it to captured C# `text/plain Healthy`.
+- `DEC-009` is complete: Kotlin's JSON `/health` response is an approved
+  intentional change from captured C# `text/plain Healthy`, not equivalent.
+- `MIG-002` repository-level removal is complete: the user approved the
+  24-file scope and rollback plan, and only the C# solution/project/harness
+  files were deleted. Post-deletion Kotlin quality/compatibility and all 22
+  browser tests passed; captures are unchanged. The actual diff was checked
+  against `tcc/05 - Migration/CSharp Removal Review.md`, then the user
+  requested commit and push. Production deployment remains separate.
 - `SEC-001`: decide production remote-endpoint and upload/cache limits.
 - `OPS-001` provides local JVM/container packaging. `OPS-002`–`OPS-004`
   still define hosting, DNS/TLS, restrictive production CORS, deployment,
-  monitoring, backup, and recovery.
+  monitoring, backup, and recovery. The legacy .NET GitHub workflow is archived
+  outside the active directory on `kotlin`; `master` still tracks the old YAML
+  until integration, but the user reports no enabled workflow on the fork.
+  `OPS-005` will design Kotlin
+  CI/CD from scratch after the hosting/release decision.
 - `REPO-001`: stop tracking thesis reference PDFs while preserving local
   copies; no history rewrite is approved.
 - `BUG-002` is complete: relationship and relationship-value executor failures

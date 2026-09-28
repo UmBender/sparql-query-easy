@@ -1,5 +1,10 @@
 # Kotlin/JVM + Ktor Migration Assessment
 
+**Current note (2026-09-27):** The initial assessment and C# command examples
+below are historical. The 24-file C# project/solution/harness removal was
+applied later in this document's timeline; source is recoverable from Git
+commit `0f20091`. The 34 original and three additional captures remain.
+
 ## Scope and evidence
 
 This document is a read-only assessment of the complete tracked repository as
@@ -117,10 +122,11 @@ Configured middleware/entry routes:
 `http://localhost:5242` and `https://localhost:7070`, opens Swagger, and sets
 `ASPNETCORE_ENVIRONMENT=Development` for launch profiles.
 
-The GitHub Actions workflow builds and publishes .NET 8 on Windows, then
-deploys the artifact to the Azure Web App named `sparql-query-easy`. The
-Kotlin deployment replacement must also replace this workflow; it currently
-cannot deploy a JVM/Ktor artifact.
+At the original assessment date, the GitHub Actions workflow built and
+published .NET 8 on Windows, then deployed to the Azure Web App named
+`sparql-query-easy`. On 2026-09-27 it was archived outside the active workflow
+directory on the Kotlin branch. A Kotlin deployment workflow will be designed
+from scratch after the hosting and release method are decided.
 
 ## 4. HTTP contract
 
@@ -738,8 +744,8 @@ Recommended boundaries:
   main/test compilation, focused domain tests, the complete Kotlin suite,
   KtLint, Detekt, and `check` passed with Gradle 9.7.1 and Temurin JDK 21; see
   the Prompt 6 verification record below.
-- [x] Capture and review the C# baseline with
-  [`Compatibility.Harness`](compatibility/Compatibility.Harness/README.md).
+- [x] Capture and review the C# baseline with the historical
+  `Compatibility.Harness` (source recoverable from Git commit `0f20091`).
   The repository contains 34 provenance-recorded graph, raw-result,
   generated-SPARQL, controller-response, and exception captures.
 - [x] Capture the agreed three additional C# success cases separately from
@@ -747,9 +753,9 @@ Recommended boundaries:
   the recorded public upstream body, and generic remote SPARQL with a
   controlled local handler. Kotlin replay matches the two query responses and
   remote raw result. Health status matches but its body/content type differs;
-  `DEC-009` awaits approval or correction. The user waived additional C#
-  middleware-error response captures; their exception records are not falsely
-  marked equivalent.
+  `DEC-009` approved Kotlin JSON as an intentional difference. The user waived
+  additional C# middleware-error response captures; their exception records
+  are not falsely marked equivalent.
 - [x] Add the Kotlin Gradle/Ktor application, `/health`, static frontend,
   packaged resources, and the approved development port `8080`.
 - [x] Package the canonical C# built-in TTL and compare its captured graph and
@@ -787,10 +793,11 @@ Recommended boundaries:
   error responses; treat approved hardening as a versioned behavior change.
   Structured JSON errors are approved; production endpoint/upload/CORS policy
   remains open under `SEC-001` and `OPS-002`.
-- [ ] Replace the Azure deployment workflow only after the Kotlin artifact,
-  runtime configuration, health check, and resource packaging are verified.
-  The local artifact and `/health` are now verified under OPS-001, but the
-  workflow remains .NET-only and no production cutover is approved.
+- [ ] Design a new Kotlin deployment workflow only after the hosting and
+  release method are approved (OPS-005). The local artifact and `/health` are
+  verified under OPS-001. The legacy .NET workflow was archived on `kotlin`,
+  and its default-branch YAML remains until integration. The user reports no
+  enabled workflow in the fork's Actions UI; no production cutover is approved.
 
 ## Kotlin scaffold commands
 
@@ -1804,9 +1811,12 @@ deployed. See `tcc/07 - Operations/Local JVM and Container Runtime.md` for
 repeatable commands, configuration boundaries, and future OPS decisions.
 
 This removes one C# retirement dependency, not the retirement gate itself.
-The .NET Azure workflow and C# capture harness still reference the original
-project. `MIG-002` requires an explicit decision on remaining captures and a
-separately reviewed removal/CI change. Production domain/TLS/CORS, security,
+The old .NET Azure workflow is archived outside `.github/workflows/` on
+`kotlin`, preserving its configuration while leaving the default-branch YAML
+untouched until integration. The user reports no enabled workflow in the
+fork's Actions UI. The C# capture harness
+still references the original project. `MIG-002` requires separately reviewed
+removal and local gates. Production domain/TLS/CORS, security,
 hosting, monitoring, backup, and rollback remain under OPS-002–OPS-004 and
 SEC-001; none is inferred from local packaging.
 
@@ -1830,10 +1840,68 @@ Kotlin transport mapper now preserves `rdf:langString` for language-tagged
 literals. Focused remote transport and route regression tests verify this; no
 expected result or assertion was weakened.
 
-C# `/health` returned `200 text/plain Healthy`; Kotlin currently returns
+C# `/health` returned `200 text/plain Healthy`; Kotlin returns
 `200 application/json {"status":"ok"}`. Only status is equal. This is a
-newly confirmed observable difference, **not** an approved equivalence.
-`DEC-009` must select whether to retain Kotlin JSON as an intentional change
-or align Kotlin with C# before MIG-002 can remove the original code. The
-.NET-only workflow, local gate, preservation plan, and removal review are
-independent remaining retirement gates; no production deployment is required.
+confirmed observable difference, **not** response equivalence. The user
+approved retaining Kotlin JSON under `DEC-009` on 2026-09-27 as an intentional
+change. The .NET workflow is archived on `kotlin`; local gates, preservation
+plan, and removal review remain independent
+retirement gates. No production deployment is required.
+
+## Archived .NET workflow and deferred Kotlin CI/CD (2026-09-27)
+
+The user chose not to select a Kotlin deployment platform or method yet. The
+legacy C# GitHub Actions YAML was moved from
+`.github/workflows/master_sparql-query-easy.yml` to
+`.github/archived-workflows/master_sparql-query-easy.yml` on `kotlin`, with its
+trigger, .NET jobs, artifact transfer, Azure Web App target, and publish-profile
+secret reference retained as historical evidence. The secret value was never
+present in the file. This branch has no workflow YAML in the active directory;
+`master` still tracks the old file. The user reports no enabled GitHub Actions
+workflow in the fork, so the file's presence was not evidence of a running
+deployment. No GitHub setting or Azure resource was changed and no deployment
+was attempted.
+
+OPS-005 records the future work to design a Kotlin workflow from scratch
+after hosting, credential, release, and rollback choices are approved. The
+archived C# YAML is not the proposed Kotlin deployment design. See
+`tcc/07 - Operations/Archived .NET Deployment Workflow.md`.
+
+## C# removal preflight, without deletion (2026-09-27)
+
+The final local gate passed after the workflow and health-contract decisions:
+`ktlintCheck detekt test installDist --no-daemon`, all 22 Playwright browser
+tests, and distribution HTTP smoke for JSON `/health`, `/index2.html`, and
+`/openapi.json`. The installed application JAR contains the canonical Turtle
+resource with the same SHA-256 as the original C# asset. All 34 original and
+three additional capture IDs match the 37 provenance ledger IDs, and no
+capture case was modified. The C# harness still builds offline with zero
+errors and 20 existing warnings. Browser tests still depend on external
+styles/fonts; FE-003/FE-004 retain that separate REVIEW item.
+
+No C# project, solution, or harness source was deleted. The exact 24-file
+proposed deletion, preserved artifacts, Git recovery anchors, and repository
+rollback procedure are in `tcc/05 - Migration/CSharp Removal Review.md`.
+The user subsequently approved that scope and rollback plan. The user reports no
+enabled workflow in the fork's GitHub Actions UI; the archive change must
+still accompany the future merge so the legacy YAML is not left in
+`.github/workflows/`.
+
+## C# source removal applied for review (2026-09-27)
+
+With explicit approval of the 24-file scope and repository rollback plan,
+the C# solution, application project (including its runtime Turtle copy),
+and characterization harness were removed from the `kotlin` worktree. The
+historical source remains recoverable from pre-removal commit `0f20091`.
+No capture case, provenance row, Kotlin comparator, `files/` reference Turtle,
+Kotlin-owned dataset, or archived .NET workflow was deleted. The original
+34-case and separate three-case indexes still match the 37 provenance IDs.
+
+After deletion, `ktlintCheck detekt test installDist --no-daemon`, all 22
+browser tests, and installed-distribution HTTP smoke passed. The Kotlin
+distribution remains independent of the C#
+tree. The actual removal diff was checked against the approved 24-file scope;
+the user then requested commit and push. MIG-002 is DONE for repository-level
+retirement, while no production deployment occurred. Historical C#
+capture commands are no longer runnable from this checkout and are kept only
+as provenance/recovery instructions.

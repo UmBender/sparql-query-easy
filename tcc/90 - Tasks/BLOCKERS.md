@@ -1,13 +1,21 @@
 # Project Blockers
 
-## DEC-009 — Captured health response
+## MIG-002 — Resolved C# removal gate
 
-The actual C# host returns `200 text/plain Healthy`; Kotlin returns `200`
-JSON `{"status":"ok"}`. The success-status match does not make the response
-equivalent. Before `MIG-002` can remove C#, choose whether to approve Kotlin
-JSON as an intentional difference or align Kotlin to the C# body/content type.
+DEC-009 is resolved: the user approved Kotlin's `200 application/json`
+`{"status":"ok"}` health response as an intentional difference from the
+captured C# `200 text/plain Healthy`. The two responses are not equivalent.
 The three approved C# success captures are complete; additional C#
-middleware-error equivalence was explicitly waived.
+middleware-error equivalence was explicitly waived. The user approved the
+24-file C# removal scope and repository rollback plan; those files are deleted
+locally and post-deletion tests passed. After the diff was checked against the
+approved manifest, the user requested commit and push. See
+[[../05 - Migration/CSharp Removal Review]].
+The .NET YAML is archived on `kotlin`; although
+`master` still tracks the old file, the user reports no enabled workflow in
+the fork's Actions UI. The archive change should accompany the removal diff;
+remote workflow disablement is not a separate blocker. Production deployment
+decisions remain deferred.
 
 ## Production operations tasks
 

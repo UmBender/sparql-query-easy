@@ -17,8 +17,9 @@ of the C# project, without making production deployment decisions.
 
 ## Evidence and relevant files
 `build.gradle.kts`; `src/main/resources/application.conf`;
-`Sparql.QueryEasy/futebol_completo.ttl`;
-`.github/workflows/master_sparql-query-easy.yml`.
+`Sparql.QueryEasy/futebol_completo.ttl` (historical source, Git commit `0f20091`);
+`.github/archived-workflows/master_sparql-query-easy.yml` (the original .NET
+workflow was active during OPS-001 and archived afterward).
 
 ## Scope
 Container design, non-secret runtime configuration, health check, resource asset packaging, and local verification.

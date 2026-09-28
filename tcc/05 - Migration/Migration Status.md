@@ -20,6 +20,13 @@ all listed areas now have Kotlin implementation and tests. Remaining work is
 limited to explicit compatibility gaps and production/additive requirements,
 not another core feature port.
 
+**C# repository retirement (2026-09-27):** The user approved the 24-file solution,
+project, and harness deletion scope and repository rollback plan. The files
+are removed locally; all 34 original and three retirement captures remain.
+Post-deletion Kotlin and browser gates passed. The deletion diff was checked
+against the approved scope and the user requested commit and push. MIG-002 is
+DONE for repository-level retirement; production deployment is separate.
+
 ## Dataset decision
 
 **Approved (2026-09-16):** Kotlin retains the approved C# `futebol_completo.ttl`
@@ -65,9 +72,9 @@ because the harness did not run ASP.NET middleware.
 
 ## Remaining migration-related work
 
-- `DEC-009` must resolve the newly captured C# `text/plain Healthy` versus
-  Kotlin JSON `{"status":"ok"}` health-response difference. Do not call it
-  equivalent solely because both return HTTP 200.
+- `DEC-009` approved retaining Kotlin JSON `{"status":"ok"}` as an
+  intentional difference from captured C# `text/plain Healthy`. Do not call
+  the responses equivalent solely because both return HTTP 200.
 - The three agreed C# success captures are complete. Additional middleware
   error-equivalence captures were explicitly waived; the original exception
   evidence remains separate from HTTP response claims.
@@ -105,7 +112,7 @@ Port `8080` and explicit JSON errors are approved intentional changes.
 - `remaining.md`
 - `compatibility/README.md`
 - `compatibility/cases/capture-status.tsv`
-- `compatibility/Compatibility.Harness/Program.cs`
+- `compatibility/Compatibility.Harness/Program.cs` (historical, Git commit `0f20091`)
 - `src/test/kotlin/com/example/sparqlqueryeasy/http/CaptureDrivenCompatibilityTest.kt`
 - `src/main/kotlin/com/example/sparqlqueryeasy/rdf/jena/JenaRdfInfrastructure.kt`
 - `frontend-tests/index2.spec.mjs`

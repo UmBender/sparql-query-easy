@@ -1,9 +1,9 @@
 # SPARQL EasyQuery
 
-SPARQL EasyQuery is a graph-query application with an original ASP.NET
-Core/.NET 8 and dotNetRDF implementation and a Kotlin/JVM, Ktor, and Apache
-Jena migration. The repository retains the C# application as compatibility
-evidence while Kotlin provides the current development runtime.
+SPARQL EasyQuery is a graph-query application originally built with ASP.NET
+Core/.NET 8 and dotNetRDF. Kotlin/JVM, Ktor, and Apache Jena provide the current
+runtime. The retired C# source is recoverable from Git commit `0f20091`; its
+reviewed compatibility captures remain in this repository.
 
 ## Current status
 
@@ -13,7 +13,8 @@ evidence while Kotlin provides the current development runtime.
   `compatibility/expected/`.
 - Three additional C# retirement success captures are kept separately under
   `compatibility/retirement-expected/`. Wikidata and generic remote SPARQL
-  outputs match Kotlin; the health response body still needs a decision.
+  outputs match Kotlin. Kotlin's JSON health response is an approved intentional
+  difference from the C# plain-text capture.
 - The offline Kotlin comparator executes every valid capture and checks HTTP
   output, graph isomorphism, generated/executed SPARQL, projected variables,
   bindings, RDF terms, duplicate rows, and explicit ordering.
@@ -29,6 +30,11 @@ Ktor route contract and tested for drift. Authentication is intentionally
 deferred until user testing. Recorded Wikidata route fixtures, production
 endpoint/upload policy, TLS/CORS, deployment, monitoring, and
 backup remain open.
+
+The legacy .NET deployment workflow is archived outside the active GitHub
+Actions directory on the Kotlin branch. No Kotlin deployment workflow or
+hosting target is selected yet; see the
+[archived workflow note](tcc/07%20-%20Operations/Archived%20.NET%20Deployment%20Workflow.md).
 
 ## Run locally
 
@@ -79,6 +85,8 @@ validation.
 - `src/main/kotlin/com/example/sparqlqueryeasy/http/OpenApiModule.kt` —
   generated OpenAPI metadata and documentation routes.
 - `sparql/index2.html` — authoritative static frontend.
-- `Sparql.QueryEasy/Program.cs` — retained C# entry point.
+- `compatibility/expected/index.json` — immutable original C# case index.
+- `compatibility/retirement-expected/index.json` — three additional C# success
+  captures retained after C# source removal.
 - `src/test/kotlin/com/example/sparqlqueryeasy/http/CaptureDrivenCompatibilityTest.kt`
   — capture-driven comparator.
