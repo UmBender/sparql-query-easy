@@ -255,6 +255,64 @@ export function possibleValues(page) {
 }
 
 /**
+ * @typedef {{
+ *   order: string[],
+ *   stage: number,
+ *   bindings: StageBinding[],
+ *   labels: string[],
+ *   previewCandidate: StageCandidate | null,
+ *   previewKey?: string | null,
+ *   preview: PreviewState,
+ *   complete: boolean,
+ * }} PossibleGraphInput
+ * @typedef {{assignments: Map<string, Assignment>, caption: string, valueCount: number}} PossibleGraphView
+ */
+
+/**
+ * Assignments and caption of the possible-graph window: committed values, the
+ * option under the cursor (assumed) and possible value `cycleIndex` of the next
+ * variable. `valueCount` is how many possible values the caller may cycle
+ * through; 0 means there is nothing to cycle.
+ * @param {PossibleGraphInput} input
+ * @param {number} cycleIndex
+ * @returns {PossibleGraphView}
+ */
+export function possibleGraphView(input, cycleIndex) {
+  /** @type {Map<string, Assignment>} */
+  const assignments = new Map();
+  input.bindings.forEach((binding, index) => {
+    assignments.set(binding.variableName, { term: binding.term, text: input.labels[index], state: 'committed' });
+  });
+  const candidate = input.previewCandidate;
+  if (!candidate || input.complete) {
+    const caption = input.complete ? 'All variables chosen.' : 'Hover or focus an option to preview it.';
+    return { assignments, caption, valueCount: 0 };
+  }
+  const { order, stage, preview } = input;
+  const assumedText = candidateText(candidate);
+  assignments.set(order[stage], { term: candidate.term, text: assumedText, state: 'assumed' });
+  const assumed = `If ${order[stage]} = ${assumedText}`;
+  const nextName = order[stage + 1];
+  if (!nextName) return { assignments, caption: `${assumed}.`, valueCount: 0 };
+  /** @type {PreviewState} */
+  const current = preview.key === input.previewKey ? preview : { key: null, status: 'loading' };
+  const values = current.status === 'loaded' ? possibleValues(current.page) : [];
+  if (!values.length) {
+    const reason = current.status === 'error' ? `the preview failed: ${current.error}`
+      : current.status === 'loaded' ? `${nextName} has no values` : `loading ${nextName}…`;
+    return { assignments, caption: `${assumed}, ${reason}.`, valueCount: 0 };
+  }
+  const index = cycleIndex % values.length;
+  const valueText = candidateText(values[index]);
+  assignments.set(nextName, { term: values[index].term, text: valueText, state: 'possible' });
+  return {
+    assignments,
+    caption: `${assumed}, ${nextName} could be ${valueText} (${index + 1} of ${values.length}).`,
+    valueCount: values.length,
+  };
+}
+
+/**
  * A read-only copy of the query graph with assigned variables replaced by
  * their values. Every occurrence of a variable (node or predicate) gets its
  * assignment; unassigned variables stay open. The classes carry the

@@ -326,8 +326,10 @@
     <script type="module">
         import * as queryCalculations from './query-calculations.js';
         import * as queryStages from './query-stages.js';
+        import * as graphActions from './graph-actions.js';
         window.queryCalculations = queryCalculations;
         window.queryStages = queryStages;
+        window.graphActions = graphActions;
     </script>
 
     <script src="app-core.js"></script>
@@ -734,32 +736,7 @@
             }
 
             function nodeActions(node) {
-                const data = node.data();
-                const actions = [];
-
-                if (data.isLink) {
-                    actions.push({ id: 'open-link', label: 'Open link' });
-                } else if (data.type === 'node') {
-                    actions.push({ id: 'explore-relationships', label: 'Explore relationships' });
-                } else if (data.type === 'default') {
-                    actions.push({ id: 'explore-default', label: 'Explore values' });
-                } else if (data.type === 'variable') {
-                    actions.push({ id: 'run-query', label: 'Run query' });
-                }
-
-                if (hasVariableSource(node) && (data.label === 'true' || data.label === 'false')) {
-                    actions.push({ id: 'toggle-boolean', label: 'Toggle Boolean value' });
-                }
-                if (hasVariableSource(node) && data.type === 'label') {
-                    actions.push({ id: 'edit-value', label: 'Edit value' });
-                }
-
-                actions.push({ id: 'connect-variable-predicate', label: 'Connect with variable predicate' });
-                actions.push({ id: 'connect-defined-predicate', label: 'Connect with defined predicate' });
-
-                actions.push({ id: 'convert-variable', label: 'Convert to variable' });
-                actions.push({ id: 'remove', label: 'Remove', danger: true });
-                return actions;
+                return window.graphActions.nodeActions(node.data(), hasVariableSource(node));
             }
 
             function positionNodeActionMenu() {
@@ -975,10 +952,7 @@
 
             // ── Persistent edge action menu ──────────────────────────────
             function edgeActions(edge) {
-                const actions = edge.data('nodeId')?.startsWith('?')
-                    ? []
-                    : [{ id: 'convert-predicate-variable', label: 'Convert relation to variable' }];
-                return [...actions, { id: 'remove-relation', label: 'Remove relation', danger: true }];
+                return window.graphActions.edgeActions(edge.data());
             }
 
             function positionEdgeActionMenu() {
@@ -1058,13 +1032,14 @@
             }
 
             function nextPredicateVariableName() {
-                let candidate;
-                do {
-                    candidate = `?predicate_${predicateVariableSequence++}`;
-                } while (cy.elements().some(element =>
-                    ['id', 'nodeId', 'value'].some(key => element.data(key) === candidate)
-                ));
-                return candidate;
+                const { name, sequence } = window.graphActions.nextPredicateVariableName(
+                    predicateVariableSequence,
+                    candidate => cy.elements().some(element =>
+                        ['id', 'nodeId', 'value'].some(key => element.data(key) === candidate)
+                    )
+                );
+                predicateVariableSequence = sequence;
+                return name;
             }
 
             function convertMenuEdgeToPredicateVariable(edge) {

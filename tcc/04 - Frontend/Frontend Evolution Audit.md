@@ -48,8 +48,7 @@ lines) are the only parts with DOM-free tests and type checks.
 | 1900–2086 | Node factory, connection discovery, change-value modal | Top-level functions |
 | 2089–2999 | `DOMContentLoaded`: Materialize, uploads, autocomplete, Cytoscape init, node menu (≈345), edge menu (≈120), Alt+drag, selection | Closure locals such as `selectedMenuNodeId`, `pendingConnection`, `predicateChoices` shared by menus |
 
-No function is unused. `possibleGraphStyle()` repeats the main Cytoscape base
-node/edge style literally. `possibleGraphState()`, `nodeActions()`,
+No function is unused. `possibleGraphState()`, `nodeActions()`,
 `edgeActions()` and `nextPredicateVariableName()` are mainly data decisions
 mixed with timers or DOM. 15 inline `onclick` attributes depend on globals.
 
@@ -65,7 +64,7 @@ under `sparql/`. No bundler or framework is needed for this.
 |---|---|---|
 | FE-019 | Move inline CSS to `index2.css` | −488 lines, no JS change |
 | FE-020 | Move top-level script (820–2086) to ordered classic files: core/API, stage order, exploration, graph nodes | Page ≈1,250 lines; largest file ≈470 |
-| FE-021 | Move pure possible-graph, menu-action and naming decisions into checked modules; share one base Cytoscape style | New unit tests; less duplicated style |
+| FE-021 | Move pure possible-graph, menu-action and naming decisions into checked modules | New unit tests |
 | FE-022 | Move node/edge menus and connection preview out of `DOMContentLoaded` into a controller that owns its state | Page ≈330 lines (markup + includes) |
 
 Acceptance for each slice: identical browser suite, `npm run test:query`,
@@ -73,6 +72,11 @@ Acceptance for each slice: identical browser suite, `npm run test:query`,
 resource test. Rollback is reverting that slice's commit. Expected end state:
 no application file above about 500 lines, and each FE card touches one or two
 responsibility files plus markup.
+
+Correction (FE-021): the audit first said `possibleGraphStyle()` repeated the
+main graph style. It does not: the main graph uses 120 px nodes, `getNodeColor`
+and HTML labels; the possible graph uses 60 px nodes and state classes. Only
+the edge color and arrow match, so no shared style was extracted.
 
 ## Evidence and concentration
 

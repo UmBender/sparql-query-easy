@@ -7,6 +7,7 @@ import {
   createPreviewScheduler,
   explorationSignature,
   moveItem,
+  possibleGraphView,
   possibleValues,
   stageCacheKey,
   stagePageSize,
@@ -206,4 +207,60 @@ test('possible values are at most three selectable candidates', () => {
       .map(item => item.term.value),
     ['1', '2', '3'],
   );
+});
+
+const iri = value => ({ type: 'iri', value });
+const candidate = (value, label, selectable = true) => ({ term: iri(value), label, selectable });
+const viewInput = overrides => ({
+  order: ['?a', '?b', '?c'],
+  stage: 0,
+  bindings: [],
+  labels: [],
+  previewCandidate: null,
+  previewKey: 'k1',
+  preview: { key: null, status: 'idle' },
+  complete: false,
+  ...overrides,
+});
+const states = view => Object.fromEntries([...view.assignments].map(([name, value]) => [name, `${value.state}:${value.text}`]));
+
+test('possible graph without a hovered option shows only committed values', () => {
+  const view = possibleGraphView(viewInput({
+    stage: 1, bindings: [{ variableName: '?a', term: iri('ex:A') }], labels: ['Alpha'],
+  }), 0);
+  assert.equal(view.caption, 'Hover or focus an option to preview it.');
+  assert.deepEqual(states(view), { '?a': 'committed:Alpha' });
+  assert.equal(view.valueCount, 0);
+  assert.equal(possibleGraphView(viewInput({ complete: true, previewCandidate: candidate('ex:A', 'Alpha') }), 0).caption,
+    'All variables chosen.');
+});
+
+test('possible graph explains the assumed option while the next variable loads, fails or is empty', () => {
+  const hovered = { previewCandidate: candidate('ex:A', 'Alpha') };
+  assert.equal(possibleGraphView(viewInput(hovered), 0).caption, 'If ?a = Alpha, loading ?b\u2026.');
+  assert.equal(possibleGraphView(viewInput({ ...hovered, preview: { key: 'old', status: 'loaded', page: undefined } }), 0).caption,
+    'If ?a = Alpha, loading ?b\u2026.');
+  assert.equal(possibleGraphView(viewInput({ ...hovered, preview: { key: 'k1', status: 'error', error: 'boom' } }), 0).caption,
+    'If ?a = Alpha, the preview failed: boom.');
+  const empty = possibleGraphView(viewInput({
+    ...hovered, preview: { key: 'k1', status: 'loaded', page: { variableName: '?b', offset: 0, limit: 3, hasMore: false, candidates: [] } },
+  }), 0);
+  assert.equal(empty.caption, 'If ?a = Alpha, ?b has no values.');
+  assert.deepEqual(states(empty), { '?a': 'assumed:Alpha' });
+  assert.equal(possibleGraphView(viewInput({ ...hovered, stage: 2 }), 0).caption, 'If ?c = Alpha.');
+});
+
+test('possible graph cycles through at most three selectable next values', () => {
+  const page = {
+    variableName: '?b', offset: 0, limit: 5, hasMore: false,
+    candidates: [candidate('ex:p1', 'founded'), candidate('ex:x', 'hidden', false), candidate('ex:p2', null),
+      candidate('ex:p3', 'located'), candidate('ex:p4', 'fourth')],
+  };
+  const input = viewInput({ previewCandidate: candidate('ex:A', 'Alpha'), preview: { key: 'k1', status: 'loaded', page } });
+  const first = possibleGraphView(input, 0);
+  assert.equal(first.caption, 'If ?a = Alpha, ?b could be founded (1 of 3).');
+  assert.equal(first.valueCount, 3);
+  assert.deepEqual(states(first), { '?a': 'assumed:Alpha', '?b': 'possible:founded' });
+  assert.equal(possibleGraphView(input, 1).caption, 'If ?a = Alpha, ?b could be ex:p2 (2 of 3).');
+  assert.equal(possibleGraphView(input, 3).caption, 'If ?a = Alpha, ?b could be founded (1 of 3).');
 });

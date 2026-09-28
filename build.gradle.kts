@@ -82,6 +82,7 @@ tasks.named<Copy>("processResources") {
             "cytoscape-cxtmenu.js",
             "query-calculations.js",
             "query-stages.js",
+            "graph-actions.js",
             "app-core.js",
             "stage-order.js",
             "stage-exploration.js",

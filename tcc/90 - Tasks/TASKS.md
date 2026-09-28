@@ -48,7 +48,7 @@ Ordered by dependencies, then priority among selection candidates. See [worker r
 | FE-018 | DONE | P1 | analysis | [Analyze index2.html size and plan agent-sized frontend files](<items/FE-018-index2-size-audit.md>) |
 | FE-019 | DONE | P2 | refactor | [Move index2 inline CSS to its own stylesheet](<items/FE-019-extract-index2-css.md>) |
 | FE-020 | DONE | P1 | refactor | [Split the index2 top-level script into ordered classic files](<items/FE-020-split-index2-top-level-script.md>) |
-| FE-021 | BACKLOG | P2 | refactor | [Move pure possible-graph and menu decisions into checked modules](<items/FE-021-pure-possible-graph-and-menu-logic.md>) |
+| FE-021 | DONE | P2 | refactor | [Move pure possible-graph and menu decisions into checked modules](<items/FE-021-pure-possible-graph-and-menu-logic.md>) |
 | FE-022 | BACKLOG | P2 | refactor | [Move graph action menus into a controller file](<items/FE-022-graph-menu-controller.md>) |
 | INV-001 | DONE | P1 | investigation | [Investigate Ktor HTTP-client and runtime resource lifecycle](<items/INV-001-runtime-resource-lifecycle.md>) |
 | QUAL-001 | DONE | P1 | quality | [Replay recorded Wikidata success and controlled error route fixtures](<items/QUAL-001-recorded-wikidata-routes.md>) |

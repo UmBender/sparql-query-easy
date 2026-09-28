@@ -9,5 +9,5 @@
     "moduleResolution": "NodeNext",
     "skipLibCheck": true
   },
-  "include": ["sparql/query-calculations.js", "sparql/query-stages.js"]
+  "include": ["sparql/query-calculations.js", "sparql/query-stages.js", "sparql/graph-actions.js"]
 }

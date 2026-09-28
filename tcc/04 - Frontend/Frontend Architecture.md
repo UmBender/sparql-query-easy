@@ -12,8 +12,9 @@
 | Confirmed | `sparql/stage-order.js` | Classic script: ordered variable registry bridge, stage-order blocks and the exploration panel. |
 | Confirmed | `sparql/stage-exploration.js` | Classic script: staged exploration requests/state and the possible-graph window. |
 | Confirmed | `sparql/graph-nodes.js` | Classic script: node factory, connection discovery, intro hint and change-value modal. |
+| Confirmed | `sparql/graph-actions.js` | DOM-free node/edge action lists and predicate-variable naming; checked with JSDoc/TypeScript. |
 | Confirmed | `sparql/query-calculations.js` | DOM-free query filter and variable calculations; checked with JSDoc/TypeScript. |
-| Confirmed | `sparql/query-stages.js` | DOM-free ordered-exploration state: variable registry, query signature and block moves; checked with JSDoc/TypeScript. |
+| Confirmed | `sparql/query-stages.js` | DOM-free ordered-exploration state: variable registry, query signature, block moves and the possible-graph assignments/caption; checked with JSDoc/TypeScript. |
 | Confirmed | `sparql/cytoscape.min.js` | Local graph rendering library. |
 | Confirmed | `sparql/cytoscape-cxtmenu.js` | Retained local plugin asset; the authoritative page no longer loads it. |
 

@@ -87,51 +87,26 @@ function possibleGraphStyle() {
 }
 
 // Committed values, the assumed option and the current possible value of the next variable.
+// The cycle restarts at the first value whenever the hovered option changes.
 function possibleGraphState() {
-    const assignments = new Map();
-    exploration.bindings.forEach((binding, index) => {
-        assignments.set(binding.variableName, { term: binding.term, text: exploration.labels[index], state: 'committed' });
-    });
-    const candidate = exploration.previewCandidate;
-    if (!candidate || isExplorationComplete()) {
+    const input = { ...exploration, complete: isExplorationComplete() };
+    let view = window.queryStages.possibleGraphView(input, possibleCycle.index);
+    if (!view.valueCount) {
         stopPossibleCycle();
-        return { assignments, caption: isExplorationComplete() ? 'All variables chosen.' : 'Hover or focus an option to preview it.' };
-    }
-    const { order, stage, preview } = exploration;
-    const candidateText = window.queryStages.candidateText(candidate);
-    assignments.set(order[stage], { term: candidate.term, text: candidateText, state: 'assumed' });
-    const assumed = `If ${order[stage]} = ${candidateText}`;
-    const nextName = order[stage + 1];
-    if (!nextName) {
-        stopPossibleCycle();
-        return { assignments, caption: `${assumed}.` };
-    }
-    const current = preview.key === exploration.previewKey ? preview : { status: 'loading' };
-    const values = current.status === 'loaded' ? window.queryStages.possibleValues(current.page) : [];
-    if (!values.length) {
-        stopPossibleCycle();
-        const reason = current.status === 'error' ? `the preview failed: ${current.error}`
-            : current.status === 'loaded' ? `${nextName} has no values` : `loading ${nextName}\u2026`;
-        return { assignments, caption: `${assumed}, ${reason}.` };
+        return view;
     }
     if (possibleCycle.key !== exploration.previewKey) {
         stopPossibleCycle();
         possibleCycle.key = exploration.previewKey;
-        if (values.length > 1) {
+        if (view.valueCount > 1) {
             possibleCycle.timer = setInterval(() => {
                 possibleCycle.index += 1;
                 renderPossibleGraph();
             }, POSSIBLE_VALUE_CYCLE_MS);
         }
+        view = window.queryStages.possibleGraphView(input, possibleCycle.index);
     }
-    const index = possibleCycle.index % values.length;
-    const value = values[index];
-    const valueText = window.queryStages.candidateText(value);
-    assignments.set(nextName, { term: value.term, text: valueText, state: 'possible' });
-    return {
-        assignments,
-        caption: `${assumed}, ${nextName} could be ${valueText} (${index + 1} of ${values.length}).`,
-    };
+    return view;
 }
 
 function renderPossibleGraph() {
