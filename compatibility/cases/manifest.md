@@ -62,7 +62,7 @@ tables are relative to `compatibility/`.
 
 | Case ID | Inputs and route | Behavior characterized | Why it matters |
 |---|---|---|---|
-| `HTTP-HEALTH-001` | Actual ASP.NET host `GET /health`; `../retirement-expected/HTTP-HEALTH-001/case.json` | `200 text/plain Healthy`; Kotlin currently returns `200` JSON `{"status":"ok"}`. | Health-body difference requires approval or correction; not equivalent yet. |
+| `HTTP-HEALTH-001` | Actual ASP.NET host `GET /health`; `../retirement-expected/HTTP-HEALTH-001/case.json` | `200 text/plain Healthy`; Kotlin returns `200 application/json {"status":"ok"}`. | DEC-009 approved the intentional body/content-type difference; not equivalent. |
 | `HTTP-BAD-JSON-001` | `malformed.json` → `POST /api/query` | Framework/model-binding malformed JSON response. | Ktor behavior must be chosen deliberately. |
 | `HTTP-MISSING-UPLOAD-001` | `POST /api/local-database` without `ttlFile` | Missing multipart field behavior. | Captures current validation/error boundary. |
 | `WIKIDATA-GENERATION-001` | `wikidata-query-generation.json` → `/api/query/sparql` | Wikidata prefix and `wikibase:directClaim` label text. | Safe, no-network characterization of Wikidata logic. |

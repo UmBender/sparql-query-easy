@@ -26,6 +26,18 @@ import kotlin.test.assertTrue
 
 class OpenApiRoutesTest {
     @Test
+    fun `health OpenAPI response documents approved JSON body`() =
+        testApplication {
+            application { module() }
+            val document = Json.parseToJsonElement(client.get("/openapi.json").bodyAsText()).jsonObject
+            val health = document.operation("/health", "get")
+
+            assertEquals(setOf("200"), health.requiredObject("responses").keys)
+            val healthSchema = document.responseSchema(health, "200", "application/json")
+            assertEquals("string", document.resolve(healthSchema.property("status")).typeName())
+        }
+
+    @Test
     fun `public Swagger UI and OpenAPI document are available`() =
         testApplication {
             application { module() }

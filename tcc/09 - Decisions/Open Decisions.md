@@ -9,7 +9,7 @@
 | DEC-005 | Decision required | Upload graph size, cache size, persistence, retention, and access-control policy. |
 | DEC-006 | Decision direction approved | Implement authentication; `AUTH-000` must decide identity, sessions, anonymous access, protected routes, and security controls first. |
 | DEC-007 | Approved | Generate OpenAPI 3.1 from Ktor code; publish public `/swagger` and `/openapi.json` endpoints in every environment; defer authentication. |
-| DEC-009 | Decision required | Captured C# `/health` is `200 text/plain Healthy`; Kotlin is `200` JSON `{"status":"ok"}`. Approve the Kotlin difference or align it before C# removal. |
+| DEC-009 | Resolved | Keep Kotlin `200 application/json {"status":"ok"}` as an approved intentional difference from captured C# `200 text/plain Healthy`; do not claim equivalence. |
 
 ## Already documented decisions
 
@@ -26,8 +26,14 @@
   production. Authentication remains deferred until user testing.
 - **Approved (2026-09-27):** Capture three remaining C# success cases before
   retirement, preserve the original 34, and waive further C# middleware-error
-  equivalence. The health capture exposed an additional undecided success
-  response difference; see [[../90 - Tasks/items/DEC-009-health-response-contract]].
+  equivalence. The health capture exposed a success-response difference that
+  was approved under [[../90 - Tasks/items/DEC-009-health-response-contract]].
+- **Approved (2026-09-27):** Archive the legacy .NET workflow outside the
+  active GitHub Actions directory on `kotlin`, retain its configuration, and
+  create no Kotlin deployment workflow until hosting and release choices are
+  made. `master` still needs the archive change integrated; the user reports
+  no enabled workflow in this fork's GitHub Actions UI.
+  See [[../07 - Operations/Archived .NET Deployment Workflow]] and OPS-005.
 
 ## Source files
 

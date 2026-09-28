@@ -15,7 +15,8 @@ updated: 2026-09-16
 Produce a decision-ready AWS architecture only after the hosting/domain/runtime choices are known.
 
 ## Evidence and relevant files
-No AWS configuration exists in the repository; current CI targets Azure.
+No AWS configuration exists in the repository. The former Azure .NET workflow
+is archived on `kotlin`; no Kotlin CI/CD or production target is selected.
 
 ## Scope
 Compare approved AWS service options, deployment/rollback, IAM boundaries, cost assumptions, and non-secret configuration flow.
@@ -40,3 +41,7 @@ Assumptions about AWS services or costs before requirements exist.
 
 ## Execution log
 - 2026-09-16: Blocked; AWS is requested as a planning family but not configured or selected.
+- 2026-09-27: User confirmed that the Kotlin hosting platform and release
+  method are undecided. AWS remains a possible planning option, not an
+  approved destination; OPS-005 tracks platform-neutral workflow design
+  after a hosting decision.

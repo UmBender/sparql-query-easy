@@ -72,7 +72,7 @@ There is no application-owned error response for this redirect route.
 
 ### `GET /health`
 
-Returns `200 OK`:
+Returns `200 OK` with `Content-Type: application/json`:
 
 ```json
 { "status": "ok" }
@@ -81,8 +81,9 @@ Returns `200 OK`:
 There is no application-owned error response for this route.
 The actual C# host returned `200 text/plain Healthy` in
 `compatibility/retirement-expected/HTTP-HEALTH-001/case.json`. The Kotlin
-body/content type are **not equivalent**; [[../90 - Tasks/items/DEC-009-health-response-contract]]
-awaits a human choice to approve Kotlin JSON or align it to C#.
+body/content type are **not equivalent**. The user approved retaining Kotlin
+JSON as an intentional difference under
+[[../90 - Tasks/items/DEC-009-health-response-contract]].
 
 ### `POST /api/local-database`
 

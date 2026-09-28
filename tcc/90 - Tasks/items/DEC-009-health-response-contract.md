@@ -1,7 +1,7 @@
 ---
 id: DEC-009
 title: Decide captured C# versus Kotlin health response contract
-status: BLOCKED
+status: DONE
 priority: P1
 type: decision
 depends_on: [MIG-001, OPS-001]
@@ -39,15 +39,24 @@ errors, or rewriting the C# capture.
 
 ## Dependencies
 
-The C# health capture exists; this task needs a human contract decision.
-`MIG-002` must wait for it. OPS-002–OPS-004 remain future deployment work.
+The C# health capture exists. The user approved retaining Kotlin JSON as an
+intentional difference on 2026-09-27. OPS-002–OPS-004 remain future deployment
+work; this decision does not authorize C# deletion or production deployment.
+
+## Approved decision
+
+Keep Kotlin `GET /health` at `200 application/json` with body
+`{"status":"ok"}`. C# `HTTP-HEALTH-001` remains `200 text/plain Healthy`.
+These are intentionally different response contracts, not equivalent captures.
+The Docker health probe continues to check HTTP success only; neither response
+proves external-service readiness.
 
 ## Acceptance criteria
 
-- [ ] Human selects and records the health response contract.
-- [ ] Tests assert the approved body/content type and status exactly.
-- [ ] OpenAPI, API docs, migration report, and operations notes agree.
-- [ ] Existing C# capture remains untouched and the Kotlin quality gate passes.
+- [x] Human selects and records the health response contract.
+- [x] Tests assert the approved body/content type and status.
+- [x] OpenAPI, API docs, migration report, and operations notes agree.
+- [x] Existing C# capture remains untouched and the Kotlin quality gate passes.
 
 ## Verification commands
 
@@ -70,3 +79,8 @@ schema; retaining JSON requires explicit intentional-difference approval.
 
 - 2026-09-27: Created after actual ASP.NET health capture exposed a concrete
   body/content-type difference. No contract choice was inferred.
+- 2026-09-27: User explicitly approved retaining Kotlin JSON. Added response
+  MIME assertions to `ApplicationTest` and `RetirementSuccessCompatibilityTest`
+  and a JSON health-schema assertion to `OpenApiRoutesTest`. Updated migration,
+  API, operations, compatibility, and task documentation without changing the
+  immutable C# capture or production route. The Kotlin quality gate passed.

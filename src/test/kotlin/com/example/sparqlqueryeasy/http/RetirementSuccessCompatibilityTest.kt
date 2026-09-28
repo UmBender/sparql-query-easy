@@ -72,7 +72,7 @@ class RetirementSuccessCompatibilityTest {
     }
 
     @Test
-    fun `HTTP-HEALTH-001 preserves the C sharp host capture and exposes the unapproved body difference`() =
+    fun `HTTP-HEALTH-001 preserves the C sharp host capture and approved JSON difference`() =
         testApplication {
             application { module() }
             val capture = capture("HTTP-HEALTH-001")
@@ -83,8 +83,8 @@ class RetirementSuccessCompatibilityTest {
             response.status.value shouldBe expected.getValue("status").jsonPrimitive.content.toInt()
             expected.getValue("contentType").jsonPrimitive.content shouldBe "text/plain"
             expected.getValue("bodyText").jsonPrimitive.content shouldBe "Healthy"
-            // This is not marked equivalent: Kotlin's existing health contract is JSON.
-            response.headers[HttpHeaders.ContentType]?.startsWith("application/json") shouldBe true
+            // DEC-009 approves this intentional difference, not C# response equivalence.
+            ContentType.parse(response.headers[HttpHeaders.ContentType]!!).withoutParameters() shouldBe ContentType.Application.Json
             response.bodyAsText() shouldBe """{"status":"ok"}"""
         }
 
