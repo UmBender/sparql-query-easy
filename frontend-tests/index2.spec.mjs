@@ -894,6 +894,38 @@ test('the possible graph renders in its own window with the assumed option and a
   expect(await possibleGraph(page)).toEqual(['edge:rel|open|?b', 'node:?a|assumed iri|Beta', 'node:?c|open|?c']);
 });
 
+test('long possible-graph values are wrapped under their node or relation in a larger window', async ({ page }) => {
+  const longName = 'International Business Machines Corporation of New York';
+  const longPredicate = 'was founded in the place and on the date recorded by the historical registry of companies';
+  await addThreeVariableChain(page);
+  await routeStages(page, request => request.variableName === '?a'
+    ? { body: stagePage(request, [iri('https://example.test/a1', longName), iri('https://example.test/a2', 'Beta')]) }
+    : { body: stagePage(request, [iri('https://example.test/p1', longPredicate)]) });
+  await page.locator('#run-query-btn').click();
+  const window = page.getByRole('region', { name: 'Possible graph' });
+  await expect(window).toBeVisible();
+  expect((await window.boundingBox()).width).toBeGreaterThan(380);
+  expect((await page.locator('#possible-graph-canvas').boundingBox()).height).toBeGreaterThan(240);
+  // Short open labels stay inside their elements.
+  expect(await possibleGraph(page)).toEqual(['edge:rel|open|?b', 'node:?a|open|?a', 'node:?c|open|?c']);
+
+  await candidateButtons(page).first().hover();
+  await expect(possibleCaption(page)).toHaveText(`If ?a = ${longName}, ?b could be ${longPredicate} (1 of 1).`);
+  expect(await possibleGraph(page)).toEqual([
+    `edge:rel|possible label-below|${longPredicate}`,
+    `node:?a|assumed iri label-below|${longName}`,
+    'node:?c|open|?c',
+  ]);
+  const style = await page.evaluate(() => ['node:?a', 'edge:rel', 'node:?c'].map(id => {
+    const element = possibleCy.getElementById(id);
+    return [element.style('text-wrap'), element.isNode() ? element.style('text-valign') : 'edge', element.numericStyle('text-margin-y') > 0];
+  }));
+  expect(style).toEqual([['wrap', 'bottom', true], ['wrap', 'edge', true], ['ellipsis', 'center', false]]);
+
+  await candidateButtons(page).nth(1).hover();
+  expect(await possibleGraph(page)).toEqual(['edge:rel|open|?b', 'node:?a|assumed iri|Beta', 'node:?c|open|?c']);
+});
+
 test('holding the cursor on an option cycles up to three possible next values every three seconds', async ({ page }) => {
   await addThreeVariableChain(page);
   await routeStages(page, cyclingResponder());

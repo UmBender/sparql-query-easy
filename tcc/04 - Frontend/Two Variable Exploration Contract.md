@@ -143,6 +143,11 @@ caption such as "If ?a = Alpha, ?b could be founded (1 of 3)." Leaving the
 option stops the cycle and drops the assumption; the last stage shows only
 the assumption. No extra requests are sent, the main graph's data and
 viewport are unchanged, and the window hides when the panel closes.
+*Implemented (FE-024):* the window is larger (up to 560px wide, canvas up
+to 380px high; a 240px bottom sheet on narrow screens). A value too long to fit
+inside its node, or between the two nodes of its relation, is shown complete,
+wrapped at spaces under the element (`placePossibleLabels`, class
+`label-below`) instead of being cut off; short labels keep their placement.
 
 ## Typed data findings (INV-002, 2026-09-28)
 

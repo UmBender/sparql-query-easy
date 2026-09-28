@@ -83,7 +83,52 @@ function possibleGraphStyle() {
         { selector: 'edge.open', style: { 'color': '#1b5e20', 'text-background-color': '#A9D18E' } },
         { selector: 'edge.assumed', style: { 'line-style': 'dashed', 'line-color': '#FF6F00', 'target-arrow-color': '#FF6F00' } },
         { selector: 'edge.possible', style: { 'line-color': '#8E24AA', 'target-arrow-color': '#8E24AA', 'color': '#fff', 'text-background-color': '#8E24AA' } },
+        // FE-024: a label too long for its node or relation is wrapped under it.
+        { selector: '.label-below', style: {
+            'text-wrap': 'wrap', 'text-max-width': POSSIBLE_LABEL_BELOW_WIDTH,
+            'text-background-opacity': 0.92, 'text-background-padding': 2, 'text-background-shape': 'roundrectangle',
+        } },
+        { selector: 'node.label-below', style: {
+            'text-valign': 'bottom', 'text-margin-y': 4, 'color': '#212121', 'text-background-color': '#fff',
+        } },
+        { selector: 'edge.label-below', style: { 'text-margin-y': 'data(labelOffset)' } },
     ];
+}
+
+// Labels are measured with the Cytoscape default font; sizes match the style above.
+const POSSIBLE_LABEL_BELOW_WIDTH = 150;
+const POSSIBLE_LABEL_FONT = 'Helvetica Neue, Helvetica, sans-serif';
+let possibleLabelContext = null;
+
+function possibleLabelWidth(text, size) {
+    possibleLabelContext ??= document.createElement('canvas').getContext('2d');
+    possibleLabelContext.font = `${size}px ${POSSIBLE_LABEL_FONT}`;
+    return possibleLabelContext.measureText(text).width;
+}
+
+// Moves a label under its element when it does not fit inside the node, or
+// between the borders of the two nodes of a relation. An edge label is
+// shifted below the line by half its wrapped height.
+function placePossibleLabels() {
+    possibleCy.batch(() => possibleCy.elements().forEach(element => {
+        const label = String(element.data('label') ?? '');
+        let below;
+        if (element.isNode()) {
+            below = possibleLabelWidth(label, 11) > element.width() - 8;
+        } else {
+            const start = element.source().position();
+            const end = element.target().position();
+            const length = Math.hypot(end.x - start.x, end.y - start.y)
+                - (element.source().width() + element.target().width()) / 2;
+            const width = possibleLabelWidth(label, 10);
+            below = width + 12 > length;
+            if (below) {
+                const lines = Math.ceil(width / POSSIBLE_LABEL_BELOW_WIDTH);
+                element.data('labelOffset', lines * 7 + 6);
+            }
+        }
+        element.toggleClass('label-below', below);
+    }));
 }
 
 // Committed values, the assumed option and the current possible value of the next variable.
@@ -142,6 +187,7 @@ function renderPossibleGraph() {
         possibleCy.elements().remove();
         possibleCy.add(window.queryStages.consolidatedGraphElements(items, assignments));
     });
+    placePossibleLabels();
     possibleCy.fit(undefined, 16);
     document.getElementById('possible-graph-caption').textContent = caption;
 }
