@@ -1,13 +1,13 @@
 ---
 id: DEC-008
 title: Decide the ordered multi-variable query exploration contract
-status: BLOCKED
+status: DONE
 priority: P1
 type: decision
 depends_on: [API-001]
 human_gate: true
 created: 2026-09-27
-updated: 2026-09-27
+updated: 2026-09-28
 ---
 # Decide the ordered multi-variable query exploration contract
 
@@ -54,10 +54,10 @@ unrestricted raw SPARQL.
 
 ## Acceptance criteria
 
-- [ ] All choices above are recorded in the frontend contract and approved.
-- [ ] Request budget explicitly prevents accidental `n × m` exploration and
+- [x] All choices above are recorded in the frontend contract and approved.
+- [x] Request budget explicitly prevents accidental `n × m` exploration and
       unbounded hover-triggered remote calls.
-- [ ] Follow-on `API-002`, `FE-005`, and `FE-006` match the approved contract.
+- [x] Follow-on `API-002`, `FE-005`, and `FE-006` match the approved contract.
 
 ## Verification commands
 
@@ -79,3 +79,10 @@ to raw IRIs; labels alone are insufficient to reconstruct RDF bindings.
   previews at the user's request. No product choices beyond that direction
   were assumed; implementation waits for the revised development loop and
   this human contract decision.
+- 2026-09-28: User approved the recommended bundle: blocks for every distinct
+  node/predicate variable name in the first component; sorted initial order,
+  drag plus Move up/down, session-only and reset on signature change; 300 ms
+  hover/focus preview with one in-flight aborted request and in-memory cache;
+  Limit-sized pages capped at 50 with offset "Load more"; typed IRI/literal
+  terms, unbound dropped, blank nodes unselectable; additive typed stage API;
+  final summary with explicit **Apply to graph**. Recorded in the contract.

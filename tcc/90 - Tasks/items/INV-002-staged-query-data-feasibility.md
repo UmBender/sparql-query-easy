@@ -1,7 +1,7 @@
 ---
 id: INV-002
 title: Characterize typed staged-query data and safe binding options
-status: BACKLOG
+status: DONE
 priority: P1
 type: investigation
 depends_on: [DEV-001]
@@ -42,10 +42,10 @@ DEV-001, so this investigation follows the revised workflow.
 
 ## Acceptance criteria
 
-- [ ] Evidence-backed typed-result/constraint options and limitations are in
+- [x] Evidence-backed typed-result/constraint options and limitations are in
       the frontend contract or a focused backend note.
-- [ ] Existing `/api/query` output and its C# capture obligations are mapped.
-- [ ] A recommended additive path, test fixtures, and open decisions are
+- [x] Existing `/api/query` output and its C# capture obligations are mapped.
+- [x] A recommended additive path, test fixtures, and open decisions are
       recorded for DEC-008 and API-002.
 
 ## Verification commands
@@ -67,3 +67,8 @@ substitution could change results or introduce SPARQL injection.
 ## Execution log
 
 - 2026-09-27: Planned only; no code or tests run.
+- 2026-09-28: Traced Wikidata JSON and Jena mapping to `RdfValue` and the
+  lossy legacy `ResultFilteringService.query` flattening (captured, unchanged).
+  Recommended a separate grouped/ordered stage query with typed `VALUES`
+  bindings; findings are in the exploration contract's INV-002 section and
+  fixtures follow in BE-001. No production code changed.

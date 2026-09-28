@@ -16,7 +16,7 @@ notes remain evidence; they do not reopen resolved decisions.
 | Baseline | Keep original 34 + separate 3 retirement captures, provenance and expected JSON. C# source retired; no recapture without a specific decision. [[../05 - Migration/CSharp Retirement Readiness]]. |
 | Built-in graph | DATA-001: retain byte-identical canonical C# asset in `src/main/resources/futebol_completo.ttl`. [[Brazilian Dataset Decision]]. |
 | Menus/predicates | Left-click node action list, background dismissal; predicate choice binds edges in place. [[../04 - Frontend/Predicate Variable Edge Contract]]. |
-| Multiple variables | Current exactly-two panel sends no candidate call; repeated parallel predicate alternatives are rejected. Ordered 2+ exploration is intended and still needs DEC-008. [[../04 - Frontend/Two Variable Exploration Contract]]. |
+| Multiple variables | DEC-008 approved ordered 2+ exploration: numbered reorderable blocks, one bounded typed stage request at a time via `POST /api/query/stage`, hover/focus preview, explicit Apply to graph. Parallel predicate alternatives are rejected. [[../04 - Frontend/Two Variable Exploration Contract]]. |
 | Git/vault | Markdown versioned; PDFs to be untracked through REPO-001 preserving local copies. Automatic local task commits; push/merge/deploy only with explicit authorization. [[Development Workflow]]. |
 
 ## Source files
