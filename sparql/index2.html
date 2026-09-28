@@ -81,6 +81,89 @@
         #two-variable-list { margin: 0 0 12px; }
         #two-variable-list li { list-style: disc; margin-left: 20px; }
 
+        /* ── Numbered stage-order blocks next to Run Query ───────── */
+        .run-query-cell {
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            justify-content: flex-end;
+            gap: 6px;
+        }
+
+        #variable-order {
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            gap: 4px;
+            min-width: 0;
+        }
+
+        #variable-order[hidden] { display: none; }
+
+        #variable-order-list {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 4px;
+            margin: 0;
+            padding: 0;
+        }
+
+        .variable-block {
+            display: inline-flex;
+            align-items: center;
+            gap: 2px;
+            padding: 2px 4px 2px 2px;
+            border: 1px solid #b26a00;
+            border-radius: 6px 12px 12px 6px;
+            background: #ffab40;
+            color: #212121;
+            font-size: 12px;
+            list-style: none;
+            touch-action: none;
+            cursor: grab;
+            user-select: none;
+        }
+
+        .variable-block.dragging { opacity: 0.6; cursor: grabbing; }
+        .variable-block.drop-target { outline: 2px dashed #fff; outline-offset: 1px; }
+
+        .variable-block-number {
+            display: inline-block;
+            min-width: 18px;
+            border-radius: 9px;
+            background: #fff3e0;
+            font-weight: 700;
+            text-align: center;
+        }
+
+        .variable-block-name { padding: 0 2px; font-family: monospace; }
+
+        .variable-block button {
+            min-width: 16px;
+            height: 20px;
+            padding: 0;
+            border: 1px solid transparent;
+            border-radius: 4px;
+            background: transparent;
+            color: inherit;
+            font-size: 10px;
+            line-height: 18px;
+            cursor: pointer;
+        }
+
+        .variable-block button:disabled { opacity: 0.35; cursor: default; }
+        .variable-block button:focus-visible,
+        .variable-block:focus-visible { outline: 2px solid #0d47a1; outline-offset: 1px; }
+
+        .visually-hidden {
+            position: absolute;
+            width: 1px;
+            height: 1px;
+            overflow: hidden;
+            clip: rect(0 0 0 0);
+            white-space: nowrap;
+        }
+
         #connection-preview {
             position: absolute;
             inset: 0;
@@ -479,7 +562,12 @@
                             <i class="material-icons left">add</i>Add Variable
                         </button>
                     </div>
-                    <div class="col s6 right-align">
+                    <div class="col s6 right-align run-query-cell">
+                        <div id="variable-order" hidden role="group" aria-labelledby="variable-order-title">
+                            <span id="variable-order-title" class="visually-hidden">Stage order</span>
+                            <ol id="variable-order-list"></ol>
+                            <span id="variable-order-status" class="visually-hidden" aria-live="polite"></span>
+                        </div>
                         <button id="run-query-btn"
                                 class="btn waves-effect waves-light green darken-1"
                                 type="submit"
@@ -1113,6 +1201,94 @@
 
         function getVariableOrder() {
             return variableOrderState.order.slice();
+        }
+
+        // ── Stage-order blocks (FE-009) ───────────────────────────────────
+        // Pointer drag and Move earlier/later buttons both go through moveVariableBlock.
+        function moveVariableBlock(from, to) {
+            const order = getVariableOrder();
+            const next = window.queryStages.moveItem(order, from, to);
+            if (next.every((name, index) => name === order[index])) return;
+            setVariableOrder(next);
+            document.getElementById('variable-order-status').textContent =
+                `${next[to]} moved to stage ${to + 1} of ${next.length}.`;
+        }
+
+        function renderVariableOrder(state) {
+            const container = document.getElementById('variable-order');
+            const list = document.getElementById('variable-order-list');
+            const focusedButton = list.contains(document.activeElement) ? document.activeElement.dataset.action : null;
+            const focusedName = focusedButton ? document.activeElement.closest('.variable-block')?.dataset.variable : null;
+            container.hidden = state.order.length < 2;
+            list.replaceChildren(...state.order.map((name, index) => {
+                const block = document.createElement('li');
+                block.className = 'variable-block';
+                block.dataset.variable = name;
+                block.dataset.index = String(index);
+                block.setAttribute('aria-label', `Stage ${index + 1}: ${name}`);
+                const number = document.createElement('span');
+                number.className = 'variable-block-number';
+                number.textContent = String(index + 1);
+                number.setAttribute('aria-hidden', 'true');
+                const label = document.createElement('span');
+                label.className = 'variable-block-name';
+                label.textContent = name;
+                label.setAttribute('aria-hidden', 'true');
+                const earlier = variableBlockButton('earlier', `Move ${name} earlier`, '\u25C0', index === 0, () => moveVariableBlock(index, index - 1));
+                const later = variableBlockButton('later', `Move ${name} later`, '\u25B6', index === state.order.length - 1, () => moveVariableBlock(index, index + 1));
+                block.append(number, label, earlier, later);
+                return block;
+            }));
+            if (focusedName) {
+                const block = list.querySelector(`[data-variable="${CSS.escape(focusedName)}"]`);
+                const button = block?.querySelector(`[data-action="${focusedButton}"]`);
+                const target = button && !button.disabled ? button : block?.querySelector('button:not(:disabled)');
+                target?.focus();
+            }
+        }
+
+        function variableBlockButton(action, label, text, disabled, onClick) {
+            const button = document.createElement('button');
+            button.type = 'button';
+            button.dataset.action = action;
+            button.setAttribute('aria-label', label);
+            button.title = label;
+            button.textContent = text;
+            button.disabled = disabled;
+            button.addEventListener('click', onClick);
+            return button;
+        }
+
+        function initVariableOrderDrag() {
+            const list = document.getElementById('variable-order-list');
+            let drag = null;
+            const clearTarget = () => list.querySelectorAll('.drop-target').forEach(item => item.classList.remove('drop-target'));
+            list.addEventListener('pointerdown', event => {
+                const block = event.target.closest('.variable-block');
+                if (!block || event.target.closest('button') || event.button !== 0) return;
+                event.preventDefault();
+                block.setPointerCapture?.(event.pointerId);
+                block.classList.add('dragging');
+                drag = { from: Number(block.dataset.index), to: Number(block.dataset.index), block };
+            });
+            list.addEventListener('pointermove', event => {
+                if (!drag) return;
+                const over = document.elementFromPoint(event.clientX, event.clientY)?.closest('.variable-block');
+                if (!over || !list.contains(over)) return;
+                clearTarget();
+                drag.to = Number(over.dataset.index);
+                if (over !== drag.block) over.classList.add('drop-target');
+            });
+            const finish = event => {
+                if (!drag) return;
+                const { from, to, block } = drag;
+                drag = null;
+                block.classList.remove('dragging');
+                clearTarget();
+                if (event.type === 'pointerup') moveVariableBlock(from, to);
+            };
+            list.addEventListener('pointerup', finish);
+            list.addEventListener('pointercancel', finish);
         }
 
         let twoVariablePanelReturnFocus = null;
@@ -2148,6 +2324,8 @@
                     refreshVariableOrder();
                 });
             }
+            variableOrderListeners.push(renderVariableOrder);
+            initVariableOrderDrag();
             cy.on('add remove data', scheduleVariableOrderRefresh);
             document.getElementById('input-endpoint-sparql').addEventListener('input', scheduleVariableOrderRefresh);
             document.getElementById('input-endpoint-sparql').addEventListener('change', scheduleVariableOrderRefresh);

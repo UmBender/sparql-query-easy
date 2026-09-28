@@ -298,6 +298,109 @@ test('variable order is session state that resets only when the query signature 
   await expect.poll(() => page.evaluate(() => getVariableOrder())).toEqual([]);
 });
 
+async function addThreeVariableChain(page) {
+  await disableAutoLayout(page);
+  await page.evaluate(() => {
+    cy.add([
+      { group: 'nodes', data: { id: '?a', value: '?a', label: '?', type: 'variable' }, position: { x: 150, y: 200 } },
+      { group: 'nodes', data: { id: '?c', value: '?c', label: '?', type: 'variable' }, position: { x: 450, y: 200 } },
+      { group: 'edges', data: { id: 'rel', source: '?a', target: '?c', nodeId: '?b', label: '?' } },
+    ]);
+  });
+  await expect(page.locator('#variable-order')).toBeVisible();
+}
+
+const blockNames = page => page.locator('#variable-order-list .variable-block-name');
+
+test('stage-order blocks appear next to Run Query only for two or more variables', async ({ page }) => {
+  await disableAutoLayout(page);
+  const blocks = page.locator('#variable-order');
+  await expect(blocks).toBeHidden();
+  await page.evaluate(() => cy.add({ group: 'nodes', data: { id: '?solo', value: '?solo', label: '?', type: 'variable' } }) && undefined);
+  await page.evaluate(() => new Promise(resolve => setTimeout(resolve, 0)));
+  await expect(blocks).toBeHidden();
+  await page.evaluate(() => {
+    cy.add([
+      { group: 'nodes', data: { id: '?other', value: '?other', label: '?', type: 'variable' } },
+      { group: 'edges', data: { id: 'solo-other', source: '?solo', target: '?other', nodeId: '<https://example.test/p>', label: 'p' } },
+    ]);
+  });
+  await expect(blocks).toBeVisible();
+  await expect(page.getByRole('group', { name: 'Stage order' })).toBeVisible();
+  await expect(page.locator('#variable-order-list .variable-block-number')).toHaveText(['1', '2']);
+  await expect(blockNames(page)).toHaveText(['?other', '?solo']);
+  expect(await page.evaluate(() => document.getElementById('variable-order').parentElement
+    === document.getElementById('run-query-btn').parentElement)).toBe(true);
+
+  await page.evaluate(() => { cy.getElementById('?other').remove(); });
+  await expect(blocks).toBeHidden();
+});
+
+test('a variable repeated as node and predicate is one block', async ({ page }) => {
+  await disableAutoLayout(page);
+  await page.evaluate(() => {
+    cy.add([
+      { group: 'nodes', data: { id: '?x', value: '?x', label: '?', type: 'variable' } },
+      { group: 'nodes', data: { id: '?y', value: '?y', label: '?', type: 'variable' } },
+      { group: 'edges', data: { id: 'x-y', source: '?x', target: '?y', nodeId: '?x', label: '?' } },
+    ]);
+  });
+  await expect(blockNames(page)).toHaveText(['?x', '?y']);
+});
+
+test('keyboard reordering updates the stage order read by Run Query without requests', async ({ page }) => {
+  await addThreeVariableChain(page);
+  await expect(blockNames(page)).toHaveText(['?a', '?b', '?c']);
+  await expect(page.getByRole('button', { name: 'Move ?a earlier' })).toBeDisabled();
+  await expect(page.getByRole('button', { name: 'Move ?c later' })).toBeDisabled();
+  const requestsBefore = server.requests.length;
+
+  await page.getByRole('button', { name: 'Move ?c earlier' }).focus();
+  await page.keyboard.press('Enter');
+  await expect(blockNames(page)).toHaveText(['?a', '?c', '?b']);
+  await expect(page.getByRole('button', { name: 'Move ?c earlier' })).toBeFocused();
+  await page.keyboard.press('Enter');
+  await expect(blockNames(page)).toHaveText(['?c', '?a', '?b']);
+  await expect(page.getByRole('button', { name: 'Move ?c later' })).toBeFocused();
+  await expect(page.locator('#variable-order-status')).toHaveText('?c moved to stage 1 of 3.');
+  await expect(page.getByRole('listitem', { name: 'Stage 1: ?c' })).toBeVisible();
+
+  const nodesBefore = await page.evaluate(() => cy.elements().map(item => JSON.stringify(item.data())).sort());
+  await page.locator('#run-query-btn').click();
+  await expect(page.locator('#two-variable-list')).toHaveText('?c?a?b');
+  expect(await page.evaluate(() => cy.elements().map(item => JSON.stringify(item.data())).sort())).toEqual(nodesBefore);
+  expect(server.requests.length).toBe(requestsBefore);
+});
+
+test('pointer dragging a block produces the same order as the keyboard controls', async ({ page }) => {
+  await addThreeVariableChain(page);
+  const source = page.getByRole('listitem', { name: 'Stage 3: ?c' });
+  const target = page.getByRole('listitem', { name: 'Stage 1: ?a' });
+  const from = await source.locator('.variable-block-name').boundingBox();
+  const to = await target.locator('.variable-block-name').boundingBox();
+  await page.mouse.move(from.x + from.width / 2, from.y + from.height / 2);
+  await page.mouse.down();
+  await page.mouse.move(to.x + to.width / 2, to.y + to.height / 2, { steps: 5 });
+  await page.mouse.up();
+  await expect(blockNames(page)).toHaveText(['?c', '?a', '?b']);
+  expect(await page.evaluate(() => getVariableOrder())).toEqual(['?c', '?a', '?b']);
+  await expect(page.locator('#variable-order-list .dragging, #variable-order-list .drop-target')).toHaveCount(0);
+});
+
+test('stage-order controls stay reachable at a narrow viewport width', async ({ page }) => {
+  await page.setViewportSize({ width: 360, height: 740 });
+  await addThreeVariableChain(page);
+  const button = page.getByRole('button', { name: 'Move ?b later' });
+  await button.focus();
+  await expect(button).toBeFocused();
+  const box = await button.boundingBox();
+  expect(box.x).toBeGreaterThanOrEqual(0);
+  expect(box.x + box.width).toBeLessThanOrEqual(360);
+  await page.keyboard.press('Enter');
+  await expect(blockNames(page)).toHaveText(['?a', '?c', '?b']);
+  await expect(page.locator('#variable-order-status')).toHaveText('?b moved to stage 3 of 3.');
+});
+
 test('parallel edges sharing one predicate variable bind together without staging', async ({ page }) => {
   await disableAutoLayout(page);
   await page.evaluate(() => {

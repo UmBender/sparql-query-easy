@@ -1,7 +1,7 @@
 ---
 id: FE-009
 title: Add numbered Scratch-like reorderable query blocks
-status: BACKLOG
+status: DONE
 priority: P1
 type: frontend
 depends_on: [DEV-001, FE-008]
@@ -41,11 +41,11 @@ DEV-001 and FE-008.
 
 ## Acceptance criteria
 
-- [ ] Menu is adjacent to Run Query and visually numbered as blocks.
-- [ ] Pointer and keyboard reordering produce the same stage order.
-- [ ] Run Query reads that order; no candidate request occurs in this slice.
-- [ ] Focus and announcements remain usable at narrow viewport widths.
-- [ ] Offline browser tests cover the reorder interaction and regressions.
+- [x] Menu is adjacent to Run Query and visually numbered as blocks.
+- [x] Pointer and keyboard reordering produce the same stage order.
+- [x] Run Query reads that order; no candidate request occurs in this slice.
+- [x] Focus and announcements remain usable at narrow viewport widths.
+- [x] Offline browser tests cover the reorder interaction and regressions.
 
 ## Verification commands
 
@@ -67,3 +67,12 @@ depend on it alone. Avoid stealing Cytoscape drag events.
 ## Execution log
 
 - 2026-09-27: Planned only; visual details await DEC-008 and new workflow.
+- 2026-09-28: Implemented `#variable-order` beside Run Query: numbered
+  Scratch-like blocks for 2+ variables, Move earlier/later buttons (the
+  horizontal equivalent of up/down), pointer-event drag (mouse and touch, no
+  Cytoscape interaction) and a polite live-region announcement. Reorder goes
+  through `setVariableOrder`, so Run Query reads it; no request is sent.
+  Checked visually at 1280 px and 360 px. Validation: browser suite 30/30
+  offline (new: visibility for 0/1/2 variables, repeated node/predicate name,
+  keyboard reorder with focus retention and Run Query order, pointer drag
+  parity, narrow viewport) and `git diff --check`.

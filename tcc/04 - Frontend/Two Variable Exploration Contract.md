@@ -44,6 +44,12 @@ add/remove/value/predicate edit, graph load, New Query, or endpoint change.
 *Implemented (FE-008):* labels and positions are excluded from the signature,
 so cosmetic edits keep the order; a variable in both node and predicate
 positions keeps its node and edge IDs in one registry entry.
+*Implemented (FE-009):* the blocks form a horizontal numbered group ("Stage
+order") beside Run Query, shown only for two or more variables. Because the
+row is horizontal, the explicit controls are **Move earlier**/**Move later**
+buttons (the Move up/Move down equivalents). Pointer-event dragging works for
+mouse and touch; both controls call the same move, announce the new stage
+through a polite live region, and never touch graph topology or positions.
 
 **Stages.** Stage *k* lists candidates for the *k*-th variable under the
 bindings committed for stages 1..*k*-1. Only the current stage is requested.

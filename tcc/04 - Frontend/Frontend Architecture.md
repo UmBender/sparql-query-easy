@@ -106,8 +106,10 @@ registry in `index2.html` (`refreshVariableOrder`, `getVariableOrder`,
 sorted initially, reset when the exploration signature (endpoint plus element
 IDs, values, endpoints, predicates and filter types; not labels or positions)
 changes. Cytoscape `add`/`remove`/`data` events, endpoint input/change and
-Turtle upload schedule a refresh. Two or more variables open the panel with
-that order; candidate requests remain for `FE-005`+.
+Turtle upload schedule a refresh. `FE-009` renders that order as numbered
+blocks in `#variable-order` beside Run Query (`renderVariableOrder`,
+`moveVariableBlock`, pointer drag in `initVariableOrderDrag`). Two or more
+variables open the panel with that order.
 
 **Potential issue:** Materialize, Intro.js, Google icons, and CSS are loaded from third-party CDNs, so local development is not fully offline.
 
