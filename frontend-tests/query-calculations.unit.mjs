@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
-import { buildFilters, getQueryVariables, hasParallelPredicateVariables } from '../sparql/query-calculations.js';
+import { buildFilters, getQueryVariables, hasParallelPredicateVariables, relationLabelKind } from '../sparql/query-calculations.js';
 
 test('filters preserve edge order, fixed RDF terms, and numeric filterType zero', () => {
   assert.deepEqual(buildFilters([
@@ -35,4 +35,14 @@ test('parallel predicate alternatives differ from repeated bindings and a chain'
   assert.equal(hasParallelPredicateVariables([first, { ...first }]), false);
   assert.equal(hasParallelPredicateVariables([first, { ...first, source: 'b', target: 'c', sourceValue: '<b>', targetValue: '<c>', nodeId: '?p2' }]), false);
   assert.equal(hasParallelPredicateVariables([{ ...first, sourceValue: '?subject' }, { ...first, sourceValue: '?subject', nodeId: '?p2' }]), false);
+});
+
+test('relation label kind follows the predicate, not a stored type flag', () => {
+  assert.equal(relationLabelKind({ nodeId: '?predicate_1' }), 'variable');
+  assert.equal(relationLabelKind({ nodeId: '?predicate_1', type: 'variable' }), 'variable');
+  assert.equal(relationLabelKind({ label: '?' }), 'variable');
+  assert.equal(relationLabelKind({ nodeId: '<https://example.test/p>' }), 'fixed');
+  assert.equal(relationLabelKind({ nodeId: '<https://example.test/p>', type: 'variable' }), 'fixed');
+  assert.equal(relationLabelKind({ nodeId: '<https://example.test/p?ghost>' }), 'fixed');
+  assert.equal(relationLabelKind({ nodeId: '?predicate', type: 'filter' }), 'filter');
 });

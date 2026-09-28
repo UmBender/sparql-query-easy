@@ -45,6 +45,21 @@ other metadata, and all nodes remain intact. Result rows retain their queried
 edge IDs; if an edge was removed or its predicate changed before selection,
 that stale result does not recreate it or create a node.
 
+## Relation display and removal (FE-013, 2026-09-28)
+
+The relation label style follows the predicate, not a stored `type` flag
+(`relationLabelKind` in `sparql/query-calculations.js`, rendered by
+`edgeLabelHtml`). A whole valid variable `nodeId`, or no `nodeId` (queried
+through a fallback variable), shows the green variable box. A fixed predicate
+shows the plain label, even with a stale `type: 'variable'`. `type: 'filter'`
+keeps the filter box. Node conversion and result-table replacement rebuild
+edges with all their data (including `type` and `filterType`).
+
+Every relation's action list offers **Remove relation**. It removes only
+that edge; both nodes and other edges, including parallel ones, remain.
+Variable relations offer only this action; fixed ones also offer **Convert
+relation to variable**.
+
 ## Boundaries
 
 - This is a frontend interaction extension; it does not change C# parity,
@@ -60,6 +75,7 @@ that stale result does not recreate it or create a node.
 ## Source files
 
 - `sparql/index2.html`
+- `sparql/query-calculations.js`
 - `src/main/kotlin/com/example/sparqlqueryeasy/http/QueryHttpModels.kt`
 - `src/main/kotlin/com/example/sparqlqueryeasy/application/query/GeneralQueryService.kt`
 - `src/main/kotlin/com/example/sparqlqueryeasy/wikidata/query/WikidataQueryGenerator.kt`

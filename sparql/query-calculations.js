@@ -70,3 +70,16 @@ export function hasParallelPredicateVariables(edges) {
   }
   return false;
 }
+
+/**
+ * Visual kind of a relation label, derived from the predicate rather than a
+ * stored flag so rebuilt edges render the same way. A missing predicate is
+ * queried through a fallback variable, so it is a variable relation too.
+ * @param {{nodeId?: string | null, type?: string | null}} edge
+ * @returns {'filter' | 'variable' | 'fixed'}
+ */
+export function relationLabelKind(edge) {
+  if (edge.type === 'filter') return 'filter';
+  if (!edge.nodeId || variablePattern.test(edge.nodeId)) return 'variable';
+  return 'fixed';
+}

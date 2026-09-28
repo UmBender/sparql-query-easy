@@ -1049,6 +1049,70 @@ test('edge action menu converts only a relation predicate into a queryable varia
   await expect(edgeMenu.getByRole('button', { name: 'Convert relation to variable' })).toBeVisible();
 });
 
+const relationLabelClass = (page, id) => page.evaluate(edgeId => {
+  const html = edgeLabelHtml(cy.getElementById(edgeId).data());
+  return new DOMParser().parseFromString(html, 'text/html').body.firstElementChild.className;
+}, id);
+
+test('variable relations render the green label however they were created', async ({ page }) => {
+  await disableAutoLayout(page);
+  await page.evaluate(() => {
+    cy.add([
+      { group: 'nodes', data: { id: 'a', value: '<https://example.test/a>', label: 'A', type: 'node' }, position: { x: 200, y: 200 } },
+      { group: 'nodes', data: { id: 'b', value: '<https://example.test/b>', label: 'B', type: 'node' }, position: { x: 500, y: 200 } },
+      { group: 'edges', data: { id: 'flagged', source: 'a', target: 'b', nodeId: '?p1', label: '?', type: 'variable' } },
+      { group: 'edges', data: { id: 'unflagged', source: 'b', target: 'a', nodeId: '?p2', label: '?' } },
+      { group: 'edges', data: { id: 'fixed', source: 'a', target: 'b', nodeId: '<https://example.test/p>', label: 'p' } },
+      { group: 'edges', data: { id: 'stale-flag', source: 'b', target: 'a', nodeId: '<https://example.test/q>', label: 'q', type: 'variable' } },
+    ]);
+  });
+  expect(await relationLabelClass(page, 'flagged')).toBe('edge-label-variable');
+  expect(await relationLabelClass(page, 'unflagged')).toBe('edge-label-variable');
+  expect(await relationLabelClass(page, 'fixed')).toBe('edge-label');
+  expect(await relationLabelClass(page, 'stale-flag')).toBe('edge-label');
+
+  // Converting an endpoint node rebuilds its edges; they must keep all data.
+  await page.evaluate(() => { cy.getElementById('flagged').data('filterType', 0); });
+  await clickGraphNode(page, 'a');
+  await page.locator('#node-action-menu').getByRole('button', { name: 'Convert to variable' }).click();
+  const rebuilt = await page.evaluate(() => cy.getElementById('flagged').data());
+  expect(rebuilt).toMatchObject({ nodeId: '?p1', label: '?', type: 'variable', filterType: 0, target: 'b' });
+  expect(rebuilt.source).toMatch(/^\?node_/);
+  expect(await relationLabelClass(page, 'flagged')).toBe('edge-label-variable');
+  expect(await relationLabelClass(page, 'unflagged')).toBe('edge-label-variable');
+});
+
+test('Remove relation deletes only the chosen edge', async ({ page }) => {
+  await disableAutoLayout(page);
+  await page.evaluate(() => {
+    cy.add([
+      { group: 'nodes', data: { id: '?team', value: '?team', label: '?', type: 'variable' }, position: { x: 200, y: 200 } },
+      { group: 'nodes', data: { id: 'city', value: '<https://example.test/city>', label: 'City', type: 'node' }, position: { x: 560, y: 200 } },
+      { group: 'nodes', data: { id: 'league', value: '<https://example.test/league>', label: 'League', type: 'node' }, position: { x: 200, y: 480 } },
+      { group: 'edges', data: { id: 'located', source: '?team', target: 'city', nodeId: '?where', label: '?', type: 'variable' } },
+      { group: 'edges', data: { id: 'plays', source: '?team', target: 'league', nodeId: '<https://example.test/playsIn>', label: 'plays in' } },
+    ]);
+  });
+  await expect(page.locator('#variable-order')).toBeVisible();
+
+  await clickGraphEdge(page, 'located');
+  const edgeMenu = page.locator('#edge-action-menu');
+  await expect(edgeMenu.getByRole('button', { name: 'Convert relation to variable' })).toHaveCount(0);
+  await edgeMenu.getByRole('button', { name: 'Remove relation' }).click();
+
+  await expect(edgeMenu).toBeHidden();
+  expect(await page.evaluate(() => ({
+    nodes: cy.nodes().map(node => node.id()).sort(),
+    edges: cy.edges().map(edge => edge.id()),
+  }))).toEqual({ nodes: ['?team', 'city', 'league'], edges: ['plays'] });
+  await expect(page.locator('#status-edges')).toHaveText('Edges: 1');
+  await expect(page.locator('#variable-order')).toBeHidden();
+
+  await clickGraphEdge(page, 'plays');
+  await expect(edgeMenu.getByRole('button', { name: 'Convert relation to variable' })).toBeVisible();
+  await expect(edgeMenu.getByRole('button', { name: 'Remove relation' })).toBeVisible();
+});
+
 test('node action connects an existing subject variable to an existing object with a variable predicate', async ({ page }) => {
   await disableAutoLayout(page);
   await page.evaluate(() => { cy.add([

@@ -893,19 +893,36 @@
         }
 
         /**
-         * Re-wire all edges that reference oldId to instead reference newId.
+         * Relation label markup. The variable style follows the predicate
+         * (FE-013), so rebuilt or imported edges always look the same.
+         */
+        function edgeLabelHtml(data) {
+            const kind = window.queryCalculations.relationLabelKind(data);
+            if (kind === 'filter') {
+                return `<div class="edge-label-filter">
+                    <span>${escapeHTML(data.label)}</span><br><br>
+                    <span style="font-weight:bold;color:white">${escapeHTML(String(data.filterType))}</span>
+                </div>`;
+            }
+            const cls = kind === 'variable' ? 'edge-label-variable' : 'edge-label';
+            return `<div class="${cls}">${escapeHTML(data.label)}</div>`;
+        }
+
+        /**
+         * Re-wire all edges that reference oldId to instead reference newId,
+         * keeping every edge data field (type, filterType, …).
          */
         function rewireEdges(oldId, newId) {
             cy.edges().forEach(edge => {
                 if (edge.data('source') === oldId) {
-                    const { id: eId, target, label: eLabel, nodeId: eNodeId } = edge.data();
+                    const data = edge.data();
                     edge.remove();
-                    cy.add({ group: 'edges', data: { nodeId: eNodeId, id: eId, label: eLabel, source: newId, target } });
+                    cy.add({ group: 'edges', data: { ...data, source: newId } });
                 }
                 if (edge.data('target') === oldId) {
-                    const { id: eId, source, label: eLabel, nodeId: eNodeId } = edge.data();
+                    const data = edge.data();
                     edge.remove();
-                    cy.add({ group: 'edges', data: { nodeId: eNodeId, id: eId, label: eLabel, source, target: newId } });
+                    cy.add({ group: 'edges', data: { ...data, target: newId } });
                 }
             });
         }
@@ -1740,16 +1757,17 @@
 
             cy.edges().forEach(edge => {
                 if (edge.data('source') === oldId) {
-                    const { id: eId, target, label: eLabel, nodeId: eNodeId } = edge.data();
+                    const data = edge.data();
+                    const { target, label: eLabel, nodeId: eNodeId } = data;
                     edge.remove();
-                    cy.add({ group: 'edges', data: { nodeId: eNodeId, id: eId, label: eLabel, source: nodeId, target } });
+                    cy.add({ group: 'edges', data: { ...data, source: nodeId } });
                     cy.getElementById(target).remove();
                     getRelationshipValueChange(nodeId, eNodeId, eLabel);
                 }
                 if (edge.data('target') === oldId) {
-                    const { id: eId, source, label: eLabel, nodeId: eNodeId } = edge.data();
+                    const data = edge.data();
                     edge.remove();
-                    cy.add({ group: 'edges', data: { nodeId: eNodeId, id: eId, label: eLabel, source, target: nodeId } });
+                    cy.add({ group: 'edges', data: { ...data, target: nodeId } });
                 }
             });
 
@@ -2153,16 +2171,7 @@
                     query: 'edge',
                     halign: 'center', valign: 'center',
                     halignBox: 'center', valignBox: 'center',
-                    tpl(data) {
-                        if (data.type === 'filter') {
-                            return `<div class="edge-label-filter">
-                                <span>${escapeHTML(data.label)}</span><br><br>
-                                <span style="font-weight:bold;color:white">${escapeHTML(String(data.filterType))}</span>
-                            </div>`;
-                        }
-                        const cls = data.type ? `edge-label-${data.type}` : 'edge-label';
-                        return `<div class="${cls}">${escapeHTML(data.label)}</div>`;
-                    }
+                    tpl: edgeLabelHtml
                 },
                 {
                     query: 'node',
@@ -2526,9 +2535,10 @@
 
             // ── Persistent edge action menu ──────────────────────────────
             function edgeActions(edge) {
-                return edge.data('nodeId')?.startsWith('?')
+                const actions = edge.data('nodeId')?.startsWith('?')
                     ? []
                     : [{ id: 'convert-predicate-variable', label: 'Convert relation to variable' }];
+                return [...actions, { id: 'remove-relation', label: 'Remove relation' }];
             }
 
             function positionEdgeActionMenu() {
@@ -2632,6 +2642,12 @@
                 const edge = selectedMenuEdge();
                 if (edge && button.dataset.action === 'convert-predicate-variable') {
                     convertMenuEdgeToPredicateVariable(edge);
+                }
+                if (edge && button.dataset.action === 'remove-relation') {
+                    // Only this edge; both nodes and parallel edges stay.
+                    closeEdgeActionMenu();
+                    edge.remove();
+                    updateStatusBar();
                 }
             });
 
