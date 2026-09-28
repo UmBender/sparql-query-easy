@@ -110,6 +110,18 @@ sends no relationship-value request and removes no neighboring nodes.
 Literal datatype/language are not stored in graph nodes, matching other
 literal nodes in the legacy query model.
 
+*Implemented (FE-015):* while the panel is open, a visual-only overlay
+(`#concrete-preview`, `renderConcretePreview`) draws the concreted query on
+the canvas. Committed values cover their variable nodes at node size (blue
+disc for an IRI, pink rectangle for a literal) and their predicate edges
+(white relation label). The hovered or focused candidate appears the same
+way with a dashed orange outline, including on the last stage, where no
+request is sent. The next variable's nodes show its preview state ("?x: 3
+values", loading, no values, error). The overlay follows pan, zoom, resize
+and node moves, and clears on close, Back, reorder and Apply. It changes no
+Cytoscape data, class or style. When the panel would cover the query,
+opening it changes only the viewport so the component fits beside the panel.
+
 ## Typed data findings (INV-002, 2026-09-28)
 
 - Remote Wikidata JSON (`WikidataHttpClient`) and local Jena results both map

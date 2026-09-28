@@ -199,6 +199,50 @@
             white-space: nowrap;
         }
 
+        /* ── Concrete-graph preview over the canvas (FE-015) ───────── */
+        #concrete-preview {
+            position: absolute;
+            inset: 0;
+            z-index: 105;
+            overflow: hidden;
+            pointer-events: none;
+        }
+
+        #concrete-preview[hidden] { display: none; }
+
+        .concrete-chip {
+            position: absolute;
+            transform: translate(-50%, -50%);
+            max-width: 180px;
+            padding: 4px 8px;
+            overflow: hidden;
+            border: 2px solid transparent;
+            border-radius: 14px;
+            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.25);
+            font-size: 12px;
+            line-height: 16px;
+            text-align: center;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        .concrete-chip.iri { background: #4472C4; color: #fff; }
+        .concrete-chip.literal { border-radius: 3px; background: #F48FB1; color: #212121; }
+        /* Bound nodes are drawn at node size so the canvas reads as the concrete graph. */
+        .concrete-chip.node-shape {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            max-width: none;
+            padding: 4px;
+            white-space: normal;
+            word-break: break-word;
+        }
+        .concrete-chip.node-shape.iri { border-radius: 50%; }
+        .concrete-chip.edge { border-radius: 3px; background: #fff; color: #4472C4; border-color: #4472C4; }
+        .concrete-chip.assumed { border-style: dashed; border-color: #FF6F00; box-shadow: 0 0 0 3px rgba(255, 111, 0, 0.35); }
+        .concrete-chip.pending { background: #FFF8E1; color: #5D4037; border-color: #FFB300; border-style: dotted; }
+
         #connection-preview {
             position: absolute;
             inset: 0;
@@ -638,6 +682,8 @@
                 <p id="edge-action-menu-title"></p>
                 <ul id="edge-action-menu-list"></ul>
             </aside>
+
+            <div id="concrete-preview" hidden aria-hidden="true"></div>
 
             <aside id="two-variable-panel" hidden aria-labelledby="two-variable-panel-title" aria-describedby="two-variable-panel-description">
                 <button id="two-variable-panel-close" type="button" class="btn-flat" aria-label="Close query variable exploration" title="Back to graph">Close</button>
@@ -1367,7 +1413,34 @@
             renderExplorationOrder(variables);
             panel.hidden = false;
             document.getElementById('two-variable-panel-close').focus();
+            revealQueryBesidePanel(component);
             startExploration(variables, component);
+        }
+
+        // Viewport only (FE-015): if the panel covers part of the query, pan/zoom
+        // so the whole component fits in the canvas area left of the panel.
+        function revealQueryBesidePanel(component) {
+            const panelRect = document.getElementById('two-variable-panel').getBoundingClientRect();
+            const canvasRect = document.getElementById('cy').getBoundingClientRect();
+            const box = component.renderedBoundingBox();
+            const visibleWidth = panelRect.left - canvasRect.left;
+            const covered = box.x2 > visibleWidth || box.x1 < 0 || box.y1 < 0 || box.y2 > canvasRect.height;
+            if (!covered || visibleWidth < 160) return;
+            const padding = 24;
+            const model = component.boundingBox();
+            const zoom = Math.min(
+                cy.zoom(),
+                (visibleWidth - 2 * padding) / Math.max(model.w, 1),
+                (canvasRect.height - 2 * padding) / Math.max(model.h, 1),
+            );
+            const level = Math.max(cy.minZoom(), Math.min(cy.maxZoom(), zoom));
+            cy.viewport({
+                zoom: level,
+                pan: {
+                    x: visibleWidth / 2 - (model.x1 + model.w / 2) * level,
+                    y: canvasRect.height / 2 - (model.y1 + model.h / 2) * level,
+                },
+            });
         }
 
         function renderExplorationOrder(variables) {
@@ -1431,6 +1504,86 @@
             exploration?.controller?.abort();
             exploration?.previews.cancel();
             exploration = null;
+            renderConcretePreview();
+        }
+
+        // Visual-only "concreted" graph (FE-015): chips over the variables' nodes
+        // and predicate edges for committed values, the hovered/focused
+        // assumption and the next variable's preview state. Cytoscape data,
+        // classes and styles are never touched.
+        function concretePreviewAssignments() {
+            const assignments = new Map();
+            exploration.bindings.forEach((binding, index) => {
+                assignments.set(binding.variableName, { term: binding.term, text: exploration.labels[index], state: 'committed' });
+            });
+            const candidate = exploration.previewCandidate;
+            if (!candidate || isExplorationComplete()) return assignments;
+            const { order, stage, preview } = exploration;
+            assignments.set(order[stage], { term: candidate.term, text: window.queryStages.candidateText(candidate), state: 'assumed' });
+            const nextName = order[stage + 1];
+            if (nextName) {
+                const current = preview.key === exploration.previewKey ? preview : { status: 'loading' };
+                const count = current.status === 'loaded' ? current.page.candidates.length : 0;
+                const text = current.status === 'error' ? `${nextName}: error`
+                    : current.status !== 'loaded' ? `${nextName}: loading\u2026`
+                    : !count ? `${nextName}: no values`
+                    : `${nextName}: ${count}${current.page.hasMore ? '+' : ''} value${count === 1 ? '' : 's'}`;
+                assignments.set(nextName, { term: null, text, state: 'pending' });
+            }
+            return assignments;
+        }
+
+        function renderConcretePreview() {
+            const layer = document.getElementById('concrete-preview');
+            if (!exploration || !cy) {
+                layer.hidden = true;
+                layer.replaceChildren();
+                return;
+            }
+            const wrapperRect = document.getElementById('cy-wrapper').getBoundingClientRect();
+            const canvasRect = document.getElementById('cy').getBoundingClientRect();
+            const offset = { x: canvasRect.left - wrapperRect.left, y: canvasRect.top - wrapperRect.top };
+            const chips = [];
+            const chip = (variableName, assignment, kind, position, size) => {
+                const element = document.createElement('div');
+                const nodeShape = Boolean(size && kind);
+                element.className = `concrete-chip ${kind} ${assignment.state}${nodeShape ? ' node-shape' : ''}`;
+                element.dataset.variable = variableName;
+                element.textContent = assignment.text;
+                element.title = assignment.term ? assignment.term.value : assignment.text;
+                element.style.left = `${offset.x + position.x}px`;
+                element.style.top = `${offset.y + position.y}px`;
+                if (nodeShape) {
+                    // Same geometry as the real node: 120px disc for IRIs, 120x50 rectangle for literals.
+                    const width = Math.max(size.width, 24);
+                    element.style.width = `${width}px`;
+                    element.style.height = `${kind === 'iri' ? width : width * 50 / 120}px`;
+                    element.style.fontSize = `${Math.min(Math.max(14 * cy.zoom(), 9), 18)}px`;
+                } else if (size) {
+                    element.style.maxWidth = `${Math.max(size.width, 60)}px`;
+                }
+                chips.push(element);
+            };
+            for (const [variableName, assignment] of concretePreviewAssignments()) {
+                const entry = variableOrderState.registry.find(item => item.name === variableName);
+                if (!entry) continue;
+                const valueKind = assignment.state === 'pending' ? '' : assignment.term.type === 'iri' ? 'iri' : 'literal';
+                entry.nodeIds.forEach(id => {
+                    const node = cy.getElementById(id);
+                    if (node.length) chip(variableName, assignment, valueKind, node.renderedPosition(), { width: node.renderedWidth() });
+                });
+                entry.edgeIds.forEach(id => {
+                    const edge = cy.getElementById(id);
+                    if (!edge.length || (assignment.term && assignment.term.type !== 'iri')) return;
+                    const midpoint = edge.midpoint();
+                    const zoom = cy.zoom();
+                    const pan = cy.pan();
+                    chip(variableName, assignment, assignment.state === 'pending' ? '' : 'edge',
+                        { x: midpoint.x * zoom + pan.x, y: midpoint.y * zoom + pan.y });
+                });
+            }
+            layer.replaceChildren(...chips);
+            layer.hidden = chips.length === 0;
         }
 
         function currentStageRequest(offset) {
@@ -1551,8 +1704,16 @@
 
         // Hover/focus temporarily assumes a candidate and previews the next variable.
         function previewStageCandidate(candidate) {
-            if (!exploration || !candidate.selectable || isLastStage()) return;
+            if (!exploration || !candidate.selectable) return;
             exploration.previewCandidate = candidate;
+            if (isLastStage()) {
+                // No next variable to request; the assumption only concretes the canvas.
+                exploration.previews.cancel();
+                exploration.previewCandidate = candidate;
+                exploration.previewKey = null;
+                renderStagePreview();
+                return;
+            }
             const bindings = [...exploration.bindings, { variableName: exploration.order[exploration.stage], term: candidate.term }];
             const request = stageRequestFor(exploration.stage + 1, bindings, 0);
             exploration.previewKey = window.queryStages.stageCacheKey(request);
@@ -1570,6 +1731,7 @@
         }
 
         function renderStagePreview() {
+            renderConcretePreview();
             const section = document.getElementById('stage-preview');
             const candidate = exploration?.previewCandidate;
             if (!exploration || !candidate) {
@@ -1578,6 +1740,10 @@
             }
             const { order, stage, preview } = exploration;
             const nextName = order[stage + 1];
+            if (!nextName) {
+                section.hidden = true;
+                return;
+            }
             const status = document.getElementById('stage-preview-status');
             const list = document.getElementById('stage-preview-list');
             section.hidden = false;
@@ -2746,6 +2912,9 @@
             document.getElementById('input-endpoint-sparql').addEventListener('change', scheduleVariableOrderRefresh);
             refreshVariableOrder();
 
+            cy.on('pan zoom resize layoutstop position', () => {
+                if (exploration) renderConcretePreview();
+            });
             cy.on('pan zoom resize layoutstop', () => {
                 positionNodeActionMenu();
                 positionEdgeActionMenu();
@@ -2766,6 +2935,7 @@
                 if (event.target.id() === selectedMenuEdgeId) closeEdgeActionMenu();
             });
             window.addEventListener('resize', () => {
+                if (exploration) requestAnimationFrame(renderConcretePreview);
                 positionNodeActionMenuAfterLayout();
                 requestAnimationFrame(() => requestAnimationFrame(positionEdgeActionMenu));
             });

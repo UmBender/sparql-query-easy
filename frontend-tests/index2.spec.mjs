@@ -743,6 +743,91 @@ test('empty and failed later stages keep the committed path and recover', async 
   expectOnlyNextStageRequests(requests, ['?a', '?b', '?c']);
 });
 
+const concreteChips = page => page.locator('#concrete-preview .concrete-chip');
+const chipSummary = page => page.evaluate(() => [...document.querySelectorAll('#concrete-preview .concrete-chip')]
+  .map(chip => `${chip.dataset.variable}|${chip.className.replace('concrete-chip ', '').replace(' node-shape', '').trim()}|${chip.textContent}`).sort());
+
+test('hovering a candidate renders the concreted graph on the canvas without mutating it', async ({ page }) => {
+  await addThreeVariableChain(page);
+  await routeStages(page, threeStageResponder());
+  const before = await graphSnapshot(page);
+  await page.evaluate(() => { cy.zoom(1); cy.pan({ x: cy.width() - 250, y: 0 }); });
+  await page.locator('#run-query-btn').click();
+  await expect(candidateButtons(page)).toHaveCount(2);
+  await expect(page.locator('#concrete-preview')).toBeHidden();
+  // Opening the panel moves only the viewport so the query sits beside it.
+  expect(await page.evaluate(() => {
+    const panelLeft = document.getElementById('two-variable-panel').getBoundingClientRect().left
+      - document.getElementById('cy').getBoundingClientRect().left;
+    const box = cy.elements().renderedBoundingBox();
+    return box.x1 >= 0 && box.x2 <= panelLeft;
+  })).toBe(true);
+
+  await candidateButtons(page).first().hover();
+  await expect(concreteChips(page).filter({ hasText: 'Alpha' })).toHaveCount(1);
+  await expect.poll(() => chipSummary(page)).toEqual(['?a|iri assumed|Alpha', '?b|pending|?b: 1 value']);
+  // The chip sits on the ?a node.
+  const [chipCenter, nodeCenter] = await page.evaluate(() => {
+    const chip = document.querySelector('#concrete-preview [data-variable="?a"]').getBoundingClientRect();
+    const canvas = document.getElementById('cy').getBoundingClientRect();
+    const node = cy.getElementById('?a').renderedPosition();
+    return [[chip.left + chip.width / 2, chip.top + chip.height / 2], [canvas.left + node.x, canvas.top + node.y]];
+  });
+  expect(Math.abs(chipCenter[0] - nodeCenter[0])).toBeLessThan(2);
+  expect(Math.abs(chipCenter[1] - nodeCenter[1])).toBeLessThan(2);
+
+  await candidateButtons(page).nth(1).hover();
+  await expect.poll(() => chipSummary(page)).toEqual(['?a|iri assumed|Beta', '?b|pending|?b: no values']);
+  expect(await graphSnapshot(page)).toEqual(before);
+});
+
+test('committed values stay concreted through later stages, pan, zoom and close', async ({ page }) => {
+  await addThreeVariableChain(page);
+  await routeStages(page, threeStageResponder());
+  const before = await graphSnapshot(page);
+  await page.locator('#run-query-btn').click();
+  await candidateButtons(page).first().click();
+  await expect(page.locator('#stage-heading')).toHaveText('Stage 2 of 3: ?b');
+  await expect.poll(() => chipSummary(page)).toEqual(['?a|iri committed|Alpha']);
+
+  await candidateButtons(page).first().focus();
+  await expect.poll(() => chipSummary(page)).toEqual(['?a|iri committed|Alpha', '?b|edge assumed|founded', '?c|pending|?c: 1 value']);
+
+  const chipPosition = () => page.evaluate(() => {
+    const chip = document.querySelector('#concrete-preview [data-variable="?c"]').getBoundingClientRect();
+    return { x: chip.left + chip.width / 2, y: chip.top + chip.height / 2 };
+  });
+  const first = await chipPosition();
+  await page.evaluate(() => { cy.panBy({ x: 40, y: 25 }); });
+  await expect.poll(async () => {
+    const moved = await chipPosition();
+    return [Math.round(moved.x - first.x), Math.round(moved.y - first.y)];
+  }).toEqual([40, 25]);
+  await page.evaluate(() => { cy.zoom({ level: 0.5, renderedPosition: { x: 0, y: 0 } }); });
+  await expect.poll(async () => page.evaluate(() => {
+    const chip = document.querySelector('#concrete-preview [data-variable="?c"]').getBoundingClientRect();
+    const canvas = document.getElementById('cy').getBoundingClientRect();
+    const node = cy.getElementById('?c').renderedPosition();
+    return Math.round(Math.hypot(chip.left + chip.width / 2 - canvas.left - node.x, chip.top + chip.height / 2 - canvas.top - node.y));
+  })).toBeLessThan(2);
+
+  await page.keyboard.press('Enter');
+  await expect(page.locator('#stage-heading')).toHaveText('Stage 3 of 3: ?c');
+  const stageRequests = await page.evaluate(() => performance.getEntriesByType('resource').filter(entry => entry.name.endsWith('/api/query/stage')).length);
+  await candidateButtons(page).first().hover();
+  await expect.poll(() => chipSummary(page)).toEqual(['?a|iri committed|Alpha', '?b|edge committed|founded', '?c|literal assumed|1903']);
+  await expect(page.locator('#stage-preview')).toBeHidden();
+  expect(await page.evaluate(() => performance.getEntriesByType('resource').filter(entry => entry.name.endsWith('/api/query/stage')).length)).toBe(stageRequests);
+  await candidateButtons(page).first().click();
+  await expect(page.locator('#stage-heading')).toHaveText('All variables chosen');
+  await expect.poll(() => chipSummary(page)).toEqual(['?a|iri committed|Alpha', '?b|edge committed|founded', '?c|literal committed|1903']);
+
+  await page.getByRole('button', { name: 'Close query variable exploration' }).click();
+  await expect(page.locator('#concrete-preview')).toBeHidden();
+  await expect(concreteChips(page)).toHaveCount(0);
+  expect(await graphSnapshot(page)).toEqual(before);
+});
+
 test('an endpoint change during exploration closes the panel without graph changes', async ({ page }) => {
   await addThreeVariableChain(page);
   await routeStages(page, threeStageResponder());
