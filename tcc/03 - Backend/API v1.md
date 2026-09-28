@@ -17,7 +17,7 @@ application operation has an OpenAPI security requirement yet because
 authentication is explicitly deferred until user testing. No production
 server hostname is embedded in the document.
 
-The OpenAPI inventory covers the eight operations below exactly once. Static
+The OpenAPI inventory covers the nine operations below exactly once. Static
 frontend resources are intentionally excluded. Route metadata is maintained
 in `OpenApiModule.kt`; `OpenApiRoutesTest` validates the document with Swagger
 Parser and detects route/schema drift.
@@ -269,6 +269,73 @@ Success (`200 OK`):
 Missing/invalid input or invalid generated query returns `400`; an unavailable
 local graph returns `404`. This route does not perform remote execution, so it
 does not produce the route's `502` execution response.
+
+### `POST /api/query/stage`
+
+Additive staged-exploration route (API-002, approved 2026-09-28 with DEC-008).
+It returns one bounded page of distinct typed candidates for one variable under
+previously committed typed bindings. It never changes `POST /api/query`.
+
+Request fields and defaults:
+
+```json
+{
+  "endpointUrl": "https://query.wikidata.org/sparql",
+  "variableName": "?team",
+  "where": [
+    {"subject": "?team", "predicate": "<https://example.test/city>", "object": "?city"},
+    {"subject": "?team", "predicate": "?relation", "object": "<https://example.test/league>"}
+  ],
+  "bindings": [
+    {"variableName": "?city", "term": {"type": "iri", "value": "https://example.test/porto-alegre"}},
+    {"variableName": "?relation", "term": {"type": "iri", "value": "https://example.test/playsIn"}}
+  ],
+  "limit": 20,
+  "offset": 0
+}
+```
+
+- `where` uses the `/api/query` item shape and must be non-empty. Filter types
+  `4`/`5` (Maximum/Minimum) are rejected because they impose `LIMIT 1`.
+- `variableName` and every binding variable must occur in `where`. Bindings are
+  distinct, exclude `variableName`, and number at most 16.
+- A term is `{"type":"iri","value":"<absolute IRI without brackets>"}` or
+  `{"type":"literal","value":"...","datatype":"<IRI>|null","language":"<tag>|null"}`.
+  `language` and a non-`rdf:langString` datatype are mutually exclusive.
+  `bnode` terms are rejected as bindings.
+- `limit` is 1..50 (default 20); `offset` is 0..10000 (default 0).
+- Variable names starting with `__stage` are reserved.
+
+Generated shape: `SELECT ?v (SAMPLE(label) AS ?label)` over a server-rendered
+`VALUES` row, the `where` patterns and an optional English `rdfs:label`
+(plus the Wikidata direct-claim label on Wikidata), `GROUP BY ?v ORDER BY ?v
+LIMIT limit+1 OFFSET offset`. Bindings are validated terms, never interpolated
+request text.
+
+Success (`200 OK`):
+
+```json
+{
+  "data": {
+    "variableName": "?team",
+    "offset": 0,
+    "limit": 20,
+    "hasMore": false,
+    "candidates": [
+      {"term": {"type": "iri", "value": "https://example.test/gremio", "datatype": null, "language": null}, "label": "Grêmio", "selectable": true},
+      {"term": {"type": "literal", "value": "1903", "datatype": "http://www.w3.org/2001/XMLSchema#integer", "language": null}, "label": null, "selectable": true},
+      {"term": {"type": "literal", "value": "Grêmio", "datatype": "http://www.w3.org/1999/02/22-rdf-syntax-ns#langString", "language": "pt"}, "label": null, "selectable": true},
+      {"term": {"type": "bnode", "value": "b0", "datatype": null, "language": null}, "label": null, "selectable": false}
+    ]
+  }
+}
+```
+
+Candidates keep server order (ordered by term), are distinct by term, and omit
+unbound values. `hasMore` reports whether another page exists. An empty page is
+`200` with `"candidates": []`. Invalid input returns `400`, an unavailable
+local graph `404`, and execution failure `502`, with the shared error envelope.
+Normal tests use local graphs or fake executors only.
 
 ## Endpoint selection
 

@@ -1,7 +1,7 @@
 ---
 id: API-002
 title: Specify additive typed and bounded staged-candidate API
-status: BACKLOG
+status: DONE
 priority: P1
 type: documentation
 depends_on: [DEV-001, DEC-008, INV-002]
@@ -43,9 +43,9 @@ DEV-001, DEC-008, INV-002; this is a human contract gate before BE-001.
 
 ## Acceptance criteria
 
-- [ ] Method, path, typed schemas, limits, statuses and errors are approved.
-- [ ] Backward compatibility and OpenAPI 3.1 update requirements are explicit.
-- [ ] Deterministic local and recorded-remote test examples are documented.
+- [x] Method, path, typed schemas, limits, statuses and errors are approved.
+- [x] Backward compatibility and OpenAPI 3.1 update requirements are explicit.
+- [x] Deterministic local and recorded-remote test examples are documented.
 
 ## Verification commands
 
@@ -67,3 +67,8 @@ expensive. Approval is required for any externally observable API addition.
 ## Execution log
 
 - 2026-09-27: Planned only; exact route intentionally undecided.
+- 2026-09-28: Approved with DEC-008 (user selected the full typed chain).
+  Specified `POST /api/query/stage` in API v1: typed IRI/literal terms,
+  bindings via server-rendered VALUES, limit 1..50, offset 0..10000,
+  `hasMore`, 400/404/502 envelope, filterType 4/5 rejected, OpenAPI inventory
+  grows to nine operations. Fixtures are implemented in BE-001/BE-002.

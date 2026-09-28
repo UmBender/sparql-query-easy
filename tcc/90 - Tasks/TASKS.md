@@ -19,7 +19,7 @@ Ordered by dependencies, then priority among selection candidates. See [worker r
 | API-001 | DONE | P1 | documentation | [Publish versioned API contract from source evidence](<items/API-001-versioned-api-documentation.md>) |
 | DEC-008 | DONE | P1 | decision | [Decide the ordered multi-variable query exploration contract](<items/DEC-008-two-variable-exploration-contract.md>) |
 | INV-002 | DONE | P1 | investigation | [Characterize typed staged-query data and safe binding options](<items/INV-002-staged-query-data-feasibility.md>) |
-| API-002 | BACKLOG | P1 | documentation | [Specify additive typed and bounded staged-candidate API](<items/API-002-staged-candidate-contract.md>) |
+| API-002 | DONE | P1 | documentation | [Specify additive typed and bounded staged-candidate API](<items/API-002-staged-candidate-contract.md>) |
 | BE-001 | BACKLOG | P1 | backend | [Implement a safe typed bounded stage-query service](<items/BE-001-typed-bounded-stage-query.md>) |
 | BE-002 | BACKLOG | P1 | backend | [Expose the typed stage-query service over Ktor](<items/BE-002-staged-candidate-http-route.md>) |
 | BUG-002 | DONE | P1 | bug | [Map relationship executor failures to the approved JSON 502 contract](<items/BUG-002-relationship-upstream-error-mapping.md>) |
