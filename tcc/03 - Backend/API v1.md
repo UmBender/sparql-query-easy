@@ -340,8 +340,8 @@ Normal tests use local graphs or fake executors only.
 
 ## Endpoint selection
 
-`endpointUrl` accepts the built-in identifier `CampeonatoBrasileiro2023`, an
-uploaded graph handle, or a remote absolute HTTP(S) endpoint with a host. The
+`endpointUrl` accepts the built-in identifiers `CampeonatoBrasileiro2023` and
+`PokemonGen1`, an uploaded graph handle, or a remote absolute HTTP(S) endpoint with a host. The
 Wikidata behavior is selected when the endpoint contains the documented
 Wikidata marker. An invalid remote endpoint produces `400`; a syntactically
 valid but unavailable local handle produces `404`.
@@ -350,6 +350,14 @@ The built-in identifier resolves the approved C# baseline bytes from the
 Kotlin-owned `src/main/resources/futebol_completo.ttl`; the
 frontend `sparql/databases/brasileirao2023.ttl` file is not a runtime
 alternative.
+
+`PokemonGen1` (DATA-002) is an additional Kotlin-only built-in graph with no C#
+equivalent: the 151 Kanto Pokémon with current-game types, base stats, the
+18-type effectiveness chart, per-Pokémon weaknesses, evolution lines and
+Pokédex neighbours, under `http://easyquery.example.org/pokemon#`. It is parsed
+once at startup from `src/main/resources/pokemon_gen1.ttl`, which is generated
+by `node scripts/generate-pokemon-dataset.mjs` (`--check` verifies the
+committed bytes). It behaves like the other local graphs on every route.
 
 ## C# compatibility differences
 

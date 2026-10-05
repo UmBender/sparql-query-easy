@@ -1,7 +1,7 @@
 ---
 id: DATA-002
 title: Add a built-in first-generation Pokémon dataset for trying the tool
-status: READY
+status: DONE
 priority: P1
 type: data
 depends_on: [DATA-001]
@@ -117,3 +117,47 @@ Expected examples once done (endpoint field set to `PokemonGen1`):
 
 - 2026-10-05: Card created from the user's request; access and data-era
   decisions recorded above. Implementation is to happen on its own branch.
+- 2026-10-05: Implemented on branch `DATA-002-pokemon-gen1-dataset` (worktree
+  `../sparql-query-easy-data-002`) from `765f11b`.
+  - `scripts/generate-pokemon-dataset.mjs` holds the 151 species and the
+    18-type chart. It checks the counts (151 Pokémon with no number gaps;
+    51 super effective, 61 not very effective and 8 no-effect matchups) and
+    writes `src/main/resources/pokemon_gen1.ttl` (4,740 lines) under
+    `http://easyquery.example.org/pokemon#`. `--check` confirms the committed
+    bytes match. It uses `owl:Class`/`ObjectProperty`/`DatatypeProperty`
+    declarations and `@en` labels, because local search and relationships
+    depend on them.
+  - Weaknesses come from the chart: `weakTo` covers 2× and 4×,
+    `fourTimesWeakTo`, `resistantTo` covers 0.5× and 0.25×, and `immuneTo`.
+    Evolution data: `evolvesFrom`/`evolvesInto`, `evolutionStage`,
+    `evolutionTrigger` (Level up / Use item / Trade), `evolutionLevel`,
+    `evolutionItem` (stones) and `inEvolutionFamily`. Pokédex links:
+    `nextInPokedex`/`previousInPokedex`. No Gen 1 evolution in scope uses
+    friendship, so it is not modelled.
+  - `EndpointContextResolver` takes an optional map of additional built-in
+    providers and refuses to replace `CampeonatoBrasileiro2023`.
+    `BuiltInGraphEndpointContext` now carries its identifier (defaults to the
+    Brazilian ID). `HttpModule` registers `PokemonGen1`.
+  - Tests: `PokemonDatasetTest` (resolution and SPARQL oracles: counts,
+    Bulbasaur stats, speed/weight filters, evolution lines, chart counts,
+    Charizard 4× Rock, Gengar and Magnemite immunities) and
+    `PokemonDatasetRoutesTest` (search, relationships and stage through the
+    real module).
+  - A focused run caught a generator bug ("Leaf Stone" was read as a level,
+    producing `NaN`). Fixed it and added a check that rejects unknown
+    evolution methods. One route oracle wrongly expected only "Pikachu"; the
+    family resource also matches, so the oracle now compares both labels in
+    any order.
+  - Validation: `./gradlew ktlintCheck detekt test` passed (142 tests).
+    `installDist` packages `pokemon_gen1.ttl`. A distribution smoke run on port
+    18091 returned health `ok`, `PokemonGen1` search results for "char", and
+    unchanged `CampeonatoBrasileiro2023` search. `node
+    scripts/generate-pokemon-dataset.mjs --check` passed. No frontend files
+    changed, so the browser suite was not required.
+  - Docs: Current Contracts, API v1, Workspace Inventory, System Architecture.
+  - Limitations: the data tables were written by hand from current-game
+    references, not imported from an external source; the oracles
+    double-check selected values. Stages and links count only within the 151
+    (e.g. Pikachu is stage 1, Golbat has no evolution). The endpoint field
+    still defaults to `CampeonatoBrasileiro2023`; type `PokemonGen1` to use it.
+    The branch is not merged into `main`.

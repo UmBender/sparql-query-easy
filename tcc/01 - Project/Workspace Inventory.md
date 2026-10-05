@@ -35,6 +35,10 @@ asset from Git commit `0f20091`; the C# copy was removed locally. The frontend
 `futebol_completo.ttl` bytes are the canonical built-in dataset, now owned by
 the Kotlin resource; the frontend asset is reference-only.
 
+**Confirmed (DATA-002):** Kotlin also packages `src/main/resources/pokemon_gen1.ttl`
+as the additional built-in endpoint `PokemonGen1`. It is generated offline by
+`scripts/generate-pokemon-dataset.mjs` and is not part of the C# baseline.
+
 ## Source files
 
 - `Sparql.QueryEasy/Sparql.QueryEasy.csproj` (historical, Git commit `0f20091`)

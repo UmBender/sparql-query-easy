@@ -9,6 +9,8 @@ import java.net.URI
 import java.net.URISyntaxException
 
 const val BRASILEIRAO_ENDPOINT_ID = "CampeonatoBrasileiro2023"
+const val POKEMON_ENDPOINT_ID = "PokemonGen1"
+const val POKEMON_RESOURCE_NAME = "pokemon_gen1.ttl"
 private const val WIKIDATA_ENDPOINT_MARKER = "query.wikidata.org/sparql"
 
 /** A Ktor-free source of UTF-8 Turtle text. Implementations close their own underlying resources. */
@@ -19,7 +21,7 @@ fun interface TurtleTextSource {
 class BuiltInGraphLoadingFailure(
     val resourceName: String,
     cause: Throwable? = null,
-) : RuntimeException("Built-in Brazilian graph resource is unavailable: $resourceName", cause)
+) : RuntimeException("Built-in graph resource is unavailable: $resourceName", cause)
 
 /** Reads the byte-identical C# baseline dataset from the Kotlin-owned classpath resource. */
 class ClasspathTurtleTextSource(
@@ -96,8 +98,8 @@ data class UploadedGraphEndpointContext(
 data class BuiltInGraphEndpointContext(
     val graph: RdfGraph,
     override val executor: EndpointExecution,
+    override val endpointUrl: String = BRASILEIRAO_ENDPOINT_ID,
 ) : EndpointContext {
-    override val endpointUrl: String = BRASILEIRAO_ENDPOINT_ID
     override val isLocal: Boolean = true
     override val isWikidata: Boolean = false
 }
@@ -131,24 +133,39 @@ sealed interface EndpointContextResolution {
     ) : EndpointContextResolution
 }
 
-/** Stateless replacement for C# EndpointService.SetEndpoint. */
+/**
+ * Stateless replacement for C# EndpointService.SetEndpoint. [additionalBuiltInGraphs] adds Kotlin-only
+ * built-in identifiers (DATA-002) beside the C# baseline Brazilian graph.
+ */
 class EndpointContextResolver(
     private val localGraphCache: LocalGraphCache,
     private val builtInGraphProvider: BuiltInGraphProvider,
     private val localExecutorFactory: LocalEndpointExecutorFactory,
     private val remoteExecutorFactory: RemoteEndpointExecutorFactory,
+    private val additionalBuiltInGraphs: Map<String, BuiltInGraphProvider> = emptyMap(),
 ) {
+    init {
+        require(BRASILEIRAO_ENDPOINT_ID !in additionalBuiltInGraphs) {
+            "The Brazilian built-in graph cannot be replaced"
+        }
+    }
+
     fun resolve(endpointUrl: String): EndpointContextResolution =
         when {
-            endpointUrl == BRASILEIRAO_ENDPOINT_ID -> builtInContext()
+            endpointUrl == BRASILEIRAO_ENDPOINT_ID -> builtInContext(endpointUrl, builtInGraphProvider)
+            endpointUrl in additionalBuiltInGraphs ->
+                builtInContext(endpointUrl, additionalBuiltInGraphs.getValue(endpointUrl))
             endpointUrl.isCSharpGuid() -> uploadedGraphContext(endpointUrl)
             else -> remoteContext(endpointUrl)
         }
 
-    private fun builtInContext(): EndpointContextResolution {
-        val graph = builtInGraphProvider.graph()
+    private fun builtInContext(
+        endpointUrl: String,
+        provider: BuiltInGraphProvider,
+    ): EndpointContextResolution {
+        val graph = provider.graph()
         return EndpointContextResolution.Resolved(
-            BuiltInGraphEndpointContext(graph, localExecutorFactory.create(graph)),
+            BuiltInGraphEndpointContext(graph, localExecutorFactory.create(graph), endpointUrl),
         )
     }
 

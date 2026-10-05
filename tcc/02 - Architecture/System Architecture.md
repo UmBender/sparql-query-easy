@@ -12,6 +12,7 @@ flowchart LR
   Services --> Wiki[Wikidata MediaWiki search client]
   Local --> Cache[In-memory uploaded graph cache]
   Local --> Builtin[Built-in futebol_completo.ttl]
+  Local --> Pokemon[Built-in pokemon_gen1.ttl]
   CSharp[C# ASP.NET Core baseline] --> DotNetRDF[dotNetRDF]
   Compat[Compatibility corpus + harness] --> CSharp
   Compat --> Ktor

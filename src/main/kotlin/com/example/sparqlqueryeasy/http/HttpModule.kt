@@ -9,6 +9,8 @@ import com.example.sparqlqueryeasy.application.endpoints.EndpointContextResolver
 import com.example.sparqlqueryeasy.application.endpoints.EndpointExecutionResolverAdapter
 import com.example.sparqlqueryeasy.application.endpoints.InvalidEndpointFailure
 import com.example.sparqlqueryeasy.application.endpoints.LocalGraphUnavailableFailure
+import com.example.sparqlqueryeasy.application.endpoints.POKEMON_ENDPOINT_ID
+import com.example.sparqlqueryeasy.application.endpoints.POKEMON_RESOURCE_NAME
 import com.example.sparqlqueryeasy.application.endpoints.ParsedBuiltInGraphProvider
 import com.example.sparqlqueryeasy.application.localdatabase.InMemoryLocalGraphCache
 import com.example.sparqlqueryeasy.application.localdatabase.LocalDatabaseUploadRequest
@@ -105,6 +107,7 @@ fun defaultHttpDependencies(): HttpDependencies {
             ParsedBuiltInGraphProvider(ClasspathTurtleTextSource(), parser),
             { graph -> JenaGraphEndpointExecution(graph) },
             { endpoint, isWikidata -> RemoteSparqlEndpointExecution(endpoint.value, isWikidata, httpClient) },
+            mapOf(POKEMON_ENDPOINT_ID to ParsedBuiltInGraphProvider(ClasspathTurtleTextSource(POKEMON_RESOURCE_NAME), parser)),
         )
     val relationshipResolver = EndpointExecutionResolverAdapter(endpointResolver)
     return HttpDependencies(
