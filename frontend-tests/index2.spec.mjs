@@ -184,6 +184,83 @@ test('running a query with exactly two valid variables opens the staged explorat
   await expect(panel).toBeHidden();
 });
 
+async function addFixedGroupFirst(page) {
+  await disableAutoLayout(page);
+  await page.evaluate(() => {
+    M.toast = options => { window.__lastToast = options.html; };
+    cy.add([
+      { group: 'nodes', data: { id: 'pikachu', value: '<https://example.test/pikachu>', label: 'Pikachu', type: 'node' } },
+      { group: 'nodes', data: { id: 'electric', value: '<https://example.test/electric>', label: 'Electric', type: 'node' } },
+      { group: 'edges', data: { id: 'resists', source: 'pikachu', target: 'electric', nodeId: '<https://example.test/resistantTo>', label: 'resistant to' } },
+    ]);
+  });
+}
+
+test('Run Query and the stage order use the variable group even when a group without variables came first', async ({ page }) => {
+  await addFixedGroupFirst(page);
+  await page.evaluate(() => {
+    cy.add([
+      { group: 'nodes', data: { id: 'fire', value: '<https://example.test/fire>', label: 'Fire', type: 'node' } },
+      { group: 'nodes', data: { id: '?node_1', value: '?node_1', label: '?', type: 'variable' } },
+      { group: 'edges', data: { id: 'fire-relation', source: 'fire', target: '?node_1', nodeId: '?predicate_1', label: '?', type: 'variable' } },
+    ]);
+  });
+  await expect(page.locator('#variable-order')).toBeVisible();
+  await expect(blockNames(page)).toHaveText(['?node_1', '?predicate_1']);
+  const requestsBefore = server.requests.filter(({ path }) => path === '/api/query').length;
+
+  await page.locator('#run-query-btn').click();
+
+  await expect(page.locator('#two-variable-panel')).toBeVisible();
+  await expect(page.locator('#two-variable-list')).toHaveText('?node_1?predicate_1');
+  expect(server.requests.filter(({ path }) => path === '/api/query').length).toBe(requestsBefore);
+  expect(await page.evaluate(() => window.__lastToast)).toBeUndefined();
+});
+
+test('a single variable in a later group runs the legacy query for that group', async ({ page }) => {
+  await addFixedGroupFirst(page);
+  await page.evaluate(() => {
+    cy.add([
+      { group: 'nodes', data: { id: 'fire', value: '<https://example.test/fire>', label: 'Fire', type: 'node' } },
+      { group: 'nodes', data: { id: '?node_1', value: '?node_1', label: '?', type: 'variable' } },
+      { group: 'edges', data: { id: 'fire-relation', source: 'fire', target: '?node_1', nodeId: '<https://example.test/superEffectiveAgainst>', label: 'super effective against' } },
+    ]);
+  });
+  const requestsBefore = server.requests.filter(({ path }) => path === '/api/query').length;
+
+  await page.locator('#run-query-btn').click();
+
+  await expect.poll(() => server.requests.filter(({ path }) => path === '/api/query').length).toBe(requestsBefore + 1);
+  const body = JSON.parse(server.requests.filter(({ path }) => path === '/api/query').at(-1).body);
+  expect(body.variableName).toBe('?node_1');
+  expect(body.where).toHaveLength(1);
+  expect(body.where[0]).toMatchObject({ subject: '<https://example.test/fire>', object: '?node_1' });
+});
+
+test('variables in two unconnected groups are rejected with a clear message', async ({ page }) => {
+  await disableAutoLayout(page);
+  await page.evaluate(() => {
+    M.toast = options => { window.__lastToast = options.html; };
+    cy.add([
+      { group: 'nodes', data: { id: '?first', value: '?first', label: '?', type: 'variable' } },
+      { group: 'nodes', data: { id: 'pikachu', value: '<https://example.test/pikachu>', type: 'node' } },
+      { group: 'edges', data: { id: 'first-edge', source: '?first', target: 'pikachu', nodeId: '<https://example.test/p>', label: 'p' } },
+      { group: 'nodes', data: { id: '?second', value: '?second', label: '?', type: 'variable' } },
+      { group: 'nodes', data: { id: 'fire', value: '<https://example.test/fire>', type: 'node' } },
+      { group: 'edges', data: { id: 'second-edge', source: 'fire', target: '?second', nodeId: '<https://example.test/q>', label: 'q' } },
+    ]);
+  });
+  await expect.poll(() => page.evaluate(() => getVariableOrder())).toEqual([]);
+  await expect(page.locator('#variable-order')).toBeHidden();
+  const requestsBefore = server.requests.length;
+
+  await page.locator('#run-query-btn').click();
+
+  await expect.poll(() => page.evaluate(() => window.__lastToast)).toContain('separate, unconnected parts');
+  await expect(page.locator('#two-variable-panel')).toBeHidden();
+  expect(server.requests.length).toBe(requestsBefore);
+});
+
 for (const fixedValue of ['<https://example.test/relation?ghost>', '?alpha-bad']) {
   test(`query variable detection ignores the non-variable value ${fixedValue}`, async ({ page }) => {
     await disableAutoLayout(page);

@@ -28,9 +28,15 @@ one-variable query and bind together when a result is chosen.
 
 ## Approved ordered exploration contract (DEC-008)
 
-**Variables and blocks.** Run Query considers only the first graph component,
-as before. Each distinct variable name is one block, whether it occurs as a
-node value, an edge predicate, or both; repeated occurrences share the block
+**Variables and blocks.** Run Query considers one graph component, the
+*query component*. *Changed by BUG-004 (2026-10-06):* it is the only component
+that contains a variable; components without variables are ignored. With no
+variable anywhere it is the first component, as before. If two or more
+components contain variables, Run Query and View SPARQL show an error asking
+to connect them or remove one, send no request, and no stage order is shown.
+The node menu's Run query keeps using the clicked node's component.
+Each distinct variable name is one block, whether it occurs as a node value,
+an edge predicate, or both; repeated occurrences share the block
 and are bound together. Zero variables keep the existing error toast; one
 variable keeps the legacy `/api/query` results table. Two or more variables use
 staged exploration.

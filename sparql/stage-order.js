@@ -4,14 +4,20 @@
 'use strict';
 
 // ── Ordered variable registry (DEC-008) ───────────────────────────
-// Session-only order of distinct query variables in the first graph component.
+// Session-only order of distinct query variables in the query component.
 // It resets to sorted names whenever the query signature changes.
 let variableOrderState = { signature: null, order: [], registry: [] };
 const variableOrderListeners = [];
 
-function queryComponent() {
+// The component with the variables (BUG-004); see queryStages.queryComponentChoice.
+function selectQueryComponent() {
     const components = cy ? cy.elements().components() : [];
-    return components.length ? components[0] : null;
+    const choice = window.queryStages.queryComponentChoice(components.map(component => component.map(item => item.data())));
+    return { component: choice.index === null ? null : components[choice.index], ambiguous: choice.ambiguous };
+}
+
+function queryComponent() {
+    return selectQueryComponent().component;
 }
 
 function refreshVariableOrder() {

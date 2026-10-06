@@ -55,6 +55,20 @@ export function buildVariableRegistry(items) {
 }
 
 /**
+ * Which graph component a query uses (BUG-004): the only component with a
+ * variable, or the first one when none has a variable. Variables spread over
+ * several components are ambiguous and select nothing.
+ * @param {GraphItem[][]} components
+ * @returns {{index: number | null, ambiguous: boolean}}
+ */
+export function queryComponentChoice(components) {
+  const withVariables = components.flatMap((items, index) => (buildVariableRegistry(items).length ? [index] : []));
+  if (withVariables.length > 1) return { index: null, ambiguous: true };
+  if (withVariables.length === 1) return { index: withVariables[0], ambiguous: false };
+  return { index: components.length ? 0 : null, ambiguous: false };
+}
+
+/**
  * Stable description of everything a staged query depends on. Labels and
  * positions are excluded so cosmetic edits do not reset the user's order.
  * @param {string} endpointUrl

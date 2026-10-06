@@ -57,7 +57,7 @@ click cancels the preview without adding an edge. The new edge has `nodeId`
 set to the chosen predicate, so `buildFilters()` includes it in the existing
 query request. No new graph node or backend route is created for this flow.
 
-**Confirmed:** Before staging or executing the first component, Run Query
+**Confirmed:** Before staging or executing the query component, Run Query
 rejects multiple distinct predicate variables on the same directed pair of
 fixed RDF endpoints. Those parallel edges do not form a traversal chain.
 Two variables on successive edges still stage; parallel edges sharing a single
@@ -111,7 +111,8 @@ capability through the graph interface.
 ordered staged exploration for two or more variables (DEC-008). `FE-004`
 added the no-request panel. `FE-008` added the session-only variable
 registry in `index2.html` (`refreshVariableOrder`, `getVariableOrder`,
-`setVariableOrder`): one entry per distinct variable of the first component,
+`setVariableOrder`): one entry per distinct variable of the query component
+(see BUG-004 in [[Two Variable Exploration Contract]]),
 sorted initially, reset when the exploration signature (endpoint plus element
 IDs, values, endpoints, predicates and filter types; not labels or positions)
 changes. Cytoscape `add`/`remove`/`data` events, endpoint input/change and

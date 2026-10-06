@@ -9,6 +9,7 @@ import {
   moveItem,
   possibleGraphView,
   possibleValues,
+  queryComponentChoice,
   stageCacheKey,
   stagePageSize,
   stageRequest,
@@ -30,6 +31,26 @@ test('registry has one sorted entry per variable name across node and predicate 
     { name: '?p', nodeIds: [], edgeIds: ['e2'] },
     { name: '?zeta', nodeIds: ['?zeta'], edgeIds: [] },
   ]);
+});
+
+test('the query component is the only one with variables, else the first, and ambiguous across several', () => {
+  const fixed = [
+    { id: 'pikachu', value: '<https://example.test/pikachu>' },
+    { id: 'electric', value: '<https://example.test/electric>' },
+    { id: 'resists', source: 'pikachu', target: 'electric', nodeId: '<https://example.test/resistantTo>' },
+  ];
+  const nodeVariable = [{ id: '?node_1', value: '?node_1' }];
+  const predicateVariable = [
+    { id: 'fire', value: '<https://example.test/fire>' },
+    { id: 'target', value: '<https://example.test/water>' },
+    { id: 'e', source: 'fire', target: 'target', nodeId: '?predicate_1' },
+  ];
+  assert.deepEqual(queryComponentChoice([]), { index: null, ambiguous: false });
+  assert.deepEqual(queryComponentChoice([fixed]), { index: 0, ambiguous: false });
+  assert.deepEqual(queryComponentChoice([fixed, fixed]), { index: 0, ambiguous: false });
+  assert.deepEqual(queryComponentChoice([fixed, nodeVariable]), { index: 1, ambiguous: false });
+  assert.deepEqual(queryComponentChoice([fixed, predicateVariable, fixed]), { index: 1, ambiguous: false });
+  assert.deepEqual(queryComponentChoice([nodeVariable, fixed, predicateVariable]), { index: null, ambiguous: true });
 });
 
 test('signature ignores element order and labels but changes on values, predicates, filters and endpoint', () => {

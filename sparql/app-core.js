@@ -157,14 +157,21 @@ function rewireEdges(oldId, newId) {
     });
 }
 
+// Run Query/View SPARQL when variables are in several components (BUG-004).
+const SEPARATE_VARIABLE_GROUPS_MESSAGE =
+    'Variables are in separate, unconnected parts of the graph. Connect them or remove one part before running.';
+
 // ── API: view SPARQL ──────────────────────────────────────────────
 function seeSparqlQuery() {
-    const conjuntos = cy.elements().components();
-    if (!conjuntos.length || !conjuntos[0].length) {
+    const { component, ambiguous } = selectQueryComponent();
+    if (ambiguous) {
+        toast(SEPARATE_VARIABLE_GROUPS_MESSAGE, 'error');
+        return;
+    }
+    if (!component || !component.length) {
         toast('Add at least one node to preview the query.', 'error');
         return;
     }
-    const component    = conjuntos[0];
     const variableName = extractVariableName(component);
     const filters      = buildFilters(component);
 
@@ -427,13 +434,17 @@ function loadQuery()    { document.getElementById('upload-json').click(); }
 function uploadTriples(){ document.getElementById('upload-triple').click(); }
 
 function runQuery() {
-    const conjuntos = cy.elements().components();
-    if (!conjuntos.length || !conjuntos[0].length) {
+    const { component, ambiguous } = selectQueryComponent();
+    if (ambiguous) {
+        closeTwoVariablePanel();
+        toast(SEPARATE_VARIABLE_GROUPS_MESSAGE, 'error');
+        return;
+    }
+    if (!component || !component.length) {
         toast('Add at least one node before running the query.', 'error');
         return;
     }
 
-    const component    = conjuntos[0];
     if (hasParallelPredicateVariables(component)) {
         closeTwoVariablePanel();
         toast('Parallel predicate variables between the same fixed subject and object do not form a chain. Keep one predicate variable for this pair.', 'error');
