@@ -28,6 +28,7 @@ Ordered by dependencies, then priority among selection candidates. See [worker r
 | COM-001 | DONE | P1 | frontend-backend | [Characterize frontend-to-backend request flows](<items/COM-001-frontend-backend-contract.md>) |
 | DATA-001 | DONE | P2 | decision | [Decide canonical Brazilian football dataset behavior](<items/DATA-001-brazilian-dataset-decision.md>) |
 | DATA-002 | DONE | P1 | data | [Add a built-in first-generation Pokémon dataset for trying the tool](<items/DATA-002-pokemon-gen1-dataset.md>) |
+| DATA-003 | READY | P1 | data | [Extend PokemonGen1 with per-Pokémon strengths and Pokédex lore links](<items/DATA-003-pokemon-matchups-and-lore.md>) |
 | OPS-001 | DONE | P2 | operations | [Define container and JVM runtime packaging](<items/OPS-001-container-runtime.md>) |
 | DEC-009 | DONE | P1 | decision | [Decide captured C# versus Kotlin health response contract](<items/DEC-009-health-response-contract.md>) |
 | FE-001 | DONE | P1 | frontend | [Add browser-level tests for authoritative frontend flows](<items/FE-001-browser-frontend-flow-tests.md>) |
