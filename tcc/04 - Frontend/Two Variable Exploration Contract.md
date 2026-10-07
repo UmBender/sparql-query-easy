@@ -109,6 +109,16 @@ changes the graph: variable nodes are replaced by the chosen IRI/literal nodes
 (edges rewired as in the legacy node replacement) and predicate-variable edges
 are bound in place. Closing the panel or Back leaves the graph unchanged.
 
+*Approved change (FE-025, external requirement from the thesis advisor):*
+each selectable value of the current stage also has an **Assume** button, a
+second explicit graph-changing action. It applies the earlier commitments
+plus that value with the same replacement rules as Apply, closes the panel,
+keeps the remaining variables in their current block order and runs Run
+Query again: the panel reopens at stage 1 for 2+ remaining variables, the
+legacy single-variable query runs for one, and nothing more happens for none.
+Clicking the value itself still only commits inside the panel; blank nodes
+have no Assume button.
+
 *Implemented (FE-010):* committing the last stage shows "All variables
 chosen" with the numbered commitments, Back and **Apply to graph**. Apply
 closes the panel first, then in one Cytoscape batch binds each IRI to its

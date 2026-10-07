@@ -125,8 +125,9 @@ elements (`initVariableEmphasis`, `applyVariableEmphasis`, class
 variables open the panel with that order. The panel runs one exploration
 (`startExploration`): one current stage request, a shared page cache, the
 `createPreviewScheduler` preview budget, commitments with Back, and a final
-**Apply to graph** (`applyExplorationToGraph`), the only step that edits
-Cytoscape.
+**Apply to graph** (`applyExplorationToGraph`). `FE-025` adds an **Assume**
+button per selectable value (`assumeStageCandidate`); Apply and Assume share
+`applyChoicesToGraph` and are the only steps that edit Cytoscape.
 
 **Confirmed (FE-014):** mouse-wheel zoom uses Cytoscape
 `wheelSensitivity: 0.2` (about 1.2× per notch, near the 1.25× zoom buttons);

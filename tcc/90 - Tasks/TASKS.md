@@ -55,6 +55,7 @@ Ordered by dependencies, then priority among selection candidates. See [worker r
 | FE-022 | DONE | P2 | refactor | [Move graph action menus into a controller file](<items/FE-022-graph-menu-controller.md>) |
 | FE-023 | DONE | P1 | frontend | [Emphasize a variable in the graph and the stage order together on hover](<items/FE-023-variable-order-hover-emphasis.md>) |
 | FE-024 | DONE | P1 | frontend | [Enlarge the possible-graph window and move long labels under their element](<items/FE-024-possible-graph-readable-labels.md>) |
+| FE-025 | DONE | P1 | frontend | [Let a stage value be applied to the graph immediately with an Assume button](<items/FE-025-assume-stage-value-now.md>) |
 | INV-001 | DONE | P1 | investigation | [Investigate Ktor HTTP-client and runtime resource lifecycle](<items/INV-001-runtime-resource-lifecycle.md>) |
 | QUAL-001 | DONE | P1 | quality | [Replay recorded Wikidata success and controlled error route fixtures](<items/QUAL-001-recorded-wikidata-routes.md>) |
 | MIG-002 | DONE | P1 | migration | [Retire the C# project after compatibility and operations gates](<items/MIG-002-retire-csharp-project.md>) |

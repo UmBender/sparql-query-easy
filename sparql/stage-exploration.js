@@ -420,19 +420,62 @@ function renderStage() {
         button.addEventListener('mouseleave', settleStagePreview);
         button.addEventListener('blur', settleStagePreview);
         item.append(button);
+        if (candidate.selectable) item.append(assumeButton(candidate));
         return item;
     }));
     if (focusedKey) list.querySelector(`[data-term="${CSS.escape(focusedKey)}"]`)?.focus();
     renderStagePreview();
 }
 
-// The only exploration action that changes the graph (DEC-008 final action):
-// variable nodes become the chosen IRI/literal nodes with their edges rewired,
+// FE-025: Assume applies the earlier commitments and this value to the graph
+// now, then Run Query continues with the remaining variables in their order.
+function assumeButton(candidate) {
+    const text = window.queryStages.candidateText(candidate);
+    const button = document.createElement('button');
+    button.type = 'button';
+    button.className = 'stage-assume';
+    button.textContent = 'Assume';
+    button.setAttribute('aria-label', `Assume ${exploration.order[exploration.stage]} = ${text} in the graph now`);
+    button.title = 'Apply this value to the graph now';
+    button.addEventListener('click', () => assumeStageCandidate(candidate));
+    button.addEventListener('mouseenter', () => previewStageCandidate(candidate));
+    button.addEventListener('focus', () => previewStageCandidate(candidate));
+    button.addEventListener('mouseleave', settleStagePreview);
+    button.addEventListener('blur', settleStagePreview);
+    return button;
+}
+
+function assumeStageCandidate(candidate) {
+    if (!exploration || !candidate.selectable || isExplorationComplete()) return;
+    const choices = [
+        ...explorationChoices(),
+        { variableName: exploration.order[exploration.stage], term: candidate.term, label: window.queryStages.candidateText(candidate) },
+    ];
+    const remaining = exploration.order.slice(exploration.stage + 1);
+    applyChoicesToGraph(choices);
+    refreshVariableOrder();
+    const available = getVariableOrder();
+    setVariableOrder([
+        ...remaining.filter(name => available.includes(name)),
+        ...available.filter(name => !remaining.includes(name)),
+    ]);
+    if (remaining.length) runQuery();
+}
+
+function explorationChoices() {
+    return exploration.bindings.map((binding, index) => ({ ...binding, label: exploration.labels[index] }));
+}
+
+// The final exploration action (DEC-008); Assume (FE-025) is the other one.
+// Variable nodes become the chosen IRI/literal nodes with their edges rewired,
 // and predicate-variable edges are bound in place, keeping edge IDs.
 function applyExplorationToGraph() {
     if (!exploration || !isExplorationComplete()) return;
+    applyChoicesToGraph(explorationChoices());
+}
+
+function applyChoicesToGraph(choices) {
     const registry = variableOrderState.registry;
-    const choices = exploration.bindings.map((binding, index) => ({ ...binding, label: exploration.labels[index] }));
     closeTwoVariablePanel();
     cy.batch(() => {
         for (const { variableName, term, label } of choices) {

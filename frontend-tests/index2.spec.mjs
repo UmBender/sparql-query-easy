@@ -605,6 +605,8 @@ test('the first stage requests typed candidates for the reordered first variable
   await expect(page.locator('#stage-heading')).toHaveText('Stage 1 of 2: ?team');
   await expect(candidateButtons(page)).toHaveText([/Grêmio\s*IRI/, /1903\s*literal integer/, /Grêmio\s*literal @pt/, /b0\s*blank node \(not selectable\)/]);
   await expect(candidateButtons(page).nth(3)).toBeDisabled();
+  await expect(page.locator('#stage-candidates li').nth(3).locator('.stage-assume')).toHaveCount(0);
+  await expect(page.locator('#stage-candidates .stage-assume')).toHaveCount(3);
   await expect(page.locator('#stage-status')).toHaveText('4 values for ?team.');
   expect(requests).toEqual([{
     endpointUrl: 'CampeonatoBrasileiro2023',
@@ -892,6 +894,57 @@ test('three ordered stages end in a summary and only Apply to graph changes the 
     edges: [{ id: 'rel', source: '<https://example.test/a1>', target: '1903', nodeId: '<https://example.test/p1>', label: 'founded', type: undefined }],
   });
   await expect(page.locator('#variable-order')).toBeHidden();
+});
+
+const assumeButtons = page => page.locator('#stage-candidates .stage-assume');
+const graphNodesAndEdges = page => page.evaluate(() => ({
+  nodes: cy.nodes().map(node => node.id()).sort(),
+  edges: cy.edges().map(edge => `${edge.id()}|${edge.data('source')}|${edge.data('nodeId')}|${edge.data('target')}`),
+}));
+
+test('Assume on the first stage applies that value now and reopens the remaining variables in their order', async ({ page }) => {
+  await addThreeVariableChain(page);
+  const requests = await routeStages(page, threeStageResponder());
+  await page.getByRole('button', { name: 'Move ?c earlier' }).click();
+  await expect(blockNames(page)).toHaveText(['?a', '?c', '?b']);
+  await page.locator('#run-query-btn').click();
+  await expect(candidateButtons(page)).toHaveCount(2);
+
+  await page.getByRole('button', { name: 'Assume ?a = Alpha in the graph now' }).click();
+
+  expect(await graphNodesAndEdges(page)).toEqual({
+    nodes: ['<https://example.test/a1>', '?c'],
+    edges: ['rel|<https://example.test/a1>|?b|?c'],
+  });
+  await expect(page.locator('#two-variable-panel')).toBeVisible();
+  await expect(page.locator('#stage-heading')).toHaveText('Stage 1 of 2: ?c');
+  await expect(page.locator('#stage-commitments li')).toHaveCount(0);
+  await expect(blockNames(page)).toHaveText(['?c', '?b']);
+  const last = requests.at(-1);
+  expect(last.variableName).toBe('?c');
+  expect(last.bindings).toEqual([]);
+  expect(last.where).toEqual([{ subject: '<https://example.test/a1>', predicate: '?b', object: '?c', filterType: null }]);
+});
+
+test('Assume on a later stage applies the committed path and runs the legacy query for the last variable', async ({ page }) => {
+  await addThreeVariableChain(page);
+  await routeStages(page, threeStageResponder());
+  await page.locator('#run-query-btn').click();
+  await candidateButtons(page).first().click();
+  await expect(page.locator('#stage-heading')).toHaveText('Stage 2 of 3: ?b');
+  const queriesBefore = server.requests.filter(({ path }) => path === '/api/query').length;
+
+  await assumeButtons(page).first().click();
+
+  await expect(page.locator('#two-variable-panel')).toBeHidden();
+  expect(await graphNodesAndEdges(page)).toEqual({
+    nodes: ['<https://example.test/a1>', '?c'],
+    edges: ['rel|<https://example.test/a1>|<https://example.test/p1>|?c'],
+  });
+  await expect.poll(() => server.requests.filter(({ path }) => path === '/api/query').length).toBe(queriesBefore + 1);
+  const body = JSON.parse(server.requests.filter(({ path }) => path === '/api/query').at(-1).body);
+  expect(body.variableName).toBe('?c');
+  expect(body.where[0]).toMatchObject({ subject: '<https://example.test/a1>', predicate: '<https://example.test/p1>', object: '?c' });
 });
 
 test('Back and Close from the summary leave the graph unchanged', async ({ page }) => {
