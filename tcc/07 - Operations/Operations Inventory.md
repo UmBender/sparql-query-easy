@@ -22,6 +22,13 @@ flowchart LR
   Decision --> Unknown[Hosting target undecided]
 ```
 
+## Deployment plan
+
+**Intended (DOC-003):** the step-by-step deployment plan and the hands-on
+learning path live in [[Deployment Learning Path/00 - Deployment Roadmap]],
+with progress in [[Deployment Learning Path/Deployment Learning Tracker]].
+Nothing in it is deployed yet.
+
 ## CORS and TLS
 
 **Intended:** Local development serves static frontend and API same-origin on port 8080. Production CORS is deferred until a frontend domain is selected.
