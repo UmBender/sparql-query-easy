@@ -26,6 +26,7 @@ export function nodeActions(data, hasVariableSource) {
     actions.push({ id: 'explore-default', label: 'Explore values' });
   } else if (data.type === 'variable') {
     actions.push({ id: 'run-query', label: 'Run query' });
+    actions.push({ id: 'add-value-filter', label: 'Add value filter' });
   }
 
   if (hasVariableSource && (data.label === 'true' || data.label === 'false')) {

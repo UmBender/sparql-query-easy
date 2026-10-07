@@ -1868,3 +1868,111 @@ test('fetchNumericProfile profiles the relation of a filter node under the rest 
   await expect(page.evaluate(() => fetchNumericProfile('speed-value'))).rejects.toThrow('limit must be between 1 and 1000');
   expect(await page.evaluate(() => fetchNumericProfile('?p'))).toBeNull();
 });
+
+// BUG-006: re-fetching a fixed IRI neighbour after result selection asked for a
+// literal, so the IRI came back as a pink value node labelled with the raw IRI.
+test('choosing a result re-adds a fixed IRI neighbour as an IRI node with its label', async ({ page }) => {
+  await disableAutoLayout(page);
+  await page.evaluate(() => {
+    cy.add([
+      { group: 'nodes', data: { id: '?mon', value: '?mon', label: '?', type: 'variable' }, position: { x: 400, y: 300 } },
+      { group: 'nodes', data: { id: '<https://e/Electric>', value: '<https://e/Electric>', label: 'Electric', type: 'node' }, position: { x: 150, y: 300 } },
+      { group: 'nodes', data: { id: 'attack-value', value: '130', label: '130', type: 'label' }, position: { x: 400, y: 100 } },
+      { group: 'edges', data: { id: 'immune', source: '?mon', target: '<https://e/Electric>', nodeId: '<https://e/immuneTo>', label: 'immune to' } },
+      { group: 'edges', data: { id: 'attack', source: '?mon', target: 'attack-value', nodeId: '<https://e/attack>', label: 'Attack' } },
+    ]);
+  });
+  await page.route('**/api/query', route => route.fulfill({ contentType: 'application/json',
+    body: JSON.stringify({ data: [{ propertyId: '<https://e/Rhydon>', propertyLabel: 'Rhydon', propertyType: 'object', propertyClass: null }] }) }));
+  const valueRequests = [];
+  await page.route('**/api/query/relationship-value', route => {
+    const request = route.request().postDataJSON();
+    valueRequests.push(request);
+    const data = request.isLiteral
+      ? [{ propertyId: '130', propertyLabel: '130', propertyType: 'text' }]
+      : [{ propertyId: '<https://e/Electric>', propertyLabel: 'Electric', propertyType: null }];
+    return route.fulfill({ contentType: 'application/json', body: JSON.stringify({ data }) });
+  });
+  await runLegacyQueryFromNode(page, '?mon');
+  await expect(page.locator('#table-results-body')).toContainText('Rhydon');
+  await page.locator('#table-results-body tr.query-row').dispatchEvent('click');
+
+  await expect.poll(() => valueRequests.length).toBe(2);
+  expect(valueRequests.map(({ predicateId, isLiteral }) => [predicateId, isLiteral]).sort())
+    .toEqual([['<https://e/attack>', true], ['<https://e/immuneTo>', false]]);
+  await expect.poll(() => page.evaluate(() => cy.nodes().map(node => [node.id(), node.data('label'), node.data('type')]).sort()))
+    .toEqual([['130', '130', 'label'], ['<https://e/Electric>', 'Electric', 'node'], ['<https://e/Rhydon>', 'Rhydon', 'node']]);
+});
+
+// FE-030: Add value filter creates a value node through a datatype relation
+// and opens its filter editor.
+async function addValueFilterGraph(page, { profile }) {
+  await disableAutoLayout(page);
+  await page.evaluate(() => {
+    cy.add([
+      { group: 'nodes', data: { id: '?mon', value: '?mon', label: '?', type: 'variable' }, position: { x: 300, y: 300 } },
+      { group: 'nodes', data: { id: '<https://e/Fire>', value: '<https://e/Fire>', label: 'Fire', type: 'node' }, position: { x: 100, y: 300 } },
+      { group: 'edges', data: { id: 'has-type', source: '?mon', target: '<https://e/Fire>', nodeId: '<https://e/hasType>', label: 'has type' } },
+    ]);
+  });
+  const relationshipRequests = [];
+  await page.route('**/api/query/relationships', route => {
+    relationshipRequests.push(route.request().postDataJSON());
+    return route.fulfill({ contentType: 'application/json', body: JSON.stringify({ data: [
+      { propertyId: '<https://e/speed>', propertyLabel: 'Speed', propertyType: 'label' },
+      { propertyId: '<https://e/hasType>', propertyLabel: 'has type', propertyType: 'objeto' },
+      { propertyId: '<https://e/category>', propertyLabel: 'category', propertyType: 'label' },
+      { propertyId: '<https://e/hp>', propertyLabel: 'HP', propertyType: 'label' },
+      { propertyId: '<https://e/x>', propertyLabel: '', propertyType: 'outro' },
+    ] }) });
+  });
+  const profileRequests = [];
+  await page.route('**/api/query/numeric-profile', route => {
+    profileRequests.push(route.request().postDataJSON());
+    return route.fulfill({ contentType: 'application/json', body: JSON.stringify({ data: profile }) });
+  });
+  await clickGraphNode(page, '?mon');
+  await page.locator('#node-action-menu').getByRole('button', { name: 'Add value filter' }).click();
+  return { relationshipRequests, profileRequests };
+}
+
+test('Add value filter lists datatype relations and opens the editor on a seeded value node', async ({ page }) => {
+  const { relationshipRequests, profileRequests } = await addValueFilterGraph(page, { profile: {
+    subject: '?mon', predicate: '<https://e/hp>', count: 3, min: 39, max: 78, truncated: true,
+    values: [{ entity: { type: 'iri', value: 'https://e/Charmander', datatype: null, language: null }, label: 'Charmander', value: '39', datatype: 'http://www.w3.org/2001/XMLSchema#integer', number: 39 }],
+  } });
+  const menu = page.locator('#node-action-menu');
+  await expect(menu.locator('.node-action-menu-message')).toHaveText('Choose a value relation:');
+  await expect(menu.locator('button[data-action="choose-predicate"]')).toHaveText(['category', 'HP', 'Speed']);
+  expect(relationshipRequests[0].id).toBe('?mon');
+
+  await menu.getByRole('button', { name: 'HP', exact: true }).click();
+
+  await expect(page.locator('#modal-new-value')).toHaveValue('39');
+  await expect(page.locator('#modal-change-value')).toContainText('At least (≥)');
+  expect(profileRequests).toHaveLength(1);
+  expect(profileRequests[0]).toMatchObject({
+    where: [{ subject: '?mon', predicate: '<https://e/hasType>', object: '<https://e/Fire>', filterType: null }],
+    subject: '?mon', predicate: '<https://e/hp>', limit: 1,
+  });
+  const value = await page.evaluate(() => {
+    const node = cy.nodes('[type = "label"]')[0];
+    const edge = node.connectedEdges()[0];
+    return { value: node.data('value'), label: node.data('label'), source: edge.data('source'), nodeId: edge.data('nodeId'), edgeLabel: edge.data('label') };
+  });
+  expect(value).toEqual({ value: '39', label: '39', source: '?mon', nodeId: '<https://e/hp>', edgeLabel: 'HP' });
+
+  await page.evaluate(() => {
+    document.querySelector('#modal-change-value input[name=filter-type][value="2"]').checked = true;
+    document.getElementById('modal-new-value').value = '60';
+    document.getElementById('apply-filter-btn').click();
+  });
+  expect(await filterNode(page)).toEqual({ label: '≥ 60', value: '60', filterType: 2 });
+});
+
+test('Add value filter on a relation without numbers opens the text editor on an empty value', async ({ page }) => {
+  await addValueFilterGraph(page, { profile: { subject: '?mon', predicate: '<https://e/category>', count: 0, min: null, max: null, truncated: false, values: [] } });
+  await page.locator('#node-action-menu').getByRole('button', { name: 'category', exact: true }).click();
+  await expect(page.locator('#modal-change-value')).toContainText('Starts with');
+  await expect(page.locator('#modal-new-value')).toHaveValue('');
+});

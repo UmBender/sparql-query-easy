@@ -385,7 +385,7 @@ function getRelationshipValue(nodeLine) {
     });
 }
 
-function getRelationshipValueChange(subject, predicate, predicateLabel) {
+function getRelationshipValueChange(subject, predicate, predicateLabel, isLiteral = true) {
     $.ajax({
         url:         apiUrl('/api/query/relationship-value'),
         type:        'POST',
@@ -394,7 +394,7 @@ function getRelationshipValueChange(subject, predicate, predicateLabel) {
             endpointUrl: getEndpoint(),
             subjectId:   subject,
             predicateId: predicate,
-            isLiteral:   true
+            isLiteral
         }),
         success(data) {
             if (data.data.length === 1) {

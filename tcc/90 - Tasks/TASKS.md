@@ -28,6 +28,7 @@ Ordered by dependencies, then priority among selection candidates. See [worker r
 | BUG-003 | DONE | P1 | bug | [Keep result-table selection working when the value is already in a cyclic graph](<items/BUG-003-result-selection-in-cyclic-graphs.md>) |
 | BUG-004 | DONE | P1 | bug | [Run Query uses the graph group that contains the variables](<items/BUG-004-run-query-component-with-variables.md>) |
 | BUG-005 | DONE | P1 | bug | [A single remaining variable is staged so literal values are not lost](<items/BUG-005-single-variable-literal-results.md>) |
+| BUG-006 | DONE | P1 | bug | [Choosing a result keeps a fixed IRI neighbour as an IRI node](<items/BUG-006-result-selection-iri-neighbour.md>) |
 | COM-001 | DONE | P1 | frontend-backend | [Characterize frontend-to-backend request flows](<items/COM-001-frontend-backend-contract.md>) |
 | DATA-001 | DONE | P2 | decision | [Decide canonical Brazilian football dataset behavior](<items/DATA-001-brazilian-dataset-decision.md>) |
 | DATA-002 | DONE | P1 | data | [Add a built-in first-generation Pokémon dataset for trying the tool](<items/DATA-002-pokemon-gen1-dataset.md>) |
@@ -65,6 +66,7 @@ Ordered by dependencies, then priority among selection candidates. See [worker r
 | FE-027 | READY | P1 | frontend | [Visualize a numeric filter as a dot strip with a live count badge on the graph](<items/FE-027-filter-dot-strip-badge.md>) |
 | FE-028 | READY | P1 | frontend | [Visualize how each filter narrows the result as a funnel](<items/FE-028-filter-funnel.md>) |
 | FE-029 | READY | P1 | frontend | [Show the filtered result as a live graph that changes with the range](<items/FE-029-filter-live-result-graph.md>) |
+| FE-030 | DONE | P1 | frontend | [Add a value filter to a variable node from its action list](<items/FE-030-add-value-filter-node-action.md>) |
 | INV-001 | DONE | P1 | investigation | [Investigate Ktor HTTP-client and runtime resource lifecycle](<items/INV-001-runtime-resource-lifecycle.md>) |
 | LEARN-001 | REVIEW | P1 | learning | [Learn the Linux shell and networking needed to debug a web app](<items/LEARN-001-linux-shell-networking.md>) |
 | LEARN-002 | REVIEW | P1 | learning | [Learn containers by running and inspecting the app image](<items/LEARN-002-containers-docker.md>) |
