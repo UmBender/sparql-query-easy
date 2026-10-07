@@ -1,7 +1,7 @@
 ---
 id: FE-026
 title: Visualize a numeric filter as a range slider over a histogram
-status: REVIEW
+status: DONE
 priority: P1
 type: frontend
 depends_on: [BE-003]
@@ -69,3 +69,5 @@ A two-handle range slider over a histogram of the profiled values inside the fil
     equal-width over the sample, so a truncated profile shows only its lowest
     values; slider steps are 1 for whole numbers and a power of ten near 1%
     of the span otherwise.
+- 2026-10-07: Accepted by the user after testing (with FE-030's Add value
+  filter) and fast-forwarded into `main` at `1204dd1` (DEC-010).

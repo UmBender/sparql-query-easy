@@ -62,7 +62,7 @@ Ordered by dependencies, then priority among selection candidates. See [worker r
 | FE-023 | DONE | P1 | frontend | [Emphasize a variable in the graph and the stage order together on hover](<items/FE-023-variable-order-hover-emphasis.md>) |
 | FE-024 | DONE | P1 | frontend | [Enlarge the possible-graph window and move long labels under their element](<items/FE-024-possible-graph-readable-labels.md>) |
 | FE-025 | DONE | P1 | frontend | [Let a stage value be applied to the graph immediately with an Assume button](<items/FE-025-assume-stage-value-now.md>) |
-| FE-026 | REVIEW | P1 | frontend | [Visualize a numeric filter as a range slider over a histogram](<items/FE-026-filter-range-histogram.md>) |
+| FE-026 | DONE | P1 | frontend | [Visualize a numeric filter as a range slider over a histogram](<items/FE-026-filter-range-histogram.md>) |
 | FE-027 | READY | P1 | frontend | [Visualize a numeric filter as a dot strip with a live count badge on the graph](<items/FE-027-filter-dot-strip-badge.md>) |
 | FE-028 | READY | P1 | frontend | [Visualize how each filter narrows the result as a funnel](<items/FE-028-filter-funnel.md>) |
 | FE-029 | READY | P1 | frontend | [Show the filtered result as a live graph that changes with the range](<items/FE-029-filter-live-result-graph.md>) |

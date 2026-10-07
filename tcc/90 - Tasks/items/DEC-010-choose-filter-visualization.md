@@ -25,3 +25,7 @@ combined into the chosen one?
 ## Execution log
 
 - 2026-10-07: Created; waits for the four variant branches.
+- 2026-10-07: Partial decision: FE-026 (histogram + range slider) is
+  accepted and merged into `main` (`1204dd1`). FE-027, FE-028 and FE-029
+  stay unmerged on their branches until the user tests them; still open is
+  whether any of them (or parts) is combined with FE-026.
