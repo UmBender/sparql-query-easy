@@ -40,3 +40,8 @@ Uploaded graphs are process-local and may not be backup candidates; confirm prod
 
 ## Execution log
 - 2026-09-16: Blocked pending production architecture.
+- 2026-10-07: Finding from LEARN-001 (observed): the Kotlin app starts with
+  `SLF4J(W): No SLF4J providers were found … Defaulting to no-operation (NOP)
+  logger`, so it emits no application or Ktor logs. Any log shipping
+  (`docker logs`, CloudWatch) needs a logging backend such as Logback first.
+  Not changed here; the task remains blocked on the architecture choice.

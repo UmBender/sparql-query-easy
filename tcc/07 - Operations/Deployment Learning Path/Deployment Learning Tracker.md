@@ -84,7 +84,7 @@ Status: todo · Started: · Finished: · Hours: · Confidence:
 
 **Lesson**
 
-- [ ] Lesson written (Claude)
+- [x] Lesson written (Claude) — [[L01 - Linux Shell and Networking]]
 - [ ] Lesson read
 - [ ] Reading list skimmed
 

@@ -65,7 +65,7 @@ Ordered by dependencies, then priority among selection candidates. See [worker r
 | FE-028 | READY | P1 | frontend | [Visualize how each filter narrows the result as a funnel](<items/FE-028-filter-funnel.md>) |
 | FE-029 | READY | P1 | frontend | [Show the filtered result as a live graph that changes with the range](<items/FE-029-filter-live-result-graph.md>) |
 | INV-001 | DONE | P1 | investigation | [Investigate Ktor HTTP-client and runtime resource lifecycle](<items/INV-001-runtime-resource-lifecycle.md>) |
-| LEARN-001 | READY | P1 | learning | [Learn the Linux shell and networking needed to debug a web app](<items/LEARN-001-linux-shell-networking.md>) |
+| LEARN-001 | REVIEW | P1 | learning | [Learn the Linux shell and networking needed to debug a web app](<items/LEARN-001-linux-shell-networking.md>) |
 | LEARN-002 | READY | P1 | learning | [Learn containers by running and inspecting the app image](<items/LEARN-002-containers-docker.md>) |
 | LEARN-003 | READY | P1 | learning | [Learn to set up an AWS account safely with IAM, MFA, CLI and cost alarms](<items/LEARN-003-aws-account-iam-cost.md>) |
 | LEARN-004 | READY | P1 | learning | [Learn AWS networking: VPC, subnets, routes and security groups](<items/LEARN-004-aws-networking-vpc.md>) |

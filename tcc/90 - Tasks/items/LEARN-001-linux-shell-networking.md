@@ -1,7 +1,7 @@
 ---
 id: LEARN-001
 title: Learn the Linux shell and networking needed to debug a web app
-status: READY
+status: REVIEW
 priority: P1
 type: learning
 depends_on: []
@@ -145,3 +145,11 @@ Look for: disk and memory headroom — the two things that silently kill small s
 
 - 2026-10-07: Created from the user's request for a hands-on deployment learning
   path (DOC-003).
+- 2026-10-07: Lesson written: [[../../07 - Operations/Deployment Learning Path/L01 - Linux Shell and Networking]].
+  Every output in it was observed on the dev machine (app built from
+  `main`, Fedora, `curl` 8.18, `ncat` 7.92). Lesson findings: the app has no
+  SLF4J backend, so it writes no logs (recorded on OPS-004); `HEAD /`
+  returns 405 while `GET /` redirects (monitoring caveat); Fedora `nc` needs
+  a pause to show the reply. Status REVIEW: the user does the lab and ticks
+  "Done when" in the tracker to close it (human gate). Validation:
+  `node scripts/check-project-docs.mjs`, `git diff --check`.
