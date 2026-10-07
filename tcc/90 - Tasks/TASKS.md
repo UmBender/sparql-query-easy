@@ -27,6 +27,7 @@ Ordered by dependencies, then priority among selection candidates. See [worker r
 | BUG-002 | DONE | P1 | bug | [Map relationship executor failures to the approved JSON 502 contract](<items/BUG-002-relationship-upstream-error-mapping.md>) |
 | BUG-003 | DONE | P1 | bug | [Keep result-table selection working when the value is already in a cyclic graph](<items/BUG-003-result-selection-in-cyclic-graphs.md>) |
 | BUG-004 | DONE | P1 | bug | [Run Query uses the graph group that contains the variables](<items/BUG-004-run-query-component-with-variables.md>) |
+| BUG-005 | DONE | P1 | bug | [A single remaining variable is staged so literal values are not lost](<items/BUG-005-single-variable-literal-results.md>) |
 | COM-001 | DONE | P1 | frontend-backend | [Characterize frontend-to-backend request flows](<items/COM-001-frontend-backend-contract.md>) |
 | DATA-001 | DONE | P2 | decision | [Decide canonical Brazilian football dataset behavior](<items/DATA-001-brazilian-dataset-decision.md>) |
 | DATA-002 | DONE | P1 | data | [Add a built-in first-generation Pokémon dataset for trying the tool](<items/DATA-002-pokemon-gen1-dataset.md>) |

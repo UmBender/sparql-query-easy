@@ -481,8 +481,10 @@ function runQuery() {
         toast('Parallel predicate variables between the same fixed subject and object do not form a chain. Keep one predicate variable for this pair.', 'error');
         return;
     }
+    // BUG-005: one variable also uses staged exploration, because the legacy
+    // /api/query projection drops untyped values such as literals.
     const orderedVariables = refreshVariableOrder();
-    if (orderedVariables.length >= 2) {
+    if (orderedVariables.length >= 1) {
         openTwoVariablePanel(orderedVariables, component);
         return;
     }
