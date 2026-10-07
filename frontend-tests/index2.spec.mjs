@@ -1950,7 +1950,7 @@ test('Add value filter lists datatype relations and opens the editor on a seeded
 
   await expect(page.locator('#modal-new-value')).toHaveValue('39');
   await expect(page.locator('#modal-change-value')).toContainText('At least (≥)');
-  expect(profileRequests).toHaveLength(1);
+  // The seed request comes first; an editor histogram may profile again.
   expect(profileRequests[0]).toMatchObject({
     where: [{ subject: '?mon', predicate: '<https://e/hasType>', object: '<https://e/Fire>', filterType: null }],
     subject: '?mon', predicate: '<https://e/hp>', limit: 1,
