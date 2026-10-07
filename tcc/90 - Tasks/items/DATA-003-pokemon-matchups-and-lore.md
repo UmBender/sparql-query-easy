@@ -1,7 +1,7 @@
 ---
 id: DATA-003
 title: Extend PokemonGen1 with per-Pokémon strengths and Pokédex lore links
-status: READY
+status: DONE
 priority: P1
 type: data
 depends_on: [DATA-002]
@@ -64,15 +64,57 @@ or calls to live services at build/test time.
 
 ## Acceptance criteria
 
-- [ ] Charmander `strongAgainst` exactly Grass, Ice, Bug, Steel; a dual type
+- [x] Charmander `strongAgainst` exactly Grass, Ice, Bug, Steel; a dual type
       (e.g. Bulbasaur Grass/Poison) is the union of both types' strengths.
-- [ ] Lore links exist in both directions, every endpoint is one of the 151,
+- [x] Lore links exist in both directions, every endpoint is one of the 151,
       and at least a reviewed set of well-known cases is asserted by tests.
-- [ ] `node scripts/generate-pokemon-dataset.mjs --check` passes.
-- [ ] `ktlintCheck detekt test` passes; `installDist` smoke of `PokemonGen1`.
-- [ ] `node scripts/check-project-docs.mjs` and `git diff --check` pass.
+- [x] `node scripts/generate-pokemon-dataset.mjs --check` passes.
+- [x] `ktlintCheck detekt test` passes; `installDist` smoke of `PokemonGen1`.
+- [x] `node scripts/check-project-docs.mjs` and `git diff --check` pass.
 
 ## Execution log
 
 - 2026-10-07: Card created from the user's request, to run in parallel with
   frontend work on its own branch/worktree.
+- 2026-10-07: Implemented on branch `DATA-003-pokemon-matchups-and-lore`
+  (worktree under `.claude/worktrees/`), fast-forwarded to `8c45993` first.
+  - Generator: `strongAgainst` per Pokémon is the union of the chart's 2×
+    matchups of its own types (565 links; Normal-only Pokémon have none). The
+    script checks the total, the per-Pokémon union, and that only Normal-only
+    Pokémon lack strengths. A `LORE` source table holds each link with its
+    source game and a short paraphrase; checks reject unknown species, self
+    links, duplicates, unknown games and long notes, and fix the count at 8.
+    New declarations with `@en` labels: `strongAgainst`, `pokedexMentions`,
+    `mentionedInPokedexOf` (`owl:inverseOf` each other) and the
+    `rdf:langString` note `pokedexLoreNote` (`"<game>: <paraphrase>"`). No
+    offensive not-very-effective counterpart was added.
+  - Lore links included (citing → cited, game): Slowbro → Shellder and
+    Slowbro → Slowpoke (Red/Blue), Exeggutor → Exeggcute (Red/Blue),
+    Magneton → Magnemite (Red/Blue), Dugtrio → Diglett (Red/Blue),
+    Weezing → Koffing (Red/Blue), Gyarados → Magikarp (Sapphire),
+    Mewtwo → Mew (Ultra Sun). They come from recalled knowledge of these
+    entries, with no network lookup. Other candidates, including any entry
+    citing Pikachu, were left out because they were uncertain.
+  - Tests: `PokemonDatasetTest` checks Charmander (Grass, Ice, Bug, Steel), the
+    Bulbasaur and Charizard unions, Snorlax with none, the total of 565, a
+    SPARQL check that every Pokémon's strengths equal its types' union, and
+    the "weak to Pikachu's attacking types" join. It also checks the 8 reviewed
+    lore pairs in both directions, that every endpoint is one of the 151, a
+    note's game prefix and the labels. `PokemonDatasetRoutesTest` checks that
+    Slowbro's relationships expose the new properties and that the stage
+    route finds Slowbro from Shellder `mentionedInPokedexOf`.
+  - Validation: `./gradlew ktlintFormat ktlintCheck detekt test installDist`
+    passed (145 tests, 0 failures). A distribution smoke run on port 18093
+    returned health `ok`. Charmander `strongAgainst` stage candidates were
+    Bug, Grass, Ice and Steel, `?p pokedexMentions Mew` returned Mewtwo, and
+    the `slowb` search returned Slowbro. `CampeonatoBrasileiro2023` search
+    returned 200, and the server was stopped afterwards.
+    `generate-pokemon-dataset.mjs --check`, `check-project-docs.mjs` and
+    `git diff --check` passed. No frontend files changed.
+  - Docs: API v1 and Current Contracts (built-in graph row).
+  - Limitations: lore coverage is partial by design (8 links). The source
+    games for Gyarados (Sapphire) and Mewtwo (Ultra Sun) are the least certain
+    attributions, though other games' entries also make both links. No entry
+    citing Pikachu is included, so that example query returns nothing.
+    Property-label search does not list the new predicates (the search route
+    matches resources). Not merged into `main`.
