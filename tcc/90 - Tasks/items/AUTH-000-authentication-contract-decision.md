@@ -105,6 +105,11 @@ git diff --check
   testing. The task remains `BLOCKED`; no provider, credential, session,
   protected-route, cookie, CSRF, or recovery contract was invented. OpenAPI
   remains public and has no security scheme in the meantime.
+- 2026-10-07: While planning deployment (DOC-003) the user stated that login
+  passwords will be stored in PostgreSQL. Recorded as a direction for item 1
+  (application-owned users) and item 7 (storage); hashing parameters and
+  every other item remain undecided, so the task stays `BLOCKED`. `LEARN-008`
+  prepares the user to answer the remaining questions.
 
 ## Source files
 

@@ -217,7 +217,7 @@ test('Run Query and the stage order use the variable group even when a group wit
   expect(await page.evaluate(() => window.__lastToast)).toBeUndefined();
 });
 
-test('a single variable in a later group runs the legacy query for that group', async ({ page }) => {
+test('a single variable in a later group is staged for that group', async ({ page }) => {
   await addFixedGroupFirst(page);
   await page.evaluate(() => {
     cy.add([
@@ -226,12 +226,13 @@ test('a single variable in a later group runs the legacy query for that group', 
       { group: 'edges', data: { id: 'fire-relation', source: 'fire', target: '?node_1', nodeId: '<https://example.test/superEffectiveAgainst>', label: 'super effective against' } },
     ]);
   });
-  const requestsBefore = server.requests.filter(({ path }) => path === '/api/query').length;
+  const stageRequests = () => server.requests.filter(({ path }) => path === '/api/query/stage');
+  const stagesBefore = stageRequests().length;
 
   await page.locator('#run-query-btn').click();
 
-  await expect.poll(() => server.requests.filter(({ path }) => path === '/api/query').length).toBe(requestsBefore + 1);
-  const body = JSON.parse(server.requests.filter(({ path }) => path === '/api/query').at(-1).body);
+  await expect.poll(() => stageRequests().length).toBe(stagesBefore + 1);
+  const body = JSON.parse(stageRequests().at(-1).body);
   expect(body.variableName).toBe('?node_1');
   expect(body.where).toHaveLength(1);
   expect(body.where[0]).toMatchObject({ subject: '<https://example.test/fire>', object: '?node_1' });
@@ -271,12 +272,14 @@ for (const fixedValue of ['<https://example.test/relation?ghost>', '?alpha-bad']
         { group: 'edges', data: { id: 'fixed-predicate', source: 'fixed-node', target: '?real', nodeId: '<https://example.test/relation>', label: 'relation' } },
       ]);
     }, fixedValue);
-    const queryRequestsBefore = server.requests.filter(({ path }) => path === '/api/query').length;
+    const stagesBefore = server.requests.filter(({ path }) => path === '/api/query/stage').length;
 
     await page.locator('#run-query-btn').click();
 
-    await expect(page.locator('#two-variable-panel')).toBeHidden();
-    await expect.poll(() => server.requests.filter(({ path }) => path === '/api/query').length).toBe(queryRequestsBefore + 1);
+    await expect(page.locator('#stage-heading')).toHaveText('Stage 1 of 1: ?real');
+    await expect.poll(() => server.requests.filter(({ path }) => path === '/api/query/stage').length).toBe(stagesBefore + 1);
+    const body = JSON.parse(server.requests.filter(({ path }) => path === '/api/query/stage').at(-1).body);
+    expect(body.variableName).toBe('?real');
   });
 }
 
@@ -926,9 +929,9 @@ test('Assume on the first stage applies that value now and reopens the remaining
   expect(last.where).toEqual([{ subject: '<https://example.test/a1>', predicate: '?b', object: '?c', filterType: null }]);
 });
 
-test('Assume on a later stage applies the committed path and runs the legacy query for the last variable', async ({ page }) => {
+test('Assume on a later stage applies the committed path and stages the last variable', async ({ page }) => {
   await addThreeVariableChain(page);
-  await routeStages(page, threeStageResponder());
+  const requests = await routeStages(page, threeStageResponder());
   await page.locator('#run-query-btn').click();
   await candidateButtons(page).first().click();
   await expect(page.locator('#stage-heading')).toHaveText('Stage 2 of 3: ?b');
@@ -936,15 +939,27 @@ test('Assume on a later stage applies the committed path and runs the legacy que
 
   await assumeButtons(page).first().click();
 
-  await expect(page.locator('#two-variable-panel')).toBeHidden();
   expect(await graphNodesAndEdges(page)).toEqual({
     nodes: ['<https://example.test/a1>', '?c'],
     edges: ['rel|<https://example.test/a1>|<https://example.test/p1>|?c'],
   });
-  await expect.poll(() => server.requests.filter(({ path }) => path === '/api/query').length).toBe(queriesBefore + 1);
-  const body = JSON.parse(server.requests.filter(({ path }) => path === '/api/query').at(-1).body);
-  expect(body.variableName).toBe('?c');
-  expect(body.where[0]).toMatchObject({ subject: '<https://example.test/a1>', predicate: '<https://example.test/p1>', object: '?c' });
+  // BUG-005: the last variable stays staged, so a literal value is offered
+  // instead of the legacy projection that drops untyped values.
+  await expect(page.locator('#two-variable-panel')).toBeVisible();
+  await expect(page.locator('#stage-heading')).toHaveText('Stage 1 of 1: ?c');
+  await expect(candidateButtons(page)).toHaveText([/1903\s*literal integer/]);
+  expect(server.requests.filter(({ path }) => path === '/api/query').length).toBe(queriesBefore);
+  const last = requests.at(-1);
+  expect(last.variableName).toBe('?c');
+  expect(last.bindings).toEqual([]);
+  expect(last.where).toEqual([{ subject: '<https://example.test/a1>', predicate: '<https://example.test/p1>', object: '?c', filterType: null }]);
+
+  await candidateButtons(page).first().click();
+  await page.getByRole('button', { name: 'Apply to graph' }).click();
+  expect(await graphNodesAndEdges(page)).toEqual({
+    nodes: ['1903', '<https://example.test/a1>'],
+    edges: ['rel|<https://example.test/a1>|<https://example.test/p1>|1903'],
+  });
 });
 
 test('Back and Close from the summary leave the graph unchanged', async ({ page }) => {
@@ -1116,7 +1131,7 @@ test('an endpoint change during exploration closes the panel without graph chang
   expect(await graphSnapshot(page)).toEqual(before);
 });
 
-test('parallel edges sharing one predicate variable bind together without staging', async ({ page }) => {
+test('parallel edges sharing one predicate variable are one stage and bind together', async ({ page }) => {
   await disableAutoLayout(page);
   await page.evaluate(() => {
     cy.add([
@@ -1127,14 +1142,12 @@ test('parallel edges sharing one predicate variable bind together without stagin
       })),
     ]);
   });
-  await page.route('**/api/query', route => route.fulfill({
-    contentType: 'application/json',
-    body: JSON.stringify({ data: [{ propertyId: '<https://example.test/relation>', propertyLabel: 'relation', propertyType: 'object', propertyClass: null }] }),
-  }));
+  await routeStages(page, request => ({ body: stagePage(request, [iri('https://example.test/relation', 'relation')]) }));
   await page.locator('#run-query-btn').click();
-  await expect(page.locator('#table-results-body')).toContainText('relation');
+  await expect(page.locator('#stage-heading')).toHaveText('Stage 1 of 1: ?predicate_1');
+  await candidateButtons(page).first().click();
+  await page.getByRole('button', { name: 'Apply to graph' }).click();
   await expect(page.locator('#two-variable-panel')).toBeHidden();
-  await page.locator('#table-results-body tr.query-row').dispatchEvent('click');
   expect(await page.evaluate(() => cy.edges().map(edge => edge.data()))).toEqual(['first', 'second'].map(id => ({
     id, source: 'source', target: 'target', nodeId: '<https://example.test/relation>', label: 'relation', custom: id,
   })));
@@ -1361,21 +1374,15 @@ test('edge action menu converts only a relation predicate into a queryable varia
   expect(await page.evaluate(() => cy.getElementById('has-rival-edge').length)).toBe(1);
 
   const nodesBefore = await page.evaluate(() => cy.nodes().map(node => node.json()));
-  await page.route('**/api/query', route => route.fulfill({
-    contentType: 'application/json',
-    body: JSON.stringify({ data: [{
-      propertyId: '<https://example.test/playsAgainst>',
-      propertyLabel: 'plays against',
-      propertyType: 'object',
-      propertyClass: null,
-    }] }),
+  const stageRequests = await routeStages(page, request => ({
+    body: stagePage(request, [iri('https://example.test/playsAgainst', 'plays against')]),
   }));
-  const queryRequest = page.waitForRequest(request => request.url().endsWith('/api/query'));
   await page.evaluate(() => window.runQuery());
-  expect((await queryRequest).postDataJSON()).toEqual({
+  await expect(page.locator('#stage-heading')).toHaveText(`Stage 1 of 1: ${convertedEdge.nodeId}`);
+  expect(stageRequests[0]).toMatchObject({
     endpointUrl: 'uploaded-test-graph',
     variableName: convertedEdge.nodeId,
-    limit: 7,
+    bindings: [],
     where: [{
       subject: '<https://example.test/team-a>',
       predicate: convertedEdge.nodeId,
@@ -1384,13 +1391,9 @@ test('edge action menu converts only a relation predicate into a queryable varia
     }],
   });
 
-  await clickGraphEdge(page, 'has-rival-edge');
-  await expect(edgeMenu).toBeVisible();
-  await page.locator('#cy').click({ position: { x: 16, y: 16 } });
-  await expect(edgeMenu).toBeHidden();
-
-  await expect(page.locator('#table-results-body')).toContainText('plays against');
-  await page.locator('#table-results-body tr.query-row').dispatchEvent('click');
+  await candidateButtons(page).first().click();
+  await page.getByRole('button', { name: 'Apply to graph' }).click();
+  await expect(page.locator('#two-variable-panel')).toBeHidden();
 
   expect(await page.evaluate(() => cy.nodes().map(node => node.json()))).toEqual(nodesBefore);
   await expect(page.locator('#status-nodes')).toHaveText('Nodes: 2');
@@ -1571,6 +1574,11 @@ test('connection preview cancels on Escape and graph background without adding a
   await expect(page.locator('#status-edges')).toHaveText('Edges: 0');
 });
 
+async function runLegacyQueryFromNode(page, nodeId) {
+  await page.evaluate(id => { cy.getElementById(id).emit('tap'); }, nodeId);
+  await page.getByRole('button', { name: 'Run query', exact: true }).click();
+}
+
 test('selecting a node-variable result still replaces the variable node', async ({ page }) => {
   await disableAutoLayout(page);
   await page.evaluate(() => {
@@ -1580,7 +1588,8 @@ test('selecting a node-variable result still replaces the variable node', async 
     contentType: 'application/json',
     body: JSON.stringify({ data: [{ propertyId: '<https://example.test/team-a>', propertyLabel: 'Team A', propertyType: 'object', propertyClass: null }] }),
   }));
-  await page.locator('#run-query-btn').click();
+  // Run Query stages one variable (BUG-005); the node action keeps the legacy table.
+  await runLegacyQueryFromNode(page, '?item');
   await expect(page.locator('#table-results-body')).toContainText('Team A');
   await page.locator('#table-results-body tr.query-row').dispatchEvent('click');
   expect(await page.evaluate(() => cy.nodes().map(node => node.data()))).toEqual([{
@@ -1663,7 +1672,7 @@ test('a self-loop on the variable survives result selection', async ({ page }) =
   await page.route('**/api/query/relationship-value', route => { valueRequests += 1; return route.abort(); });
   await page.route('**/api/query', route => route.fulfill({ contentType: 'application/json',
     body: JSON.stringify({ data: [{ propertyId: '<https://e/L>', propertyLabel: 'L', propertyType: 'object', propertyClass: null }] }) }));
-  await page.locator('#run-query-btn').click();
+  await runLegacyQueryFromNode(page, '?loop');
   await expect(page.locator('#table-results-body')).toContainText('L');
   await page.locator('#table-results-body tr.query-row').dispatchEvent('click');
   expect(await graphEdges(page)).toEqual(['self:<https://e/L>-><https://e/L>']);
@@ -1688,7 +1697,9 @@ for (const change of ['removed', 'rebound']) {
       contentType: 'application/json',
       body: JSON.stringify({ data: [{ propertyId: '<https://example.test/relation>', propertyLabel: 'relation', propertyType: 'object', propertyClass: null }] }),
     }));
-    await page.locator('#run-query-btn').click();
+    // Run Query stages a single predicate variable (BUG-005); the legacy result
+    // table's stale-edge guard is exercised through getQuery directly.
+    await page.evaluate(() => getQuery('?predicate_1', buildFilters(cy.elements()), true));
     await expect(page.locator('#table-results-body')).toContainText('relation');
     await page.evaluate(change => {
       const edge = cy.getElementById('relation');
@@ -1821,10 +1832,11 @@ test('the numeric filter editor offers at least, at most and between with readab
 test('an exact numeric match runs without a starts-with filter', async ({ page }) => {
   await addSpeedFilterGraph(page);
   await editSpeedFilter(page, 'Exactly Equal', '45');
-  const before = server.requests.filter(({ path }) => path === '/api/query').length;
+  const stageRequests = () => server.requests.filter(({ path }) => path === '/api/query/stage');
+  const before = stageRequests().length;
   await page.locator('#run-query-btn').click();
-  await expect.poll(() => server.requests.filter(({ path }) => path === '/api/query').length).toBe(before + 1);
-  const body = JSON.parse(server.requests.filter(({ path }) => path === '/api/query').at(-1).body);
+  await expect.poll(() => stageRequests().length).toBe(before + 1);
+  const body = JSON.parse(stageRequests().at(-1).body);
   expect(body.where).toEqual([{ subject: '?p', predicate: '<https://example.test/speed>', object: '45', filterType: null }]);
 });
 
@@ -2031,4 +2043,112 @@ test('the filter editor histogram fits a narrow viewport', async ({ page }) => {
     expect(box.x + box.width).toBeLessThanOrEqual(modal.x + modal.width + 0.5);
   }
   expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(360);
+});
+
+// BUG-006: re-fetching a fixed IRI neighbour after result selection asked for a
+// literal, so the IRI came back as a pink value node labelled with the raw IRI.
+test('choosing a result re-adds a fixed IRI neighbour as an IRI node with its label', async ({ page }) => {
+  await disableAutoLayout(page);
+  await page.evaluate(() => {
+    cy.add([
+      { group: 'nodes', data: { id: '?mon', value: '?mon', label: '?', type: 'variable' }, position: { x: 400, y: 300 } },
+      { group: 'nodes', data: { id: '<https://e/Electric>', value: '<https://e/Electric>', label: 'Electric', type: 'node' }, position: { x: 150, y: 300 } },
+      { group: 'nodes', data: { id: 'attack-value', value: '130', label: '130', type: 'label' }, position: { x: 400, y: 100 } },
+      { group: 'edges', data: { id: 'immune', source: '?mon', target: '<https://e/Electric>', nodeId: '<https://e/immuneTo>', label: 'immune to' } },
+      { group: 'edges', data: { id: 'attack', source: '?mon', target: 'attack-value', nodeId: '<https://e/attack>', label: 'Attack' } },
+    ]);
+  });
+  await page.route('**/api/query', route => route.fulfill({ contentType: 'application/json',
+    body: JSON.stringify({ data: [{ propertyId: '<https://e/Rhydon>', propertyLabel: 'Rhydon', propertyType: 'object', propertyClass: null }] }) }));
+  const valueRequests = [];
+  await page.route('**/api/query/relationship-value', route => {
+    const request = route.request().postDataJSON();
+    valueRequests.push(request);
+    const data = request.isLiteral
+      ? [{ propertyId: '130', propertyLabel: '130', propertyType: 'text' }]
+      : [{ propertyId: '<https://e/Electric>', propertyLabel: 'Electric', propertyType: null }];
+    return route.fulfill({ contentType: 'application/json', body: JSON.stringify({ data }) });
+  });
+  await runLegacyQueryFromNode(page, '?mon');
+  await expect(page.locator('#table-results-body')).toContainText('Rhydon');
+  await page.locator('#table-results-body tr.query-row').dispatchEvent('click');
+
+  await expect.poll(() => valueRequests.length).toBe(2);
+  expect(valueRequests.map(({ predicateId, isLiteral }) => [predicateId, isLiteral]).sort())
+    .toEqual([['<https://e/attack>', true], ['<https://e/immuneTo>', false]]);
+  await expect.poll(() => page.evaluate(() => cy.nodes().map(node => [node.id(), node.data('label'), node.data('type')]).sort()))
+    .toEqual([['130', '130', 'label'], ['<https://e/Electric>', 'Electric', 'node'], ['<https://e/Rhydon>', 'Rhydon', 'node']]);
+});
+
+// FE-030: Add value filter creates a value node through a datatype relation
+// and opens its filter editor.
+async function addValueFilterGraph(page, { profile }) {
+  await disableAutoLayout(page);
+  await page.evaluate(() => {
+    cy.add([
+      { group: 'nodes', data: { id: '?mon', value: '?mon', label: '?', type: 'variable' }, position: { x: 300, y: 300 } },
+      { group: 'nodes', data: { id: '<https://e/Fire>', value: '<https://e/Fire>', label: 'Fire', type: 'node' }, position: { x: 100, y: 300 } },
+      { group: 'edges', data: { id: 'has-type', source: '?mon', target: '<https://e/Fire>', nodeId: '<https://e/hasType>', label: 'has type' } },
+    ]);
+  });
+  const relationshipRequests = [];
+  await page.route('**/api/query/relationships', route => {
+    relationshipRequests.push(route.request().postDataJSON());
+    return route.fulfill({ contentType: 'application/json', body: JSON.stringify({ data: [
+      { propertyId: '<https://e/speed>', propertyLabel: 'Speed', propertyType: 'label' },
+      { propertyId: '<https://e/hasType>', propertyLabel: 'has type', propertyType: 'objeto' },
+      { propertyId: '<https://e/category>', propertyLabel: 'category', propertyType: 'label' },
+      { propertyId: '<https://e/hp>', propertyLabel: 'HP', propertyType: 'label' },
+      { propertyId: '<https://e/x>', propertyLabel: '', propertyType: 'outro' },
+    ] }) });
+  });
+  const profileRequests = [];
+  await page.route('**/api/query/numeric-profile', route => {
+    profileRequests.push(route.request().postDataJSON());
+    return route.fulfill({ contentType: 'application/json', body: JSON.stringify({ data: profile }) });
+  });
+  await clickGraphNode(page, '?mon');
+  await page.locator('#node-action-menu').getByRole('button', { name: 'Add value filter' }).click();
+  return { relationshipRequests, profileRequests };
+}
+
+test('Add value filter lists datatype relations and opens the editor on a seeded value node', async ({ page }) => {
+  const { relationshipRequests, profileRequests } = await addValueFilterGraph(page, { profile: {
+    subject: '?mon', predicate: '<https://e/hp>', count: 3, min: 39, max: 78, truncated: true,
+    values: [{ entity: { type: 'iri', value: 'https://e/Charmander', datatype: null, language: null }, label: 'Charmander', value: '39', datatype: 'http://www.w3.org/2001/XMLSchema#integer', number: 39 }],
+  } });
+  const menu = page.locator('#node-action-menu');
+  await expect(menu.locator('.node-action-menu-message')).toHaveText('Choose a value relation:');
+  await expect(menu.locator('button[data-action="choose-predicate"]')).toHaveText(['category', 'HP', 'Speed']);
+  expect(relationshipRequests[0].id).toBe('?mon');
+
+  await menu.getByRole('button', { name: 'HP', exact: true }).click();
+
+  await expect(page.locator('#modal-new-value')).toHaveValue('39');
+  await expect(page.locator('#modal-change-value')).toContainText('At least (≥)');
+  // The seed request comes first; an editor histogram may profile again.
+  expect(profileRequests[0]).toMatchObject({
+    where: [{ subject: '?mon', predicate: '<https://e/hasType>', object: '<https://e/Fire>', filterType: null }],
+    subject: '?mon', predicate: '<https://e/hp>', limit: 1,
+  });
+  const value = await page.evaluate(() => {
+    const node = cy.nodes('[type = "label"]')[0];
+    const edge = node.connectedEdges()[0];
+    return { value: node.data('value'), label: node.data('label'), source: edge.data('source'), nodeId: edge.data('nodeId'), edgeLabel: edge.data('label') };
+  });
+  expect(value).toEqual({ value: '39', label: '39', source: '?mon', nodeId: '<https://e/hp>', edgeLabel: 'HP' });
+
+  await page.evaluate(() => {
+    document.querySelector('#modal-change-value input[name=filter-type][value="2"]').checked = true;
+    document.getElementById('modal-new-value').value = '60';
+    document.getElementById('apply-filter-btn').click();
+  });
+  expect(await filterNode(page)).toEqual({ label: '≥ 60', value: '60', filterType: 2 });
+});
+
+test('Add value filter on a relation without numbers opens the text editor on an empty value', async ({ page }) => {
+  await addValueFilterGraph(page, { profile: { subject: '?mon', predicate: '<https://e/category>', count: 0, min: null, max: null, truncated: false, values: [] } });
+  await page.locator('#node-action-menu').getByRole('button', { name: 'category', exact: true }).click();
+  await expect(page.locator('#modal-change-value')).toContainText('Starts with');
+  await expect(page.locator('#modal-new-value')).toHaveValue('');
 });

@@ -252,10 +252,13 @@ function initGraphMenus() {
         updateStatusBar();
     }
 
-    function loadPredicateChoices(node) {
+    // FE-030: 'value' mode lists only datatype relations (propertyType
+    // "label"), sorted by label, to create a value node with a filter.
+    function loadPredicateChoices(node, mode = 'connect') {
         const sourceId = node.id();
         const requestId = ++predicateChoiceRequestId;
-        predicateChoices = { sourceId, message: 'Loading predicates…', items: [] };
+        const noun = mode === 'value' ? 'value relations' : 'predicates';
+        predicateChoices = { sourceId, mode, message: `Loading ${noun}…`, items: [] };
         renderNodeActionMenu();
         $.ajax({
             url: apiUrl('/api/query/relationships'),
@@ -264,13 +267,18 @@ function initGraphMenus() {
             data: JSON.stringify({ endpointUrl: getEndpoint(), id: node.data('value') || sourceId, limit: getLimit() }),
             success(response) {
                 if (requestId !== predicateChoiceRequestId || selectedMenuNodeId !== sourceId || predicateChoices?.sourceId !== sourceId) return;
-                const items = (response.data || []).filter(item => typeof item.propertyId === 'string' && item.propertyId);
-                predicateChoices = { sourceId, message: items.length ? 'Choose a predicate:' : 'No predicates found.', items };
+                let items = (response.data || []).filter(item => typeof item.propertyId === 'string' && item.propertyId);
+                if (mode === 'value') {
+                    items = items.filter(item => item.propertyType === 'label' && item.propertyLabel)
+                        .sort((left, right) => left.propertyLabel.localeCompare(right.propertyLabel));
+                }
+                const choose = mode === 'value' ? 'Choose a value relation:' : 'Choose a predicate:';
+                predicateChoices = { sourceId, mode, message: items.length ? choose : `No ${noun} found.`, items };
                 renderNodeActionMenu();
             },
             error() {
                 if (requestId !== predicateChoiceRequestId || selectedMenuNodeId !== sourceId || predicateChoices?.sourceId !== sourceId) return;
-                predicateChoices = { sourceId, message: 'Could not load predicates. Try again.', items: [] };
+                predicateChoices = { sourceId, mode, message: `Could not load ${noun}. Try again.`, items: [] };
                 renderNodeActionMenu();
             }
         });
@@ -293,6 +301,8 @@ function initGraphMenus() {
             const component = cy.elements().components()
                 .find(items => items.some(item => item.id() === data.id));
             if (component) getQuery(data.value, buildFilters(component), true);
+        } else if (action === 'add-value-filter') {
+            loadPredicateChoices(node, 'value');
         } else if (action === 'toggle-boolean') {
             changeElementBooleanValue(node);
         } else if (action === 'edit-value') {
@@ -304,7 +314,8 @@ function initGraphMenus() {
         } else if (action === 'choose-predicate') {
             const predicate = predicateChoices?.sourceId === node.id()
                 ? predicateChoices.items[Number(button.dataset.predicateIndex)] : null;
-            if (predicate) beginConnection(node, predicate.propertyId, predicate.propertyLabel || predicate.propertyId);
+            if (predicate && predicateChoices.mode === 'value') addValueFilter(node, predicate);
+            else if (predicate) beginConnection(node, predicate.propertyId, predicate.propertyLabel || predicate.propertyId);
         } else if (action === 'convert-variable') {
             convertMenuNodeToVariable(node);
         } else if (action === 'remove') {
@@ -551,6 +562,34 @@ function initGraphMenus() {
         rewireEdges(ele.id(), newNodeId);
         retargetNodeActionMenu(ele.id(), newNodeId);
         ele.remove();
+    }
+
+    // FE-030: adds a value node fed by the variable through the chosen relation,
+    // seeded with the smallest numeric value under the rest of the query (empty
+    // when the relation has none), then opens its filter editor.
+    async function addValueFilter(node, predicate) {
+        closeNodeActionMenu();
+        const valueId = `value_${Date.now()}`;
+        const position = node.position();
+        cy.add([
+            { group: 'nodes', data: { id: valueId, value: '', label: '', type: 'label' },
+              position: { x: position.x + 220, y: position.y - 120 } },
+            { group: 'edges', data: { id: `${valueId}_relation`, source: node.id(), target: valueId,
+              nodeId: predicate.propertyId, label: predicate.propertyLabel || predicate.propertyId } },
+        ]);
+        updateStatusBar();
+        let seed = '';
+        try {
+            const profile = await fetchNumericProfile(valueId, { limit: 1 });
+            if (profile?.count) seed = profile.values[0]?.value ?? String(profile.min);
+        } catch (error) {
+            console.error(error);
+        }
+        const valueNode = cy.getElementById(valueId);
+        if (!valueNode.length) return;
+        valueNode.data({ value: seed, label: seed });
+        if (document.getElementById('auto-layout').checked) cy.layout({ name: 'cose' }).run();
+        changeElementStringValueModal(valueNode);
     }
 
     function changeElementStringValueModal(ele) {

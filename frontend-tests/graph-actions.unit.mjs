@@ -8,7 +8,7 @@ const COMMON = ['connect-variable-predicate', 'connect-defined-predicate', 'conv
 test('each node type offers its own first action before the common actions', () => {
   assert.deepEqual(ids(nodeActions({ type: 'node' }, false)), ['explore-relationships', ...COMMON]);
   assert.deepEqual(ids(nodeActions({ type: 'default' }, false)), ['explore-default', ...COMMON]);
-  assert.deepEqual(ids(nodeActions({ type: 'variable' }, false)), ['run-query', ...COMMON]);
+  assert.deepEqual(ids(nodeActions({ type: 'variable' }, false)), ['run-query', 'add-value-filter', ...COMMON]);
   assert.deepEqual(ids(nodeActions({ type: 'node', isLink: true }, false)), ['open-link', ...COMMON]);
   assert.deepEqual(ids(nodeActions({ type: 'label' }, false)), COMMON);
 });

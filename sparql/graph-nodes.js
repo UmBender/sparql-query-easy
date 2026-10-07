@@ -55,13 +55,17 @@ function replaceWithNewNode(theCy, varName, nodeId, nodeLabel, propertyType, pro
         if (edge.data('source') === oldId) ends.source = nodeId;
         if (edge.data('target') === oldId) ends.target = nodeId;
         edge.move(ends);
-        if (ends.source && edge.data('target') !== nodeId) outgoing.push(edge.data());
+        if (ends.source && edge.data('target') !== nodeId) {
+            outgoing.push({ ...edge.data(), targetType: edge.target().data('type') });
+        }
     });
     oldElement.remove();
 
-    outgoing.forEach(({ target, label: eLabel, nodeId: eNodeId }) => {
+    // BUG-006: a fixed IRI target is fetched again as an IRI with its label;
+    // only other targets (values, variables) keep the literal request.
+    outgoing.forEach(({ target, label: eLabel, nodeId: eNodeId, targetType }) => {
         cy.getElementById(target).remove();
-        getRelationshipValueChange(nodeId, eNodeId, eLabel);
+        getRelationshipValueChange(nodeId, eNodeId, eLabel, targetType !== 'node');
     });
     updateStatusBar();
 }
@@ -144,7 +148,7 @@ function showIntroAlert(name, text) {
 // ── Change-value modal content ────────────────────────────────────
 function getModalReplaceContent(theId, theValue) {
     const safeVal = escapeHTML(theValue);
-    const isNumericOrSpecial = !isNaN(theValue) || theValue === 'MAX' || theValue === 'MIN'
+    const isNumericOrSpecial = (theValue !== '' && !isNaN(theValue)) || theValue === 'MAX' || theValue === 'MIN'
         || window.queryCalculations.parseBetween(theValue) !== null;
 
     const textFilters = `

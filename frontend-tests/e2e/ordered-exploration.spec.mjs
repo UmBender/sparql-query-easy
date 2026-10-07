@@ -117,7 +117,7 @@ test('the typed literal binding returned by Ktor constrains the next stage exact
   expectOnlyNextStageRequests(order);
 });
 
-test('one-variable Run Query still uses the legacy results table', async ({ page }) => {
+test('one-variable Run Query is staged through Ktor', async ({ page }) => {
   await page.evaluate(() => {
     cy.add([
       { group: 'nodes', data: { id: '?team', value: '?team', label: '?', type: 'variable' }, position: { x: 150, y: 250 } },
@@ -126,8 +126,32 @@ test('one-variable Run Query still uses the legacy results table', async ({ page
     ]);
   });
   await page.locator('#run-query-btn').click();
-  await expect(page.locator('#table-results-body tr')).not.toHaveCount(0);
-  await expect(page.locator('#two-variable-panel')).toBeHidden();
-  expect(stageRequests).toEqual([]);
-  expect(legacyQueryRequests).toBe(1);
+  await expect(page.locator('#stage-heading')).toHaveText('Stage 1 of 1: ?team');
+  await expect(candidates(page)).toHaveText([/Grêmio\s*IRI/, /Internacional\s*IRI/]);
+  expectOnlyNextStageRequests(['?team']);
+  expect(legacyQueryRequests).toBe(0);
+});
+
+// BUG-005: the legacy projection requires rdf:type, so a literal last variable
+// returned no rows after Assume although the stage preview listed its values.
+test('Assume on a predicate leaves the literal last variable staged with its values', async ({ page }) => {
+  await page.evaluate(() => {
+    cy.add([
+      { group: 'nodes', data: { id: '<https://example.test/gremio>', value: '<https://example.test/gremio>', label: 'Grêmio', type: 'node' }, position: { x: 150, y: 250 } },
+      { group: 'nodes', data: { id: '?value', value: '?value', label: '?', type: 'variable' }, position: { x: 450, y: 250 } },
+      { group: 'edges', data: { id: 'attribute', source: '<https://example.test/gremio>', target: '?value', nodeId: '?attr', label: '?', type: 'variable' } },
+    ]);
+  });
+  await expect(page.locator('#variable-order-list .variable-block-name')).toHaveText(['?attr', '?value']);
+  await page.locator('#run-query-btn').click();
+  await expect(page.locator('#stage-heading')).toHaveText('Stage 1 of 2: ?attr');
+
+  await page.getByRole('button', { name: 'Assume ?attr = https://example.test/founded in the graph now' }).click();
+
+  await expect(page.locator('#stage-heading')).toHaveText('Stage 1 of 1: ?value');
+  await expect(candidates(page)).toHaveText([/1903\s*literal integer/]);
+  await page.locator('#two-variable-panel-close').click();
+  await page.locator('#run-query-btn').click();
+  await expect(candidates(page)).toHaveText([/1903\s*literal integer/]);
+  expect(legacyQueryRequests).toBe(0);
 });
