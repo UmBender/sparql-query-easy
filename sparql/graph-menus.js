@@ -567,6 +567,12 @@ function initGraphMenus() {
         // A filtered node shows a readable label (≥ 100); edit its raw value instead.
         const current = window.queryCalculations.filterTypeOf(ele.data('filterType')) === null ? ele.data('label') : ele.data('value');
         contentEl.innerHTML = getModalReplaceContent(ele.id(), current);
+        // FE-026: start from the stored filter type, so the range slider reads it.
+        const storedType = window.queryCalculations.filterTypeOf(ele.data('filterType'));
+        const storedOption = storedType === null ? null
+            : contentEl.querySelector(`input[name=filter-type][value="${storedType}"]`);
+        if (storedOption) storedOption.checked = true;
+        loadFilterHistogram(ele.id());
         M.updateTextFields();
         openChangeValueModal();
     }

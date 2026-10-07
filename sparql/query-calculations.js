@@ -98,6 +98,103 @@ export function numericProfileRequest({ endpointUrl, edges, literalId, limit = 5
   };
 }
 
+/** @typedef {{min: number, max: number, step: number, decimals: number}} RangeScale */
+
+/**
+ * Slider scale for a numeric profile (FE-026): whole numbers step by 1, other
+ * data by a power of ten near 1/100 of the span. The slider ends are aligned
+ * to the step and enclose the data.
+ * @param {number[]} numbers
+ * @returns {RangeScale | null}
+ */
+export function rangeScale(numbers) {
+  if (!numbers.length || !numbers.every(Number.isFinite)) return null;
+  const dataMin = Math.min(...numbers);
+  const dataMax = Math.max(...numbers);
+  const exponent = numbers.every(Number.isInteger) ? 0
+    : Math.min(0, Math.floor(Math.log10((dataMax - dataMin) / 100 || 1)));
+  const step = 10 ** exponent;
+  const decimals = exponent === 0 ? 0 : -exponent;
+  const align = (/** @type {number} */ value, /** @type {(n: number) => number} */ round) =>
+    Number((round(Number((value / step).toFixed(6))) * step).toFixed(decimals));
+  return { min: align(dataMin, Math.floor), max: align(dataMax, Math.ceil), step, decimals };
+}
+
+/**
+ * Equal-width bins over [min, max] (last bin inclusive), with how many values
+ * of each bin lie inside the kept range [lo, hi].
+ * @param {number[]} numbers
+ * @param {{min: number, max: number, lo: number, hi: number, binCount: number}} options
+ * @returns {{from: number, to: number, count: number, kept: number}[]}
+ */
+export function histogramBins(numbers, { min, max, lo, hi, binCount }) {
+  const count = max > min ? Math.max(1, Math.floor(binCount)) : 1;
+  const width = (max - min) / count;
+  const bins = Array.from({ length: count }, (_, index) => ({
+    from: min + index * width,
+    to: index === count - 1 ? max : min + (index + 1) * width,
+    count: 0,
+    kept: 0,
+  }));
+  for (const value of numbers) {
+    if (value < min || value > max) continue;
+    const bin = bins[width > 0 ? Math.min(count - 1, Math.floor((value - min) / width)) : 0];
+    bin.count++;
+    if (value >= lo && value <= hi) bin.kept++;
+  }
+  return bins;
+}
+
+/**
+ * How many values lie inside the inclusive range [lo, hi].
+ * @param {number[]} numbers
+ * @param {number} lo
+ * @param {number} hi
+ */
+export function countInRange(numbers, lo, hi) {
+  return numbers.filter(value => value >= lo && value <= hi).length;
+}
+
+/**
+ * Filter written by the range slider (FE-026). A handle at its slider end
+ * means "no bound on that side": only the low handle moved gives At least (2),
+ * only the high handle gives At most (3), otherwise Between (6) `lo..hi`.
+ * @param {RangeScale} scale
+ * @param {number} lo
+ * @param {number} hi
+ * @returns {{filterType: number, value: string}}
+ */
+export function rangeFilter(scale, lo, hi) {
+  const format = (/** @type {number} */ value) => String(Number(value.toFixed(scale.decimals)));
+  const lowOpen = lo <= scale.min;
+  const highOpen = hi >= scale.max;
+  if (!lowOpen && highOpen) return { filterType: 2, value: format(lo) };
+  if (lowOpen && !highOpen) return { filterType: 3, value: format(hi) };
+  return { filterType: 6, value: `${format(lo)}..${format(hi)}` };
+}
+
+/**
+ * Slider handles for an editor value: Between, At least and At most set the
+ * matching bounds (clamped to the scale); anything else selects the whole range.
+ * @param {RangeScale} scale
+ * @param {number | string | null | undefined} filterType
+ * @param {string} value
+ * @returns {{lo: number, hi: number}}
+ */
+export function rangeFromFilter(scale, filterType, value) {
+  const clamp = (/** @type {number} */ number) => Math.min(scale.max, Math.max(scale.min, number));
+  const number = numberPattern.test(String(value ?? '').trim()) ? Number(value) : NaN;
+  switch (filterTypeOf(filterType)) {
+  case 2: return Number.isFinite(number) ? { lo: clamp(number), hi: scale.max } : { lo: scale.min, hi: scale.max };
+  case 3: return Number.isFinite(number) ? { lo: scale.min, hi: clamp(number) } : { lo: scale.min, hi: scale.max };
+  case 6: {
+    const range = parseBetween(value);
+    return range ? { lo: clamp(range.min), hi: clamp(range.max) } : { lo: scale.min, hi: scale.max };
+  }
+  default: return { lo: scale.min, hi: scale.max };
+  }
+}
+
 /**
  * @param {QueryItem[]} items
  * @returns {string[]}

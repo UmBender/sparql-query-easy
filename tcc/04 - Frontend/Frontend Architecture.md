@@ -129,6 +129,15 @@ variables open the panel with that order. The panel runs one exploration
 button per selectable value (`assumeStageCandidate`); Apply and Assume share
 `applyChoicesToGraph` and are the only steps that edit Cytoscape.
 
+**Variant A under review (FE-026, branch `FE-026-filter-range-histogram`,
+choice in DEC-010):** the numeric filter editor profiles its relation with
+`fetchNumericProfile` (BE-003) and shows an SVG histogram with a two-handle
+native range slider (`loadFilterHistogram`, `renderFilterHistogram` in
+`graph-nodes.js`; pure `rangeScale`, `histogramBins`, `rangeFilter`,
+`rangeFromFilter` in `query-calculations.js`). Moving a handle writes At least
+/ At most when the other handle is at its end, otherwise Between, and shows
+"Keeps N of M values"; the editor preselects the stored filter type.
+
 **Confirmed (FE-014):** mouse-wheel zoom uses Cytoscape
 `wheelSensitivity: 0.2` (about 1.2× per notch, near the 1.25× zoom buttons);
 Cytoscape logs an expected one-time warning for the non-default value.

@@ -1856,3 +1856,179 @@ test('fetchNumericProfile profiles the relation of a filter node under the rest 
   await expect(page.evaluate(() => fetchNumericProfile('speed-value'))).rejects.toThrow('limit must be between 1 and 1000');
   expect(await page.evaluate(() => fetchNumericProfile('?p'))).toBeNull();
 });
+
+// FE-026: histogram with a two-handle range slider inside the numeric filter editor.
+const speedProfile = (numbers, extra = {}) => ({
+  subject: '?p',
+  predicate: '<https://example.test/speed>',
+  count: numbers.length,
+  truncated: false,
+  min: numbers.length ? Math.min(...numbers) : null,
+  max: numbers.length ? Math.max(...numbers) : null,
+  values: numbers.map((number, index) => ({ entity: `<https://example.test/p${index}>`, label: `P${index}`, value: String(number), number })),
+  ...extra,
+});
+
+async function routeSpeedProfile(page, respond) {
+  const requests = [];
+  await page.route('**/api/query/numeric-profile', async route => {
+    requests.push(JSON.parse(route.request().postData()));
+    await respond(route);
+  });
+  return requests;
+}
+
+const fulfillProfile = data => route => route.fulfill({ contentType: 'application/json', body: JSON.stringify({ data }) });
+const histogram = page => page.locator('#filter-histogram');
+
+// The Materialize stub does not open modals; show the editor as Materialize would.
+async function openVisibleFilterEditor(page) {
+  await page.evaluate(() => { document.getElementById('modal-change-value').style.display = 'none'; });
+  await openFilterEditor(page);
+  await page.evaluate(() => Object.assign(document.getElementById('modal-change-value').style, {
+    display: 'block', opacity: '1', top: '10%', zIndex: '1003', transform: 'none',
+  }));
+}
+const checkedFilter = page => page.evaluate(() => document.querySelector('#modal-change-value input[name=filter-type]:checked').nextElementSibling.textContent);
+const keptBars = page => page.locator('#filter-histogram rect.kept').evaluateAll(rects => rects.map(rect => Math.round(+rect.getAttribute('height'))));
+const allBars = page => page.locator('#filter-histogram rect:not(.kept)').evaluateAll(rects => rects.map(rect => Math.round(+rect.getAttribute('height'))));
+
+test('the filter editor histogram follows the range handles and writes at least, between and at most', async ({ page }) => {
+  await addSpeedFilterGraph(page);
+  const requests = await routeSpeedProfile(page, fulfillProfile(speedProfile([20, 45, 45, 60, 90, 150])));
+  await openVisibleFilterEditor(page);
+  await expect(histogram(page)).toContainText('Keeps 6 of 6 values');
+  expect(requests).toHaveLength(1);
+  const lo = page.getByRole('slider', { name: 'Lowest kept value' });
+  const hi = page.getByRole('slider', { name: 'Highest kept value' });
+  await expect(lo).toHaveValue('20');
+  await expect(hi).toHaveValue('150');
+  // Opening the editor does not change an exact value.
+  await expect(page.locator('#modal-new-value')).toHaveValue('45');
+  expect(await keptBars(page)).toEqual(await allBars(page));
+
+  await lo.fill('40');
+  await expect(histogram(page)).toContainText('Keeps 5 of 6 values');
+  await expect(page.locator('#modal-new-value')).toHaveValue('40');
+  expect(await checkedFilter(page)).toBe('At least (≥)');
+  const kept = await keptBars(page);
+  const all = await allBars(page);
+  expect(kept[0]).toBeLessThan(all[0]);
+  expect(kept.slice(1)).toEqual(all.slice(1));
+
+  await hi.focus();
+  for (let i = 0; i < 60; i++) await page.keyboard.press('ArrowLeft');
+  await expect(hi).toHaveValue('90');
+  await expect(histogram(page)).toContainText('Keeps 4 of 6 values');
+  await expect(page.locator('#modal-new-value')).toHaveValue('40..90');
+  expect(await checkedFilter(page)).toBe('Between (min..max, e.g. 40..80)');
+
+  await lo.fill('20');
+  await expect(page.locator('#modal-new-value')).toHaveValue('90');
+  expect(await checkedFilter(page)).toBe('At most (≤)');
+
+  // Handles cannot cross: the low handle stops at the high one.
+  await lo.fill('120');
+  await expect(lo).toHaveValue('90');
+  await expect(page.locator('#modal-new-value')).toHaveValue('90..90');
+  await expect(histogram(page)).toContainText('Keeps 1 of 6 values');
+
+  await lo.fill('45');
+  await page.locator('#apply-filter-btn').click();
+  expect(await filterNode(page)).toEqual({ label: '45–90', value: '45..90', filterType: 6 });
+
+  // Reopening starts from the stored filter; typing moves the handles back.
+  await openVisibleFilterEditor(page);
+  await expect(histogram(page)).toContainText('Keeps 4 of 6 values');
+  await expect(lo).toHaveValue('45');
+  await expect(hi).toHaveValue('90');
+  await page.locator('#modal-new-value').fill('50..150');
+  await expect(lo).toHaveValue('50');
+  await expect(hi).toHaveValue('150');
+  await expect(histogram(page)).toContainText('Keeps 3 of 6 values');
+});
+
+test('a truncated profile says what the histogram covers and counts values above it when the top is open', async ({ page }) => {
+  await addSpeedFilterGraph(page);
+  await routeSpeedProfile(page, fulfillProfile(speedProfile([10, 20, 30, 40], { count: 10, truncated: true, max: 99 })));
+  await openVisibleFilterEditor(page);
+  await expect(histogram(page)).toContainText('The histogram covers the lowest 4 of 10 values (up to 40; the largest is 99).');
+  await expect(histogram(page)).toContainText('Keeps 10 of 10 values');
+  await page.getByRole('slider', { name: 'Lowest kept value' }).fill('25');
+  await expect(histogram(page)).toContainText('Keeps 8 of 10 values');
+  await expect(page.locator('#modal-new-value')).toHaveValue('25');
+  await page.getByRole('slider', { name: 'Highest kept value' }).fill('35');
+  await expect(histogram(page)).toContainText('Keeps 1 of 10 values');
+  await expect(page.locator('#modal-new-value')).toHaveValue('25..35');
+});
+
+test('the filter editor histogram shows loading, empty, error and unprofilable states', async ({ page }) => {
+  await addSpeedFilterGraph(page);
+  let release;
+  const gate = new Promise(resolve => { release = resolve; });
+  await routeSpeedProfile(page, async route => { await gate; await fulfillProfile(speedProfile([]))(route); });
+  await openVisibleFilterEditor(page);
+  await expect(histogram(page)).toContainText('Loading the value distribution');
+  release();
+  await expect(histogram(page)).toContainText('No numeric values for this relation under the rest of the query.');
+  await expect(histogram(page).getByRole('slider')).toHaveCount(0);
+
+  await page.unroute('**/api/query/numeric-profile');
+  await routeSpeedProfile(page, route => route.fulfill({ status: 502, contentType: 'application/json', body: '{"error":"SPARQL endpoint unavailable"}' }));
+  await openVisibleFilterEditor(page);
+  await expect(histogram(page).getByRole('alert')).toHaveText('Could not load the value distribution: SPARQL endpoint unavailable');
+
+  const replaceSpeedRelation = nodeId => page.evaluate(nodeId => {
+    cy.getElementById('speed').remove();
+    cy.add({ group: 'edges', data: { id: 'speed', source: '?p', target: cy.nodes('[type = "label"]')[0].id(), nodeId, label: 'speed' } });
+  }, nodeId);
+  await replaceSpeedRelation('<https://example.test/stats>/<https://example.test/speed>');
+  await openVisibleFilterEditor(page);
+  await expect(histogram(page)).toContainText('needs exactly one fixed relation');
+
+  // A text value gets no histogram.
+  await replaceSpeedRelation('<https://example.test/speed>');
+  await page.evaluate(() => { document.getElementById('modal-change-value').style.display = 'none'; });
+  await editSpeedFilter(page, 'Exactly Equal', 'fast');
+  await openVisibleFilterEditor(page);
+  await expect(histogram(page)).toHaveCount(0);
+});
+
+test('a slow profile for an earlier editor does not replace the current histogram', async ({ page }) => {
+  await addSpeedFilterGraph(page);
+  let calls = 0;
+  let releaseFirst;
+  const first = new Promise(resolve => { releaseFirst = resolve; });
+  await routeSpeedProfile(page, async route => {
+    calls++;
+    if (calls === 1) {
+      await first;
+      await fulfillProfile(speedProfile([1, 2]))(route).catch(() => {});
+      return;
+    }
+    await fulfillProfile(speedProfile([20, 45, 60]))(route);
+  });
+  await openVisibleFilterEditor(page);
+  await expect(histogram(page)).toContainText('Loading');
+  await openVisibleFilterEditor(page);
+  await expect(histogram(page)).toContainText('Keeps 3 of 3 values');
+  releaseFirst();
+  await page.evaluate(() => new Promise(resolve => setTimeout(resolve, 100)));
+  await expect(histogram(page)).toContainText('Keeps 3 of 3 values');
+});
+
+test('the filter editor histogram fits a narrow viewport', async ({ page }) => {
+  await page.setViewportSize({ width: 360, height: 740 });
+  await addSpeedFilterGraph(page);
+  await routeSpeedProfile(page, fulfillProfile(speedProfile([20, 45, 45, 60, 90, 150])));
+  await openVisibleFilterEditor(page);
+  await expect(histogram(page)).toContainText('Keeps 6 of 6 values');
+  const [modal, chart, slider] = await Promise.all(['#modal-change-value-content', '#filter-histogram svg', '#filter-histogram .filter-histogram-slider']
+    .map(selector => page.locator(selector).boundingBox()));
+  for (const box of [chart, slider]) {
+    expect(box.width).toBeGreaterThan(200);
+    expect(box.x).toBeGreaterThanOrEqual(modal.x - 0.5);
+    expect(box.x + box.width).toBeLessThanOrEqual(modal.x + modal.width + 0.5);
+  }
+  expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(360);
+});

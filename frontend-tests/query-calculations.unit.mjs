@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
-import { buildFilters, filterLabel, filterTypeOf, getQueryVariables, hasParallelPredicateVariables, numericProfileRequest, parseBetween, relationLabelKind } from '../sparql/query-calculations.js';
+import { buildFilters, countInRange, filterLabel, filterTypeOf, getQueryVariables, hasParallelPredicateVariables, histogramBins, numericProfileRequest, parseBetween, rangeFilter, rangeFromFilter, rangeScale, relationLabelKind } from '../sparql/query-calculations.js';
 
 test('filters preserve edge order, fixed RDF terms, and numeric filterType zero', () => {
   assert.deepEqual(buildFilters([
@@ -82,4 +82,34 @@ test('the numeric profile request leaves out the profiled relation and keeps the
   assert.equal(numericProfileRequest({ endpointUrl: 'g', edges, literalId: 'missing' }), null);
   assert.equal(numericProfileRequest({ endpointUrl: 'g', edges: [{ ...edges[1], nodeId: '?pred' }], literalId: 'n1' }), null);
   assert.equal(numericProfileRequest({ endpointUrl: 'g', edges: [edges[1], { ...edges[1] }], literalId: 'n1' }), null);
+});
+
+test('the range slider scale steps whole numbers by one and decimals by a fraction of the span', () => {
+  assert.deepEqual(rangeScale([45, 90, 130]), { min: 45, max: 130, step: 1, decimals: 0 });
+  assert.deepEqual(rangeScale([0.137, 0.9]), { min: 0.137, max: 0.9, step: 0.001, decimals: 3 });
+  assert.deepEqual(rangeScale([1.25, 2.5]), { min: 1.25, max: 2.5, step: 0.01, decimals: 2 });
+  assert.deepEqual(rangeScale([7]), { min: 7, max: 7, step: 1, decimals: 0 });
+  assert.equal(rangeScale([]), null);
+  assert.equal(rangeScale([1, NaN]), null);
+});
+
+test('histogram bins count every value once and how many the range keeps', () => {
+  const bins = histogramBins([0, 1, 4, 5, 9, 10], { min: 0, max: 10, lo: 4, hi: 9, binCount: 2 });
+  assert.deepEqual(bins, [{ from: 0, to: 5, count: 3, kept: 1 }, { from: 5, to: 10, count: 3, kept: 2 }]);
+  assert.deepEqual(histogramBins([3, 3], { min: 3, max: 3, lo: 3, hi: 3, binCount: 20 }), [{ from: 3, to: 3, count: 2, kept: 2 }]);
+  assert.equal(countInRange([0, 1, 4, 5, 9, 10], 4, 9), 3);
+});
+
+test('the range slider writes at least, at most or between and reads them back', () => {
+  const scale = rangeScale([20, 150]);
+  assert.deepEqual(rangeFilter(scale, 40, 80), { filterType: 6, value: '40..80' });
+  assert.deepEqual(rangeFilter(scale, 40, 150), { filterType: 2, value: '40' });
+  assert.deepEqual(rangeFilter(scale, 20, 80), { filterType: 3, value: '80' });
+  assert.deepEqual(rangeFilter(scale, 20, 150), { filterType: 6, value: '20..150' });
+  assert.deepEqual(rangeFilter(rangeScale([0.1, 0.9]), 0.30000000000000004, 0.5), { filterType: 6, value: '0.3..0.5' });
+  assert.deepEqual(rangeFromFilter(scale, 6, '40..80'), { lo: 40, hi: 80 });
+  assert.deepEqual(rangeFromFilter(scale, '2', '100'), { lo: 100, hi: 150 });
+  assert.deepEqual(rangeFromFilter(scale, 3, '500'), { lo: 20, hi: 150 });
+  assert.deepEqual(rangeFromFilter(scale, null, '45'), { lo: 20, hi: 150 });
+  assert.deepEqual(rangeFromFilter(scale, 2, 'abc'), { lo: 20, hi: 150 });
 });
