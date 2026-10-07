@@ -126,7 +126,7 @@ Status: todo · Started: · Finished: · Hours: · Confidence:
 
 **Lesson**
 
-- [ ] Lesson written (Claude)
+- [x] Lesson written (Claude) — [[L02 - Containers with Docker]]
 - [ ] Lesson read
 - [ ] Reading list skimmed
 

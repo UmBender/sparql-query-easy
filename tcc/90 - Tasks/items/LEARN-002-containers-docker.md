@@ -1,7 +1,7 @@
 ---
 id: LEARN-002
 title: Learn containers by running and inspecting the app image
-status: READY
+status: REVIEW
 priority: P1
 type: learning
 depends_on: [LEARN-001]
@@ -99,7 +99,7 @@ Look for: health and restarts
 ```sh
 docker logs --since 5m -f app
 ```
-Look for: Ktor startup lines (`Responding at http://0.0.0.0:8080`)
+Look for: the three `SLF4J(W)` warnings — the app has no logging backend yet, so no Ktor startup line appears (OPS-004)
 
 ```sh
 docker exec -it app id ; docker exec -it app ls /opt/sparql-query-easy/lib | head
@@ -139,3 +139,19 @@ Look for: how much disk images/containers/build cache use — servers fill up wi
 
 - 2026-10-07: Created from the user's request for a hands-on deployment learning
   path (DOC-003).
+- 2026-10-07: Lesson written: [[../../07 - Operations/Deployment Learning Path/L02 - Containers with Docker]].
+  Outputs observed on the dev machine (Docker Engine 29.7.2, amd64): cold
+  build 2:11, a CSS-only change re-runs the 110 s Gradle step (no dependency
+  layer or cache mount, idea for OPS-005); image 473 MB on disk / 132 MB
+  compressed, app layer 36.5 MB; healthy after ~15 s; Java is PID 1 and
+  stops with 143; 256 MiB limit with a 1 GiB pre-touched heap is OOM-killed
+  (137) and crash-loops, `MaxRAMPercentage=60` fixes it; Caddy proxies to
+  the unpublished app and returns 502 when it stops. Findings: `curl` is
+  already in the Temurin base, so the runtime `apt-get` layer adds 0 B; the
+  Compose plugin is not installed on the dev machine, so the Compose output
+  is marked expected and the lab topology was run with plain `docker`;
+  Fedora SELinux needs `:z` on bind-mounted secret files. The "Check it
+  yourself" log hint was corrected (no Ktor startup line without a logging
+  backend). Status REVIEW: the user does the lab and ticks "Done when" in
+  the tracker to close it (human gate). Validation:
+  `node scripts/check-project-docs.mjs`, `git diff --check`.
