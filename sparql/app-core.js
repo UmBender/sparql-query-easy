@@ -85,6 +85,11 @@ function getAllNodes() {
  * Build a SPARQL filter list from a cytoscape component (connected set).
  */
 function buildFilters(component) {
+    return window.queryCalculations.buildFilters(filterEdgeItems(component));
+}
+
+/** Plain relation items of a component, as queryCalculations expects them. */
+function filterEdgeItems(component) {
     const items = [];
     for (let i = 0; i < component.length; i++) {
         const item = component[i];
@@ -104,7 +109,33 @@ function buildFilters(component) {
             fallbackPredicate: item.data('nodeId') || `?empty_${Date.now()}`
         });
     }
-    return window.queryCalculations.buildFilters(items);
+    return items;
+}
+
+/**
+ * BE-003: distribution of the numeric relation pointing at a literal node, under
+ * the rest of its query component. Resolves to null when the node has no single
+ * fixed relation to profile; rejects with the server error otherwise.
+ */
+async function fetchNumericProfile(literalNodeId, { limit, signal } = {}) {
+    const node = cy.getElementById(literalNodeId);
+    if (!node.length) return null;
+    const request = window.queryCalculations.numericProfileRequest({
+        endpointUrl: getEndpoint(),
+        edges: filterEdgeItems(node.component()),
+        literalId: literalNodeId,
+        limit,
+    });
+    if (!request) return null;
+    const response = await fetch(apiUrl('/api/query/numeric-profile'), {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify(request),
+        signal,
+    });
+    const body = await response.json().catch(() => null);
+    if (!response.ok) throw new Error(body?.error || `Numeric profile failed (${response.status}).`);
+    return body.data;
 }
 
 /**
@@ -131,7 +162,7 @@ function edgeLabelHtml(data) {
     if (kind === 'filter') {
         return `<div class="edge-label-filter">
                     <span>${escapeHTML(data.label)}</span><br><br>
-                    <span style="font-weight:bold;color:white">${escapeHTML(String(data.filterType))}</span>
+                    <span style="font-weight:bold;color:white">${escapeHTML(window.queryCalculations.filterLabel(data.filterType, ''))}</span>
                 </div>`;
     }
     const cls = kind === 'variable' ? 'edge-label-variable' : 'edge-label';

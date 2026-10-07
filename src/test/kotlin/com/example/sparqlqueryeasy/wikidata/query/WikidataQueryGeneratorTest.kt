@@ -83,6 +83,9 @@ class WikidataQueryGeneratorTest {
         parses(literalQuery(Contains("text")))
         parses(literalQuery(GreaterOrEqual("7")))
         parses(literalQuery(LessOrEqual("7.5")))
+        val between = literalQuery(Between("40", "80.5"))
+        between.contains("FILTER (?literalValue0 >= 40 && ?literalValue0 <= 80.5)") shouldBe true
+        parses(between)
 
         val maximum = literalQuery(Maximum)
         maximum.contains("ORDER BY DESC(?literalValue0) \nLIMIT 1") shouldBe true
@@ -152,6 +155,8 @@ class WikidataQueryGeneratorTest {
         assertFailsWith<IllegalArgumentException> { WikidataPropertyId("P0") }
         assertFailsWith<IllegalArgumentException> { QueryVariable("item } ?s ?p ?o") }
         assertFailsWith<IllegalArgumentException> { GreaterOrEqual("7; DROP ALL") }
+        assertFailsWith<IllegalArgumentException> { Between("1", "2) || true") }
+        assertFailsWith<IllegalArgumentException> { Between("9", "2") }
         assertFailsWith<IllegalArgumentException> {
             TriplePattern(
                 WikidataEntityId("Q42").asIri(),

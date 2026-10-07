@@ -1765,3 +1765,94 @@ test('on a narrow screen the possible graph is a bottom sheet below the explorat
   expect(panelBox.y + panelBox.height).toBeLessThanOrEqual(windowBox.y);
   expect(await possibleGraph(page)).toEqual(['edge:rel|open|?b', 'node:?a|open|?a', 'node:?c|open|?c']);
 });
+
+// BE-003: numeric filter editor, readable labels and the numeric profile client.
+async function addSpeedFilterGraph(page) {
+  await disableAutoLayout(page);
+  await page.evaluate(() => {
+    cy.add([
+      { group: 'nodes', data: { id: '?p', value: '?p', label: '?', type: 'variable' }, position: { x: 150, y: 200 } },
+      { group: 'nodes', data: { id: 'speed-value', value: '45', label: '45', type: 'label' }, position: { x: 450, y: 200 } },
+      { group: 'edges', data: { id: 'speed', source: '?p', target: 'speed-value', nodeId: '<https://example.test/speed>', label: 'speed' } },
+    ]);
+  });
+}
+
+// Materialize is stubbed offline, so the modal is driven through its DOM.
+async function openFilterEditor(page) {
+  await page.locator('#cy').click({ position: { x: 16, y: 16 } });
+  await clickGraphNode(page, await page.evaluate(() => cy.nodes('[type = "label"]')[0].id()));
+  await page.locator('#node-action-menu').getByRole('button', { name: 'Edit value', exact: true }).click();
+}
+
+async function editSpeedFilter(page, filterName, value) {
+  await openFilterEditor(page);
+  await page.evaluate(([name, text]) => {
+    const option = [...document.querySelectorAll('#modal-change-value input[name=filter-type]')]
+      .find(input => input.nextElementSibling.textContent.startsWith(name));
+    option.checked = true;
+    document.getElementById('modal-new-value').value = text;
+    document.getElementById('apply-filter-btn').click();
+  }, [filterName, value]);
+}
+
+const filterNode = page => page.evaluate(() => {
+  const node = cy.nodes('[type = "label"]')[0];
+  return { label: node.data('label'), value: node.data('value'), filterType: node.data('filterType') };
+});
+
+test('the numeric filter editor offers at least, at most and between with readable labels', async ({ page }) => {
+  await addSpeedFilterGraph(page);
+  await editSpeedFilter(page, 'Between', '40..80');
+  expect(await filterNode(page)).toEqual({ label: '40\u201380', value: '40..80', filterType: 6 });
+
+  await page.evaluate(() => { window.toastMessages = []; window.toast = message => window.toastMessages.push(message); });
+  await editSpeedFilter(page, 'Between', '80..40');
+  expect(await page.evaluate(() => window.toastMessages)).toEqual([expect.stringContaining('Between needs two numbers')]);
+  expect(await filterNode(page)).toEqual({ label: '40\u201380', value: '40..80', filterType: 6 });
+
+  await openFilterEditor(page);
+  await expect(page.locator('#modal-new-value')).toHaveValue('40..80');
+  await expect(page.locator('#modal-change-value')).toContainText('At least (\u2265)');
+  await editSpeedFilter(page, 'At least', '100');
+  expect(await filterNode(page)).toEqual({ label: '\u2265 100', value: '100', filterType: 2 });
+});
+
+test('an exact numeric match runs without a starts-with filter', async ({ page }) => {
+  await addSpeedFilterGraph(page);
+  await editSpeedFilter(page, 'Exactly Equal', '45');
+  const before = server.requests.filter(({ path }) => path === '/api/query').length;
+  await page.locator('#run-query-btn').click();
+  await expect.poll(() => server.requests.filter(({ path }) => path === '/api/query').length).toBe(before + 1);
+  const body = JSON.parse(server.requests.filter(({ path }) => path === '/api/query').at(-1).body);
+  expect(body.where).toEqual([{ subject: '?p', predicate: '<https://example.test/speed>', object: '45', filterType: null }]);
+});
+
+test('fetchNumericProfile profiles the relation of a filter node under the rest of its query', async ({ page }) => {
+  await addSpeedFilterGraph(page);
+  await page.evaluate(() => {
+    cy.add([
+      { group: 'nodes', data: { id: 'fire', value: '<https://example.test/Fire>', label: 'Fire', type: 'node' }, position: { x: 150, y: 400 } },
+      { group: 'edges', data: { id: 'type', source: '?p', target: 'fire', nodeId: '<https://example.test/type>', label: 'type' } },
+    ]);
+  });
+  const requests = [];
+  await page.route('**/api/query/numeric-profile', async route => {
+    requests.push(JSON.parse(route.request().postData()));
+    await route.fulfill({ contentType: 'application/json', body: JSON.stringify({ data: { subject: '?p', predicate: '<https://example.test/speed>', count: 1, min: 60, max: 60, truncated: false, values: [] } }) });
+  });
+  const profile = await page.evaluate(() => fetchNumericProfile('speed-value'));
+  expect(profile).toMatchObject({ count: 1, min: 60 });
+  expect(requests).toEqual([{
+    endpointUrl: 'CampeonatoBrasileiro2023',
+    where: [{ subject: '?p', predicate: '<https://example.test/type>', object: '<https://example.test/Fire>', filterType: null }],
+    subject: '?p',
+    predicate: '<https://example.test/speed>',
+    limit: 500,
+  }]);
+
+  await page.unroute('**/api/query/numeric-profile');
+  await page.route('**/api/query/numeric-profile', route => route.fulfill({ status: 400, contentType: 'application/json', body: '{"error":"limit must be between 1 and 1000"}' }));
+  await expect(page.evaluate(() => fetchNumericProfile('speed-value'))).rejects.toThrow('limit must be between 1 and 1000');
+  expect(await page.evaluate(() => fetchNumericProfile('?p'))).toBeNull();
+});

@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
-import { buildFilters, getQueryVariables, hasParallelPredicateVariables, relationLabelKind } from '../sparql/query-calculations.js';
+import { buildFilters, filterLabel, filterTypeOf, getQueryVariables, hasParallelPredicateVariables, numericProfileRequest, parseBetween, relationLabelKind } from '../sparql/query-calculations.js';
 
 test('filters preserve edge order, fixed RDF terms, and numeric filterType zero', () => {
   assert.deepEqual(buildFilters([
@@ -45,4 +45,41 @@ test('relation label kind follows the predicate, not a stored type flag', () => 
   assert.equal(relationLabelKind({ nodeId: '<https://example.test/p>', type: 'variable' }), 'fixed');
   assert.equal(relationLabelKind({ nodeId: '<https://example.test/p?ghost>' }), 'fixed');
   assert.equal(relationLabelKind({ nodeId: '?predicate', type: 'filter' }), 'filter');
+});
+
+test('an exact match stored as an empty filter type sends no filter', () => {
+  assert.equal(filterTypeOf(''), null);
+  assert.equal(filterTypeOf(null), null);
+  assert.equal(filterTypeOf('0'), 0);
+  assert.equal(buildFilters([{ source: '?p', target: 'n', targetValue: '45', nodeId: '<https://example.test/speed>', filterType: '', fallbackPredicate: '' }])[0].filterType, null);
+});
+
+test('between values need two ordered numbers', () => {
+  assert.deepEqual(parseBetween('40..80'), { min: 40, max: 80 });
+  assert.deepEqual(parseBetween(' -1.5 .. 2e1 '), { min: -1.5, max: 20 });
+  for (const invalid of ['80..40', '40', '40..', 'a..b', '1..2..3', '', null]) assert.equal(parseBetween(invalid), null);
+});
+
+test('filtered literal labels are readable', () => {
+  assert.deepEqual(
+    [[null, '45'], ['', '45'], ['0', 'Pi'], [1, 'chu'], ['2', '100'], [3, '80'], [4, '1'], [5, '1'], [6, '40..80'], [6, 'bad']].map(([type, value]) => filterLabel(type, value)),
+    ['45', '45', 'starts with Pi', 'contains chu', '\u2265 100', '\u2264 80', 'MAX', 'MIN', '40\u201380', 'bad'],
+  );
+});
+
+test('the numeric profile request leaves out the profiled relation and keeps the rest', () => {
+  const edges = [
+    { source: '?p', target: 'fire', sourceValue: '?p', targetValue: '<https://example.test/Fire>', nodeId: '<https://example.test/type>', fallbackPredicate: '' },
+    { source: '?p', target: 'n1', sourceValue: '?p', targetValue: '90..100', nodeId: '<https://example.test/speed>', filterType: '6', fallbackPredicate: '' },
+  ];
+  assert.deepEqual(numericProfileRequest({ endpointUrl: 'PokemonGen1', edges, literalId: 'n1' }), {
+    endpointUrl: 'PokemonGen1',
+    where: [{ subject: '?p', predicate: '<https://example.test/type>', object: '<https://example.test/Fire>', filterType: null }],
+    subject: '?p',
+    predicate: '<https://example.test/speed>',
+    limit: 500,
+  });
+  assert.equal(numericProfileRequest({ endpointUrl: 'g', edges, literalId: 'missing' }), null);
+  assert.equal(numericProfileRequest({ endpointUrl: 'g', edges: [{ ...edges[1], nodeId: '?pred' }], literalId: 'n1' }), null);
+  assert.equal(numericProfileRequest({ endpointUrl: 'g', edges: [edges[1], { ...edges[1] }], literalId: 'n1' }), null);
 });

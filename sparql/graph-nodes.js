@@ -144,7 +144,8 @@ function showIntroAlert(name, text) {
 // ── Change-value modal content ────────────────────────────────────
 function getModalReplaceContent(theId, theValue) {
     const safeVal = escapeHTML(theValue);
-    const isNumericOrSpecial = !isNaN(theValue) || theValue === 'MAX' || theValue === 'MIN';
+    const isNumericOrSpecial = !isNaN(theValue) || theValue === 'MAX' || theValue === 'MIN'
+        || window.queryCalculations.parseBetween(theValue) !== null;
 
     const textFilters = `
                 <label><input type="radio" name="filter-type" value="" checked><span>Exact match</span></label>
@@ -153,8 +154,9 @@ function getModalReplaceContent(theId, theValue) {
 
     const numFilters = `
                 <label><input type="radio" name="filter-type" value="" checked><span>Exactly Equal</span></label>
-                <label><input type="radio" name="filter-type" value="2"><span>Greater Than (&gt;)</span></label>
-                <label><input type="radio" name="filter-type" value="3"><span>Less Than (&lt;)</span></label>
+                <label><input type="radio" name="filter-type" value="2"><span>At least (&ge;)</span></label>
+                <label><input type="radio" name="filter-type" value="3"><span>At most (&le;)</span></label>
+                <label><input type="radio" name="filter-type" value="6"><span>Between (min..max, e.g. 40..80)</span></label>
                 <label><input type="radio" name="filter-type" value="4"><span>MAX</span></label>
                 <label><input type="radio" name="filter-type" value="5"><span>MIN</span></label>`;
 
@@ -175,15 +177,18 @@ function getModalReplaceContent(theId, theValue) {
 }
 
 function changeElementStringValue(elementId, newValue, filterType) {
+    filterType = window.queryCalculations.filterTypeOf(filterType);
+    if (filterType === 6 && !window.queryCalculations.parseBetween(newValue)) {
+        toast('Between needs two numbers as min..max, with min not above max (e.g. 40..80).', 'error');
+        return;
+    }
     const ele       = cy.getElementById(elementId);
     const newNodeId = `node_${Date.now()}`;
     const oldId     = ele.id();
     const oldData   = ele.data();
     const oldPos    = ele.position();
 
-    let label = newValue;
-    if (filterType == 4) label = 'MAX';
-    else if (filterType == 5) label = 'MIN';
+    const label = window.queryCalculations.filterLabel(filterType, newValue);
 
     cy.add({
         group: 'nodes',

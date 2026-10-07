@@ -27,8 +27,75 @@ export function buildFilters(edges) {
     subject: edge.sourceValue || edge.source,
     predicate: edge.nodeId || edge.fallbackPredicate,
     object: edge.targetValue || edge.target,
-    filterType: edge.filterType != null ? +edge.filterType : null,
+    filterType: filterTypeOf(edge.filterType),
   }));
+}
+
+/**
+ * The editor stores "" for an exact match; that is no filter, not 0 (Starts with).
+ * @param {number | string | null | undefined} filterType
+ * @returns {number | null}
+ */
+export function filterTypeOf(filterType) {
+  return filterType == null || filterType === '' ? null : +filterType;
+}
+
+const numberPattern = /^[+-]?(?:\d+(?:\.\d*)?|\.\d+)(?:[eE][+-]?\d+)?$/;
+
+/**
+ * Parses a Between value `min..max` (filterType 6, BE-003); both bounds inclusive.
+ * @param {string | null | undefined} text
+ * @returns {{min: number, max: number} | null}
+ */
+export function parseBetween(text) {
+  const bounds = String(text ?? '').split('..').map(bound => bound.trim());
+  if (bounds.length !== 2 || !bounds.every(bound => numberPattern.test(bound))) return null;
+  const [min, max] = bounds.map(Number);
+  return min <= max ? { min, max } : null;
+}
+
+/**
+ * Readable label of a filtered literal node: `≥ 100`, `≤ 80`, `40–80`, MAX, MIN.
+ * @param {number | string | null | undefined} filterType
+ * @param {string} value
+ * @returns {string}
+ */
+export function filterLabel(filterType, value) {
+  switch (filterTypeOf(filterType)) {
+  case 0: return `starts with ${value}`;
+  case 1: return `contains ${value}`;
+  case 2: return `\u2265 ${value}`;
+  case 3: return `\u2264 ${value}`;
+  case 4: return 'MAX';
+  case 5: return 'MIN';
+  case 6: {
+    const range = parseBetween(value);
+    return range ? `${range.min}\u2013${range.max}` : value;
+  }
+  default: return value;
+  }
+}
+
+/**
+ * Request for POST /api/query/numeric-profile (BE-003): the distribution of the
+ * relation that points at the literal node [literalId], under the rest of the query.
+ * Returns null unless exactly one fixed-IRI relation points at that node.
+ * @param {{endpointUrl: string, edges: FilterEdge[], literalId: string, limit?: number}} input
+ * @returns {{endpointUrl: string, where: QueryFilter[], subject: string, predicate: string, limit: number} | null}
+ */
+export function numericProfileRequest({ endpointUrl, edges, literalId, limit = 500 }) {
+  const profiled = edges.filter(edge => edge.target === literalId);
+  if (profiled.length !== 1) return null;
+  const [edge] = profiled;
+  const predicate = edge.nodeId;
+  if (!predicate || !predicate.startsWith('<') || predicate.includes('>/<')) return null;
+  return {
+    endpointUrl,
+    where: buildFilters(edges.filter(item => item !== edge)),
+    subject: edge.sourceValue || edge.source,
+    predicate,
+    limit,
+  };
 }
 
 /**

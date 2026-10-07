@@ -58,8 +58,11 @@ angle-bracket IRIs is accepted as a safe property-path subset. Query objects
 may additionally be a literal string or `[]` for a blank node.
 
 `filterType` is numeric: `0` Starts, `1` Contains, `2` Greater-or-equal, `3`
-Less-or-equal, `4` Maximum, and `5` Minimum. An omitted `filterType` produces
-no filter. The `/api/query/sparql` display route deliberately ignores a
+Less-or-equal, `4` Maximum, `5` Minimum and `6` Between (BE-003). Between takes
+`object` as `min..max` (both numeric, min not above max, both inclusive) and
+renders one `FILTER (?lit >= min && ?lit <= max)`; other forms return `400`.
+`4`/`5` only order the results (`ORDER BY`, `LIMIT 1`); they do not filter.
+An omitted `filterType` produces an exact `str()` match. The `/api/query/sparql` display route deliberately ignores a
 provided `filterType`, preserving C# behavior.
 
 ## Routes
@@ -337,6 +340,45 @@ unbound values. `hasMore` reports whether another page exists. An empty page is
 local graph `404`, and execution failure `502` (diagnostic text as in
 `/api/query`), with the shared error envelope.
 Normal tests use local graphs or fake executors only.
+
+### `POST /api/query/numeric-profile`
+
+BE-003, additive. Distribution of one numeric relation under the rest of a
+query, for filter visualizations. Request:
+
+```json
+{
+  "endpointUrl": "PokemonGen1",
+  "where": [{"subject": "?p", "predicate": "<http://easyquery.example.org/pokemon#hasType>", "object": "<http://easyquery.example.org/pokemon#FireType>"}],
+  "subject": "?p",
+  "predicate": "<http://easyquery.example.org/pokemon#speed>",
+  "limit": 3
+}
+```
+
+`where` is the query without the profiled relation (default `[]`; Maximum/
+Minimum filters are rejected). `subject` is a variable or IRI; `predicate` a
+single IRI; `limit` 1–1000 (default 500). Response:
+
+```json
+{
+  "data": {
+    "subject": "?p",
+    "predicate": "<http://easyquery.example.org/pokemon#speed>",
+    "count": 12, "min": 60.0, "max": 105.0, "truncated": true,
+    "values": [
+      {"entity": {"type": "iri", "value": "http://easyquery.example.org/pokemon#Growlithe", "datatype": null, "language": null},
+       "label": "Growlithe", "value": "60", "datatype": "http://www.w3.org/2001/XMLSchema#integer", "number": 60.0}
+    ]
+  }
+}
+```
+
+`count`, `min` and `max` cover every distinct entity/value pair whose value is a
+numeric literal (`isNumeric`); `values` holds up to `limit` of them ordered by
+value then entity, and `truncated` is true when it holds fewer than `count`.
+No numeric values gives `count` 0 and null `min`/`max`. Errors as for
+`/api/query/stage`. Two SPARQL queries are run (aggregate and values page).
 
 ## Endpoint selection
 

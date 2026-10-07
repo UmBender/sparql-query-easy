@@ -22,6 +22,7 @@ Ordered by dependencies, then priority among selection candidates. See [worker r
 | API-002 | DONE | P1 | documentation | [Specify additive typed and bounded staged-candidate API](<items/API-002-staged-candidate-contract.md>) |
 | BE-001 | DONE | P1 | backend | [Implement a safe typed bounded stage-query service](<items/BE-001-typed-bounded-stage-query.md>) |
 | BE-002 | DONE | P1 | backend | [Expose the typed stage-query service over Ktor](<items/BE-002-staged-candidate-http-route.md>) |
+| BE-003 | DONE | P1 | fullstack | [Profile numeric relation values and add a between filter with readable labels](<items/BE-003-numeric-profile-and-between-filter.md>) |
 | BUG-002 | DONE | P1 | bug | [Map relationship executor failures to the approved JSON 502 contract](<items/BUG-002-relationship-upstream-error-mapping.md>) |
 | BUG-003 | DONE | P1 | bug | [Keep result-table selection working when the value is already in a cyclic graph](<items/BUG-003-result-selection-in-cyclic-graphs.md>) |
 | BUG-004 | DONE | P1 | bug | [Run Query uses the graph group that contains the variables](<items/BUG-004-run-query-component-with-variables.md>) |
@@ -31,6 +32,7 @@ Ordered by dependencies, then priority among selection candidates. See [worker r
 | DATA-003 | READY | P1 | data | [Extend PokemonGen1 with per-Pokémon strengths and Pokédex lore links](<items/DATA-003-pokemon-matchups-and-lore.md>) |
 | OPS-001 | DONE | P2 | operations | [Define container and JVM runtime packaging](<items/OPS-001-container-runtime.md>) |
 | DEC-009 | DONE | P1 | decision | [Decide captured C# versus Kotlin health response contract](<items/DEC-009-health-response-contract.md>) |
+| DEC-010 | BLOCKED | P1 | decision | [Choose which numeric-filter visualization is merged into main](<items/DEC-010-choose-filter-visualization.md>) |
 | FE-001 | DONE | P1 | frontend | [Add browser-level tests for authoritative frontend flows](<items/FE-001-browser-frontend-flow-tests.md>) |
 | FE-002 | DONE | P1 | frontend | [Replace the node radial menu with a persistent left-click action list](<items/FE-002-left-click-node-action-menu.md>) |
 | FE-003 | DONE | P1 | frontend | [Let users convert a graph relation into a projected predicate variable](<items/FE-003-predicate-variable-edge.md>) |
@@ -57,6 +59,10 @@ Ordered by dependencies, then priority among selection candidates. See [worker r
 | FE-023 | DONE | P1 | frontend | [Emphasize a variable in the graph and the stage order together on hover](<items/FE-023-variable-order-hover-emphasis.md>) |
 | FE-024 | DONE | P1 | frontend | [Enlarge the possible-graph window and move long labels under their element](<items/FE-024-possible-graph-readable-labels.md>) |
 | FE-025 | DONE | P1 | frontend | [Let a stage value be applied to the graph immediately with an Assume button](<items/FE-025-assume-stage-value-now.md>) |
+| FE-026 | READY | P1 | frontend | [Visualize a numeric filter as a range slider over a histogram](<items/FE-026-filter-range-histogram.md>) |
+| FE-027 | READY | P1 | frontend | [Visualize a numeric filter as a dot strip with a live count badge on the graph](<items/FE-027-filter-dot-strip-badge.md>) |
+| FE-028 | READY | P1 | frontend | [Visualize how each filter narrows the result as a funnel](<items/FE-028-filter-funnel.md>) |
+| FE-029 | READY | P1 | frontend | [Show the filtered result as a live graph that changes with the range](<items/FE-029-filter-live-result-graph.md>) |
 | INV-001 | DONE | P1 | investigation | [Investigate Ktor HTTP-client and runtime resource lifecycle](<items/INV-001-runtime-resource-lifecycle.md>) |
 | QUAL-001 | DONE | P1 | quality | [Replay recorded Wikidata success and controlled error route fixtures](<items/QUAL-001-recorded-wikidata-routes.md>) |
 | MIG-002 | DONE | P1 | migration | [Retire the C# project after compatibility and operations gates](<items/MIG-002-retire-csharp-project.md>) |

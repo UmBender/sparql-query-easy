@@ -73,6 +73,7 @@ class OpenApiRoutesTest {
                     "/api/query/search" to setOf("post"),
                     "/api/query/sparql" to setOf("post"),
                     "/api/query/stage" to setOf("post"),
+                    "/api/query/numeric-profile" to setOf("post"),
                 ),
                 document.operationInventory(),
             )
@@ -139,7 +140,7 @@ class OpenApiRoutesTest {
                 document.resolve(document.resolve(querySchema.property("where")).requiredObject("items"))
             val filterType = document.resolve(whereItems.property("filterType"))
             assertEquals("integer", filterType.nonNullTypeName())
-            assertEquals(listOf("0", "1", "2", "3", "4", "5"), filterType.requiredArray("enum").strings())
+            assertEquals(listOf("0", "1", "2", "3", "4", "5", "6"), filterType.requiredArray("enum").strings())
 
             val successSchema =
                 document.responseSchema(query, "200", "application/json")

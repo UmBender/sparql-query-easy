@@ -104,6 +104,15 @@ data class LessOrEqual(val value: String) : QueryFilter {
     }
 }
 
+/** Both bounds inclusive (filterType 6, BE-003); one FILTER keeps them on the same value. */
+data class Between(val minimum: String, val maximum: String) : QueryFilter {
+    init {
+        numeric(minimum)
+        numeric(maximum)
+        require(BigDecimal(minimum) <= BigDecimal(maximum)) { "Between minimum must not exceed maximum" }
+    }
+}
+
 data object Maximum : QueryFilter
 
 data object Minimum : QueryFilter
@@ -228,6 +237,27 @@ data class StageCandidateQuery(
     }
 }
 
+/**
+ * Numeric values of [predicate] on [subject] under [patterns] (BE-003). [values] pages the
+ * distinct entity/value pairs ordered by value; otherwise the query returns count, min and max.
+ */
+data class NumericProfileQuery(
+    val subject: QueryTerm,
+    val predicate: IriTerm,
+    val patterns: List<TriplePattern>,
+    val limit: Int,
+    val useWikidataLabels: Boolean,
+    val values: Boolean,
+) : WikidataQuery {
+    init {
+        require(limit > 0) { "LIMIT must be positive" }
+        require(subject is VariableTerm || subject is IriTerm) { "subject must be a variable or an IRI" }
+        require(patterns.none { it.filter == Maximum || it.filter == Minimum }) {
+            "Maximum and Minimum filters are not supported in numeric profiles"
+        }
+    }
+}
+
 interface WikidataQueryGenerator {
     fun generate(input: WikidataQuery): String
 }
@@ -242,6 +272,7 @@ class CSharpCompatibleWikidataQueryGenerator : WikidataQueryGenerator {
             is RelationshipValueQuery -> relationshipValues(input)
             is SearchSelectQuery -> search(input)
             is StageCandidateQuery -> stageCandidates(input)
+            is NumericProfileQuery -> numericProfile(input)
         }
 
     private fun generalSelect(input: GeneralSelectQuery): String {
@@ -312,6 +343,48 @@ class CSharpCompatibleWikidataQueryGenerator : WikidataQueryGenerator {
             if (!input.isLocal) limit(input.limit)
         }.build()
 
+    private fun numericProfile(input: NumericProfileQuery): String =
+        QueryText(input.useWikidataLabels).apply {
+            if (input.values) {
+                val label =
+                    if (input.useWikidataLabels) {
+                        "COALESCE(?__profileLabel, ?__profileClaimLabel)"
+                    } else {
+                        "?__profileLabel"
+                    }
+                line("SELECT ?__profileEntity ?__profileValue (SAMPLE($label) AS ?__profileLabelOut)")
+            } else {
+                line(
+                    "SELECT (COUNT(*) AS ?__profileCount) (MIN(?__profileValue) AS ?__profileMin) " +
+                        "(MAX(?__profileValue) AS ?__profileMax)",
+                )
+                line("WHERE {")
+                line("SELECT DISTINCT ?__profileEntity ?__profileValue")
+            }
+            line("WHERE {")
+            input.patterns.forEachIndexed { index, pattern -> pattern(pattern, index) }
+            line("${input.subject.render()} ${input.predicate.render()} ?__profileValue .")
+            line("BIND(${input.subject.render()} AS ?__profileEntity)")
+            line("FILTER (isNumeric(?__profileValue))")
+            if (!input.values) {
+                line("}")
+                line("}")
+                return@apply
+            }
+            line("OPTIONAL { ?__profileEntity rdfs:label ?__profileLabel . FILTER (lang(?__profileLabel) = \"en\") }")
+            if (input.useWikidataLabels) {
+                line(
+                    "OPTIONAL { ?__profileClaim wikibase:directClaim ?__profileEntity . " +
+                        "?__profileClaim rdfs:label ?__profileClaimLabel . " +
+                        "FILTER (lang(?__profileClaimLabel) = \"en\") }",
+                )
+            }
+            line("}")
+            line("GROUP BY ?__profileEntity ?__profileValue")
+            line("ORDER BY ?__profileValue ?__profileEntity")
+            line("LIMIT ${input.limit}")
+        }.build()
+
     private fun stageCandidates(input: StageCandidateQuery): String {
         val variable = input.variable.render()
         return QueryText(input.useWikidataLabels).apply {
@@ -374,6 +447,7 @@ class CSharpCompatibleWikidataQueryGenerator : WikidataQueryGenerator {
                 is Contains -> line("FILTER (CONTAINS(STR($literal), \"${filter.value.escapeSparqlString()}\"))")
                 is GreaterOrEqual -> line("FILTER ($literal >= ${filter.value})")
                 is LessOrEqual -> line("FILTER ($literal <= ${filter.value})")
+                is Between -> line("FILTER ($literal >= ${filter.minimum} && $literal <= ${filter.maximum})")
                 Maximum -> orderBy = "ORDER BY DESC($literal) "
                 Minimum -> orderBy = "ORDER BY ASC($literal) "
             }

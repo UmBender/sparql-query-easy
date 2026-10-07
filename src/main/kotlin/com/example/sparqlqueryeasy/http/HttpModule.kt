@@ -20,6 +20,8 @@ import com.example.sparqlqueryeasy.application.localdatabase.TurtleUpload
 import com.example.sparqlqueryeasy.application.query.GeneralQueryRequest
 import com.example.sparqlqueryeasy.application.query.GeneralQueryResult
 import com.example.sparqlqueryeasy.application.query.GeneralQueryService
+import com.example.sparqlqueryeasy.application.query.NumericProfileResult
+import com.example.sparqlqueryeasy.application.query.NumericProfileService
 import com.example.sparqlqueryeasy.application.query.ResultFilteringService
 import com.example.sparqlqueryeasy.application.query.StageQueryResult
 import com.example.sparqlqueryeasy.application.query.StageQueryService
@@ -83,6 +85,8 @@ data class QueryHttpDependencies(
     val sparqlQueryGenerationService: SparqlQueryGenerationService,
     val stageQueryService: StageQueryService =
         StageQueryService(CSharpCompatibleWikidataQueryGenerator(), JenaSparqlSyntaxValidator()),
+    val numericProfileService: NumericProfileService =
+        NumericProfileService(CSharpCompatibleWikidataQueryGenerator(), JenaSparqlSyntaxValidator()),
 )
 
 data class HttpDependencies(
@@ -120,6 +124,7 @@ fun defaultHttpDependencies(): HttpDependencies {
             GeneralQueryService(generator, JenaSparqlSyntaxValidator(), filtering),
             SparqlQueryGenerationService(generator, JenaSparqlSyntaxValidator()),
             StageQueryService(generator, JenaSparqlSyntaxValidator()),
+            NumericProfileService(generator, JenaSparqlSyntaxValidator()),
         ),
         ownedResources = listOf(httpClient),
     )
@@ -260,6 +265,25 @@ private fun Route.queryRoutes(dependencies: QueryHttpDependencies) {
                 }
             }
         }.documentStageQuery()
+        post("numeric-profile") {
+            runQueryRoute {
+                val request = call.receive<NumericProfileHttpRequest>()
+                when (
+                    val result =
+                        dependencies.numericProfileService.execute(
+                            request.toProfileRequest(),
+                            dependencies.endpointContextResolver.resolve(request.endpointUrl),
+                        )
+                ) {
+                    is NumericProfileResult.Success -> call.respond(DataResponse(result.profile.toResponse()))
+                    is NumericProfileResult.InvalidInput -> badRequest(result.diagnostic)
+                    is NumericProfileResult.InvalidQuery -> badRequest(result.diagnostic)
+                    is NumericProfileResult.LocalGraphUnavailable -> notFound(result.endpointUrl)
+                    is NumericProfileResult.InvalidEndpoint -> badRequest(result.diagnostic)
+                    is NumericProfileResult.ExecutionFailure -> upstreamFailure(result.diagnostic)
+                }
+            }
+        }.documentNumericProfile()
         post("sparql") {
             runQueryRoute {
                 val request = call.receive<GeneralQueryHttpRequest>()

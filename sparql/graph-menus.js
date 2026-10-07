@@ -564,7 +564,9 @@ function initGraphMenus() {
 
         const contentEl = document.getElementById('modal-change-value-content');
         contentEl.setAttribute('data-node-id', ele.id());
-        contentEl.innerHTML = getModalReplaceContent(ele.id(), ele.data('label'));
+        // A filtered node shows a readable label (≥ 100); edit its raw value instead.
+        const current = window.queryCalculations.filterTypeOf(ele.data('filterType')) === null ? ele.data('label') : ele.data('value');
+        contentEl.innerHTML = getModalReplaceContent(ele.id(), current);
         M.updateTextFields();
         openChangeValueModal();
     }

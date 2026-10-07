@@ -2,6 +2,10 @@
 
 package com.example.sparqlqueryeasy.http
 
+import com.example.sparqlqueryeasy.application.query.NumericProfile
+import com.example.sparqlqueryeasy.application.query.NumericProfileRequest
+import com.example.sparqlqueryeasy.application.query.PROFILE_DEFAULT_LIMIT
+import com.example.sparqlqueryeasy.application.query.PROFILE_MAX_LIMIT
 import com.example.sparqlqueryeasy.application.query.PropertyResult
 import com.example.sparqlqueryeasy.application.query.StageCandidatePage
 import com.example.sparqlqueryeasy.application.query.StageQueryRequest
@@ -10,6 +14,7 @@ import com.example.sparqlqueryeasy.domain.model.Iri
 import com.example.sparqlqueryeasy.domain.model.Literal
 import com.example.sparqlqueryeasy.domain.model.RdfValue
 import com.example.sparqlqueryeasy.wikidata.query.AnyBlankNode
+import com.example.sparqlqueryeasy.wikidata.query.Between
 import com.example.sparqlqueryeasy.wikidata.query.Contains
 import com.example.sparqlqueryeasy.wikidata.query.GreaterOrEqual
 import com.example.sparqlqueryeasy.wikidata.query.IriBindingValue
@@ -84,8 +89,11 @@ data class WhereHttpRequest(
     val subject: String? = null,
     val predicate: String? = null,
     val `object`: String? = null,
-    @JsonSchema.Description("Numeric filter: 0 Starts, 1 Contains, 2 Greater/equal, 3 Lesser/equal, 4 Max, 5 Min.")
-    @JsonSchema.Enum("0", "1", "2", "3", "4", "5")
+    @JsonSchema.Description(
+        "Literal filter: 0 Starts, 1 Contains, 2 Greater/equal, 3 Lesser/equal, 4 Max, 5 Min, " +
+            "6 Between (object min..max, both inclusive).",
+    )
+    @JsonSchema.Enum("0", "1", "2", "3", "4", "5", "6")
     val filterType: Int? = null,
 )
 
@@ -127,6 +135,45 @@ data class StageQueryHttpRequest(
     @JsonSchema.Default("0")
     @JsonSchema.Description("Page offset, 0 to 10000.")
     val offset: Int = 0,
+)
+
+@Serializable
+data class NumericProfileHttpRequest(
+    @JsonSchema.Default("\"$DEFAULT_ENDPOINT_URL\"")
+    val endpointUrl: String = DEFAULT_ENDPOINT_URL,
+    @JsonSchema.Description("The query without the profiled relation; may be empty.")
+    val where: List<WhereHttpRequest> = emptyList(),
+    @JsonSchema.Description("Subject of the profiled relation: a SPARQL variable or an IRI in angle brackets.")
+    val subject: String? = null,
+    @JsonSchema.Description("Profiled predicate IRI in angle brackets.")
+    val predicate: String? = null,
+    @JsonSchema.Default("$PROFILE_DEFAULT_LIMIT")
+    @JsonSchema.Description("Maximum number of values returned, 1 to $PROFILE_MAX_LIMIT.")
+    val limit: Int = PROFILE_DEFAULT_LIMIT,
+)
+
+@Serializable
+data class NumericProfileValueHttpResponse(
+    val entity: RdfTermHttp,
+    val label: String?,
+    @JsonSchema.Description("Literal lexical form.")
+    val value: String,
+    val datatype: String?,
+    val number: Double,
+)
+
+@Serializable
+data class NumericProfileHttpResponse(
+    val subject: String,
+    val predicate: String,
+    @JsonSchema.Description("Distinct entity/value pairs with a numeric value.")
+    val count: Int,
+    val min: Double?,
+    val max: Double?,
+    @JsonSchema.Description("True when values holds fewer pairs than count.")
+    val truncated: Boolean,
+    @JsonSchema.Description("Pairs ordered by number.")
+    val values: List<NumericProfileValueHttpResponse>,
 )
 
 @Serializable
@@ -181,8 +228,15 @@ private fun Int.toFilter(value: String): QueryFilter =
         3 -> LessOrEqual(value)
         4 -> Maximum
         5 -> Minimum
+        6 -> value.toBetween()
         else -> throw HttpRequestValidationFailure("Unsupported filterType: $this")
     }
+
+private fun String.toBetween(): Between {
+    val bounds = split("..")
+    if (bounds.size != 2) throw HttpRequestValidationFailure("Between filter value must be min..max: $this")
+    return Between(bounds[0].trim(), bounds[1].trim())
+}
 
 private fun String.toQueryObject(): QueryObject =
     when {
@@ -230,6 +284,36 @@ internal fun PropertyResult.toRelationshipValueResponse(isLiteral: Boolean) =
     PropertyDtoResponse(propertyId, propertyLabel, propertyType = if (isLiteral) propertyType else null)
 
 internal fun PropertyResult.toSearchResponse() = PropertyDtoResponse(propertyId, propertyLabel, propertyType = propertyType)
+
+internal fun NumericProfileHttpRequest.toProfileRequest(): NumericProfileRequest =
+    NumericProfileRequest(
+        subject = subject.toQueryTerm("subject"),
+        predicate =
+            predicate.toQueryTerm("predicate") as? IriTerm
+                ?: throw HttpRequestValidationFailure("predicate must be a single IRI"),
+        patterns = where.map(WhereHttpRequest::toPattern),
+        limit = limit,
+    )
+
+internal fun NumericProfile.toResponse() =
+    NumericProfileHttpResponse(
+        subject = subject.render(),
+        predicate = predicate.render(),
+        count = count,
+        min = minimum?.toDouble(),
+        max = maximum?.toDouble(),
+        truncated = truncated,
+        values =
+            values.map {
+                NumericProfileValueHttpResponse(
+                    it.entity.toTermResponse(),
+                    it.label,
+                    it.value.lexicalForm,
+                    it.value.datatype?.value,
+                    it.number.toDouble(),
+                )
+            },
+    )
 
 internal fun StageQueryHttpRequest.toStageRequest(): StageQueryRequest =
     StageQueryRequest(

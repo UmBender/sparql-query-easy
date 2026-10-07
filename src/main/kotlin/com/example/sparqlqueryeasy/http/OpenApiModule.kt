@@ -175,6 +175,28 @@ internal fun Route.documentStageQuery(): Route =
         }
     }
 
+internal fun Route.documentNumericProfile(): Route =
+    describe {
+        operationId = "profileNumericRelation"
+        summary = "Profile the numeric values of one relation"
+        description =
+            "Returns count, min, max and up to limit distinct entity/value pairs, ordered by value, for subject " +
+            "predicate ?value under the where patterns. Only numeric literals are included. " +
+            "Maximum/Minimum filters are rejected."
+        tag("Query")
+        requestBody {
+            required = true
+            ContentType.Application.Json { schema = jsonSchema<NumericProfileHttpRequest>() }
+        }
+        responses {
+            HttpStatusCode.OK {
+                description = "The numeric profile."
+                schema = jsonSchema<DataResponse<NumericProfileHttpResponse>>()
+            }
+            commonQueryErrors(includeUpstreamFailure = true)
+        }
+    }
+
 internal fun Route.documentSparqlGeneration(): Route =
     describe {
         operationId = "generateSparql"
