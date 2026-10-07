@@ -100,6 +100,7 @@ function filterEdgeItems(component) {
         const sourceValue  = sourceNode.data('value')  || item.data('source');
         const targetValue  = targetNode.data('value')  || item.data('target');
         items.push({
+            id: item.data('id'),
             source: item.data('source'),
             target: item.data('target'),
             sourceValue,

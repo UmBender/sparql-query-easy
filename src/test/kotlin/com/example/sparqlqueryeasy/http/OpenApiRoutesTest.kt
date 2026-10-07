@@ -74,6 +74,7 @@ class OpenApiRoutesTest {
                     "/api/query/sparql" to setOf("post"),
                     "/api/query/stage" to setOf("post"),
                     "/api/query/numeric-profile" to setOf("post"),
+                    "/api/query/count" to setOf("post"),
                 ),
                 document.operationInventory(),
             )

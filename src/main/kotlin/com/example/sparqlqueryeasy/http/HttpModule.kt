@@ -22,6 +22,8 @@ import com.example.sparqlqueryeasy.application.query.GeneralQueryResult
 import com.example.sparqlqueryeasy.application.query.GeneralQueryService
 import com.example.sparqlqueryeasy.application.query.NumericProfileResult
 import com.example.sparqlqueryeasy.application.query.NumericProfileService
+import com.example.sparqlqueryeasy.application.query.ResultCountResult
+import com.example.sparqlqueryeasy.application.query.ResultCountService
 import com.example.sparqlqueryeasy.application.query.ResultFilteringService
 import com.example.sparqlqueryeasy.application.query.StageQueryResult
 import com.example.sparqlqueryeasy.application.query.StageQueryService
@@ -87,6 +89,8 @@ data class QueryHttpDependencies(
         StageQueryService(CSharpCompatibleWikidataQueryGenerator(), JenaSparqlSyntaxValidator()),
     val numericProfileService: NumericProfileService =
         NumericProfileService(CSharpCompatibleWikidataQueryGenerator(), JenaSparqlSyntaxValidator()),
+    val resultCountService: ResultCountService =
+        ResultCountService(CSharpCompatibleWikidataQueryGenerator(), JenaSparqlSyntaxValidator()),
 )
 
 data class HttpDependencies(
@@ -125,6 +129,7 @@ fun defaultHttpDependencies(): HttpDependencies {
             SparqlQueryGenerationService(generator, JenaSparqlSyntaxValidator()),
             StageQueryService(generator, JenaSparqlSyntaxValidator()),
             NumericProfileService(generator, JenaSparqlSyntaxValidator()),
+            ResultCountService(generator, JenaSparqlSyntaxValidator()),
         ),
         ownedResources = listOf(httpClient),
     )
@@ -284,6 +289,26 @@ private fun Route.queryRoutes(dependencies: QueryHttpDependencies) {
                 }
             }
         }.documentNumericProfile()
+        post("count") {
+            runQueryRoute {
+                val request = call.receive<ResultCountHttpRequest>()
+                when (
+                    val result =
+                        dependencies.resultCountService.execute(
+                            request.toCountRequest(),
+                            dependencies.endpointContextResolver.resolve(request.endpointUrl),
+                        )
+                ) {
+                    is ResultCountResult.Success ->
+                        call.respond(DataResponse(ResultCountHttpResponse(result.variable.render(), result.count)))
+                    is ResultCountResult.InvalidInput -> badRequest(result.diagnostic)
+                    is ResultCountResult.InvalidQuery -> badRequest(result.diagnostic)
+                    is ResultCountResult.LocalGraphUnavailable -> notFound(result.endpointUrl)
+                    is ResultCountResult.InvalidEndpoint -> badRequest(result.diagnostic)
+                    is ResultCountResult.ExecutionFailure -> upstreamFailure(result.diagnostic)
+                }
+            }
+        }.documentResultCount()
         post("sparql") {
             runQueryRoute {
                 val request = call.receive<GeneralQueryHttpRequest>()

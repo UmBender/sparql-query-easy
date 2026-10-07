@@ -380,6 +380,31 @@ value then entity, and `truncated` is true when it holds fewer than `count`.
 No numeric values gives `count` 0 and null `min`/`max`. Errors as for
 `/api/query/stage`. Two SPARQL queries are run (aggregate and values page).
 
+### `POST /api/query/count`
+
+FE-028 (branch `FE-028-filter-funnel`, one of the DEC-010 variants), additive.
+Number of distinct values of one variable under a query, for the filter
+funnel. Request:
+
+```json
+{
+  "endpointUrl": "PokemonGen1",
+  "variableName": "?p",
+  "where": [
+    {"subject": "?p", "predicate": "<http://easyquery.example.org/pokemon#speed>", "object": "90", "filterType": 2},
+    {"subject": "?p", "predicate": "<http://easyquery.example.org/pokemon#hasType>", "object": "<http://easyquery.example.org/pokemon#FireType>"}
+  ]
+}
+```
+
+Response: `{"data": {"variableName": "?p", "count": 7}}`. The generated query
+is `SELECT (COUNT(DISTINCT ?p) AS ?__countValue) WHERE { ... }` over the
+`where` patterns, with no LIMIT and without the rdf:type requirement of
+`/api/query`. `variableName` is required (with or without `?`); `where` needs
+at least one pattern; Maximum/Minimum filters and variable names starting with
+`__count` are rejected with `400`. Other errors as for `/api/query/stage`
+(`404` unknown local graph, `502` upstream failure).
+
 ## Endpoint selection
 
 `endpointUrl` accepts the built-in identifiers `CampeonatoBrasileiro2023` and
@@ -422,9 +447,11 @@ committed bytes). It behaves like the other local graphs on every route.
 - `src/main/kotlin/com/example/sparqlqueryeasy/application/query/ResultFilteringService.kt`
 - `src/main/kotlin/com/example/sparqlqueryeasy/application/query/GeneralQueryService.kt`
 - `src/main/kotlin/com/example/sparqlqueryeasy/application/query/StageQueryService.kt`
+- `src/main/kotlin/com/example/sparqlqueryeasy/application/query/ResultCountService.kt`
 - `src/main/kotlin/com/example/sparqlqueryeasy/application/querygeneration/SparqlQueryGenerationService.kt`
 - `src/test/kotlin/com/example/sparqlqueryeasy/http/QueryRoutesTest.kt`
 - `src/test/kotlin/com/example/sparqlqueryeasy/http/StageQueryRoutesTest.kt`
+- `src/test/kotlin/com/example/sparqlqueryeasy/http/ResultCountRoutesTest.kt`
 - `src/test/kotlin/com/example/sparqlqueryeasy/http/LocalDatabaseRoutesTest.kt`
 - `src/test/kotlin/com/example/sparqlqueryeasy/http/OpenApiRoutesTest.kt`
 - `src/test/kotlin/com/example/sparqlqueryeasy/ApplicationTest.kt`
