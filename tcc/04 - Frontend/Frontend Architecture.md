@@ -139,14 +139,15 @@ native range slider (`loadFilterHistogram`, `renderFilterHistogram` in
 
 **Confirmed (FE-035):** with the range fixed, the histogram editor cycles
 over the entities the range keeps (pure `keptEntities`: distinct entities with
-all their kept values, ordered by lowest value then label), two per step.
+all their kept values, ordered by lowest value then label), five per step in
+an editor widened to 624px.
 Previous/Next (also ←/→ on the controls) and Play/Pause (every 1.6 s,
 `filterCycleTimer`) move between pages and wrap; cycling never changes the
 range, the editor value or the main graph, and makes no request. The shown
 entities appear in large type with their values and as a read-only Cytoscape
 mini graph (`filterPreviewCy`, pure `possibilityGraph`: entity → relation
 label → value nodes). A new range or filter type restarts from the first
-entities; MAX/MIN and two or fewer kept entities disable the controls; Cancel,
+entities; MAX/MIN and five or fewer kept entities disable the controls; Cancel,
 Apply or a replaced editor stop playback. An exact value highlights only its
 own bars and count.
 

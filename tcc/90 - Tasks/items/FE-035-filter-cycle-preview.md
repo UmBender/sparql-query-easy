@@ -23,7 +23,7 @@ corrected after the first version (which stepped the range and drew up to 24
 unreadable entities):
 - The range stays fixed while cycling; cycling goes over the possible values
   of the variable, i.e. the distinct entities the range keeps, each with all
-  of its kept values ("consolidated").
+  of its kept values ("consolidated"). Five per step since the follow-up below.
 - Only one or two entities are shown at a time (two per step), in large type
   and as a mini result graph inside the editor. The main graph changes only
   on Apply.
@@ -48,7 +48,7 @@ Exclusions: the FE-027 graph badge (FE-036); changes to the profile route.
 
 ## Acceptance criteria
 
-- [x] Previous/Next/Play cycle over the kept entities two at a time, showing
+- [x] Previous/Next/Play cycle over the kept entities five at a time, showing
       their names and values in large type and as a mini graph, without
       changing the range, the editor value or making requests.
 - [x] Apply writes the edited filter; the main graph is unchanged before
@@ -91,3 +91,9 @@ Focused: `npm run test:query`, `npm run check:frontend-types`,
   `npm run test:browser` 79/79 (3 rewritten FE-035 cases),
   `node scripts/check-project-docs.mjs`, `git diff --check`. Still not seen
   with the real Material icon font. Completion commit for this task.
+- 2026-10-09: User follow-up: show five entities per step (`FILTER_CYCLE_PAGE`)
+  and widen the editor about 30% (`#modal-change-value` max-width 480 → 624px);
+  large names wrap as a row of chips. Browser tests use twelve-value profiles.
+  Validation: `npm run test:browser` 79/79, docs check and `git diff --check`
+  clean. On a 360px phone the five-node mini graph is small; the large names
+  stay readable.

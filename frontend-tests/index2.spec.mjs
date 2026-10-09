@@ -2048,7 +2048,8 @@ test('the filter editor histogram fits a narrow viewport', async ({ page }) => {
   expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(360);
 });
 
-// FE-035: with the range fixed, cycle over the kept entities two at a time.
+// FE-035: with the range fixed, cycle over the kept entities five at a time.
+const twelveSpeeds = [20, 45, 45, 50, 55, 60, 65, 70, 75, 80, 90, 150];
 const cycleValue = page => page.locator('#filter-histogram .filter-cycle-value');
 const cyclePosition = page => page.locator('#filter-histogram .filter-cycle-position');
 const previewEntities = page => page.evaluate(() => filterPreviewCy.nodes('[kind = "entity"]').map(node => node.data('label')));
@@ -2060,9 +2061,9 @@ const chooseFilter = (page, name, value) => page.evaluate(([label, text]) => {
   option.dispatchEvent(new Event('change'));
 }, [name, value]);
 
-test('previous and next cycle over the kept entities two at a time without changing the range', async ({ page }) => {
+test('previous and next cycle over the kept entities five at a time without changing the range', async ({ page }) => {
   await addSpeedFilterGraph(page);
-  const requests = await routeSpeedProfile(page, fulfillProfile(speedProfile([20, 45, 45, 60, 90, 150])));
+  const requests = await routeSpeedProfile(page, fulfillProfile(speedProfile(twelveSpeeds)));
   const before = await filterNode(page);
   await openVisibleFilterEditor(page);
   const next = page.getByRole('button', { name: 'Next entities' });
@@ -2076,28 +2077,28 @@ test('previous and next cycle over the kept entities two at a time without chang
   await expect(next).toBeDisabled();
 
   await chooseFilter(page, 'At least', '40');
-  await expect(cyclePosition(page)).toHaveText('1\u20132 of 5 kept');
+  await expect(cyclePosition(page)).toHaveText('1\u20135 of 11 kept');
   await expect(next).toBeEnabled();
   await next.click();
-  await expect(cyclePosition(page)).toHaveText('3\u20134 of 5 kept');
-  await expect(cycleValue(page)).toHaveText('P3 60P4 90');
-  expect(await previewEntities(page)).toEqual(['P3', 'P4']);
+  await expect(cyclePosition(page)).toHaveText('6\u201310 of 11 kept');
+  await expect(cycleValue(page)).toHaveText('P6 65P7 70P8 75P9 80P10 90');
+  expect(await previewEntities(page)).toEqual(['P6', 'P7', 'P8', 'P9', 'P10']);
   await next.click();
-  await expect(cyclePosition(page)).toHaveText('5 of 5 kept');
-  expect(await previewEntities(page)).toEqual(['P5']);
+  await expect(cyclePosition(page)).toHaveText('11 of 11 kept');
+  expect(await previewEntities(page)).toEqual(['P11']);
   await next.click();
-  await expect(cyclePosition(page)).toHaveText('1\u20132 of 5 kept');
+  await expect(cyclePosition(page)).toHaveText('1\u20135 of 11 kept');
   await previous.click();
-  await expect(cyclePosition(page)).toHaveText('5 of 5 kept');
+  await expect(cyclePosition(page)).toHaveText('11 of 11 kept');
   // Cycling leaves the range and the editor as they were.
   await expect(page.locator('#modal-new-value')).toHaveValue('40');
   await expect(page.getByRole('slider', { name: 'Lowest kept value' })).toHaveValue('40');
-  await expect(histogram(page)).toContainText('Keeps 5 of 6 values');
+  await expect(histogram(page)).toContainText('Keeps 11 of 12 values');
 
   // A new range starts again from its first entities.
   await page.getByRole('slider', { name: 'Lowest kept value' }).fill('60');
-  await expect(cyclePosition(page)).toHaveText('1\u20132 of 3 kept');
-  expect(await previewEntities(page)).toEqual(['P3', 'P4']);
+  await expect(cyclePosition(page)).toHaveText('1\u20135 of 7 kept');
+  expect(await previewEntities(page)).toEqual(['P5', 'P6', 'P7', 'P8', 'P9']);
 
   // MAX and MIN have no fixed set to cycle over.
   await chooseFilter(page, 'MAX');
@@ -2114,16 +2115,16 @@ test('previous and next cycle over the kept entities two at a time without chang
 
 test('play cycles the kept entities until paused or the editor closes, and arrows step on the controls', async ({ page }) => {
   await addSpeedFilterGraph(page);
-  await routeSpeedProfile(page, fulfillProfile(speedProfile([20, 45, 60, 90, 150])));
+  await routeSpeedProfile(page, fulfillProfile(speedProfile(twelveSpeeds)));
   await openVisibleFilterEditor(page);
   await chooseFilter(page, 'At least', '20');
   const play = page.getByRole('button', { name: 'Play', exact: true });
   await play.click();
   const pause = page.getByRole('button', { name: 'Pause', exact: true });
   await expect(pause).toHaveAttribute('aria-pressed', 'true');
-  await expect(cyclePosition(page)).toHaveText('3\u20134 of 5 kept');
-  await expect(cyclePosition(page)).toHaveText('5 of 5 kept');
-  await expect(cyclePosition(page)).toHaveText('1\u20132 of 5 kept');
+  await expect(cyclePosition(page)).toHaveText('6\u201310 of 12 kept');
+  await expect(cyclePosition(page)).toHaveText('11\u201312 of 12 kept');
+  await expect(cyclePosition(page)).toHaveText('1\u20135 of 12 kept');
   await pause.click();
   await expect(play).toHaveAttribute('aria-pressed', 'false');
   const paused = await cyclePosition(page).textContent();

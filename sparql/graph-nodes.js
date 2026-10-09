@@ -210,12 +210,12 @@ function changeElementStringValue(elementId, newValue, filterType) {
 
 // ── FE-026: value histogram with a range slider in the filter editor ──
 // FE-035: with the range fixed, Play/Previous/Next cycle over the entities the
-// range keeps, a few at a time, in large type and as a read-only mini result
+// range keeps, five at a time, in large type and as a read-only mini result
 // graph. Cycling changes neither the editor nor the main graph and makes no
 // profile requests.
 let filterHistogramRequest = null;
 const FILTER_CYCLE_INTERVAL_MS = 1600;
-const FILTER_CYCLE_PAGE = 2;
+const FILTER_CYCLE_PAGE = 5;
 let filterCycleTimer = null;
 let filterPreviewCy = null;
 let filterPreviewResize = null;
