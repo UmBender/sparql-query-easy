@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
-import { buildFilters, filterFunnelPlan, filterLabel, filterTypeOf, funnelStepCounts, funnelStepKind, getQueryVariables, hasParallelPredicateVariables, numericProfileRequest, parseBetween, relationLabelKind } from '../sparql/query-calculations.js';
+import { buildFilters, countInRange, cycleMode, filterFunnelPlan, filterLabel, filterTypeOf, funnelStepCounts, funnelStepKind, getQueryVariables, hasParallelPredicateVariables, histogramBins, numericProfileRequest, parseBetween, rangeFilter, rangeFromFilter, rangeScale, keptEntities, possibilityGraph, relationLabelKind } from '../sparql/query-calculations.js';
 
 test('filters preserve edge order, fixed RDF terms, and numeric filterType zero', () => {
   assert.deepEqual(buildFilters([
@@ -129,4 +129,75 @@ test('steps beyond the cap stay relaxed and are not counted', () => {
   assert.deepEqual(plan.steps.map(step => step.counted), [true, false]);
   assert.equal(plan.requests.length, 2);
   assert.deepEqual(plan.requests[1]?.where, [typeFire, evolves, speedAny, hpAny]);
+});
+
+test('the range slider scale steps whole numbers by one and decimals by a fraction of the span', () => {
+  assert.deepEqual(rangeScale([45, 90, 130]), { min: 45, max: 130, step: 1, decimals: 0 });
+  assert.deepEqual(rangeScale([0.137, 0.9]), { min: 0.137, max: 0.9, step: 0.001, decimals: 3 });
+  assert.deepEqual(rangeScale([1.25, 2.5]), { min: 1.25, max: 2.5, step: 0.01, decimals: 2 });
+  assert.deepEqual(rangeScale([7]), { min: 7, max: 7, step: 1, decimals: 0 });
+  assert.equal(rangeScale([]), null);
+  assert.equal(rangeScale([1, NaN]), null);
+});
+
+test('histogram bins count every value once and how many the range keeps', () => {
+  const bins = histogramBins([0, 1, 4, 5, 9, 10], { min: 0, max: 10, lo: 4, hi: 9, binCount: 2 });
+  assert.deepEqual(bins, [{ from: 0, to: 5, count: 3, kept: 1 }, { from: 5, to: 10, count: 3, kept: 2 }]);
+  assert.deepEqual(histogramBins([3, 3], { min: 3, max: 3, lo: 3, hi: 3, binCount: 20 }), [{ from: 3, to: 3, count: 2, kept: 2 }]);
+  assert.equal(countInRange([0, 1, 4, 5, 9, 10], 4, 9), 3);
+});
+
+test('the range slider writes at least, at most or between and reads them back', () => {
+  const scale = rangeScale([20, 150]);
+  assert.deepEqual(rangeFilter(scale, 40, 80), { filterType: 6, value: '40..80' });
+  assert.deepEqual(rangeFilter(scale, 40, 150), { filterType: 2, value: '40' });
+  assert.deepEqual(rangeFilter(scale, 20, 80), { filterType: 3, value: '80' });
+  assert.deepEqual(rangeFilter(scale, 20, 150), { filterType: 6, value: '20..150' });
+  assert.deepEqual(rangeFilter(rangeScale([0.1, 0.9]), 0.30000000000000004, 0.5), { filterType: 6, value: '0.3..0.5' });
+  assert.deepEqual(rangeFromFilter(scale, 6, '40..80'), { lo: 40, hi: 80 });
+  assert.deepEqual(rangeFromFilter(scale, '2', '100'), { lo: 100, hi: 150 });
+  assert.deepEqual(rangeFromFilter(scale, 3, '500'), { lo: 20, hi: 150 });
+  assert.deepEqual(rangeFromFilter(scale, null, '45'), { lo: 20, hi: 150 });
+  assert.deepEqual(rangeFromFilter(scale, 2, 'abc'), { lo: 20, hi: 150 });
+});
+
+test('only range filters have a fixed set of kept entities to cycle over', () => {
+  assert.deepEqual([null, '', 2, '3', 6, 4, 5, 0, 1].map(cycleMode),
+    ['exact', 'exact', 'atLeast', 'atMost', 'between', null, null, null, null]);
+});
+
+test('kept entities are distinct, carry all their kept values and are ordered by value then label', () => {
+  const values = [
+    { entity: { type: 'iri', value: 'https://e/Pikachu' }, label: 'Pikachu', value: '35', number: 35 },
+    { entity: '<https://e/Bulbasaur>', label: null, value: '45', number: 45 },
+    { entity: '<https://e/Abra>', label: 'Abra', value: '25', number: 25 },
+    { entity: '<https://e/Abra>', label: 'Abra', value: '25', number: 25 },
+    { entity: '<https://e/Abra>', label: 'Abra', value: '40', number: 40 },
+    { entity: '<https://e/Arbok>', label: 'Arbok', value: '60', number: 60 },
+    { entity: '<https://e/Pikachu>', label: 'Pikachu', value: '25', number: 25 },
+  ];
+  assert.deepEqual(keptEntities(values, 25, 45), [
+    { key: 'https://e/Abra', label: 'Abra', values: [{ value: '25', number: 25 }, { value: '40', number: 40 }] },
+    { key: 'https://e/Pikachu', label: 'Pikachu', values: [{ value: '25', number: 25 }, { value: '35', number: 35 }] },
+    { key: 'https://e/Bulbasaur', label: 'Bulbasaur', values: [{ value: '45', number: 45 }] },
+  ]);
+  assert.deepEqual(keptEntities(values, 70, 80), []);
+});
+
+test('the possibility graph puts each shown entity above its values, linked by the relation', () => {
+  const elements = possibilityGraph([
+    { key: 'a', label: 'Abra', values: [{ value: '25', number: 25 }, { value: '40', number: 40 }] },
+    { key: 'p', label: 'Pikachu', values: [{ value: '35', number: 35 }] },
+  ], 'HP');
+  assert.deepEqual(elements.map(item => [item.data.id, item.data.label, item.position]), [
+    ['e0', 'Abra', { x: 55, y: 0 }],
+    ['e0v0', '25', { x: 0, y: 120 }],
+    ['e0-e0v0', 'HP', undefined],
+    ['e0v1', '40', { x: 110, y: 120 }],
+    ['e0-e0v1', 'HP', undefined],
+    ['e1', 'Pikachu', { x: 260, y: 0 }],
+    ['e1v0', '35', { x: 260, y: 120 }],
+    ['e1-e1v0', 'HP', undefined],
+  ]);
+  assert.deepEqual(possibilityGraph([], 'HP'), []);
 });

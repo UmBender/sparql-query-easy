@@ -84,6 +84,72 @@ main graph style. It does not: the main graph uses 120 px nodes, `getNodeColor`
 and HTML labels; the possible graph uses 60 px nodes and state classes. Only
 the edge color and arrow match, so no shared style was extracted.
 
+## Reliability proposal (FE-031, 2026-10-09)
+
+Analysis only; no application code changed. The user reported that each
+frontend change has caused new bugs, value-node interactions in particular.
+The file split (FE-018–FE-022) made the files smaller, but it did not change
+how they work together.
+
+**Evidence: recent bugs share one cause.** BUG-003, BUG-005 and BUG-006 and the
+FE-030 follow-up (`834d00d`) all came after features shipped. None came from a typo. Each
+happened because one path decided what a graph element *is* (IRI, literal,
+variable, filtered value) differently from another path:
+
+- BUG-006: `getRelationshipValueChange` assumed `isLiteral: true`, so a fixed
+  IRI neighbour came back as a literal node.
+- BUG-005: the legacy query dropped untyped literals that the staged query
+  returns, so the two paths disagreed about which values exist.
+- BUG-003: one replacement path added a node with an existing ID; FE-010
+  Apply already reused it.
+
+**What the code shows (`main`, `5d64c4a`):**
+
+| Finding | Evidence |
+|---|---|
+| A node's kind is a free-form string, with other facts stored elsewhere | `data.type` is `node`, `label`, `default`, `variable` or `label-filter`. "N results" is `color: 'gray'`, images are `isLink`, and being a variable is also inferred from an ID starting with `?` |
+| Every feature decides the kind again | About 70 `type`/`filterType` checks and 15 `?`-prefix checks across 8 files (`rg` count) |
+| A filtered value is a literal node with its filter on the edge | The `object` holds the filter text (`40..80`) and the edge holds `filterType`. The server adds a hidden `?lit` (API v1), so the filter is not a real query variable |
+| RDF terms are lost when written to the graph | Staged results are typed `RdfTerm`s (`query-stages.js`), but graph nodes keep only the lexical form plus `type` (Two Variable Exploration Contract, FE-010). Datatype and language are lost |
+| "Replace a variable with a value" exists twice | `replaceWithNewNode` (`graph-nodes.js`, results table) and `replaceVariableNodeWithTerm` (`stage-exploration.js`, Apply/Assume) have different rules for neighbours and relationship requests |
+| Graph-changing code is untested below the browser level | 28 `cy.add`/`remove`/`move` sites in `app-core`, `graph-menus`, `graph-nodes` and `stage-exploration`. None of these files is type-checked (`tsconfig.frontend.json` covers 3 pure modules) or unit-tested; only the 73 Playwright cases reach them |
+
+**Not the cause:** file size, jQuery and the lack of a framework. A component
+framework would still need these same kind rules and the same Cytoscape
+code, so Option C stays rejected (see the options table below).
+
+**Verified for this proposal:** the bundled Cytoscape 3.29.1 runs headless in
+Node when loaded as a global script
+(`cytoscape({headless: true})`, `edge.move` checked). Graph-changing
+functions can therefore get fast `node --test` tests on a real Cytoscape
+graph without a browser or a new dependency.
+
+**Proposal (Option B continued, four reversible slices):**
+
+1. **QUAL-005, safety net first.** Write the value-node bugs the user sees
+   as failing browser cases, then add a table of every node kind against every
+   action (results table, Assume, Apply, Convert, Edit/Add value filter,
+   Remove, Connect). Each row checks the resulting kinds, IDs and query
+   payload. Fix the reproduced bugs in this card.
+2. **FE-032, one kind model.** A checked `graph-model.js` owns
+   `elementKind(data)` (`iri`, `literal`, `class`, `variable`, `many`, plus the
+   filter) and the factory that writes node data from an `RdfTerm`. Callers
+   stop comparing `type` strings. Behavior-preserving; the stored field values
+   stay the same so imports and tests still work.
+3. **FE-033, one way to bind a variable.** A single `bindVariable(cy, id,
+   term, options)` used by the results table, Assume and Apply. The
+   differences that exist on purpose (the legacy relationship re-fetch) become
+   explicit options. It gets headless-Cytoscape unit tests and type checking.
+4. **Every later FE card** adds its node kind or action to the QUAL-005 table
+   and its graph-changing code to the checked/headless-tested set. FE-034
+   (the variable value node) is the first card under this rule.
+
+Success criteria: the table covers every kind/action pair; a new node kind
+changes `graph-model.js` and adds table rows instead of edits across files;
+the `type`-string checks outside `graph-model.js` go to zero. Rollback is
+reverting a slice's commit. The cost is a few small, behavior-preserving
+cards before FE-034; they are estimates, not measured.
+
 ## Evidence and concentration
 
 Confirmed: `sparql/index2.html` is 2,221 lines. Inline application JavaScript

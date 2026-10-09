@@ -129,6 +129,33 @@ variables open the panel with that order. The panel runs one exploration
 button per selectable value (`assumeStageCandidate`); Apply and Assume share
 `applyChoicesToGraph` and are the only steps that edit Cytoscape.
 
+**Confirmed (FE-026, merged by DEC-010):** the numeric filter editor profiles its relation with
+`fetchNumericProfile` (BE-003) and shows an SVG histogram with a two-handle
+native range slider (`loadFilterHistogram`, `renderFilterHistogram` in
+`graph-nodes.js`; pure `rangeScale`, `histogramBins`, `rangeFilter`,
+`rangeFromFilter` in `query-calculations.js`). Moving a handle writes At least
+/ At most when the other handle is at its end, otherwise Between, and shows
+"Keeps N of M values"; the editor preselects the stored filter type.
+
+**Confirmed (FE-035):** with the range fixed, the histogram editor cycles
+over the entities the range keeps (pure `keptEntities`: distinct entities with
+all their kept values, ordered by lowest value then label), five per step in
+an editor widened to 624px.
+Previous/Next (also ←/→ on the controls) and Play/Pause (every 1.6 s,
+`filterCycleTimer`) move between pages and wrap; cycling never changes the
+range, the editor value or the main graph, and makes no request. The shown
+entities appear in large type with their values and as a read-only Cytoscape
+mini graph (`filterPreviewCy`, pure `possibilityGraph`: entity → relation
+label → value nodes). A new range or filter type restarts from the first
+entities; five or fewer kept entities disable the controls; Cancel,
+Apply or a replaced editor stop playback. An exact value highlights only its
+own bars and count.
+
+**Confirmed (BE-004):** MAX/MIN in the editor keep every entity with the
+lowest/highest profiled value and cycle them like a range; the profile holds
+the lowest values, so a partial profile names only the maximum value and says
+its entities are known after the query runs.
+
 **Confirmed (FE-014):** mouse-wheel zoom uses Cytoscape
 `wheelSensitivity: 0.2` (about 1.2× per notch, near the 1.25× zoom buttons);
 Cytoscape logs an expected one-time warning for the non-default value.

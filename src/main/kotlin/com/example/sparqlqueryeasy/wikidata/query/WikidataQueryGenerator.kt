@@ -275,8 +275,25 @@ interface WikidataQueryGenerator {
     fun generate(input: WikidataQuery): String
 }
 
-/** Deterministic C# SparqlQueryBuilder equivalent; literals are escaped and identifiers are typed. */
-class CSharpCompatibleWikidataQueryGenerator : WikidataQueryGenerator {
+/** Default and allowed range of the row cap for queries with Maximum/Minimum filters (BE-004). */
+const val DEFAULT_EXTREME_RESULT_LIMIT = 100
+val EXTREME_RESULT_LIMIT_RANGE = 1..10_000
+
+/**
+ * Deterministic C# SparqlQueryBuilder equivalent; literals are escaped and identifiers are typed.
+ * BE-004 departs from C# for Maximum/Minimum: they keep every row whose value equals the extreme
+ * (ties included) instead of ordering with `LIMIT 1`, and [extremeResultLimit] caps those queries.
+ */
+class CSharpCompatibleWikidataQueryGenerator(
+    private val extremeResultLimit: Int = DEFAULT_EXTREME_RESULT_LIMIT,
+) : WikidataQueryGenerator {
+    init {
+        require(extremeResultLimit in EXTREME_RESULT_LIMIT_RANGE) {
+            "The extreme result limit must be between ${EXTREME_RESULT_LIMIT_RANGE.first} and " +
+                "${EXTREME_RESULT_LIMIT_RANGE.last}"
+        }
+    }
+
     override fun generate(input: WikidataQuery): String =
         when (input) {
             is GeneralSelectQuery -> generalSelect(input)
@@ -291,7 +308,7 @@ class CSharpCompatibleWikidataQueryGenerator : WikidataQueryGenerator {
 
     private fun generalSelect(input: GeneralSelectQuery): String {
         val variable = input.variable.render()
-        return QueryText(input.useWikidataPrefixes).apply {
+        return QueryText(input.useWikidataPrefixes, extremeResultLimit).apply {
             line("SELECT DISTINCT $variable ${variable}Label ${variable}RdfType ${variable}Type")
             line("WHERE {")
             if (input.patterns.isEmpty()) {
@@ -305,6 +322,7 @@ class CSharpCompatibleWikidataQueryGenerator : WikidataQueryGenerator {
                     rdfType(variable)
                     label(variable, input.useWikidataLabels)
                 }
+                extremes(input.patterns) { rdfType(variable) }
             }
             finishWhere()
             limit(input.limit)
@@ -313,13 +331,14 @@ class CSharpCompatibleWikidataQueryGenerator : WikidataQueryGenerator {
 
     private fun displaySelect(input: DisplaySelectQuery): String {
         val variable = input.variable.render()
-        return QueryText(input.useWikidataPrefixes).apply {
+        return QueryText(input.useWikidataPrefixes, extremeResultLimit).apply {
             line("SELECT DISTINCT $variable ${variable}Label")
             line("WHERE {")
             input.patterns.forEachIndexed { index, pattern ->
                 pattern(pattern, index)
                 label(variable, false)
             }
+            extremes(input.patterns) {}
             finishWhere()
             limit(input.limit)
         }.build()
@@ -436,14 +455,17 @@ class CSharpCompatibleWikidataQueryGenerator : WikidataQueryGenerator {
         }.build()
     }
 
-    private class QueryText(wikidata: Boolean) {
+    private class QueryText(
+        wikidata: Boolean,
+        private val extremeLimit: Int = DEFAULT_EXTREME_RESULT_LIMIT,
+    ) {
         private val lines =
             mutableListOf(
                 "PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>",
                 "PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>",
                 "PREFIX owl: <http://www.w3.org/2002/07/owl#>",
             )
-        private var orderBy: String? = null
+        private var hasExtreme = false
 
         init {
             if (wikidata) lines += "PREFIX wikibase: <http://wikiba.se/ontology#>"
@@ -453,16 +475,19 @@ class CSharpCompatibleWikidataQueryGenerator : WikidataQueryGenerator {
             lines += value
         }
 
+        /** [constrained] false binds the literal without any value condition (inside an extreme subquery). */
         fun pattern(
             pattern: TriplePattern,
             index: Int,
+            literal: String = "?literalValue$index",
+            constrained: Boolean = true,
         ) {
             if (pattern.`object` !is LiteralObject) {
                 line("${pattern.subject.render()} ${pattern.predicate.render()} ${pattern.`object`.render()} .")
                 return
             }
-            val literal = "?literalValue$index"
             line("${pattern.subject.render()} ${pattern.predicate.render()} $literal .")
+            if (!constrained) return
             when (val filter = pattern.filter) {
                 null -> line("FILTER (str($literal) = ${pattern.`object`.render()}) .")
                 is StartsWith -> line("FILTER (STRSTARTS(STR($literal), \"${filter.value.escapeSparqlString()}\"))")
@@ -470,8 +495,38 @@ class CSharpCompatibleWikidataQueryGenerator : WikidataQueryGenerator {
                 is GreaterOrEqual -> line("FILTER ($literal >= ${filter.value})")
                 is LessOrEqual -> line("FILTER ($literal <= ${filter.value})")
                 is Between -> line("FILTER ($literal >= ${filter.minimum} && $literal <= ${filter.maximum})")
-                Maximum -> orderBy = "ORDER BY DESC($literal) "
-                Minimum -> orderBy = "ORDER BY ASC($literal) "
+                Maximum, Minimum -> hasExtreme = true
+            }
+        }
+
+        /**
+         * BE-004: for each Maximum/Minimum literal, a subquery computes that relation's extreme over
+         * the rest of the query, and only rows equal to it remain, so ties are all kept. Other
+         * filters apply inside the subquery; other Maximum/Minimum relations only bind their value.
+         */
+        fun extremes(
+            patterns: List<TriplePattern>,
+            subjectConstraints: QueryText.() -> Unit,
+        ) {
+            patterns.forEachIndexed { index, target ->
+                val function =
+                    when (target.filter) {
+                        Maximum -> "MAX"
+                        Minimum -> "MIN"
+                        else -> return@forEachIndexed
+                    }
+                val extreme = "?__extreme$index"
+                line("{")
+                line("SELECT ($function(?__extremeValue${index}_$index) AS $extreme)")
+                line("WHERE {")
+                patterns.forEachIndexed { other, pattern ->
+                    val ownExtreme = pattern.filter == Maximum || pattern.filter == Minimum
+                    pattern(pattern, other, "?__extremeValue${index}_$other", constrained = !ownExtreme)
+                }
+                subjectConstraints()
+                line("}")
+                line("}")
+                line("FILTER (?literalValue$index = $extreme)")
             }
         }
 
@@ -514,10 +569,9 @@ class CSharpCompatibleWikidataQueryGenerator : WikidataQueryGenerator {
 
         fun finishWhere() {
             line("}")
-            orderBy?.let(::line)
         }
 
-        fun limit(limit: Int) = line("LIMIT ${if (orderBy == null) limit else 1}")
+        fun limit(limit: Int) = line("LIMIT ${if (hasExtreme) minOf(limit, extremeLimit) else limit}")
 
         fun build(): String = lines.joinToString("\n", postfix = "\n")
     }

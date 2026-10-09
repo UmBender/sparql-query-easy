@@ -61,7 +61,14 @@ may additionally be a literal string or `[]` for a blank node.
 Less-or-equal, `4` Maximum, `5` Minimum and `6` Between (BE-003). Between takes
 `object` as `min..max` (both numeric, min not above max, both inclusive) and
 renders one `FILTER (?lit >= min && ?lit <= max)`; other forms return `400`.
-`4`/`5` only order the results (`ORDER BY`, `LIMIT 1`); they do not filter.
+`4`/`5` (BE-004) keep every row whose value equals that relation's maximum/
+minimum over the rest of the query, ties included: a subquery computes the
+extreme (other filters apply; other Maximum/Minimum relations only bind their
+value) and `FILTER (?lit = ?extreme)` compares by value (`3` = `3.0`).
+Several Maximum/Minimum filters must all hold. Such a query's `LIMIT` is the
+request `limit` capped by `EASYQUERY_EXTREME_RESULT_LIMIT` (default 100). The
+C# behavior (`ORDER BY`, forced `LIMIT 1`) is retired; `SELECT-ORDER-MAX-001`
+and `SELECT-ORDER-MIN-001` keep their captures and still match by result.
 An omitted `filterType` produces an exact `str()` match. The `/api/query/sparql` display route deliberately ignores a
 provided `filterType`, preserving C# behavior.
 
@@ -299,7 +306,7 @@ Request fields and defaults:
 ```
 
 - `where` uses the `/api/query` item shape and must be non-empty. Filter types
-  `4`/`5` (Maximum/Minimum) are rejected because they impose `LIMIT 1`.
+  `4`/`5` (Maximum/Minimum) are rejected (staged pages cannot apply them).
 - `variableName` and every binding variable must occur in `where`. Bindings are
   distinct, exclude `variableName`, and number at most 16.
 - A term is `{"type":"iri","value":"<absolute IRI without brackets>"}` or
@@ -425,6 +432,12 @@ Pokédex neighbours, under `http://easyquery.example.org/pokemon#`. It is parsed
 once at startup from `src/main/resources/pokemon_gen1.ttl`, which is generated
 by `node scripts/generate-pokemon-dataset.mjs` (`--check` verifies the
 committed bytes). It behaves like the other local graphs on every route.
+DATA-003 adds per-Pokémon offensive strengths (`strongAgainst`: the types at
+least one of its own types hits super effectively) and reviewed Pokédex lore
+links between species of the 151 (`pokedexMentions`, inverse
+`mentionedInPokedexOf`, plus a short paraphrased `pokedexLoreNote` naming the
+source game). Lore coverage is deliberately partial: only well-known entries
+are included.
 
 ## C# compatibility differences
 

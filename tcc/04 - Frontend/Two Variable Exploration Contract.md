@@ -23,8 +23,8 @@ not a traversal chain. The main Run Query action rejects that shape with an
 explanatory message and leaves the graph intact; it neither opens the staged
 panel nor submits an arbitrary single-variable query. Pairs are compared by
 their directed RDF endpoint values. Successive edges forming a genuine chain
-remain staged. Parallel edges sharing one variable remain an ordinary
-one-variable query and bind together when a result is chosen.
+remain staged. Parallel edges sharing one variable are one variable (one
+stage since BUG-005) and bind together when a value is chosen.
 
 ## Approved ordered exploration contract (DEC-008)
 
@@ -37,9 +37,12 @@ to connect them or remove one, send no request, and no stage order is shown.
 The node menu's Run query keeps using the clicked node's component.
 Each distinct variable name is one block, whether it occurs as a node value,
 an edge predicate, or both; repeated occurrences share the block
-and are bound together. Zero variables keep the existing error toast; one
-variable keeps the legacy `/api/query` results table. Two or more variables use
-staged exploration.
+and are bound together. Zero variables keep the existing error toast.
+*Changed by BUG-005 (2026-10-07):* one or more variables use staged
+exploration; one variable is "Stage 1 of 1" and the order blocks stay hidden.
+The legacy `/api/query` projection requires `rdf:type`, so it returned no
+rows for untyped values such as literals (Pikachu → HP → `?`). The legacy
+results table remains for the variable-node action list's Run query.
 
 **Order.** The initial order is the sorted variable names. A numbered,
 Scratch-like block list next to Run Query shows the order; blocks move by
@@ -114,8 +117,9 @@ each selectable value of the current stage also has an **Assume** button, a
 second explicit graph-changing action. It applies the earlier commitments
 plus that value with the same replacement rules as Apply, closes the panel,
 keeps the remaining variables in their current block order and runs Run
-Query again: the panel reopens at stage 1 for 2+ remaining variables, the
-legacy single-variable query runs for one, and nothing more happens for none.
+Query again: the panel reopens at stage 1 for the remaining variables
+(*BUG-005:* also for one, which previously ran the legacy query), and nothing
+more happens for none.
 Clicking the value itself still only commits inside the panel; blank nodes
 have no Assume button.
 

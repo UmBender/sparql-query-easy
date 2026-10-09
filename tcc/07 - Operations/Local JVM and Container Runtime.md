@@ -63,7 +63,12 @@ is defined.
 - The Gradle launcher accepts `JAVA_OPTS` for JVM tuning. No default memory
   limit or production sizing has been approved. Avoid treating that as an
   application configuration or secret channel.
-- No environment variable for credentials, allowed origins, endpoint policy,
+- `EASYQUERY_EXTREME_RESULT_LIMIT` (BE-004, default 100, 1–10000) caps rows
+  of queries with MAX/MIN filters. The process environment wins; otherwise
+  the app reads `.env` in its working directory (`./gradlew run` uses the
+  repository root). `.env` is git- and Docker-ignored; copy `.env.example`.
+  With Docker pass `--env-file .env`. An invalid value stops startup.
+- No other environment variable for credentials, allowed origins, endpoint policy,
   upload size, or persistent storage is defined here. `SEC-001` and
   `AUTH-000` must define those contracts before user testing or deployment.
 - `/health` verifies only that the process can answer HTTP. `OPS-004` must

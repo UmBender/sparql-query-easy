@@ -138,8 +138,9 @@ class GeneralQueryServiceTest {
             filters.forEach { (_, filter) ->
                 val endpoint = remote(result())
                 val response = service.execute(request(filter), endpoint) as GeneralQueryResult.Success
-                response.query.contains("FILTER") || response.query.contains("ORDER BY") shouldBe true
-                if (filter == Maximum || filter == Minimum) response.query.endsWith("LIMIT 1\n") shouldBe true
+                response.query.contains("FILTER") shouldBe true
+                // BE-004: Maximum/Minimum filter by an extreme subquery; no forced LIMIT 1.
+                if (filter == Maximum || filter == Minimum) response.query.contains("AS ?__extreme0)") shouldBe true
             }
         }
 

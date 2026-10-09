@@ -56,6 +56,28 @@ class PokemonDatasetRoutesTest {
         }
 
     @Test
+    fun `relationships expose DATA-003 strengths and Pokedex lore links`() =
+        testApplication {
+            application { module() }
+
+            val response = client.postJson("/api/query/relationships", """{"endpointUrl":"$POKEMON_ENDPOINT_ID","id":"<${pk}Slowbro>"}""")
+
+            response.status shouldBe HttpStatusCode.OK
+            val body = response.bodyAsText()
+            listOf("strongAgainst", "pokedexMentions", "pokedexLoreNote").forEach { property -> body shouldContain "<$pk$property>" }
+
+            val stage =
+                client.postJson(
+                    "/api/query/stage",
+                    """{"endpointUrl":"$POKEMON_ENDPOINT_ID","variableName":"?cited","where":[""" +
+                        """{"subject":"<${pk}Shellder>","predicate":"<${pk}mentionedInPokedexOf>","object":"?cited"}]}""",
+                )
+
+            stage.status shouldBe HttpStatusCode.OK
+            stage.bodyAsText() shouldContain """"label":"Slowbro""""
+        }
+
+    @Test
     fun `stage candidates follow Pokemon relations`() =
         testApplication {
             application { module() }

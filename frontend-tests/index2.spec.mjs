@@ -217,7 +217,7 @@ test('Run Query and the stage order use the variable group even when a group wit
   expect(await page.evaluate(() => window.__lastToast)).toBeUndefined();
 });
 
-test('a single variable in a later group runs the legacy query for that group', async ({ page }) => {
+test('a single variable in a later group is staged for that group', async ({ page }) => {
   await addFixedGroupFirst(page);
   await page.evaluate(() => {
     cy.add([
@@ -226,12 +226,13 @@ test('a single variable in a later group runs the legacy query for that group', 
       { group: 'edges', data: { id: 'fire-relation', source: 'fire', target: '?node_1', nodeId: '<https://example.test/superEffectiveAgainst>', label: 'super effective against' } },
     ]);
   });
-  const requestsBefore = server.requests.filter(({ path }) => path === '/api/query').length;
+  const stageRequests = () => server.requests.filter(({ path }) => path === '/api/query/stage');
+  const stagesBefore = stageRequests().length;
 
   await page.locator('#run-query-btn').click();
 
-  await expect.poll(() => server.requests.filter(({ path }) => path === '/api/query').length).toBe(requestsBefore + 1);
-  const body = JSON.parse(server.requests.filter(({ path }) => path === '/api/query').at(-1).body);
+  await expect.poll(() => stageRequests().length).toBe(stagesBefore + 1);
+  const body = JSON.parse(stageRequests().at(-1).body);
   expect(body.variableName).toBe('?node_1');
   expect(body.where).toHaveLength(1);
   expect(body.where[0]).toMatchObject({ subject: '<https://example.test/fire>', object: '?node_1' });
@@ -271,12 +272,14 @@ for (const fixedValue of ['<https://example.test/relation?ghost>', '?alpha-bad']
         { group: 'edges', data: { id: 'fixed-predicate', source: 'fixed-node', target: '?real', nodeId: '<https://example.test/relation>', label: 'relation' } },
       ]);
     }, fixedValue);
-    const queryRequestsBefore = server.requests.filter(({ path }) => path === '/api/query').length;
+    const stagesBefore = server.requests.filter(({ path }) => path === '/api/query/stage').length;
 
     await page.locator('#run-query-btn').click();
 
-    await expect(page.locator('#two-variable-panel')).toBeHidden();
-    await expect.poll(() => server.requests.filter(({ path }) => path === '/api/query').length).toBe(queryRequestsBefore + 1);
+    await expect(page.locator('#stage-heading')).toHaveText('Stage 1 of 1: ?real');
+    await expect.poll(() => server.requests.filter(({ path }) => path === '/api/query/stage').length).toBe(stagesBefore + 1);
+    const body = JSON.parse(server.requests.filter(({ path }) => path === '/api/query/stage').at(-1).body);
+    expect(body.variableName).toBe('?real');
   });
 }
 
@@ -926,9 +929,9 @@ test('Assume on the first stage applies that value now and reopens the remaining
   expect(last.where).toEqual([{ subject: '<https://example.test/a1>', predicate: '?b', object: '?c', filterType: null }]);
 });
 
-test('Assume on a later stage applies the committed path and runs the legacy query for the last variable', async ({ page }) => {
+test('Assume on a later stage applies the committed path and stages the last variable', async ({ page }) => {
   await addThreeVariableChain(page);
-  await routeStages(page, threeStageResponder());
+  const requests = await routeStages(page, threeStageResponder());
   await page.locator('#run-query-btn').click();
   await candidateButtons(page).first().click();
   await expect(page.locator('#stage-heading')).toHaveText('Stage 2 of 3: ?b');
@@ -936,15 +939,27 @@ test('Assume on a later stage applies the committed path and runs the legacy que
 
   await assumeButtons(page).first().click();
 
-  await expect(page.locator('#two-variable-panel')).toBeHidden();
   expect(await graphNodesAndEdges(page)).toEqual({
     nodes: ['<https://example.test/a1>', '?c'],
     edges: ['rel|<https://example.test/a1>|<https://example.test/p1>|?c'],
   });
-  await expect.poll(() => server.requests.filter(({ path }) => path === '/api/query').length).toBe(queriesBefore + 1);
-  const body = JSON.parse(server.requests.filter(({ path }) => path === '/api/query').at(-1).body);
-  expect(body.variableName).toBe('?c');
-  expect(body.where[0]).toMatchObject({ subject: '<https://example.test/a1>', predicate: '<https://example.test/p1>', object: '?c' });
+  // BUG-005: the last variable stays staged, so a literal value is offered
+  // instead of the legacy projection that drops untyped values.
+  await expect(page.locator('#two-variable-panel')).toBeVisible();
+  await expect(page.locator('#stage-heading')).toHaveText('Stage 1 of 1: ?c');
+  await expect(candidateButtons(page)).toHaveText([/1903\s*literal integer/]);
+  expect(server.requests.filter(({ path }) => path === '/api/query').length).toBe(queriesBefore);
+  const last = requests.at(-1);
+  expect(last.variableName).toBe('?c');
+  expect(last.bindings).toEqual([]);
+  expect(last.where).toEqual([{ subject: '<https://example.test/a1>', predicate: '<https://example.test/p1>', object: '?c', filterType: null }]);
+
+  await candidateButtons(page).first().click();
+  await page.getByRole('button', { name: 'Apply to graph' }).click();
+  expect(await graphNodesAndEdges(page)).toEqual({
+    nodes: ['1903', '<https://example.test/a1>'],
+    edges: ['rel|<https://example.test/a1>|<https://example.test/p1>|1903'],
+  });
 });
 
 test('Back and Close from the summary leave the graph unchanged', async ({ page }) => {
@@ -1116,7 +1131,7 @@ test('an endpoint change during exploration closes the panel without graph chang
   expect(await graphSnapshot(page)).toEqual(before);
 });
 
-test('parallel edges sharing one predicate variable bind together without staging', async ({ page }) => {
+test('parallel edges sharing one predicate variable are one stage and bind together', async ({ page }) => {
   await disableAutoLayout(page);
   await page.evaluate(() => {
     cy.add([
@@ -1127,14 +1142,12 @@ test('parallel edges sharing one predicate variable bind together without stagin
       })),
     ]);
   });
-  await page.route('**/api/query', route => route.fulfill({
-    contentType: 'application/json',
-    body: JSON.stringify({ data: [{ propertyId: '<https://example.test/relation>', propertyLabel: 'relation', propertyType: 'object', propertyClass: null }] }),
-  }));
+  await routeStages(page, request => ({ body: stagePage(request, [iri('https://example.test/relation', 'relation')]) }));
   await page.locator('#run-query-btn').click();
-  await expect(page.locator('#table-results-body')).toContainText('relation');
+  await expect(page.locator('#stage-heading')).toHaveText('Stage 1 of 1: ?predicate_1');
+  await candidateButtons(page).first().click();
+  await page.getByRole('button', { name: 'Apply to graph' }).click();
   await expect(page.locator('#two-variable-panel')).toBeHidden();
-  await page.locator('#table-results-body tr.query-row').dispatchEvent('click');
   expect(await page.evaluate(() => cy.edges().map(edge => edge.data()))).toEqual(['first', 'second'].map(id => ({
     id, source: 'source', target: 'target', nodeId: '<https://example.test/relation>', label: 'relation', custom: id,
   })));
@@ -1361,21 +1374,15 @@ test('edge action menu converts only a relation predicate into a queryable varia
   expect(await page.evaluate(() => cy.getElementById('has-rival-edge').length)).toBe(1);
 
   const nodesBefore = await page.evaluate(() => cy.nodes().map(node => node.json()));
-  await page.route('**/api/query', route => route.fulfill({
-    contentType: 'application/json',
-    body: JSON.stringify({ data: [{
-      propertyId: '<https://example.test/playsAgainst>',
-      propertyLabel: 'plays against',
-      propertyType: 'object',
-      propertyClass: null,
-    }] }),
+  const stageRequests = await routeStages(page, request => ({
+    body: stagePage(request, [iri('https://example.test/playsAgainst', 'plays against')]),
   }));
-  const queryRequest = page.waitForRequest(request => request.url().endsWith('/api/query'));
   await page.evaluate(() => window.runQuery());
-  expect((await queryRequest).postDataJSON()).toEqual({
+  await expect(page.locator('#stage-heading')).toHaveText(`Stage 1 of 1: ${convertedEdge.nodeId}`);
+  expect(stageRequests[0]).toMatchObject({
     endpointUrl: 'uploaded-test-graph',
     variableName: convertedEdge.nodeId,
-    limit: 7,
+    bindings: [],
     where: [{
       subject: '<https://example.test/team-a>',
       predicate: convertedEdge.nodeId,
@@ -1384,13 +1391,9 @@ test('edge action menu converts only a relation predicate into a queryable varia
     }],
   });
 
-  await clickGraphEdge(page, 'has-rival-edge');
-  await expect(edgeMenu).toBeVisible();
-  await page.locator('#cy').click({ position: { x: 16, y: 16 } });
-  await expect(edgeMenu).toBeHidden();
-
-  await expect(page.locator('#table-results-body')).toContainText('plays against');
-  await page.locator('#table-results-body tr.query-row').dispatchEvent('click');
+  await candidateButtons(page).first().click();
+  await page.getByRole('button', { name: 'Apply to graph' }).click();
+  await expect(page.locator('#two-variable-panel')).toBeHidden();
 
   expect(await page.evaluate(() => cy.nodes().map(node => node.json()))).toEqual(nodesBefore);
   await expect(page.locator('#status-nodes')).toHaveText('Nodes: 2');
@@ -1571,6 +1574,11 @@ test('connection preview cancels on Escape and graph background without adding a
   await expect(page.locator('#status-edges')).toHaveText('Edges: 0');
 });
 
+async function runLegacyQueryFromNode(page, nodeId) {
+  await page.evaluate(id => { cy.getElementById(id).emit('tap'); }, nodeId);
+  await page.getByRole('button', { name: 'Run query', exact: true }).click();
+}
+
 test('selecting a node-variable result still replaces the variable node', async ({ page }) => {
   await disableAutoLayout(page);
   await page.evaluate(() => {
@@ -1580,7 +1588,8 @@ test('selecting a node-variable result still replaces the variable node', async 
     contentType: 'application/json',
     body: JSON.stringify({ data: [{ propertyId: '<https://example.test/team-a>', propertyLabel: 'Team A', propertyType: 'object', propertyClass: null }] }),
   }));
-  await page.locator('#run-query-btn').click();
+  // Run Query stages one variable (BUG-005); the node action keeps the legacy table.
+  await runLegacyQueryFromNode(page, '?item');
   await expect(page.locator('#table-results-body')).toContainText('Team A');
   await page.locator('#table-results-body tr.query-row').dispatchEvent('click');
   expect(await page.evaluate(() => cy.nodes().map(node => node.data()))).toEqual([{
@@ -1663,7 +1672,7 @@ test('a self-loop on the variable survives result selection', async ({ page }) =
   await page.route('**/api/query/relationship-value', route => { valueRequests += 1; return route.abort(); });
   await page.route('**/api/query', route => route.fulfill({ contentType: 'application/json',
     body: JSON.stringify({ data: [{ propertyId: '<https://e/L>', propertyLabel: 'L', propertyType: 'object', propertyClass: null }] }) }));
-  await page.locator('#run-query-btn').click();
+  await runLegacyQueryFromNode(page, '?loop');
   await expect(page.locator('#table-results-body')).toContainText('L');
   await page.locator('#table-results-body tr.query-row').dispatchEvent('click');
   expect(await graphEdges(page)).toEqual(['self:<https://e/L>-><https://e/L>']);
@@ -1688,7 +1697,9 @@ for (const change of ['removed', 'rebound']) {
       contentType: 'application/json',
       body: JSON.stringify({ data: [{ propertyId: '<https://example.test/relation>', propertyLabel: 'relation', propertyType: 'object', propertyClass: null }] }),
     }));
-    await page.locator('#run-query-btn').click();
+    // Run Query stages a single predicate variable (BUG-005); the legacy result
+    // table's stale-edge guard is exercised through getQuery directly.
+    await page.evaluate(() => getQuery('?predicate_1', buildFilters(cy.elements()), true));
     await expect(page.locator('#table-results-body')).toContainText('relation');
     await page.evaluate(change => {
       const edge = cy.getElementById('relation');
@@ -1821,10 +1832,11 @@ test('the numeric filter editor offers at least, at most and between with readab
 test('an exact numeric match runs without a starts-with filter', async ({ page }) => {
   await addSpeedFilterGraph(page);
   await editSpeedFilter(page, 'Exactly Equal', '45');
-  const before = server.requests.filter(({ path }) => path === '/api/query').length;
+  const stageRequests = () => server.requests.filter(({ path }) => path === '/api/query/stage');
+  const before = stageRequests().length;
   await page.locator('#run-query-btn').click();
-  await expect.poll(() => server.requests.filter(({ path }) => path === '/api/query').length).toBe(before + 1);
-  const body = JSON.parse(server.requests.filter(({ path }) => path === '/api/query').at(-1).body);
+  await expect.poll(() => stageRequests().length).toBe(before + 1);
+  const body = JSON.parse(stageRequests().at(-1).body);
   expect(body.where).toEqual([{ subject: '?p', predicate: '<https://example.test/speed>', object: '45', filterType: null }]);
 });
 
@@ -2039,4 +2051,422 @@ test('the filter funnel caps counted steps and fits a narrow viewport', async ({
   expect(box.x).toBeGreaterThanOrEqual(0);
   expect(box.x + box.width).toBeLessThanOrEqual(360);
   expect(await page.evaluate(() => document.getElementById('filter-funnel-panel').scrollWidth <= document.getElementById('filter-funnel-panel').clientWidth)).toBe(true);
+});
+
+// FE-026: histogram with a two-handle range slider inside the numeric filter editor.
+const speedProfile = (numbers, extra = {}) => ({
+  subject: '?p',
+  predicate: '<https://example.test/speed>',
+  count: numbers.length,
+  truncated: false,
+  min: numbers.length ? Math.min(...numbers) : null,
+  max: numbers.length ? Math.max(...numbers) : null,
+  values: numbers.map((number, index) => ({ entity: `<https://example.test/p${index}>`, label: `P${index}`, value: String(number), number })),
+  ...extra,
+});
+
+async function routeSpeedProfile(page, respond) {
+  const requests = [];
+  await page.route('**/api/query/numeric-profile', async route => {
+    requests.push(JSON.parse(route.request().postData()));
+    await respond(route);
+  });
+  return requests;
+}
+
+const fulfillProfile = data => route => route.fulfill({ contentType: 'application/json', body: JSON.stringify({ data }) });
+const histogram = page => page.locator('#filter-histogram');
+
+// The Materialize stub does not open modals; show the editor as Materialize would.
+async function openVisibleFilterEditor(page) {
+  await page.evaluate(() => { document.getElementById('modal-change-value').style.display = 'none'; });
+  await openFilterEditor(page);
+  await page.evaluate(() => Object.assign(document.getElementById('modal-change-value').style, {
+    display: 'block', opacity: '1', top: '10%', zIndex: '1003', transform: 'none',
+  }));
+}
+const checkedFilter = page => page.evaluate(() => document.querySelector('#modal-change-value input[name=filter-type]:checked').nextElementSibling.textContent);
+const keptBars = page => page.locator('#filter-histogram rect.kept').evaluateAll(rects => rects.map(rect => Math.round(+rect.getAttribute('height'))));
+const allBars = page => page.locator('#filter-histogram rect:not(.kept)').evaluateAll(rects => rects.map(rect => Math.round(+rect.getAttribute('height'))));
+
+test('the filter editor histogram follows the range handles and writes at least, between and at most', async ({ page }) => {
+  await addSpeedFilterGraph(page);
+  const requests = await routeSpeedProfile(page, fulfillProfile(speedProfile([20, 45, 45, 60, 90, 150])));
+  await openVisibleFilterEditor(page);
+  // FE-035: an exact value keeps only itself; the handles still span the whole range.
+  await expect(histogram(page)).toContainText('Keeps 2 of 6 values');
+  expect(requests).toHaveLength(1);
+  const lo = page.getByRole('slider', { name: 'Lowest kept value' });
+  const hi = page.getByRole('slider', { name: 'Highest kept value' });
+  await expect(lo).toHaveValue('20');
+  await expect(hi).toHaveValue('150');
+  // Opening the editor does not change an exact value.
+  await expect(page.locator('#modal-new-value')).toHaveValue('45');
+  expect((await keptBars(page)).filter(height => height > 0)).toHaveLength(1);
+
+  await lo.fill('40');
+  await expect(histogram(page)).toContainText('Keeps 5 of 6 values');
+  await expect(page.locator('#modal-new-value')).toHaveValue('40');
+  expect(await checkedFilter(page)).toBe('At least (≥)');
+  const kept = await keptBars(page);
+  const all = await allBars(page);
+  expect(kept[0]).toBeLessThan(all[0]);
+  expect(kept.slice(1)).toEqual(all.slice(1));
+
+  await hi.focus();
+  for (let i = 0; i < 60; i++) await page.keyboard.press('ArrowLeft');
+  await expect(hi).toHaveValue('90');
+  await expect(histogram(page)).toContainText('Keeps 4 of 6 values');
+  await expect(page.locator('#modal-new-value')).toHaveValue('40..90');
+  expect(await checkedFilter(page)).toBe('Between (min..max, e.g. 40..80)');
+
+  await lo.fill('20');
+  await expect(page.locator('#modal-new-value')).toHaveValue('90');
+  expect(await checkedFilter(page)).toBe('At most (≤)');
+
+  // Handles cannot cross: the low handle stops at the high one.
+  await lo.fill('120');
+  await expect(lo).toHaveValue('90');
+  await expect(page.locator('#modal-new-value')).toHaveValue('90..90');
+  await expect(histogram(page)).toContainText('Keeps 1 of 6 values');
+
+  await lo.fill('45');
+  await page.locator('#apply-filter-btn').click();
+  expect(await filterNode(page)).toEqual({ label: '45–90', value: '45..90', filterType: 6 });
+
+  // Reopening starts from the stored filter; typing moves the handles back.
+  await openVisibleFilterEditor(page);
+  await expect(histogram(page)).toContainText('Keeps 4 of 6 values');
+  await expect(lo).toHaveValue('45');
+  await expect(hi).toHaveValue('90');
+  await page.locator('#modal-new-value').fill('50..150');
+  await expect(lo).toHaveValue('50');
+  await expect(hi).toHaveValue('150');
+  await expect(histogram(page)).toContainText('Keeps 3 of 6 values');
+});
+
+test('a truncated profile says what the histogram covers and counts values above it when the top is open', async ({ page }) => {
+  await addSpeedFilterGraph(page);
+  await routeSpeedProfile(page, fulfillProfile(speedProfile([10, 20, 30, 40], { count: 10, truncated: true, max: 99 })));
+  await openVisibleFilterEditor(page);
+  await expect(histogram(page)).toContainText('The histogram covers the lowest 4 of 10 values (up to 40; the largest is 99).');
+  // The exact value 45 lies above the covered values, so its count is a lower bound.
+  await expect(histogram(page)).toContainText('Keeps at least 0 of 10 values');
+  await page.getByRole('slider', { name: 'Lowest kept value' }).fill('25');
+  await expect(histogram(page)).toContainText('Keeps 8 of 10 values');
+  await expect(page.locator('#modal-new-value')).toHaveValue('25');
+  await page.getByRole('slider', { name: 'Highest kept value' }).fill('35');
+  await expect(histogram(page)).toContainText('Keeps 1 of 10 values');
+  await expect(page.locator('#modal-new-value')).toHaveValue('25..35');
+});
+
+test('the filter editor histogram shows loading, empty, error and unprofilable states', async ({ page }) => {
+  await addSpeedFilterGraph(page);
+  let release;
+  const gate = new Promise(resolve => { release = resolve; });
+  await routeSpeedProfile(page, async route => { await gate; await fulfillProfile(speedProfile([]))(route); });
+  await openVisibleFilterEditor(page);
+  await expect(histogram(page)).toContainText('Loading the value distribution');
+  release();
+  await expect(histogram(page)).toContainText('No numeric values for this relation under the rest of the query.');
+  await expect(histogram(page).getByRole('slider')).toHaveCount(0);
+
+  await page.unroute('**/api/query/numeric-profile');
+  await routeSpeedProfile(page, route => route.fulfill({ status: 502, contentType: 'application/json', body: '{"error":"SPARQL endpoint unavailable"}' }));
+  await openVisibleFilterEditor(page);
+  await expect(histogram(page).getByRole('alert')).toHaveText('Could not load the value distribution: SPARQL endpoint unavailable');
+
+  const replaceSpeedRelation = nodeId => page.evaluate(nodeId => {
+    cy.getElementById('speed').remove();
+    cy.add({ group: 'edges', data: { id: 'speed', source: '?p', target: cy.nodes('[type = "label"]')[0].id(), nodeId, label: 'speed' } });
+  }, nodeId);
+  await replaceSpeedRelation('<https://example.test/stats>/<https://example.test/speed>');
+  await openVisibleFilterEditor(page);
+  await expect(histogram(page)).toContainText('needs exactly one fixed relation');
+
+  // A text value gets no histogram.
+  await replaceSpeedRelation('<https://example.test/speed>');
+  await page.evaluate(() => { document.getElementById('modal-change-value').style.display = 'none'; });
+  await editSpeedFilter(page, 'Exactly Equal', 'fast');
+  await openVisibleFilterEditor(page);
+  await expect(histogram(page)).toHaveCount(0);
+});
+
+test('a slow profile for an earlier editor does not replace the current histogram', async ({ page }) => {
+  await addSpeedFilterGraph(page);
+  let calls = 0;
+  let releaseFirst;
+  const first = new Promise(resolve => { releaseFirst = resolve; });
+  await routeSpeedProfile(page, async route => {
+    calls++;
+    if (calls === 1) {
+      await first;
+      await fulfillProfile(speedProfile([1, 2]))(route).catch(() => {});
+      return;
+    }
+    await fulfillProfile(speedProfile([20, 45, 60]))(route);
+  });
+  await openVisibleFilterEditor(page);
+  await expect(histogram(page)).toContainText('Loading');
+  await openVisibleFilterEditor(page);
+  await expect(histogram(page)).toContainText('Keeps 1 of 3 values');
+  releaseFirst();
+  await page.evaluate(() => new Promise(resolve => setTimeout(resolve, 100)));
+  await expect(histogram(page)).toContainText('Keeps 1 of 3 values');
+});
+
+test('the filter editor histogram fits a narrow viewport', async ({ page }) => {
+  await page.setViewportSize({ width: 360, height: 740 });
+  await addSpeedFilterGraph(page);
+  await routeSpeedProfile(page, fulfillProfile(speedProfile([20, 45, 45, 60, 90, 150])));
+  await openVisibleFilterEditor(page);
+  await expect(histogram(page)).toContainText('Keeps 2 of 6 values');
+  const [modal, chart, slider, cycle, preview] = await Promise.all(['#modal-change-value-content', '#filter-histogram svg', '#filter-histogram .filter-histogram-slider',
+    '#filter-histogram .filter-cycle', '#filter-histogram .filter-preview-graph']
+    .map(selector => page.locator(selector).boundingBox()));
+  for (const box of [chart, slider, cycle, preview]) {
+    expect(box.width).toBeGreaterThan(200);
+    expect(box.x).toBeGreaterThanOrEqual(modal.x - 0.5);
+    expect(box.x + box.width).toBeLessThanOrEqual(modal.x + modal.width + 0.5);
+  }
+  expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(360);
+});
+
+// FE-035: with the range fixed, cycle over the kept entities five at a time.
+const twelveSpeeds = [20, 45, 45, 50, 55, 60, 65, 70, 75, 80, 90, 150];
+const cycleValue = page => page.locator('#filter-histogram .filter-cycle-value');
+const cyclePosition = page => page.locator('#filter-histogram .filter-cycle-position');
+const previewEntities = page => page.evaluate(() => filterPreviewCy.nodes('[kind = "entity"]').map(node => node.data('label')));
+const chooseFilter = (page, name, value) => page.evaluate(([label, text]) => {
+  const option = [...document.querySelectorAll('#modal-change-value input[name=filter-type]')]
+    .find(input => input.nextElementSibling.textContent.startsWith(label));
+  option.checked = true;
+  if (text !== undefined) document.getElementById('modal-new-value').value = text;
+  option.dispatchEvent(new Event('change'));
+}, [name, value]);
+
+test('previous and next cycle over the kept entities five at a time without changing the range', async ({ page }) => {
+  await addSpeedFilterGraph(page);
+  const requests = await routeSpeedProfile(page, fulfillProfile(speedProfile(twelveSpeeds)));
+  const before = await filterNode(page);
+  await openVisibleFilterEditor(page);
+  const next = page.getByRole('button', { name: 'Next entities' });
+  const previous = page.getByRole('button', { name: 'Previous entities' });
+
+  // The exact value 45 keeps two entities: both are shown, nothing to cycle.
+  await expect(cyclePosition(page)).toHaveText('1\u20132 of 2 kept');
+  await expect(cycleValue(page)).toHaveText('P1 45P2 45');
+  expect(await previewEntities(page)).toEqual(['P1', 'P2']);
+  expect(await page.evaluate(() => filterPreviewCy.edges().map(edge => edge.data('label')))).toEqual(['speed', 'speed']);
+  await expect(next).toBeDisabled();
+
+  await chooseFilter(page, 'At least', '40');
+  await expect(cyclePosition(page)).toHaveText('1\u20135 of 11 kept');
+  await expect(next).toBeEnabled();
+  await next.click();
+  await expect(cyclePosition(page)).toHaveText('6\u201310 of 11 kept');
+  await expect(cycleValue(page)).toHaveText('P6 65P7 70P8 75P9 80P10 90');
+  expect(await previewEntities(page)).toEqual(['P6', 'P7', 'P8', 'P9', 'P10']);
+  await next.click();
+  await expect(cyclePosition(page)).toHaveText('11 of 11 kept');
+  expect(await previewEntities(page)).toEqual(['P11']);
+  await next.click();
+  await expect(cyclePosition(page)).toHaveText('1\u20135 of 11 kept');
+  await previous.click();
+  await expect(cyclePosition(page)).toHaveText('11 of 11 kept');
+  // Cycling leaves the range and the editor as they were.
+  await expect(page.locator('#modal-new-value')).toHaveValue('40');
+  await expect(page.getByRole('slider', { name: 'Lowest kept value' })).toHaveValue('40');
+  await expect(histogram(page)).toContainText('Keeps 11 of 12 values');
+
+  // A new range starts again from its first entities.
+  await page.getByRole('slider', { name: 'Lowest kept value' }).fill('60');
+  await expect(cyclePosition(page)).toHaveText('1\u20135 of 7 kept');
+  expect(await previewEntities(page)).toEqual(['P5', 'P6', 'P7', 'P8', 'P9']);
+
+  // BE-004: MAX keeps every entity with the highest value; one here, so nothing to cycle.
+  await chooseFilter(page, 'MAX');
+  await expect(cycleValue(page)).toHaveText('P11 150');
+  await expect(histogram(page)).toContainText('Keeps 1 of 12 values');
+  await expect(histogram(page)).toContainText('1 entity has the highest value; the query returns all of them, up to the server limit.');
+  await expect(next).toBeDisabled();
+  await expect(page.getByRole('button', { name: 'Play', exact: true })).toBeDisabled();
+
+  await chooseFilter(page, 'At least', '40');
+  expect(await filterNode(page)).toEqual(before);
+  expect(requests).toHaveLength(1);
+  await page.locator('#apply-filter-btn').click();
+  expect(await filterNode(page)).toEqual({ label: '\u2265 40', value: '40', filterType: 2 });
+});
+
+test('play cycles the kept entities until paused or the editor closes, and arrows step on the controls', async ({ page }) => {
+  await addSpeedFilterGraph(page);
+  await routeSpeedProfile(page, fulfillProfile(speedProfile(twelveSpeeds)));
+  await openVisibleFilterEditor(page);
+  await chooseFilter(page, 'At least', '20');
+  const play = page.getByRole('button', { name: 'Play', exact: true });
+  await play.click();
+  const pause = page.getByRole('button', { name: 'Pause', exact: true });
+  await expect(pause).toHaveAttribute('aria-pressed', 'true');
+  await expect(cyclePosition(page)).toHaveText('6\u201310 of 12 kept');
+  await expect(cyclePosition(page)).toHaveText('11\u201312 of 12 kept');
+  await expect(cyclePosition(page)).toHaveText('1\u20135 of 12 kept');
+  await pause.click();
+  await expect(play).toHaveAttribute('aria-pressed', 'false');
+  const paused = await cyclePosition(page).textContent();
+  await page.waitForTimeout(2000);
+  await expect(cyclePosition(page)).toHaveText(paused);
+  await expect(page.locator('#modal-new-value')).toHaveValue('20');
+
+  // Arrow keys on the controls step one page.
+  await page.getByRole('button', { name: 'Next entities' }).focus();
+  await page.keyboard.press('ArrowRight');
+  await expect(cyclePosition(page)).not.toHaveText(paused);
+
+  // Cancel stops playback and leaves the graph unchanged.
+  await play.click();
+  await page.locator('#modal-change-value-content .modal-close').click();
+  expect(await page.evaluate(() => filterCycleTimer)).toBeNull();
+  expect(await filterNode(page)).toEqual({ label: '45', value: '45', filterType: undefined });
+});
+
+test('MIN shows every tied lowest entity and cycles them; MAX of a partial profile names only the value', async ({ page }) => {
+  await addSpeedFilterGraph(page);
+  let profile = speedProfile([10, 10, 10, 10, 10, 10, 10, 40, 90]);
+  await routeSpeedProfile(page, route => fulfillProfile(profile)(route));
+  await openVisibleFilterEditor(page);
+  await chooseFilter(page, 'MIN');
+  await expect(cyclePosition(page)).toHaveText('1\u20135 of 7 kept');
+  await expect(histogram(page)).toContainText('Keeps 7 of 9 values');
+  await expect(histogram(page)).toContainText('7 entities have the lowest value; the query returns all of them, up to the server limit.');
+  await page.getByRole('button', { name: 'Next entities' }).click();
+  await expect(cycleValue(page)).toHaveText('P5 10P6 10');
+
+  profile = speedProfile([10, 20, 30], { count: 8, truncated: true, max: 99 });
+  await openVisibleFilterEditor(page);
+  await chooseFilter(page, 'MAX');
+  await expect(histogram(page)).toContainText('Keeps the highest value (99)');
+  await expect(histogram(page)).toContainText('The highest value is 99; its entities are known after the query runs.');
+  await expect(cyclePosition(page)).toHaveText('');
+  expect(await previewEntities(page)).toEqual([]);
+  await page.locator('#apply-filter-btn').click();
+  expect(await filterNode(page)).toEqual({ label: 'MAX', value: '45', filterType: 4 });
+});
+
+test('the kept entities say when nothing is kept', async ({ page }) => {
+  await addSpeedFilterGraph(page);
+  await routeSpeedProfile(page, fulfillProfile(speedProfile([20, 45, 90])));
+  await openVisibleFilterEditor(page);
+  await page.locator('#modal-new-value').fill('50');
+  await expect(histogram(page)).toContainText('No entity is kept.');
+  await expect(cyclePosition(page)).toHaveText('');
+  expect(await previewEntities(page)).toEqual([]);
+});
+
+// BUG-006: re-fetching a fixed IRI neighbour after result selection asked for a
+// literal, so the IRI came back as a pink value node labelled with the raw IRI.
+test('choosing a result re-adds a fixed IRI neighbour as an IRI node with its label', async ({ page }) => {
+  await disableAutoLayout(page);
+  await page.evaluate(() => {
+    cy.add([
+      { group: 'nodes', data: { id: '?mon', value: '?mon', label: '?', type: 'variable' }, position: { x: 400, y: 300 } },
+      { group: 'nodes', data: { id: '<https://e/Electric>', value: '<https://e/Electric>', label: 'Electric', type: 'node' }, position: { x: 150, y: 300 } },
+      { group: 'nodes', data: { id: 'attack-value', value: '130', label: '130', type: 'label' }, position: { x: 400, y: 100 } },
+      { group: 'edges', data: { id: 'immune', source: '?mon', target: '<https://e/Electric>', nodeId: '<https://e/immuneTo>', label: 'immune to' } },
+      { group: 'edges', data: { id: 'attack', source: '?mon', target: 'attack-value', nodeId: '<https://e/attack>', label: 'Attack' } },
+    ]);
+  });
+  await page.route('**/api/query', route => route.fulfill({ contentType: 'application/json',
+    body: JSON.stringify({ data: [{ propertyId: '<https://e/Rhydon>', propertyLabel: 'Rhydon', propertyType: 'object', propertyClass: null }] }) }));
+  const valueRequests = [];
+  await page.route('**/api/query/relationship-value', route => {
+    const request = route.request().postDataJSON();
+    valueRequests.push(request);
+    const data = request.isLiteral
+      ? [{ propertyId: '130', propertyLabel: '130', propertyType: 'text' }]
+      : [{ propertyId: '<https://e/Electric>', propertyLabel: 'Electric', propertyType: null }];
+    return route.fulfill({ contentType: 'application/json', body: JSON.stringify({ data }) });
+  });
+  await runLegacyQueryFromNode(page, '?mon');
+  await expect(page.locator('#table-results-body')).toContainText('Rhydon');
+  await page.locator('#table-results-body tr.query-row').dispatchEvent('click');
+
+  await expect.poll(() => valueRequests.length).toBe(2);
+  expect(valueRequests.map(({ predicateId, isLiteral }) => [predicateId, isLiteral]).sort())
+    .toEqual([['<https://e/attack>', true], ['<https://e/immuneTo>', false]]);
+  await expect.poll(() => page.evaluate(() => cy.nodes().map(node => [node.id(), node.data('label'), node.data('type')]).sort()))
+    .toEqual([['130', '130', 'label'], ['<https://e/Electric>', 'Electric', 'node'], ['<https://e/Rhydon>', 'Rhydon', 'node']]);
+});
+
+// FE-030: Add value filter creates a value node through a datatype relation
+// and opens its filter editor.
+async function addValueFilterGraph(page, { profile }) {
+  await disableAutoLayout(page);
+  await page.evaluate(() => {
+    cy.add([
+      { group: 'nodes', data: { id: '?mon', value: '?mon', label: '?', type: 'variable' }, position: { x: 300, y: 300 } },
+      { group: 'nodes', data: { id: '<https://e/Fire>', value: '<https://e/Fire>', label: 'Fire', type: 'node' }, position: { x: 100, y: 300 } },
+      { group: 'edges', data: { id: 'has-type', source: '?mon', target: '<https://e/Fire>', nodeId: '<https://e/hasType>', label: 'has type' } },
+    ]);
+  });
+  const relationshipRequests = [];
+  await page.route('**/api/query/relationships', route => {
+    relationshipRequests.push(route.request().postDataJSON());
+    return route.fulfill({ contentType: 'application/json', body: JSON.stringify({ data: [
+      { propertyId: '<https://e/speed>', propertyLabel: 'Speed', propertyType: 'label' },
+      { propertyId: '<https://e/hasType>', propertyLabel: 'has type', propertyType: 'objeto' },
+      { propertyId: '<https://e/category>', propertyLabel: 'category', propertyType: 'label' },
+      { propertyId: '<https://e/hp>', propertyLabel: 'HP', propertyType: 'label' },
+      { propertyId: '<https://e/x>', propertyLabel: '', propertyType: 'outro' },
+    ] }) });
+  });
+  const profileRequests = [];
+  await page.route('**/api/query/numeric-profile', route => {
+    profileRequests.push(route.request().postDataJSON());
+    return route.fulfill({ contentType: 'application/json', body: JSON.stringify({ data: profile }) });
+  });
+  await clickGraphNode(page, '?mon');
+  await page.locator('#node-action-menu').getByRole('button', { name: 'Add value filter' }).click();
+  return { relationshipRequests, profileRequests };
+}
+
+test('Add value filter lists datatype relations and opens the editor on a seeded value node', async ({ page }) => {
+  const { relationshipRequests, profileRequests } = await addValueFilterGraph(page, { profile: {
+    subject: '?mon', predicate: '<https://e/hp>', count: 3, min: 39, max: 78, truncated: true,
+    values: [{ entity: { type: 'iri', value: 'https://e/Charmander', datatype: null, language: null }, label: 'Charmander', value: '39', datatype: 'http://www.w3.org/2001/XMLSchema#integer', number: 39 }],
+  } });
+  const menu = page.locator('#node-action-menu');
+  await expect(menu.locator('.node-action-menu-message')).toHaveText('Choose a value relation:');
+  await expect(menu.locator('button[data-action="choose-predicate"]')).toHaveText(['category', 'HP', 'Speed']);
+  expect(relationshipRequests[0].id).toBe('?mon');
+
+  await menu.getByRole('button', { name: 'HP', exact: true }).click();
+
+  await expect(page.locator('#modal-new-value')).toHaveValue('39');
+  await expect(page.locator('#modal-change-value')).toContainText('At least (≥)');
+  // The seed request comes first; an editor histogram may profile again.
+  expect(profileRequests[0]).toMatchObject({
+    where: [{ subject: '?mon', predicate: '<https://e/hasType>', object: '<https://e/Fire>', filterType: null }],
+    subject: '?mon', predicate: '<https://e/hp>', limit: 1,
+  });
+  const value = await page.evaluate(() => {
+    const node = cy.nodes('[type = "label"]')[0];
+    const edge = node.connectedEdges()[0];
+    return { value: node.data('value'), label: node.data('label'), source: edge.data('source'), nodeId: edge.data('nodeId'), edgeLabel: edge.data('label') };
+  });
+  expect(value).toEqual({ value: '39', label: '39', source: '?mon', nodeId: '<https://e/hp>', edgeLabel: 'HP' });
+
+  await page.evaluate(() => {
+    document.querySelector('#modal-change-value input[name=filter-type][value="2"]').checked = true;
+    document.getElementById('modal-new-value').value = '60';
+    document.getElementById('apply-filter-btn').click();
+  });
+  expect(await filterNode(page)).toEqual({ label: '≥ 60', value: '60', filterType: 2 });
+});
+
+test('Add value filter on a relation without numbers opens the text editor on an empty value', async ({ page }) => {
+  await addValueFilterGraph(page, { profile: { subject: '?mon', predicate: '<https://e/category>', count: 0, min: null, max: null, truncated: false, values: [] } });
+  await page.locator('#node-action-menu').getByRole('button', { name: 'category', exact: true }).click();
+  await expect(page.locator('#modal-change-value')).toContainText('Starts with');
+  await expect(page.locator('#modal-new-value')).toHaveValue('');
 });
