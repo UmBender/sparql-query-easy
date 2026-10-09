@@ -63,7 +63,7 @@ Ordered by dependencies, then priority among selection candidates. See [worker r
 | FE-024 | DONE | P1 | frontend | [Enlarge the possible-graph window and move long labels under their element](<items/FE-024-possible-graph-readable-labels.md>) |
 | FE-025 | DONE | P1 | frontend | [Let a stage value be applied to the graph immediately with an Assume button](<items/FE-025-assume-stage-value-now.md>) |
 | FE-026 | DONE | P1 | frontend | [Visualize a numeric filter as a range slider over a histogram](<items/FE-026-filter-range-histogram.md>) |
-| FE-027 | READY | P1 | frontend | [Visualize a numeric filter as a dot strip with a live count badge on the graph](<items/FE-027-filter-dot-strip-badge.md>) |
+| FE-027 | CANCELLED | P1 | frontend | [Visualize a numeric filter as a dot strip with a live count badge on the graph](<items/FE-027-filter-dot-strip-badge.md>) |
 | FE-028 | READY | P1 | frontend | [Visualize how each filter narrows the result as a funnel](<items/FE-028-filter-funnel.md>) |
 | FE-029 | READY | P1 | frontend | [Show the filtered result as a live graph that changes with the range](<items/FE-029-filter-live-result-graph.md>) |
 | FE-030 | DONE | P1 | frontend | [Add a value filter to a variable node from its action list](<items/FE-030-add-value-filter-node-action.md>) |
@@ -72,6 +72,8 @@ Ordered by dependencies, then priority among selection candidates. See [worker r
 | FE-032 | BACKLOG | P1 | refactor | [Decide graph element kinds in one checked module](<items/FE-032-graph-element-kind-model.md>) |
 | FE-033 | BACKLOG | P1 | refactor | [Bind a variable to a value through one tested graph function](<items/FE-033-single-variable-binding-path.md>) |
 | FE-034 | BACKLOG | P1 | fullstack | [Add a variable value node that holds a filter and becomes a value when chosen](<items/FE-034-variable-value-node.md>) |
+| FE-035 | DONE | P1 | frontend | [Cycle a numeric filter through its values with a large current value and a mini result graph](<items/FE-035-filter-cycle-preview.md>) |
+| FE-036 | BACKLOG | P1 | frontend | [Bring the FE-027 kept/total badge for range filters into main](<items/FE-036-filter-count-badge.md>) |
 | INV-001 | DONE | P1 | investigation | [Investigate Ktor HTTP-client and runtime resource lifecycle](<items/INV-001-runtime-resource-lifecycle.md>) |
 | LEARN-001 | REVIEW | P1 | learning | [Learn the Linux shell and networking needed to debug a web app](<items/LEARN-001-linux-shell-networking.md>) |
 | LEARN-002 | REVIEW | P1 | learning | [Learn containers by running and inspecting the app image](<items/LEARN-002-containers-docker.md>) |

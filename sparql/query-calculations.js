@@ -195,6 +195,122 @@ export function rangeFromFilter(scale, filterType, value) {
   }
 }
 
+/** @typedef {'exact' | 'atLeast' | 'atMost' | 'between'} CycleMode */
+
+/**
+ * How a numeric filter type steps through values (FE-035); null for MAX, MIN
+ * and text filters, which do not cycle.
+ * @param {number | string | null | undefined} filterType
+ * @returns {CycleMode | null}
+ */
+export function cycleMode(filterType) {
+  switch (filterTypeOf(filterType)) {
+  case null: return 'exact';
+  case 2: return 'atLeast';
+  case 3: return 'atMost';
+  case 6: return 'between';
+  default: return null;
+  }
+}
+
+/**
+ * Next filter one distinct value away from [lo, hi] in [direction] (+1 or -1),
+ * wrapping at the ends. Exact steps the value, At least the low bound, At most
+ * the high bound; Between moves the low bound and keeps its width (the high
+ * bound stops at the scale end).
+ * @param {{mode: CycleMode, stops: number[], scale: RangeScale, lo: number, hi: number, direction: number}} input
+ *   [stops] are the sorted distinct values; [lo]/[hi] may be NaN for an unset value.
+ * @returns {{filterType: number | null, value: string, lo: number, hi: number}}
+ */
+export function cycleStep({ mode, stops, scale, lo, hi, direction }) {
+  const format = (/** @type {number} */ value) => String(Number(value.toFixed(scale.decimals)));
+  const current = mode === 'atMost' ? hi : lo;
+  let index;
+  if (direction >= 0) {
+    index = Number.isNaN(current) ? 0 : stops.findIndex(stop => stop > current);
+    if (index < 0) index = 0;
+  } else {
+    index = stops.length - 1;
+    if (!Number.isNaN(current)) while (index >= 0 && stops[index] >= current) index--;
+    if (index < 0) index = stops.length - 1;
+  }
+  const stop = stops[index];
+  switch (mode) {
+  case 'atLeast': return { filterType: 2, value: format(stop), lo: stop, hi: scale.max };
+  case 'atMost': return { filterType: 3, value: format(stop), lo: scale.min, hi: stop };
+  case 'between': {
+    const width = Number.isFinite(hi - lo) ? Math.max(0, hi - lo) : 0;
+    const top = Math.min(scale.max, Number((stop + width).toFixed(scale.decimals)));
+    return { filterType: 6, value: `${format(stop)}..${format(top)}`, lo: stop, hi: top };
+  }
+  default: return { filterType: null, value: format(stop), lo: stop, hi: stop };
+  }
+}
+
+/**
+ * @typedef {{entity: unknown, label?: string | null, value: string, number: number}} ProfileValue
+ * @typedef {{group: 'nodes' | 'edges', data: Record<string, string>, position?: {x: number, y: number}}} PreviewElement
+ */
+
+/**
+ * Mini result graph of the profile rows kept by [lo, hi] (FE-035): each kept
+ * entity linked to its value node. Rows are ordered by value, then label; at
+ * most [cap] rows are drawn. Values are columns left to right with their
+ * entities above in rows of [perRow], odd rows staggered so every link to the
+ * value stays visible.
+ * @param {ProfileValue[]} values
+ * @param {number} lo
+ * @param {number} hi
+ * @param {{cap?: number, perRow?: number}} [options]
+ * @returns {{elements: PreviewElement[], kept: number, shown: number}}
+ */
+export function resultPreviewGraph(values, lo, hi, { cap = 24, perRow = 4 } = {}) {
+  const entityKey = (/** @type {unknown} */ entity) => String(
+    entity && typeof entity === 'object' && 'value' in entity ? entity.value : entity ?? '').replace(/^<|>$/g, '');
+  const entityText = (/** @type {ProfileValue} */ item) => {
+    if (item.label) return item.label;
+    const key = entityKey(item.entity);
+    return key.slice(Math.max(key.lastIndexOf('#'), key.lastIndexOf('/')) + 1) || key;
+  };
+  const kept = values
+    .filter(item => Number.isFinite(item.number) && item.number >= lo && item.number <= hi)
+    .map(item => ({ item, text: entityText(item) }))
+    .sort((a, b) => a.item.number - b.item.number || a.text.localeCompare(b.text));
+  const shown = kept.slice(0, Math.max(0, cap));
+
+  /** @type {Map<number, {value: string, entities: {key: string, text: string}[]}>} */
+  const groups = new Map();
+  for (const { item, text } of shown) {
+    const group = groups.get(item.number) ?? { value: item.value, entities: [] };
+    group.entities.push({ key: entityKey(item.entity), text });
+    groups.set(item.number, group);
+  }
+  /** @type {PreviewElement[]} */
+  const elements = [];
+  const placed = new Set();
+  let x = 0;
+  for (const [number, group] of groups) {
+    const valueId = `v:${number}`;
+    const columns = Math.max(1, Math.min(perRow, group.entities.length));
+    elements.push({ group: 'nodes', data: { id: valueId, kind: 'value', label: group.value }, position: { x: x + (columns - 1) * 25, y: 0 } });
+    group.entities.forEach(({ key, text }, index) => {
+      const entityId = `e:${key}`;
+      if (!placed.has(entityId)) {
+        placed.add(entityId);
+        elements.push({ group: 'nodes', data: { id: entityId, kind: 'entity', label: text },
+          position: { x: x + (index % perRow) * 50 + (Math.floor(index / perRow) % 2) * 25, y: -(Math.floor(index / perRow) + 1) * 40 } });
+      }
+      const edgeId = `${entityId}->${valueId}`;
+      if (!placed.has(edgeId)) {
+        placed.add(edgeId);
+        elements.push({ group: 'edges', data: { id: edgeId, source: entityId, target: valueId } });
+      }
+    });
+    x += columns * 50 + 20;
+  }
+  return { elements, kept: kept.length, shown: shown.length };
+}
+
 /**
  * @param {QueryItem[]} items
  * @returns {string[]}

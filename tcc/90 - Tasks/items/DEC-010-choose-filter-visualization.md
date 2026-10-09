@@ -7,7 +7,7 @@ type: decision
 depends_on: [FE-026, FE-027, FE-028, FE-029]
 human_gate: true
 created: 2026-10-07
-updated: 2026-10-07
+updated: 2026-10-09
 ---
 # Choose which numeric-filter visualization is merged into main
 
@@ -29,3 +29,7 @@ combined into the chosen one?
   accepted and merged into `main` (`1204dd1`). FE-027, FE-028 and FE-029
   stay unmerged on their branches until the user tests them; still open is
   whether any of them (or parts) is combined with FE-026.
+- 2026-10-09: After testing FE-027 the user dropped its dot strip as
+  redundant with the histogram, kept its graph badge (FE-036) and asked for a
+  value-cycling preview on the histogram editor with a mini result graph and
+  a large current value (FE-035). Still open: FE-028.

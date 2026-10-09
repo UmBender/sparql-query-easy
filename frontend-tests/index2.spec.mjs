@@ -1909,7 +1909,8 @@ test('the filter editor histogram follows the range handles and writes at least,
   await addSpeedFilterGraph(page);
   const requests = await routeSpeedProfile(page, fulfillProfile(speedProfile([20, 45, 45, 60, 90, 150])));
   await openVisibleFilterEditor(page);
-  await expect(histogram(page)).toContainText('Keeps 6 of 6 values');
+  // FE-035: an exact value keeps only itself; the handles still span the whole range.
+  await expect(histogram(page)).toContainText('Keeps 2 of 6 values');
   expect(requests).toHaveLength(1);
   const lo = page.getByRole('slider', { name: 'Lowest kept value' });
   const hi = page.getByRole('slider', { name: 'Highest kept value' });
@@ -1917,7 +1918,7 @@ test('the filter editor histogram follows the range handles and writes at least,
   await expect(hi).toHaveValue('150');
   // Opening the editor does not change an exact value.
   await expect(page.locator('#modal-new-value')).toHaveValue('45');
-  expect(await keptBars(page)).toEqual(await allBars(page));
+  expect((await keptBars(page)).filter(height => height > 0)).toHaveLength(1);
 
   await lo.fill('40');
   await expect(histogram(page)).toContainText('Keeps 5 of 6 values');
@@ -1965,7 +1966,8 @@ test('a truncated profile says what the histogram covers and counts values above
   await routeSpeedProfile(page, fulfillProfile(speedProfile([10, 20, 30, 40], { count: 10, truncated: true, max: 99 })));
   await openVisibleFilterEditor(page);
   await expect(histogram(page)).toContainText('The histogram covers the lowest 4 of 10 values (up to 40; the largest is 99).');
-  await expect(histogram(page)).toContainText('Keeps 10 of 10 values');
+  // The exact value 45 lies above the covered values, so its count is a lower bound.
+  await expect(histogram(page)).toContainText('Keeps at least 0 of 10 values');
   await page.getByRole('slider', { name: 'Lowest kept value' }).fill('25');
   await expect(histogram(page)).toContainText('Keeps 8 of 10 values');
   await expect(page.locator('#modal-new-value')).toHaveValue('25');
@@ -2023,10 +2025,10 @@ test('a slow profile for an earlier editor does not replace the current histogra
   await openVisibleFilterEditor(page);
   await expect(histogram(page)).toContainText('Loading');
   await openVisibleFilterEditor(page);
-  await expect(histogram(page)).toContainText('Keeps 3 of 3 values');
+  await expect(histogram(page)).toContainText('Keeps 1 of 3 values');
   releaseFirst();
   await page.evaluate(() => new Promise(resolve => setTimeout(resolve, 100)));
-  await expect(histogram(page)).toContainText('Keeps 3 of 3 values');
+  await expect(histogram(page)).toContainText('Keeps 1 of 3 values');
 });
 
 test('the filter editor histogram fits a narrow viewport', async ({ page }) => {
@@ -2034,15 +2036,131 @@ test('the filter editor histogram fits a narrow viewport', async ({ page }) => {
   await addSpeedFilterGraph(page);
   await routeSpeedProfile(page, fulfillProfile(speedProfile([20, 45, 45, 60, 90, 150])));
   await openVisibleFilterEditor(page);
-  await expect(histogram(page)).toContainText('Keeps 6 of 6 values');
-  const [modal, chart, slider] = await Promise.all(['#modal-change-value-content', '#filter-histogram svg', '#filter-histogram .filter-histogram-slider']
+  await expect(histogram(page)).toContainText('Keeps 2 of 6 values');
+  const [modal, chart, slider, cycle, preview] = await Promise.all(['#modal-change-value-content', '#filter-histogram svg', '#filter-histogram .filter-histogram-slider',
+    '#filter-histogram .filter-cycle', '#filter-histogram .filter-preview-graph']
     .map(selector => page.locator(selector).boundingBox()));
-  for (const box of [chart, slider]) {
+  for (const box of [chart, slider, cycle, preview]) {
     expect(box.width).toBeGreaterThan(200);
     expect(box.x).toBeGreaterThanOrEqual(modal.x - 0.5);
     expect(box.x + box.width).toBeLessThanOrEqual(modal.x + modal.width + 0.5);
   }
   expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(360);
+});
+
+// FE-035: cycling through values with a large previewed value and a mini result graph.
+const cycleValue = page => page.locator('#filter-histogram .filter-cycle-value');
+const previewEntities = page => page.evaluate(() => filterPreviewCy.nodes('[kind = "entity"]').map(node => node.data('label')));
+const chooseFilter = (page, name, value) => page.evaluate(([label, text]) => {
+  const option = [...document.querySelectorAll('#modal-change-value input[name=filter-type]')]
+    .find(input => input.nextElementSibling.textContent.startsWith(label));
+  option.checked = true;
+  if (text !== undefined) document.getElementById('modal-new-value').value = text;
+  option.dispatchEvent(new Event('change'));
+}, [name, value]);
+
+test('previous and next step through the values following the filter type and only Apply changes the graph', async ({ page }) => {
+  await addSpeedFilterGraph(page);
+  const requests = await routeSpeedProfile(page, fulfillProfile(speedProfile([20, 45, 45, 60, 90, 150])));
+  const before = await filterNode(page);
+  await openVisibleFilterEditor(page);
+  const next = page.getByRole('button', { name: 'Next value' });
+  const previous = page.getByRole('button', { name: 'Previous value' });
+  await expect(cycleValue(page)).toHaveText('45');
+  expect(await previewEntities(page)).toEqual(['P1', 'P2']);
+  await expect(histogram(page)).toContainText('Showing 2 kept entities.');
+
+  // Exactly Equal steps the value.
+  await next.click();
+  await expect(cycleValue(page)).toHaveText('60');
+  await expect(page.locator('#modal-new-value')).toHaveValue('60');
+  expect(await checkedFilter(page)).toBe('Exactly Equal');
+  await expect(histogram(page)).toContainText('Keeps 1 of 6 values');
+  expect(await previewEntities(page)).toEqual(['P3']);
+  await previous.click();
+  await previous.click();
+  await expect(cycleValue(page)).toHaveText('20');
+  await previous.click();
+  await expect(cycleValue(page)).toHaveText('150');
+
+  // At least moves the threshold.
+  await chooseFilter(page, 'At least', '20');
+  await expect(cycleValue(page)).toHaveText('\u2265 20');
+  await next.click();
+  await expect(cycleValue(page)).toHaveText('\u2265 45');
+  expect(await checkedFilter(page)).toBe('At least (\u2265)');
+  await expect(histogram(page)).toContainText('Keeps 5 of 6 values');
+  expect(await previewEntities(page)).toEqual(['P1', 'P2', 'P3', 'P4', 'P5']);
+
+  // Between keeps its width and slides the window.
+  await chooseFilter(page, 'Between', '40..80');
+  await next.click();
+  await expect(cycleValue(page)).toHaveText('45\u201385');
+  await expect(page.locator('#modal-new-value')).toHaveValue('45..85');
+  await expect(page.getByRole('slider', { name: 'Lowest kept value' })).toHaveValue('45');
+  await expect(page.getByRole('slider', { name: 'Highest kept value' })).toHaveValue('85');
+  expect(await previewEntities(page)).toEqual(['P1', 'P2', 'P3']);
+
+  // MAX and MIN do not cycle.
+  await chooseFilter(page, 'MAX');
+  await expect(next).toBeDisabled();
+  await expect(page.getByRole('button', { name: 'Play', exact: true })).toBeDisabled();
+  await chooseFilter(page, 'At most', '60');
+  await expect(next).toBeEnabled();
+  await next.click();
+  await expect(cycleValue(page)).toHaveText('\u2264 90');
+
+  expect(await filterNode(page)).toEqual(before);
+  expect(requests).toHaveLength(1);
+  await page.locator('#apply-filter-btn').click();
+  expect(await filterNode(page)).toEqual({ label: '\u2264 90', value: '90', filterType: 3 });
+});
+
+test('play cycles the values until paused, an edit or closing the editor stops it, and arrows step on the controls', async ({ page }) => {
+  await addSpeedFilterGraph(page);
+  await routeSpeedProfile(page, fulfillProfile(speedProfile([20, 45, 60, 90])));
+  await openVisibleFilterEditor(page);
+  const play = page.getByRole('button', { name: 'Play', exact: true });
+  await play.click();
+  const pause = page.getByRole('button', { name: 'Pause', exact: true });
+  await expect(pause).toHaveAttribute('aria-pressed', 'true');
+  await expect(cycleValue(page)).toHaveText('60');
+  await expect(cycleValue(page)).toHaveText('90');
+  await expect(cycleValue(page)).toHaveText('20');
+  await pause.click();
+  await expect(play).toHaveAttribute('aria-pressed', 'false');
+  const paused = await cycleValue(page).textContent();
+  await page.waitForTimeout(1200);
+  await expect(cycleValue(page)).toHaveText(paused);
+
+  // Arrow keys on the controls step one value.
+  await page.getByRole('button', { name: 'Next value' }).focus();
+  await page.keyboard.press('ArrowRight');
+  await expect(cycleValue(page)).not.toHaveText(paused);
+
+  // Typing pauses playback.
+  await play.click();
+  await page.locator('#modal-new-value').fill('45');
+  await expect(play).toHaveAttribute('aria-pressed', 'false');
+  await page.waitForTimeout(1200);
+  await expect(cycleValue(page)).toHaveText('45');
+
+  // Cancel stops playback and leaves the graph unchanged.
+  await play.click();
+  await page.locator('#modal-change-value-content .modal-close').click();
+  expect(await page.evaluate(() => filterCycleTimer)).toBeNull();
+  expect(await filterNode(page)).toEqual({ label: '45', value: '45', filterType: undefined });
+});
+
+test('the mini result graph caps many kept entities and says when nothing is kept', async ({ page }) => {
+  await addSpeedFilterGraph(page);
+  await routeSpeedProfile(page, fulfillProfile(speedProfile(Array.from({ length: 30 }, () => 45).concat([90]))));
+  await openVisibleFilterEditor(page);
+  await expect(histogram(page)).toContainText('Showing 24 kept entities; 6 more not shown.');
+  expect(await previewEntities(page)).toHaveLength(24);
+  await page.locator('#modal-new-value').fill('50');
+  await expect(histogram(page)).toContainText('No entity is kept.');
+  expect(await previewEntities(page)).toEqual([]);
 });
 
 // BUG-006: re-fetching a fixed IRI neighbour after result selection asked for a

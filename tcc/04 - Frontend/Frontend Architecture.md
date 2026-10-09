@@ -129,14 +129,26 @@ variables open the panel with that order. The panel runs one exploration
 button per selectable value (`assumeStageCandidate`); Apply and Assume share
 `applyChoicesToGraph` and are the only steps that edit Cytoscape.
 
-**Variant A under review (FE-026, branch `FE-026-filter-range-histogram`,
-choice in DEC-010):** the numeric filter editor profiles its relation with
+**Confirmed (FE-026, merged by DEC-010):** the numeric filter editor profiles its relation with
 `fetchNumericProfile` (BE-003) and shows an SVG histogram with a two-handle
 native range slider (`loadFilterHistogram`, `renderFilterHistogram` in
 `graph-nodes.js`; pure `rangeScale`, `histogramBins`, `rangeFilter`,
 `rangeFromFilter` in `query-calculations.js`). Moving a handle writes At least
 / At most when the other handle is at its end, otherwise Between, and shows
 "Keeps N of M values"; the editor preselects the stored filter type.
+
+**Confirmed (FE-035):** the histogram editor cycles through the distinct
+profiled values. Previous/Next (also ←/→ on the controls) step one value and
+Play/Pause steps every 0.9 s (`filterCycleTimer`); a step follows the filter
+type (pure `cycleMode`, `cycleStep`): Exactly Equal moves the value, At least /
+At most the threshold, Between slides a window of fixed width; MAX/MIN disable
+the controls. Each step writes the editor like a manual edit, so only Apply
+changes the main graph. Slider moves, typing, a filter-type change, Cancel,
+Apply or a replaced editor pause playback. The previewed filter is shown in
+large type, and an exact value highlights only its own bars and count. A
+read-only Cytoscape mini graph (`filterPreviewCy`, pure `resultPreviewGraph`)
+draws up to 24 kept entities linked to their value nodes, with a "more not
+shown" note. No step requests a new profile.
 
 **Confirmed (FE-014):** mouse-wheel zoom uses Cytoscape
 `wheelSensitivity: 0.2` (about 1.2× per notch, near the 1.25× zoom buttons);

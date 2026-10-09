@@ -498,6 +498,50 @@ main {
 
 .filter-histogram-error { color: #c62828; }
 
+/* FE-035: value cycling, large previewed value and mini result graph. */
+.filter-cycle {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 4px 12px;
+    margin: 0 0 6px;
+}
+
+.filter-cycle-value {
+    min-width: 0;
+    font-size: 2.25rem;
+    font-weight: 700;
+    line-height: 1.15;
+    color: #0d47a1;
+    overflow-wrap: anywhere;
+}
+
+.filter-cycle-controls { display: flex; gap: 2px; }
+
+.filter-cycle-controls .btn-flat {
+    min-width: 44px;
+    height: 44px;
+    padding: 0 10px;
+    line-height: 44px;
+}
+
+.filter-cycle-controls .btn-flat:focus-visible { outline: 2px solid #1565c0; }
+
+.filter-preview-graph {
+    height: 170px;
+    margin-top: 8px;
+    border: 1px solid #e0e0e0;
+    border-radius: 4px;
+    background: #fafafa;
+}
+
+.filter-preview-note {
+    margin: 4px 0 0;
+    font-size: 0.9rem;
+    color: #616161;
+}
+
 .filter-histogram-count {
     margin: 0 0 4px;
     font-weight: 600;
