@@ -172,7 +172,11 @@ class CaptureDrivenCompatibilityTest {
         val actual = executions.flatMap { it.executions }
         withMessage(id) { actual.size shouldBe expected.size }
         expected.zip(actual).forEach { (raw, execution) ->
-            withMessage(id) { normalizeQuery(execution.query) shouldBe normalizeQuery(raw.query) }
+            if (id in APPROVED_QUERY_TEXT_CHANGES) {
+                withMessage(id) { execution.query.contains("AS ?__extreme0)") shouldBe true }
+            } else {
+                withMessage(id) { normalizeQuery(execution.query) shouldBe normalizeQuery(raw.query) }
+            }
             assertRawResult(id, raw, execution.result)
         }
     }
@@ -430,6 +434,11 @@ class CaptureDrivenCompatibilityTest {
         val SPARQL_ROUTE_CASES =
             setOf("SELECT-LIMIT-ZERO-001", "SELECT-LIMIT-TWO-001", "SPARQL-INJECTION-PATH-001", "WIKIDATA-GENERATION-001")
         val ORDERED_CASES = setOf("SELECT-ORDER-MAX-001", "SELECT-ORDER-MIN-001")
+
+        // BE-004 (approved 2026-10-09): Maximum/Minimum keep every tied row through an extreme
+        // subquery instead of ORDER BY and LIMIT 1. The query text differs from the C# capture;
+        // the fixture has no ties, so HTTP bodies and executed rows must still match it.
+        val APPROVED_QUERY_TEXT_CHANGES = ORDERED_CASES
         val EXCLUDED_CAPTURE_CASES = INTENTIONAL_EXCEPTION_DIFFERENCES
     }
 }

@@ -2100,11 +2100,13 @@ test('previous and next cycle over the kept entities five at a time without chan
   await expect(cyclePosition(page)).toHaveText('1\u20135 of 7 kept');
   expect(await previewEntities(page)).toEqual(['P5', 'P6', 'P7', 'P8', 'P9']);
 
-  // MAX and MIN have no fixed set to cycle over.
+  // BE-004: MAX keeps every entity with the highest value; one here, so nothing to cycle.
   await chooseFilter(page, 'MAX');
+  await expect(cycleValue(page)).toHaveText('P11 150');
+  await expect(histogram(page)).toContainText('Keeps 1 of 12 values');
+  await expect(histogram(page)).toContainText('1 entity has the highest value; the query returns all of them, up to the server limit.');
   await expect(next).toBeDisabled();
   await expect(page.getByRole('button', { name: 'Play', exact: true })).toBeDisabled();
-  await expect(histogram(page)).toContainText('MAX and MIN choose their entities when the query runs.');
 
   await chooseFilter(page, 'At least', '40');
   expect(await filterNode(page)).toEqual(before);
@@ -2142,6 +2144,29 @@ test('play cycles the kept entities until paused or the editor closes, and arrow
   await page.locator('#modal-change-value-content .modal-close').click();
   expect(await page.evaluate(() => filterCycleTimer)).toBeNull();
   expect(await filterNode(page)).toEqual({ label: '45', value: '45', filterType: undefined });
+});
+
+test('MIN shows every tied lowest entity and cycles them; MAX of a partial profile names only the value', async ({ page }) => {
+  await addSpeedFilterGraph(page);
+  let profile = speedProfile([10, 10, 10, 10, 10, 10, 10, 40, 90]);
+  await routeSpeedProfile(page, route => fulfillProfile(profile)(route));
+  await openVisibleFilterEditor(page);
+  await chooseFilter(page, 'MIN');
+  await expect(cyclePosition(page)).toHaveText('1\u20135 of 7 kept');
+  await expect(histogram(page)).toContainText('Keeps 7 of 9 values');
+  await expect(histogram(page)).toContainText('7 entities have the lowest value; the query returns all of them, up to the server limit.');
+  await page.getByRole('button', { name: 'Next entities' }).click();
+  await expect(cycleValue(page)).toHaveText('P5 10P6 10');
+
+  profile = speedProfile([10, 20, 30], { count: 8, truncated: true, max: 99 });
+  await openVisibleFilterEditor(page);
+  await chooseFilter(page, 'MAX');
+  await expect(histogram(page)).toContainText('Keeps the highest value (99)');
+  await expect(histogram(page)).toContainText('The highest value is 99; its entities are known after the query runs.');
+  await expect(cyclePosition(page)).toHaveText('');
+  expect(await previewEntities(page)).toEqual([]);
+  await page.locator('#apply-filter-btn').click();
+  expect(await filterNode(page)).toEqual({ label: 'MAX', value: '45', filterType: 4 });
 });
 
 test('the kept entities say when nothing is kept', async ({ page }) => {

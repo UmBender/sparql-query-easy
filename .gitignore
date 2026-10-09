@@ -373,3 +373,6 @@ FodyWeavers.xsd
 
 # Thesis reference PDFs are kept locally outside Git (REPO-001)
 tcc/PDF/*.[Pp][Dd][Ff]
+
+# Local settings (BE-004); `.env.example` documents them
+.env

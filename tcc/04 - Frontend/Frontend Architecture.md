@@ -147,9 +147,14 @@ range, the editor value or the main graph, and makes no request. The shown
 entities appear in large type with their values and as a read-only Cytoscape
 mini graph (`filterPreviewCy`, pure `possibilityGraph`: entity → relation
 label → value nodes). A new range or filter type restarts from the first
-entities; MAX/MIN and five or fewer kept entities disable the controls; Cancel,
+entities; five or fewer kept entities disable the controls; Cancel,
 Apply or a replaced editor stop playback. An exact value highlights only its
 own bars and count.
+
+**Confirmed (BE-004):** MAX/MIN in the editor keep every entity with the
+lowest/highest profiled value and cycle them like a range; the profile holds
+the lowest values, so a partial profile names only the maximum value and says
+its entities are known after the query runs.
 
 **Confirmed (FE-014):** mouse-wheel zoom uses Cytoscape
 `wheelSensitivity: 0.2` (about 1.2× per notch, near the 1.25× zoom buttons);

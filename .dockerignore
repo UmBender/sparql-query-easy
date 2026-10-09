@@ -15,3 +15,4 @@ tcc
 src/test
 src/integrationTest
 *.pdf
+.env

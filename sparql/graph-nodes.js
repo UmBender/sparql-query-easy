@@ -317,6 +317,7 @@ function renderFilterHistogram(box, profile, relation) {
     let kept = [];
     let keptRange = null;
     let page = 0;
+    let keptNote = '';
 
     function checkedType() {
         const checked = filterRadios.find(input => input.checked);
@@ -329,10 +330,21 @@ function renderFilterHistogram(box, profile, relation) {
         return qc.cycleMode(checkedType()) === 'exact' && text !== '' && Number.isFinite(Number(text)) ? Number(text) : null;
     }
 
+    // BE-004: MAX/MIN keep every entity with the extreme value. The profile holds the lowest
+    // values, so the minimum is always known and the maximum only when the profile is complete.
+    function extremeOf(type) {
+        const filterType = qc.filterTypeOf(type);
+        if (filterType === 5) return { kind: 'lowest', value: Math.min(...numbers) };
+        if (filterType === 4) return { kind: 'highest', value: profile.truncated ? null : sampleMax };
+        return null;
+    }
+
     function paint() {
-        const exact = exactNumber();
-        const a = exact ?? +lo.value;
-        const b = exact ?? +hi.value;
+        const extreme = extremeOf(checkedType());
+        const unknownMax = extreme !== null && extreme.value === null;
+        const fixed = exactNumber() ?? extreme?.value ?? null;
+        const a = unknownMax ? Infinity : fixed ?? +lo.value;
+        const b = unknownMax ? Infinity : fixed ?? +hi.value;
         const bins = qc.histogramBins(numbers, { min: scale.min, max: scale.max, lo: a, hi: b, binCount });
         const tallest = Math.max(...bins.map(bin => bin.count));
         const width = 300 / bins.length;
@@ -345,12 +357,14 @@ function renderFilterHistogram(box, profile, relation) {
                 + `<rect class="filter-histogram-bar" x="${x}" y="${72 - h}" width="${w}" height="${h}"></rect>`
                 + `<rect class="filter-histogram-bar kept" x="${x}" y="${72 - k}" width="${w}" height="${k}"></rect></g>`;
         }).join('');
-        const highOpen = exact === null && b >= scale.max;
+        const highOpen = fixed === null && !unknownMax && b >= scale.max;
         let keptCount = qc.countInRange(numbers, a, b);
         if (highOpen) keptCount += omitted;
         const atLeast = profile.truncated && !highOpen && b >= sampleMax ? 'at least ' : '';
-        box.querySelector('.filter-histogram-count').textContent = `Keeps ${atLeast}${keptCount} of ${total} values`;
-        box.querySelector('.filter-histogram-range').textContent = `${format(a)} – ${format(b)}`;
+        box.querySelector('.filter-histogram-count').textContent = unknownMax
+            ? `Keeps the highest value (${profile.max ?? '?'})`
+            : `Keeps ${atLeast}${keptCount} of ${total} values`;
+        box.querySelector('.filter-histogram-range').textContent = unknownMax ? `> ${format(sampleMax)}` : `${format(a)} – ${format(b)}`;
         const span = scale.max - scale.min || 1;
         const fill = box.querySelector('.filter-histogram-fill');
         fill.style.left = `${(+lo.value - scale.min) / span * 100}%`;
@@ -359,7 +373,7 @@ function renderFilterHistogram(box, profile, relation) {
         lo.classList.toggle('on-top', +lo.value >= scale.max);
 
         // A new range starts the cycle again from its first entities.
-        const cyclable = qc.cycleMode(checkedType()) !== null;
+        const cyclable = !unknownMax && (extreme !== null || qc.cycleMode(checkedType()) !== null);
         const rangeKey = cyclable ? `${a}|${b}` : null;
         if (rangeKey !== keptRange) {
             keptRange = rangeKey;
@@ -369,10 +383,15 @@ function renderFilterHistogram(box, profile, relation) {
         const canCycle = kept.length > FILTER_CYCLE_PAGE;
         cycleButtons.forEach(button => { button.disabled = !canCycle; });
         if (!canCycle) pauseCycle();
-        paintPossibility(cyclable);
+        const sampled = profile.truncated ? ` (from the ${numbers.length} loaded values)` : '';
+        const count = `${kept.length} ${kept.length === 1 ? 'entity' : 'entities'}`;
+        keptNote = unknownMax ? `The highest value is ${profile.max ?? '?'}; its entities are known after the query runs.`
+            : extreme ? `${count} ${kept.length === 1 ? 'has' : 'have'} the ${extreme.kind} value; the query returns all of them, up to the server limit.`
+                : !kept.length ? 'No entity is kept.' : `${kept.length} kept ${kept.length === 1 ? 'entity' : 'entities'}${sampled}.`;
+        paintPossibility();
     }
 
-    function paintPossibility(cyclable) {
+    function paintPossibility() {
         const shown = kept.slice(page * FILTER_CYCLE_PAGE, (page + 1) * FILTER_CYCLE_PAGE);
         const first = page * FILTER_CYCLE_PAGE + 1;
         const last = first + shown.length - 1;
@@ -380,9 +399,7 @@ function renderFilterHistogram(box, profile, relation) {
             : `${first === last ? first : `${first}\u2013${last}`} of ${kept.length} kept`;
         cycleValue.innerHTML = shown.map(entity => `<span class="filter-cycle-entity">${escapeHTML(entity.label)}`
             + ` <span class="filter-cycle-number">${escapeHTML(entity.values.map(value => value.value).join(', '))}</span></span>`).join('');
-        const sampled = profile.truncated ? ` (from the ${numbers.length} loaded values)` : '';
-        previewNote.textContent = !cyclable ? 'MAX and MIN choose their entities when the query runs.'
-            : !kept.length ? 'No entity is kept.' : `${kept.length} kept ${kept.length === 1 ? 'entity' : 'entities'}${sampled}.`;
+        previewNote.textContent = keptNote;
 
         const container = box.querySelector('.filter-preview-graph');
         if (!filterPreviewCy || filterPreviewCy.container() !== container) {
@@ -418,7 +435,7 @@ function renderFilterHistogram(box, profile, relation) {
         const pages = Math.ceil(kept.length / FILTER_CYCLE_PAGE);
         if (pages < 2) return;
         page = (page + direction + pages) % pages;
-        paintPossibility(true);
+        paintPossibility();
     }
 
     function setPlaying(playing) {
