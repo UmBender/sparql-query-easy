@@ -87,11 +87,15 @@ class WikidataQueryGeneratorTest {
         between.contains("FILTER (?literalValue0 >= 40 && ?literalValue0 <= 80.5)") shouldBe true
         parses(between)
 
+        // BE-004: an extreme subquery and an equality filter instead of ORDER BY and LIMIT 1.
         val maximum = literalQuery(Maximum)
-        maximum.contains("ORDER BY DESC(?literalValue0) \nLIMIT 1") shouldBe true
+        maximum.contains("SELECT (MAX(?__extremeValue0_0) AS ?__extreme0)") shouldBe true
+        maximum.contains("FILTER (?literalValue0 = ?__extreme0)") shouldBe true
+        maximum.contains("ORDER BY") shouldBe false
+        maximum.endsWith("LIMIT 20\n") shouldBe true
         parses(maximum)
         val minimum = literalQuery(Minimum)
-        minimum.contains("ORDER BY ASC(?literalValue0) \nLIMIT 1") shouldBe true
+        minimum.contains("SELECT (MIN(?__extremeValue0_0) AS ?__extreme0)") shouldBe true
         parses(minimum)
     }
 

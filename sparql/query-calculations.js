@@ -195,6 +195,83 @@ export function rangeFromFilter(scale, filterType, value) {
   }
 }
 
+/** @typedef {'exact' | 'atLeast' | 'atMost' | 'between'} CycleMode */
+
+/**
+ * Which kind of fixed range a numeric filter type keeps (FE-035); null for
+ * MAX, MIN and text filters, whose kept entities are not known in advance.
+ * @param {number | string | null | undefined} filterType
+ * @returns {CycleMode | null}
+ */
+export function cycleMode(filterType) {
+  switch (filterTypeOf(filterType)) {
+  case null: return 'exact';
+  case 2: return 'atLeast';
+  case 3: return 'atMost';
+  case 6: return 'between';
+  default: return null;
+  }
+}
+
+/**
+ * @typedef {{entity: unknown, label?: string | null, value: string, number: number}} ProfileValue
+ * @typedef {{key: string, label: string, values: {value: string, number: number}[]}} KeptEntity
+ * @typedef {{group: 'nodes' | 'edges', data: Record<string, string>, position?: {x: number, y: number}}} PreviewElement
+ */
+
+/**
+ * Distinct entities of the profile rows kept by [lo, hi] (FE-035), each with
+ * all of its kept values (duplicates removed), ordered by its lowest kept
+ * value, then label. These are the possible bindings the editor cycles over.
+ * @param {ProfileValue[]} values
+ * @param {number} lo
+ * @param {number} hi
+ * @returns {KeptEntity[]}
+ */
+export function keptEntities(values, lo, hi) {
+  /** @type {Map<string, KeptEntity>} */
+  const entities = new Map();
+  for (const item of values) {
+    if (!Number.isFinite(item.number) || item.number < lo || item.number > hi) continue;
+    const raw = item.entity && typeof item.entity === 'object' && 'value' in item.entity ? item.entity.value : item.entity;
+    const key = String(raw ?? '').replace(/^<|>$/g, '');
+    const entity = entities.get(key)
+      ?? { key, label: item.label || key.slice(Math.max(key.lastIndexOf('#'), key.lastIndexOf('/')) + 1) || key, values: [] };
+    if (!entity.values.some(value => value.number === item.number && value.value === item.value)) {
+      entity.values.push({ value: item.value, number: item.number });
+    }
+    entities.set(key, entity);
+  }
+  const list = [...entities.values()];
+  list.forEach(entity => entity.values.sort((a, b) => a.number - b.number));
+  return list.sort((a, b) => a.values[0].number - b.values[0].number || a.label.localeCompare(b.label));
+}
+
+/**
+ * Mini result graph for the entities shown in one cycle step (FE-035): each
+ * entity above its value nodes, linked by the relation label, side by side.
+ * @param {KeptEntity[]} entities
+ * @param {string} relation
+ * @returns {PreviewElement[]}
+ */
+export function possibilityGraph(entities, relation) {
+  /** @type {PreviewElement[]} */
+  const elements = [];
+  let x = 0;
+  entities.forEach((entity, index) => {
+    const width = Math.max(1, entity.values.length) * 110;
+    const entityId = `e${index}`;
+    elements.push({ group: 'nodes', data: { id: entityId, kind: 'entity', label: entity.label }, position: { x: x + (width - 110) / 2, y: 0 } });
+    entity.values.forEach((value, valueIndex) => {
+      const valueId = `${entityId}v${valueIndex}`;
+      elements.push({ group: 'nodes', data: { id: valueId, kind: 'value', label: value.value }, position: { x: x + valueIndex * 110, y: 120 } });
+      elements.push({ group: 'edges', data: { id: `${entityId}-${valueId}`, source: entityId, target: valueId, label: relation } });
+    });
+    x += width + 40;
+  });
+  return elements;
+}
+
 /**
  * @param {QueryItem[]} items
  * @returns {string[]}

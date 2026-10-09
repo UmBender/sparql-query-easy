@@ -1,13 +1,13 @@
 ---
 id: FE-027
 title: Visualize a numeric filter as a dot strip with a live count badge on the graph
-status: READY
+status: CANCELLED
 priority: P1
 type: frontend
 depends_on: [BE-003]
 human_gate: false
 created: 2026-10-07
-updated: 2026-10-07
+updated: 2026-10-09
 ---
 # Visualize a numeric filter as a dot strip with a live count badge on the graph
 
@@ -31,3 +31,6 @@ Each profiled entity is a dot on the number line (name on hover); dots outside t
 ## Execution log
 
 - 2026-10-07: Created; BE-003 provides the profile and labels.
+- 2026-10-09: Implemented on branch `FE-027-filter-dot-strip-badge` (`bfe1d8a`, not
+  merged). DEC-010: the dot strip is dropped as redundant with the FE-026 histogram;
+  the kept/total graph badge moves to FE-036 and the value preview to FE-035.

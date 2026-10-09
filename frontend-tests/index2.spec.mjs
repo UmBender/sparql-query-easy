@@ -1909,7 +1909,8 @@ test('the filter editor histogram follows the range handles and writes at least,
   await addSpeedFilterGraph(page);
   const requests = await routeSpeedProfile(page, fulfillProfile(speedProfile([20, 45, 45, 60, 90, 150])));
   await openVisibleFilterEditor(page);
-  await expect(histogram(page)).toContainText('Keeps 6 of 6 values');
+  // FE-035: an exact value keeps only itself; the handles still span the whole range.
+  await expect(histogram(page)).toContainText('Keeps 2 of 6 values');
   expect(requests).toHaveLength(1);
   const lo = page.getByRole('slider', { name: 'Lowest kept value' });
   const hi = page.getByRole('slider', { name: 'Highest kept value' });
@@ -1917,7 +1918,7 @@ test('the filter editor histogram follows the range handles and writes at least,
   await expect(hi).toHaveValue('150');
   // Opening the editor does not change an exact value.
   await expect(page.locator('#modal-new-value')).toHaveValue('45');
-  expect(await keptBars(page)).toEqual(await allBars(page));
+  expect((await keptBars(page)).filter(height => height > 0)).toHaveLength(1);
 
   await lo.fill('40');
   await expect(histogram(page)).toContainText('Keeps 5 of 6 values');
@@ -1965,7 +1966,8 @@ test('a truncated profile says what the histogram covers and counts values above
   await routeSpeedProfile(page, fulfillProfile(speedProfile([10, 20, 30, 40], { count: 10, truncated: true, max: 99 })));
   await openVisibleFilterEditor(page);
   await expect(histogram(page)).toContainText('The histogram covers the lowest 4 of 10 values (up to 40; the largest is 99).');
-  await expect(histogram(page)).toContainText('Keeps 10 of 10 values');
+  // The exact value 45 lies above the covered values, so its count is a lower bound.
+  await expect(histogram(page)).toContainText('Keeps at least 0 of 10 values');
   await page.getByRole('slider', { name: 'Lowest kept value' }).fill('25');
   await expect(histogram(page)).toContainText('Keeps 8 of 10 values');
   await expect(page.locator('#modal-new-value')).toHaveValue('25');
@@ -2023,10 +2025,10 @@ test('a slow profile for an earlier editor does not replace the current histogra
   await openVisibleFilterEditor(page);
   await expect(histogram(page)).toContainText('Loading');
   await openVisibleFilterEditor(page);
-  await expect(histogram(page)).toContainText('Keeps 3 of 3 values');
+  await expect(histogram(page)).toContainText('Keeps 1 of 3 values');
   releaseFirst();
   await page.evaluate(() => new Promise(resolve => setTimeout(resolve, 100)));
-  await expect(histogram(page)).toContainText('Keeps 3 of 3 values');
+  await expect(histogram(page)).toContainText('Keeps 1 of 3 values');
 });
 
 test('the filter editor histogram fits a narrow viewport', async ({ page }) => {
@@ -2034,15 +2036,147 @@ test('the filter editor histogram fits a narrow viewport', async ({ page }) => {
   await addSpeedFilterGraph(page);
   await routeSpeedProfile(page, fulfillProfile(speedProfile([20, 45, 45, 60, 90, 150])));
   await openVisibleFilterEditor(page);
-  await expect(histogram(page)).toContainText('Keeps 6 of 6 values');
-  const [modal, chart, slider] = await Promise.all(['#modal-change-value-content', '#filter-histogram svg', '#filter-histogram .filter-histogram-slider']
+  await expect(histogram(page)).toContainText('Keeps 2 of 6 values');
+  const [modal, chart, slider, cycle, preview] = await Promise.all(['#modal-change-value-content', '#filter-histogram svg', '#filter-histogram .filter-histogram-slider',
+    '#filter-histogram .filter-cycle', '#filter-histogram .filter-preview-graph']
     .map(selector => page.locator(selector).boundingBox()));
-  for (const box of [chart, slider]) {
+  for (const box of [chart, slider, cycle, preview]) {
     expect(box.width).toBeGreaterThan(200);
     expect(box.x).toBeGreaterThanOrEqual(modal.x - 0.5);
     expect(box.x + box.width).toBeLessThanOrEqual(modal.x + modal.width + 0.5);
   }
   expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(360);
+});
+
+// FE-035: with the range fixed, cycle over the kept entities five at a time.
+const twelveSpeeds = [20, 45, 45, 50, 55, 60, 65, 70, 75, 80, 90, 150];
+const cycleValue = page => page.locator('#filter-histogram .filter-cycle-value');
+const cyclePosition = page => page.locator('#filter-histogram .filter-cycle-position');
+const previewEntities = page => page.evaluate(() => filterPreviewCy.nodes('[kind = "entity"]').map(node => node.data('label')));
+const chooseFilter = (page, name, value) => page.evaluate(([label, text]) => {
+  const option = [...document.querySelectorAll('#modal-change-value input[name=filter-type]')]
+    .find(input => input.nextElementSibling.textContent.startsWith(label));
+  option.checked = true;
+  if (text !== undefined) document.getElementById('modal-new-value').value = text;
+  option.dispatchEvent(new Event('change'));
+}, [name, value]);
+
+test('previous and next cycle over the kept entities five at a time without changing the range', async ({ page }) => {
+  await addSpeedFilterGraph(page);
+  const requests = await routeSpeedProfile(page, fulfillProfile(speedProfile(twelveSpeeds)));
+  const before = await filterNode(page);
+  await openVisibleFilterEditor(page);
+  const next = page.getByRole('button', { name: 'Next entities' });
+  const previous = page.getByRole('button', { name: 'Previous entities' });
+
+  // The exact value 45 keeps two entities: both are shown, nothing to cycle.
+  await expect(cyclePosition(page)).toHaveText('1\u20132 of 2 kept');
+  await expect(cycleValue(page)).toHaveText('P1 45P2 45');
+  expect(await previewEntities(page)).toEqual(['P1', 'P2']);
+  expect(await page.evaluate(() => filterPreviewCy.edges().map(edge => edge.data('label')))).toEqual(['speed', 'speed']);
+  await expect(next).toBeDisabled();
+
+  await chooseFilter(page, 'At least', '40');
+  await expect(cyclePosition(page)).toHaveText('1\u20135 of 11 kept');
+  await expect(next).toBeEnabled();
+  await next.click();
+  await expect(cyclePosition(page)).toHaveText('6\u201310 of 11 kept');
+  await expect(cycleValue(page)).toHaveText('P6 65P7 70P8 75P9 80P10 90');
+  expect(await previewEntities(page)).toEqual(['P6', 'P7', 'P8', 'P9', 'P10']);
+  await next.click();
+  await expect(cyclePosition(page)).toHaveText('11 of 11 kept');
+  expect(await previewEntities(page)).toEqual(['P11']);
+  await next.click();
+  await expect(cyclePosition(page)).toHaveText('1\u20135 of 11 kept');
+  await previous.click();
+  await expect(cyclePosition(page)).toHaveText('11 of 11 kept');
+  // Cycling leaves the range and the editor as they were.
+  await expect(page.locator('#modal-new-value')).toHaveValue('40');
+  await expect(page.getByRole('slider', { name: 'Lowest kept value' })).toHaveValue('40');
+  await expect(histogram(page)).toContainText('Keeps 11 of 12 values');
+
+  // A new range starts again from its first entities.
+  await page.getByRole('slider', { name: 'Lowest kept value' }).fill('60');
+  await expect(cyclePosition(page)).toHaveText('1\u20135 of 7 kept');
+  expect(await previewEntities(page)).toEqual(['P5', 'P6', 'P7', 'P8', 'P9']);
+
+  // BE-004: MAX keeps every entity with the highest value; one here, so nothing to cycle.
+  await chooseFilter(page, 'MAX');
+  await expect(cycleValue(page)).toHaveText('P11 150');
+  await expect(histogram(page)).toContainText('Keeps 1 of 12 values');
+  await expect(histogram(page)).toContainText('1 entity has the highest value; the query returns all of them, up to the server limit.');
+  await expect(next).toBeDisabled();
+  await expect(page.getByRole('button', { name: 'Play', exact: true })).toBeDisabled();
+
+  await chooseFilter(page, 'At least', '40');
+  expect(await filterNode(page)).toEqual(before);
+  expect(requests).toHaveLength(1);
+  await page.locator('#apply-filter-btn').click();
+  expect(await filterNode(page)).toEqual({ label: '\u2265 40', value: '40', filterType: 2 });
+});
+
+test('play cycles the kept entities until paused or the editor closes, and arrows step on the controls', async ({ page }) => {
+  await addSpeedFilterGraph(page);
+  await routeSpeedProfile(page, fulfillProfile(speedProfile(twelveSpeeds)));
+  await openVisibleFilterEditor(page);
+  await chooseFilter(page, 'At least', '20');
+  const play = page.getByRole('button', { name: 'Play', exact: true });
+  await play.click();
+  const pause = page.getByRole('button', { name: 'Pause', exact: true });
+  await expect(pause).toHaveAttribute('aria-pressed', 'true');
+  await expect(cyclePosition(page)).toHaveText('6\u201310 of 12 kept');
+  await expect(cyclePosition(page)).toHaveText('11\u201312 of 12 kept');
+  await expect(cyclePosition(page)).toHaveText('1\u20135 of 12 kept');
+  await pause.click();
+  await expect(play).toHaveAttribute('aria-pressed', 'false');
+  const paused = await cyclePosition(page).textContent();
+  await page.waitForTimeout(2000);
+  await expect(cyclePosition(page)).toHaveText(paused);
+  await expect(page.locator('#modal-new-value')).toHaveValue('20');
+
+  // Arrow keys on the controls step one page.
+  await page.getByRole('button', { name: 'Next entities' }).focus();
+  await page.keyboard.press('ArrowRight');
+  await expect(cyclePosition(page)).not.toHaveText(paused);
+
+  // Cancel stops playback and leaves the graph unchanged.
+  await play.click();
+  await page.locator('#modal-change-value-content .modal-close').click();
+  expect(await page.evaluate(() => filterCycleTimer)).toBeNull();
+  expect(await filterNode(page)).toEqual({ label: '45', value: '45', filterType: undefined });
+});
+
+test('MIN shows every tied lowest entity and cycles them; MAX of a partial profile names only the value', async ({ page }) => {
+  await addSpeedFilterGraph(page);
+  let profile = speedProfile([10, 10, 10, 10, 10, 10, 10, 40, 90]);
+  await routeSpeedProfile(page, route => fulfillProfile(profile)(route));
+  await openVisibleFilterEditor(page);
+  await chooseFilter(page, 'MIN');
+  await expect(cyclePosition(page)).toHaveText('1\u20135 of 7 kept');
+  await expect(histogram(page)).toContainText('Keeps 7 of 9 values');
+  await expect(histogram(page)).toContainText('7 entities have the lowest value; the query returns all of them, up to the server limit.');
+  await page.getByRole('button', { name: 'Next entities' }).click();
+  await expect(cycleValue(page)).toHaveText('P5 10P6 10');
+
+  profile = speedProfile([10, 20, 30], { count: 8, truncated: true, max: 99 });
+  await openVisibleFilterEditor(page);
+  await chooseFilter(page, 'MAX');
+  await expect(histogram(page)).toContainText('Keeps the highest value (99)');
+  await expect(histogram(page)).toContainText('The highest value is 99; its entities are known after the query runs.');
+  await expect(cyclePosition(page)).toHaveText('');
+  expect(await previewEntities(page)).toEqual([]);
+  await page.locator('#apply-filter-btn').click();
+  expect(await filterNode(page)).toEqual({ label: 'MAX', value: '45', filterType: 4 });
+});
+
+test('the kept entities say when nothing is kept', async ({ page }) => {
+  await addSpeedFilterGraph(page);
+  await routeSpeedProfile(page, fulfillProfile(speedProfile([20, 45, 90])));
+  await openVisibleFilterEditor(page);
+  await page.locator('#modal-new-value').fill('50');
+  await expect(histogram(page)).toContainText('No entity is kept.');
+  await expect(cyclePosition(page)).toHaveText('');
+  expect(await previewEntities(page)).toEqual([]);
 });
 
 // BUG-006: re-fetching a fixed IRI neighbour after result selection asked for a

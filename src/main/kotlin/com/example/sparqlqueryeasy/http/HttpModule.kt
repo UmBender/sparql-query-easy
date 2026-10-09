@@ -35,6 +35,7 @@ import com.example.sparqlqueryeasy.application.relationships.RelationshipValueSe
 import com.example.sparqlqueryeasy.application.search.SearchRequest
 import com.example.sparqlqueryeasy.application.search.SearchResult
 import com.example.sparqlqueryeasy.application.search.SearchService
+import com.example.sparqlqueryeasy.config.AppSettings
 import com.example.sparqlqueryeasy.domain.model.SparqlQueryExecutionFailure
 import com.example.sparqlqueryeasy.rdf.jena.JenaGraphEndpointExecution
 import com.example.sparqlqueryeasy.rdf.jena.JenaSparqlSyntaxValidator
@@ -99,11 +100,11 @@ data class HttpDependencies(
     }
 }
 
-fun defaultHttpDependencies(): HttpDependencies {
+fun defaultHttpDependencies(settings: AppSettings = AppSettings.load()): HttpDependencies {
     val cache = InMemoryLocalGraphCache()
     val parser = JenaTurtleParser()
     val httpClient = HttpClient(CIO)
-    val generator = CSharpCompatibleWikidataQueryGenerator()
+    val generator = CSharpCompatibleWikidataQueryGenerator(settings.extremeResultLimit)
     val filtering = ResultFilteringService()
     val endpointResolver =
         EndpointContextResolver(
