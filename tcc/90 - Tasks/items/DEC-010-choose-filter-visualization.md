@@ -33,3 +33,5 @@ combined into the chosen one?
   redundant with the histogram, kept its graph badge (FE-036) and asked for
   FE-035: with the range fixed, cycle over the kept entities one or two at a
   time, in large type and as a mini result graph. Still open: FE-028.
+- 2026-10-09: FE-035 and BE-004 merged into `main` (`1e685c0`). FE-036 (badge)
+  and FE-028 remain open.
