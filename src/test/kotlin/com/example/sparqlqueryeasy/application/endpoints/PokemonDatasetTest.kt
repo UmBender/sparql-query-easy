@@ -11,12 +11,13 @@ import com.example.sparqlqueryeasy.rdf.jena.JenaGraphEndpointExecution
 import com.example.sparqlqueryeasy.rdf.jena.JenaTurtleParser
 import io.kotest.matchers.collections.shouldContainExactlyInAnyOrder
 import io.kotest.matchers.shouldBe
+import io.kotest.matchers.string.shouldStartWith
 import io.kotest.matchers.types.shouldBeInstanceOf
 import kotlinx.coroutines.runBlocking
 import org.junit.jupiter.api.Test
 import kotlin.test.assertFailsWith
 
-/** DATA-002 oracles over the packaged first-generation Pokémon graph. */
+/** DATA-002 and DATA-003 oracles over the packaged first-generation Pokémon graph. */
 class PokemonDatasetTest {
     private val graph = ParsedBuiltInGraphProvider(ClasspathTurtleTextSource(POKEMON_RESOURCE_NAME), JenaTurtleParser()).graph()
 
@@ -131,6 +132,61 @@ class PokemonDatasetTest {
             listOf("NormalType", "FightingType").map { "$NS$it" }
         ask("ASK { pk:Magnemite pk:immuneTo pk:PoisonType ; pk:fourTimesWeakTo pk:GroundType }") shouldBe true
     }
+
+    @Test
+    fun `strongAgainst lists the types a Pokemon's own types hit super effectively`() {
+        typesOf("pk:Charmander", "pk:strongAgainst") shouldContainExactlyInAnyOrder listOf("Grass", "Ice", "Bug", "Steel")
+        // Grass hits Water, Ground and Rock; Poison hits Grass and Fairy.
+        typesOf("pk:Bulbasaur", "pk:strongAgainst") shouldContainExactlyInAnyOrder listOf("Water", "Ground", "Rock", "Grass", "Fairy")
+        typesOf("pk:Charizard", "pk:strongAgainst") shouldContainExactlyInAnyOrder listOf("Grass", "Ice", "Bug", "Steel", "Fighting")
+        typesOf("pk:Snorlax", "pk:strongAgainst") shouldBe emptyList()
+        select("SELECT ?p ?t WHERE { ?p pk:strongAgainst ?t }").size shouldBe 565
+        // Every Pokémon's strengths are exactly the union of its types' super effective matchups.
+        pokemonWhere(
+            "?p a pk:Pokemon . { ?p pk:hasType ?a . ?a pk:superEffectiveAgainst ?t FILTER NOT EXISTS { ?p pk:strongAgainst ?t } } " +
+                "UNION { ?p pk:strongAgainst ?t FILTER NOT EXISTS { ?p pk:hasType ?a . ?a pk:superEffectiveAgainst ?t } }",
+        ) shouldBe emptyList()
+        pokemonWhere("?p pk:strongAgainst pk:WaterType ; pk:pokedexNumber ?n FILTER (?n <= 6)") shouldContainExactlyInAnyOrder
+            listOf("Bulbasaur", "Ivysaur", "Venusaur")
+        pokemonWhere("pk:Pikachu pk:strongAgainst ?t . ?p pk:weakTo ?t ; pk:pokedexNumber ?n FILTER (?n <= 9)")
+            .distinct() shouldContainExactlyInAnyOrder
+            listOf("Bulbasaur", "Ivysaur", "Venusaur", "Charmander", "Charmeleon", "Charizard")
+    }
+
+    @Test
+    fun `Pokedex lore links are reviewed and present in both directions`() {
+        val reviewed =
+            listOf(
+                "Slowbro" to "Shellder",
+                "Slowbro" to "Slowpoke",
+                "Exeggutor" to "Exeggcute",
+                "Magneton" to "Magnemite",
+                "Dugtrio" to "Diglett",
+                "Weezing" to "Koffing",
+                "Gyarados" to "Magikarp",
+                "Mewtwo" to "Mew",
+            )
+        pairs("?a pk:pokedexMentions ?b") shouldContainExactlyInAnyOrder reviewed
+        pairs("?b pk:mentionedInPokedexOf ?a") shouldContainExactlyInAnyOrder reviewed
+        pokemonWhere("pk:Shellder pk:mentionedInPokedexOf ?p") shouldBe listOf("Slowbro")
+        // Every lore endpoint is one of the 151 Pokémon.
+        pairs(
+            "{ ?a pk:pokedexMentions ?b } UNION { ?b pk:mentionedInPokedexOf ?a } " +
+                "FILTER NOT EXISTS { ?a a pk:Pokemon ; pk:pokedexNumber ?na . ?b a pk:Pokemon ; pk:pokedexNumber ?nb }",
+        ) shouldBe emptyList()
+        val gyaradosNote = select("SELECT ?note WHERE { pk:Gyarados pk:pokedexLoreNote ?note }").single().getValue("note")
+        gyaradosNote shouldStartWith "Sapphire: "
+        select("SELECT ?l WHERE { pk:pokedexMentions rdfs:label ?l }") shouldBe listOf(mapOf("l" to "Pokédex mentions"))
+        select("SELECT ?l WHERE { pk:mentionedInPokedexOf rdfs:label ?l }") shouldBe listOf(mapOf("l" to "mentioned in Pokédex of"))
+    }
+
+    private fun pairs(pattern: String): List<Pair<String, String>> =
+        select("SELECT ?a ?b WHERE { $pattern }").map { it.getValue("a").removePrefix(NS) to it.getValue("b").removePrefix(NS) }
+
+    private fun typesOf(
+        pokemon: String,
+        property: String,
+    ): List<String> = select("SELECT ?t WHERE { $pokemon $property ?t }").map { it.getValue("t").removePrefix(NS).removeSuffix("Type") }
 
     private fun select(query: String): List<Map<String, String>> =
         runBlocking { JenaGraphEndpointExecution(graph).execute(PREFIXES + query.trimIndent()) }.rows.map { row ->

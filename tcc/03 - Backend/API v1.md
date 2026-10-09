@@ -400,6 +400,12 @@ Pokédex neighbours, under `http://easyquery.example.org/pokemon#`. It is parsed
 once at startup from `src/main/resources/pokemon_gen1.ttl`, which is generated
 by `node scripts/generate-pokemon-dataset.mjs` (`--check` verifies the
 committed bytes). It behaves like the other local graphs on every route.
+DATA-003 adds per-Pokémon offensive strengths (`strongAgainst`: the types at
+least one of its own types hits super effectively) and reviewed Pokédex lore
+links between species of the 151 (`pokedexMentions`, inverse
+`mentionedInPokedexOf`, plus a short paraphrased `pokedexLoreNote` naming the
+source game). Lore coverage is deliberately partial: only well-known entries
+are included.
 
 ## C# compatibility differences
 
