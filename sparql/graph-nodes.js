@@ -209,11 +209,13 @@ function changeElementStringValue(elementId, newValue, filterType) {
 }
 
 // ── FE-026: value histogram with a range slider in the filter editor ──
-// FE-035 adds value cycling (Play/Previous/Next), a large current value and a
-// read-only mini result graph. Cycling writes the editor like a manual edit, so
-// only Apply changes the main graph; it makes no profile requests.
+// FE-035: with the range fixed, Play/Previous/Next cycle over the entities the
+// range keeps, a few at a time, in large type and as a read-only mini result
+// graph. Cycling changes neither the editor nor the main graph and makes no
+// profile requests.
 let filterHistogramRequest = null;
-const FILTER_CYCLE_INTERVAL_MS = 900;
+const FILTER_CYCLE_INTERVAL_MS = 1600;
+const FILTER_CYCLE_PAGE = 2;
 let filterCycleTimer = null;
 let filterPreviewCy = null;
 let filterPreviewResize = null;
@@ -245,14 +247,15 @@ function loadFilterHistogram(nodeId) {
             box.innerHTML = '<p class="filter-histogram-status" role="status">No value distribution: this value needs exactly one fixed relation pointing at it.</p>';
             return;
         }
-        renderFilterHistogram(box, profile);
+        const relation = cy.getElementById(nodeId).incomers('edge').first().data('label');
+        renderFilterHistogram(box, profile, relation);
     }, error => {
         if (stale()) return;
         box.innerHTML = `<p class="filter-histogram-status filter-histogram-error" role="alert">Could not load the value distribution: ${escapeHTML(error.message)}</p>`;
     });
 }
 
-function renderFilterHistogram(box, profile) {
+function renderFilterHistogram(box, profile, relation) {
     const qc = window.queryCalculations;
     const numbers = (profile.values || []).map(item => Number(item.number)).filter(Number.isFinite);
     const scale = qc.rangeScale(numbers);
@@ -272,14 +275,6 @@ function renderFilterHistogram(box, profile) {
     const slider = (cls, label, value) => `<input type="range" class="${cls}" aria-label="${label}" min="${scale.min}" max="${scale.max}" step="${scale.step}" value="${value}"${single ? ' disabled' : ''}>`;
     const icon = name => `<i class="material-icons" aria-hidden="true">${name}</i>`;
     box.innerHTML = `
-                <div class="filter-cycle" role="group" aria-label="Cycle through values">
-                    <output class="filter-cycle-value" aria-label="Previewed filter"></output>
-                    <div class="filter-cycle-controls">
-                        <button type="button" class="btn-flat filter-cycle-prev" aria-label="Previous value">${icon('skip_previous')}</button>
-                        <button type="button" class="btn-flat filter-cycle-play" aria-label="Play" aria-pressed="false">${icon('play_arrow')}</button>
-                        <button type="button" class="btn-flat filter-cycle-next" aria-label="Next value">${icon('skip_next')}</button>
-                    </div>
-                </div>
                 <p class="filter-histogram-count" aria-live="polite"></p>
                 <svg class="filter-histogram-chart" viewBox="0 0 300 72" preserveAspectRatio="none" role="img"
                      aria-label="Histogram of ${numbers.length} values from ${format(scale.min)} to ${format(scale.max)}"></svg>
@@ -293,8 +288,19 @@ function renderFilterHistogram(box, profile) {
                 </div>
                 ${single ? `<p class="filter-histogram-note">All ${total} values are ${format(scale.min)}.</p>` : ''}
                 ${note}
-                <div class="filter-preview-graph" role="img" aria-label="Preview of the filtered result"></div>
-                <p class="filter-preview-note" aria-live="polite"></p>`;
+                <div class="filter-cycle" role="group" aria-label="Kept entities">
+                    <div class="filter-cycle-head">
+                        <span class="filter-cycle-position"></span>
+                        <div class="filter-cycle-controls">
+                            <button type="button" class="btn-flat filter-cycle-prev" aria-label="Previous entities">${icon('skip_previous')}</button>
+                            <button type="button" class="btn-flat filter-cycle-play" aria-label="Play" aria-pressed="false">${icon('play_arrow')}</button>
+                            <button type="button" class="btn-flat filter-cycle-next" aria-label="Next entities">${icon('skip_next')}</button>
+                        </div>
+                    </div>
+                    <output class="filter-cycle-value" aria-label="Shown entities"></output>
+                    <div class="filter-preview-graph" role="img" aria-label="Shown entities as a result graph"></div>
+                    <p class="filter-preview-note" aria-live="polite"></p>
+                </div>`;
 
     const lo = box.querySelector('.filter-histogram-lo');
     const hi = box.querySelector('.filter-histogram-hi');
@@ -302,11 +308,15 @@ function renderFilterHistogram(box, profile) {
     const editorInput = document.getElementById('modal-new-value');
     const filterRadios = [...document.querySelectorAll('#modal-change-value-content input[name=filter-type]')];
 
-    const stops = [...new Set(numbers)].sort((x, y) => x - y);
+    const relationLabel = relation || String(profile.predicate || '').replace(/^<|>$/g, '').split(/[#/]/).pop();
     const cycleValue = box.querySelector('.filter-cycle-value');
     const cycleButtons = [...box.querySelectorAll('.filter-cycle-controls button')];
     const playButton = box.querySelector('.filter-cycle-play');
     const previewNote = box.querySelector('.filter-preview-note');
+    const cyclePosition = box.querySelector('.filter-cycle-position');
+    let kept = [];
+    let keptRange = null;
+    let page = 0;
 
     function checkedType() {
         const checked = filterRadios.find(input => input.checked);
@@ -336,10 +346,10 @@ function renderFilterHistogram(box, profile) {
                 + `<rect class="filter-histogram-bar kept" x="${x}" y="${72 - k}" width="${w}" height="${k}"></rect></g>`;
         }).join('');
         const highOpen = exact === null && b >= scale.max;
-        let kept = qc.countInRange(numbers, a, b);
-        if (highOpen) kept += omitted;
+        let keptCount = qc.countInRange(numbers, a, b);
+        if (highOpen) keptCount += omitted;
         const atLeast = profile.truncated && !highOpen && b >= sampleMax ? 'at least ' : '';
-        box.querySelector('.filter-histogram-count').textContent = `Keeps ${atLeast}${kept} of ${total} values`;
+        box.querySelector('.filter-histogram-count').textContent = `Keeps ${atLeast}${keptCount} of ${total} values`;
         box.querySelector('.filter-histogram-range').textContent = `${format(a)} – ${format(b)}`;
         const span = scale.max - scale.min || 1;
         const fill = box.querySelector('.filter-histogram-fill');
@@ -348,16 +358,32 @@ function renderFilterHistogram(box, profile) {
         // Both handles at the top end: keep the low one draggable.
         lo.classList.toggle('on-top', +lo.value >= scale.max);
 
-        const type = checkedType();
-        cycleValue.textContent = qc.filterLabel(type, editorInput.value.trim()) || '–';
-        const canCycle = qc.cycleMode(type) !== null && stops.length > 1;
+        // A new range starts the cycle again from its first entities.
+        const cyclable = qc.cycleMode(checkedType()) !== null;
+        const rangeKey = cyclable ? `${a}|${b}` : null;
+        if (rangeKey !== keptRange) {
+            keptRange = rangeKey;
+            kept = cyclable ? qc.keptEntities(profile.values || [], a, b) : [];
+            page = 0;
+        }
+        const canCycle = kept.length > FILTER_CYCLE_PAGE;
         cycleButtons.forEach(button => { button.disabled = !canCycle; });
         if (!canCycle) pauseCycle();
-        paintPreview(a, b, kept);
+        paintPossibility(cyclable);
     }
 
-    function paintPreview(a, b, kept) {
-        const preview = qc.resultPreviewGraph(profile.values || [], a, b);
+    function paintPossibility(cyclable) {
+        const shown = kept.slice(page * FILTER_CYCLE_PAGE, (page + 1) * FILTER_CYCLE_PAGE);
+        const first = page * FILTER_CYCLE_PAGE + 1;
+        const last = first + shown.length - 1;
+        cyclePosition.textContent = !shown.length ? ''
+            : `${first === last ? first : `${first}\u2013${last}`} of ${kept.length} kept`;
+        cycleValue.innerHTML = shown.map(entity => `<span class="filter-cycle-entity">${escapeHTML(entity.label)}`
+            + ` <span class="filter-cycle-number">${escapeHTML(entity.values.map(value => value.value).join(', '))}</span></span>`).join('');
+        const sampled = profile.truncated ? ` (from the ${numbers.length} loaded values)` : '';
+        previewNote.textContent = !cyclable ? 'MAX and MIN choose their entities when the query runs.'
+            : !kept.length ? 'No entity is kept.' : `${kept.length} kept ${kept.length === 1 ? 'entity' : 'entities'}${sampled}.`;
+
         const container = box.querySelector('.filter-preview-graph');
         if (!filterPreviewCy || filterPreviewCy.container() !== container) {
             filterPreviewResize?.disconnect();
@@ -371,38 +397,28 @@ function renderFilterHistogram(box, profile) {
                 boxSelectionEnabled: false,
                 autoungrabify: true,
                 autounselectify: true,
-                maxZoom: 1.5,
+                maxZoom: 1,
             });
             // The editor may still be opening or change width: refit to the box.
             filterPreviewResize = new ResizeObserver(() => {
                 filterPreviewCy.resize();
-                filterPreviewCy.fit(undefined, 12);
+                filterPreviewCy.fit(undefined, 16);
             });
             filterPreviewResize.observe(container);
         }
         filterPreviewCy.batch(() => {
             filterPreviewCy.elements().remove();
-            filterPreviewCy.add(preview.elements);
+            filterPreviewCy.add(qc.possibilityGraph(shown, relationLabel));
         });
         filterPreviewCy.resize();
-        filterPreviewCy.fit(undefined, 12);
-        const more = kept - preview.shown;
-        previewNote.textContent = preview.shown === 0 ? 'No entity is kept.'
-            : more > 0 ? `Showing ${preview.shown} kept entities; ${more} more not shown.` : `Showing ${preview.shown} kept ${preview.shown === 1 ? 'entity' : 'entities'}.`;
+        filterPreviewCy.fit(undefined, 16);
     }
 
     function step(direction) {
-        const mode = qc.cycleMode(checkedType());
-        if (!mode || stops.length < 2) return;
-        const exact = exactNumber();
-        const current = mode === 'exact'
-            ? { lo: exact ?? NaN, hi: exact ?? NaN }
-            : qc.rangeFromFilter(scale, checkedType(), editorInput.value);
-        const next = qc.cycleStep({ mode, stops, scale, lo: current.lo, hi: current.hi, direction });
-        editorInput.value = next.value;
-        const radio = filterRadios.find(input => input.value === (next.filterType === null ? '' : String(next.filterType)));
-        if (radio) radio.checked = true;
-        readEditor();
+        const pages = Math.ceil(kept.length / FILTER_CYCLE_PAGE);
+        if (pages < 2) return;
+        page = (page + direction + pages) % pages;
+        paintPossibility(true);
     }
 
     function setPlaying(playing) {
@@ -446,10 +462,10 @@ function renderFilterHistogram(box, profile) {
         paint();
     }
 
-    lo.addEventListener('input', () => { pauseCycle(); moved(lo); });
-    hi.addEventListener('input', () => { pauseCycle(); moved(hi); });
-    editorInput.addEventListener('input', () => { pauseCycle(); readEditor(); });
-    filterRadios.forEach(input => input.addEventListener('change', () => { pauseCycle(); readEditor(); }));
+    lo.addEventListener('input', () => moved(lo));
+    hi.addEventListener('input', () => moved(hi));
+    editorInput.addEventListener('input', readEditor);
+    filterRadios.forEach(input => input.addEventListener('change', readEditor));
     box.querySelector('.filter-cycle-prev').addEventListener('click', () => { pauseCycle(); step(-1); });
     box.querySelector('.filter-cycle-next').addEventListener('click', () => { pauseCycle(); step(1); });
     playButton.addEventListener('click', () => (filterCycleTimer !== null ? pauseCycle() : playCycle()));
@@ -468,15 +484,20 @@ function renderFilterHistogram(box, profile) {
 function filterPreviewStyle() {
     return [
         { selector: 'node[kind = "entity"]', style: {
-            'shape': 'ellipse', 'width': 22, 'height': 22, 'background-color': '#4472C4',
-            'label': 'data(label)', 'font-size': 9, 'color': '#263238',
-            'text-valign': 'top', 'text-margin-y': -2, 'text-wrap': 'ellipsis', 'text-max-width': 48,
+            'shape': 'ellipse', 'width': 96, 'height': 56, 'background-color': '#4472C4',
+            'label': 'data(label)', 'font-size': 15, 'color': '#ffffff',
+            'text-valign': 'center', 'text-wrap': 'ellipsis', 'text-max-width': 86,
+            'text-outline-color': '#4472C4', 'text-outline-width': 2,
         } },
         { selector: 'node[kind = "value"]', style: {
-            'shape': 'round-rectangle', 'width': 36, 'height': 18, 'background-color': '#F48FB1',
-            'label': 'data(label)', 'font-size': 10, 'font-weight': 'bold', 'color': '#212121',
-            'text-valign': 'center', 'text-wrap': 'ellipsis', 'text-max-width': 34,
+            'shape': 'round-rectangle', 'width': 80, 'height': 36, 'background-color': '#F48FB1',
+            'label': 'data(label)', 'font-size': 16, 'font-weight': 'bold', 'color': '#212121',
+            'text-valign': 'center', 'text-wrap': 'ellipsis', 'text-max-width': 76,
         } },
-        { selector: 'edge', style: { 'width': 1.5, 'line-color': '#90A4AE', 'curve-style': 'straight' } },
+        { selector: 'edge', style: {
+            'width': 3, 'line-color': '#4472C4', 'target-arrow-color': '#4472C4', 'target-arrow-shape': 'triangle',
+            'curve-style': 'straight', 'label': 'data(label)', 'font-size': 13, 'color': '#455a64',
+            'text-background-color': '#fafafa', 'text-background-opacity': 1, 'text-background-padding': 2,
+        } },
     ];
 }

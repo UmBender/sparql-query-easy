@@ -137,18 +137,18 @@ native range slider (`loadFilterHistogram`, `renderFilterHistogram` in
 / At most when the other handle is at its end, otherwise Between, and shows
 "Keeps N of M values"; the editor preselects the stored filter type.
 
-**Confirmed (FE-035):** the histogram editor cycles through the distinct
-profiled values. Previous/Next (also ←/→ on the controls) step one value and
-Play/Pause steps every 0.9 s (`filterCycleTimer`); a step follows the filter
-type (pure `cycleMode`, `cycleStep`): Exactly Equal moves the value, At least /
-At most the threshold, Between slides a window of fixed width; MAX/MIN disable
-the controls. Each step writes the editor like a manual edit, so only Apply
-changes the main graph. Slider moves, typing, a filter-type change, Cancel,
-Apply or a replaced editor pause playback. The previewed filter is shown in
-large type, and an exact value highlights only its own bars and count. A
-read-only Cytoscape mini graph (`filterPreviewCy`, pure `resultPreviewGraph`)
-draws up to 24 kept entities linked to their value nodes, with a "more not
-shown" note. No step requests a new profile.
+**Confirmed (FE-035):** with the range fixed, the histogram editor cycles
+over the entities the range keeps (pure `keptEntities`: distinct entities with
+all their kept values, ordered by lowest value then label), two per step.
+Previous/Next (also ←/→ on the controls) and Play/Pause (every 1.6 s,
+`filterCycleTimer`) move between pages and wrap; cycling never changes the
+range, the editor value or the main graph, and makes no request. The shown
+entities appear in large type with their values and as a read-only Cytoscape
+mini graph (`filterPreviewCy`, pure `possibilityGraph`: entity → relation
+label → value nodes). A new range or filter type restarts from the first
+entities; MAX/MIN and two or fewer kept entities disable the controls; Cancel,
+Apply or a replaced editor stop playback. An exact value highlights only its
+own bars and count.
 
 **Confirmed (FE-014):** mouse-wheel zoom uses Cytoscape
 `wheelSensitivity: 0.2` (about 1.2× per notch, near the 1.25× zoom buttons);

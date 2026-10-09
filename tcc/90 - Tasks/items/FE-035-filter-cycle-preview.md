@@ -1,6 +1,6 @@
 ---
 id: FE-035
-title: Cycle a numeric filter through its values with a large current value and a mini result graph
+title: Cycle over the entities a numeric filter keeps, in large type and as a mini result graph
 status: DONE
 priority: P1
 type: frontend
@@ -9,7 +9,7 @@ human_gate: false
 created: 2026-10-09
 updated: 2026-10-09
 ---
-# Cycle a numeric filter through its values with a large current value and a mini result graph
+# Cycle over the entities a numeric filter keeps, in large type and as a mini result graph
 
 ## Objective
 
@@ -18,50 +18,49 @@ the FE-026 histogram already shows. Instead, the histogram editor should let
 the user cycle through every possible value, show the current value in large
 letters, and preview the resulting graph at each step. Skill: `tcc-frontend`.
 
-Decisions taken with the user (2026-10-09, recorded in DEC-010):
-- The preview is a mini graph inside the filter editor (FE-029 idea). The
-  main graph changes only on Apply.
-- Play/Pause steps through the distinct profiled values automatically;
-  Previous/Next (and ←/→ on the controls) step one value; the sliders and the
-  typed value still work and pause playback.
-- A step follows the selected filter type: Exactly Equal shows the entities
-  with that value, At least/At most move the threshold, Between keeps its
-  width and slides the window. MAX/MIN do not cycle.
+Decisions taken with the user (2026-10-09, recorded in DEC-010), as
+corrected after the first version (which stepped the range and drew up to 24
+unreadable entities):
+- The range stays fixed while cycling; cycling goes over the possible values
+  of the variable, i.e. the distinct entities the range keeps, each with all
+  of its kept values ("consolidated").
+- Only one or two entities are shown at a time (two per step), in large type
+  and as a mini result graph inside the editor. The main graph changes only
+  on Apply.
+- Play/Pause steps automatically; Previous/Next (and ←/→ on the controls)
+  step one page and wrap.
 
 ## Scope
 
 Entry: `renderFilterHistogram` in `sparql/graph-nodes.js` (FE-026); pure
-helpers in `sparql/query-calculations.js` (type-checked); CSS in
-`sparql/index2.css`. The profile comes from one `fetchNumericProfile`
-request per editor opening, as today; cycling makes no requests.
+`keptEntities`, `possibilityGraph`, `cycleMode` in
+`sparql/query-calculations.js` (type-checked); CSS in `sparql/index2.css`.
+One `fetchNumericProfile` request per editor opening; cycling makes none.
 
-- Large current-filter value (readable label, e.g. `≥ 45`, `45–90`, `45`)
-  next to the controls, updated by playback, the sliders and typing.
-- Each step writes the editor value and filter type exactly as a manual edit
-  would, so Apply writes the step being shown.
-- Exactly Equal now highlights only the bars and count for that value
-  (FE-026 highlighted the whole range for an exact value).
-- Mini result graph: kept entities (blue) linked to their value nodes (pink),
-  read-only, at most a capped number of entities with a "+N more" note.
+- A new range, typed value or filter type restarts from the first entities.
+- MAX/MIN (entities not known in advance) and two or fewer kept entities
+  disable the controls.
+- Exactly Equal highlights only the bars and count for that value (FE-026
+  highlighted the whole range for an exact value).
 - Playback stops when the editor closes or is replaced.
 
 Exclusions: the FE-027 graph badge (FE-036); changes to the profile route.
 
 ## Acceptance criteria
 
-- [x] Play/Pause/Previous/Next step through distinct values following the
-      filter type; each step updates the large value, bars, count, editor value
-      and mini graph without new profile requests.
-- [x] Apply after stepping writes the shown filter; the main graph is unchanged
-      before Apply; closing the editor stops playback.
-- [x] Offline browser tests with a mocked profile and unit tests for the step
-      and mini-graph helpers; browser gate passes.
+- [x] Previous/Next/Play cycle over the kept entities two at a time, showing
+      their names and values in large type and as a mini graph, without
+      changing the range, the editor value or making requests.
+- [x] Apply writes the edited filter; the main graph is unchanged before
+      Apply; closing the editor stops playback.
+- [x] Offline browser tests with a mocked profile and unit tests for the
+      helpers; browser gate passes.
 - [x] Works on a narrow viewport; controls keyboard reachable.
 
 ## Validation
 
 Focused: `npm run test:query`, `npm run check:frontend-types`,
-`npm run test:browser -- --grep 'histogram|cycle'`. Closing gate:
+`npm run test:browser -- --grep 'histogram|kept entities'`. Closing gate:
 `npm run test:browser`.
 
 ## Execution log
@@ -82,3 +81,13 @@ Focused: `npm run test:query`, `npm run check:frontend-types`,
   `node scripts/check-project-docs.mjs` and `git diff --check` clean. Not
   checked in the real app with the Material icon font (tests stub it).
   Completion commit for this task.
+- 2026-10-09: Reworked after user feedback ("I want range fixed ... render one
+  or two possible values ... and cycle over this possible consolidated values
+  for that node"): cycling no longer steps the range (`cycleStep` and
+  `resultPreviewGraph` removed) but pages two kept entities at a time
+  (`keptEntities`, `possibilityGraph`, interval 1.6 s); large names with
+  values and a readable mini graph with the relation label. Validation:
+  `npm run test:query` 35/35, `npm run check:frontend-types` clean,
+  `npm run test:browser` 79/79 (3 rewritten FE-035 cases),
+  `node scripts/check-project-docs.mjs`, `git diff --check`. Still not seen
+  with the real Material icon font. Completion commit for this task.

@@ -72,7 +72,7 @@ Ordered by dependencies, then priority among selection candidates. See [worker r
 | FE-032 | BACKLOG | P1 | refactor | [Decide graph element kinds in one checked module](<items/FE-032-graph-element-kind-model.md>) |
 | FE-033 | BACKLOG | P1 | refactor | [Bind a variable to a value through one tested graph function](<items/FE-033-single-variable-binding-path.md>) |
 | FE-034 | BACKLOG | P1 | fullstack | [Add a variable value node that holds a filter and becomes a value when chosen](<items/FE-034-variable-value-node.md>) |
-| FE-035 | DONE | P1 | frontend | [Cycle a numeric filter through its values with a large current value and a mini result graph](<items/FE-035-filter-cycle-preview.md>) |
+| FE-035 | DONE | P1 | frontend | [Cycle over the entities a numeric filter keeps, in large type and as a mini result graph](<items/FE-035-filter-cycle-preview.md>) |
 | FE-036 | BACKLOG | P1 | frontend | [Bring the FE-027 kept/total badge for range filters into main](<items/FE-036-filter-count-badge.md>) |
 | INV-001 | DONE | P1 | investigation | [Investigate Ktor HTTP-client and runtime resource lifecycle](<items/INV-001-runtime-resource-lifecycle.md>) |
 | LEARN-001 | REVIEW | P1 | learning | [Learn the Linux shell and networking needed to debug a web app](<items/LEARN-001-linux-shell-networking.md>) |

@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
-import { buildFilters, countInRange, cycleMode, cycleStep, filterLabel, filterTypeOf, getQueryVariables, hasParallelPredicateVariables, histogramBins, numericProfileRequest, parseBetween, rangeFilter, rangeFromFilter, rangeScale, relationLabelKind, resultPreviewGraph } from '../sparql/query-calculations.js';
+import { buildFilters, countInRange, cycleMode, filterLabel, filterTypeOf, getQueryVariables, hasParallelPredicateVariables, histogramBins, numericProfileRequest, parseBetween, rangeFilter, rangeFromFilter, rangeScale, keptEntities, possibilityGraph, relationLabelKind } from '../sparql/query-calculations.js';
 
 test('filters preserve edge order, fixed RDF terms, and numeric filterType zero', () => {
   assert.deepEqual(buildFilters([
@@ -114,54 +114,43 @@ test('the range slider writes at least, at most or between and reads them back',
   assert.deepEqual(rangeFromFilter(scale, 2, 'abc'), { lo: 20, hi: 150 });
 });
 
-test('cycling follows the filter type and wraps at the ends', () => {
-  const scale = rangeScale([20, 150]);
-  const stops = [20, 45, 60, 90, 150];
-  const step = (mode, lo, hi, direction = 1) => cycleStep({ mode, stops, scale, lo, hi, direction });
+test('only range filters have a fixed set of kept entities to cycle over', () => {
   assert.deepEqual([null, '', 2, '3', 6, 4, 5, 0, 1].map(cycleMode),
     ['exact', 'exact', 'atLeast', 'atMost', 'between', null, null, null, null]);
-  // Exact steps the value, also from a value that is not in the profile.
-  assert.deepEqual(step('exact', 45, 45), { filterType: null, value: '60', lo: 60, hi: 60 });
-  assert.deepEqual(step('exact', 35, 35), { filterType: null, value: '45', lo: 45, hi: 45 });
-  assert.deepEqual(step('exact', 35, 35, -1), { filterType: null, value: '20', lo: 20, hi: 20 });
-  assert.deepEqual(step('exact', NaN, NaN), { filterType: null, value: '20', lo: 20, hi: 20 });
-  assert.deepEqual(step('exact', 150, 150), { filterType: null, value: '20', lo: 20, hi: 20 });
-  assert.deepEqual(step('exact', 20, 20, -1), { filterType: null, value: '150', lo: 150, hi: 150 });
-  // Thresholds move one bound.
-  assert.deepEqual(step('atLeast', 45, 150), { filterType: 2, value: '60', lo: 60, hi: 150 });
-  assert.deepEqual(step('atMost', 20, 60), { filterType: 3, value: '90', lo: 20, hi: 90 });
-  assert.deepEqual(step('atMost', 20, 60, -1), { filterType: 3, value: '45', lo: 20, hi: 45 });
-  // Between keeps its width; the top stops at the scale end.
-  assert.deepEqual(step('between', 40, 80), { filterType: 6, value: '45..85', lo: 45, hi: 85 });
-  assert.deepEqual(step('between', 90, 130), { filterType: 6, value: '150..150', lo: 150, hi: 150 });
-  assert.deepEqual(cycleStep({ mode: 'atLeast', stops: [0.1, 0.25], scale: rangeScale([0.1, 0.25]), lo: 0.1, hi: 0.25, direction: 1 }),
-    { filterType: 2, value: '0.25', lo: 0.25, hi: 0.25 });
 });
 
-test('the mini result graph links kept entities to their values in order and caps them', () => {
+test('kept entities are distinct, carry all their kept values and are ordered by value then label', () => {
   const values = [
     { entity: { type: 'iri', value: 'https://e/Pikachu' }, label: 'Pikachu', value: '35', number: 35 },
     { entity: '<https://e/Bulbasaur>', label: null, value: '45', number: 45 },
     { entity: '<https://e/Abra>', label: 'Abra', value: '25', number: 25 },
     { entity: '<https://e/Abra>', label: 'Abra', value: '25', number: 25 },
+    { entity: '<https://e/Abra>', label: 'Abra', value: '40', number: 40 },
     { entity: '<https://e/Arbok>', label: 'Arbok', value: '60', number: 60 },
+    { entity: '<https://e/Pikachu>', label: 'Pikachu', value: '25', number: 25 },
   ];
-  const graph = resultPreviewGraph(values, 25, 45);
-  assert.equal(graph.kept, 4);
-  assert.equal(graph.shown, 4);
-  const nodes = graph.elements.filter(item => item.group === 'nodes').map(item => `${item.data.kind}:${item.data.label}`);
-  assert.deepEqual(nodes, ['value:25', 'entity:Abra', 'value:35', 'entity:Pikachu', 'value:45', 'entity:Bulbasaur']);
-  const edges = graph.elements.filter(item => item.group === 'edges').map(item => item.data.id);
-  assert.deepEqual(edges, ['e:https://e/Abra->v:25', 'e:https://e/Pikachu->v:35', 'e:https://e/Bulbasaur->v:45']);
+  assert.deepEqual(keptEntities(values, 25, 45), [
+    { key: 'https://e/Abra', label: 'Abra', values: [{ value: '25', number: 25 }, { value: '40', number: 40 }] },
+    { key: 'https://e/Pikachu', label: 'Pikachu', values: [{ value: '25', number: 25 }, { value: '35', number: 35 }] },
+    { key: 'https://e/Bulbasaur', label: 'Bulbasaur', values: [{ value: '45', number: 45 }] },
+  ]);
+  assert.deepEqual(keptEntities(values, 70, 80), []);
+});
 
-  const capped = resultPreviewGraph(values, 0, 100, { cap: 2 });
-  assert.deepEqual([capped.kept, capped.shown], [5, 2]);
-  assert.equal(resultPreviewGraph(values, 70, 80).elements.length, 0);
-
-  // Many entities on one value wrap into staggered rows of four above it.
-  const many = Array.from({ length: 7 }, (_, index) => ({ entity: `<https://e/p${index}>`, label: `P${index}`, value: '10', number: 10 }));
-  const elements = resultPreviewGraph(many, 10, 10).elements;
-  const positions = elements.filter(item => item.data.kind === 'entity').map(item => item.position);
-  assert.deepEqual(positions.slice(3, 5), [{ x: 150, y: -40 }, { x: 25, y: -80 }]);
-  assert.deepEqual(elements.find(item => item.data.kind === 'value').position, { x: 75, y: 0 });
+test('the possibility graph puts each shown entity above its values, linked by the relation', () => {
+  const elements = possibilityGraph([
+    { key: 'a', label: 'Abra', values: [{ value: '25', number: 25 }, { value: '40', number: 40 }] },
+    { key: 'p', label: 'Pikachu', values: [{ value: '35', number: 35 }] },
+  ], 'HP');
+  assert.deepEqual(elements.map(item => [item.data.id, item.data.label, item.position]), [
+    ['e0', 'Abra', { x: 55, y: 0 }],
+    ['e0v0', '25', { x: 0, y: 120 }],
+    ['e0-e0v0', 'HP', undefined],
+    ['e0v1', '40', { x: 110, y: 120 }],
+    ['e0-e0v1', 'HP', undefined],
+    ['e1', 'Pikachu', { x: 260, y: 0 }],
+    ['e1v0', '35', { x: 260, y: 120 }],
+    ['e1-e1v0', 'HP', undefined],
+  ]);
+  assert.deepEqual(possibilityGraph([], 'HP'), []);
 });
