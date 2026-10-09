@@ -67,6 +67,11 @@ Ordered by dependencies, then priority among selection candidates. See [worker r
 | FE-028 | READY | P1 | frontend | [Visualize how each filter narrows the result as a funnel](<items/FE-028-filter-funnel.md>) |
 | FE-029 | READY | P1 | frontend | [Show the filtered result as a live graph that changes with the range](<items/FE-029-filter-live-result-graph.md>) |
 | FE-030 | DONE | P1 | frontend | [Add a value filter to a variable node from its action list](<items/FE-030-add-value-filter-node-action.md>) |
+| FE-031 | DONE | P1 | analysis | [Propose how to make frontend changes less error prone](<items/FE-031-frontend-reliability-proposal.md>) |
+| QUAL-005 | BACKLOG | P1 | quality | [Reproduce value-node bugs and cover every node kind against every action](<items/QUAL-005-node-kind-action-regressions.md>) |
+| FE-032 | BACKLOG | P1 | refactor | [Decide graph element kinds in one checked module](<items/FE-032-graph-element-kind-model.md>) |
+| FE-033 | BACKLOG | P1 | refactor | [Bind a variable to a value through one tested graph function](<items/FE-033-single-variable-binding-path.md>) |
+| FE-034 | BACKLOG | P1 | fullstack | [Add a variable value node that holds a filter and becomes a value when chosen](<items/FE-034-variable-value-node.md>) |
 | INV-001 | DONE | P1 | investigation | [Investigate Ktor HTTP-client and runtime resource lifecycle](<items/INV-001-runtime-resource-lifecycle.md>) |
 | LEARN-001 | REVIEW | P1 | learning | [Learn the Linux shell and networking needed to debug a web app](<items/LEARN-001-linux-shell-networking.md>) |
 | LEARN-002 | REVIEW | P1 | learning | [Learn containers by running and inspecting the app image](<items/LEARN-002-containers-docker.md>) |
