@@ -86,6 +86,7 @@ tasks.named<Copy>("processResources") {
             "app-core.js",
             "stage-order.js",
             "stage-exploration.js",
+            "filter-funnel.js",
             "graph-nodes.js",
             "graph-menus.js",
         )

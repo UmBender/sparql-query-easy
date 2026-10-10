@@ -1869,6 +1869,226 @@ test('fetchNumericProfile profiles the relation of a filter node under the rest 
   expect(await page.evaluate(() => fetchNumericProfile('?p'))).toBeNull();
 });
 
+// FE-028: filter funnel with a mocked count route.
+const funnelPk = 'https://example.test/';
+async function addFunnelGraph(page) {
+  await disableAutoLayout(page);
+  await page.evaluate(pk => {
+    cy.add([
+      { group: 'nodes', data: { id: '?p', value: '?p', label: '?', type: 'variable' }, position: { x: 200, y: 200 } },
+      { group: 'nodes', data: { id: 'fire', value: `<${pk}Fire>`, label: 'Fire', type: 'node' }, position: { x: 450, y: 120 } },
+      { group: 'nodes', data: { id: 'speed-value', value: '90', label: '≥ 90', type: 'label', filterType: 2 }, position: { x: 450, y: 300 } },
+      { group: 'edges', data: { id: 'type', source: '?p', target: 'fire', nodeId: `<${pk}type>`, label: 'type' } },
+      { group: 'edges', data: { id: 'speed', source: '?p', target: 'speed-value', nodeId: `<${pk}speed>`, label: 'speed' } },
+    ]);
+  }, funnelPk);
+}
+
+/** Pokédex-like counts: 151 with any value, 12 Fire, 40 fast, 7 both. */
+async function routeFunnelCounts(page, { fail = false } = {}) {
+  const requests = [];
+  await page.route('**/api/query/count', async route => {
+    const body = JSON.parse(route.request().postData());
+    requests.push(body);
+    if (fail) {
+      await route.fulfill({ status: 502, contentType: 'application/json', body: '{"error":"endpoint unavailable"}' });
+      return;
+    }
+    const fire = body.where.some(item => item.object === `<${funnelPk}Fire>`);
+    const fast = body.where.some(item => item.filterType === 2);
+    const count = fire && fast ? 7 : fire ? 12 : fast ? 40 : 151;
+    await route.fulfill({ contentType: 'application/json', body: JSON.stringify({ data: { variableName: body.variableName, count } }) });
+  });
+  return requests;
+}
+
+const funnelRows = page => page.locator('#filter-funnel-steps > li').evaluateAll(items => items.map(item =>
+  [...item.querySelectorAll('.funnel-row-head > *')].map(part => part.textContent.trim()).join(' | ')));
+
+test('the filter funnel counts the remaining results after each cumulative filter', async ({ page }) => {
+  await addFunnelGraph(page);
+  const requests = await routeFunnelCounts(page);
+  await page.locator('#filter-funnel-btn').click();
+  await expect(page.locator('#filter-funnel-panel')).toBeVisible();
+  await expect(page.locator('#filter-funnel-btn')).toHaveAttribute('aria-expanded', 'true');
+  await expect(page.locator('#filter-funnel-result')).toHaveText('Result: 7 ?p of 151.');
+  expect(await funnelRows(page)).toEqual([
+    'With these relations, any value | 151',
+    'type = Fire | 12 −139',
+    'speed ≥ 90 | 7 −5',
+  ]);
+  await expect(page.locator('#filter-funnel-variable')).toHaveText('Counting distinct ?p');
+  const type = { subject: '?p', predicate: `<${funnelPk}type>`, object: `<${funnelPk}Fire>`, filterType: null };
+  const speed = { subject: '?p', predicate: `<${funnelPk}speed>`, object: '90', filterType: 2 };
+  expect(requests).toEqual([
+    { endpointUrl: 'CampeonatoBrasileiro2023', variableName: '?p', where: [{ ...type, object: '?__funnel0' }, { ...speed, object: '?__funnel1', filterType: null }] },
+    { endpointUrl: 'CampeonatoBrasileiro2023', variableName: '?p', where: [type, { ...speed, object: '?__funnel1', filterType: null }] },
+    { endpointUrl: 'CampeonatoBrasileiro2023', variableName: '?p', where: [type, speed] },
+  ]);
+});
+
+// BE-004: MAX/MIN are funnel steps that keep every tie; they come after the other filters.
+test('a MAX step is counted after the other filters, wherever it sits in the graph', async ({ page }) => {
+  await disableAutoLayout(page);
+  await page.evaluate(pk => {
+    cy.add([
+      { group: 'nodes', data: { id: '?p', value: '?p', label: '?', type: 'variable' }, position: { x: 200, y: 200 } },
+      { group: 'nodes', data: { id: 'hp-value', value: '1', label: 'MAX', type: 'label', filterType: 4 }, position: { x: 450, y: 60 } },
+      { group: 'nodes', data: { id: 'fire', value: `<${pk}Fire>`, label: 'Fire', type: 'node' }, position: { x: 450, y: 200 } },
+      { group: 'edges', data: { id: 'hp', source: '?p', target: 'hp-value', nodeId: `<${pk}hp>`, label: 'hp' } },
+      { group: 'edges', data: { id: 'type', source: '?p', target: 'fire', nodeId: `<${pk}type>`, label: 'type' } },
+    ]);
+  }, funnelPk);
+  const requests = [];
+  await page.route('**/api/query/count', async route => {
+    const body = JSON.parse(route.request().postData());
+    requests.push(body);
+    const fire = body.where.some(item => item.object === `<${funnelPk}Fire>`);
+    const max = body.where.some(item => item.filterType === 4);
+    // Two Fire types tie for the highest hp; three Pokémon tie overall.
+    const count = fire && max ? 2 : max ? 3 : fire ? 12 : 151;
+    await route.fulfill({ contentType: 'application/json', body: JSON.stringify({ data: { variableName: body.variableName, count } }) });
+  });
+  await page.locator('#filter-funnel-btn').click();
+  await expect(page.locator('#filter-funnel-result')).toHaveText(
+    'Result: 2 ?p of 151. MAX/MIN keep every tied result and come after the other filters, as in the query.');
+  expect(await funnelRows(page)).toEqual([
+    'With these relations, any value | 151',
+    'type = Fire | 12 −139',
+    'hp MAX | 2 −10',
+  ]);
+  const hpMax = { subject: '?p', predicate: `<${funnelPk}hp>`, object: '1', filterType: 4 };
+  expect(requests.at(-1).where).toEqual([hpMax, { subject: '?p', predicate: `<${funnelPk}type>`, object: `<${funnelPk}Fire>`, filterType: null }]);
+});
+
+test('unticking a funnel step previews later counts only and Run Query still sends every filter', async ({ page }) => {
+  await addFunnelGraph(page);
+  const requests = await routeFunnelCounts(page);
+  await page.locator('#filter-funnel-btn').click();
+  await expect(page.locator('#filter-funnel-result')).toHaveText('Result: 7 ?p of 151.');
+
+  await page.locator('#filter-funnel-steps .funnel-toggle', { hasText: 'type = Fire' }).click();
+  await expect(page.locator('#filter-funnel-result')).toHaveText('Result: 40 ?p of 151. Preview without 1 filter; Run Query still applies every filter.');
+  expect(await funnelRows(page)).toEqual([
+    'With these relations, any value | 151',
+    'type = Fire | 151 (off)',
+    'speed ≥ 90 | 40 −111',
+  ]);
+  // Only the count after the speed step changed; the base comes from the cache.
+  expect(requests).toHaveLength(4);
+  expect(requests[3].where.map(item => item.object)).toEqual(['?__funnel0', '90']);
+
+  await page.locator('#filter-funnel-steps .funnel-toggle', { hasText: 'type = Fire' }).click();
+  await expect(page.locator('#filter-funnel-result')).toHaveText('Result: 7 ?p of 151.');
+  expect(requests).toHaveLength(4);
+
+  await page.locator('#filter-funnel-steps .funnel-toggle', { hasText: 'type = Fire' }).click();
+  await expect(page.locator('#filter-funnel-result')).toContainText('Preview without 1 filter');
+  // Run Query runs a staged query since BUG-005; it still sends every filter.
+  const staged = () => server.requests.filter(({ path }) => path === '/api/query/stage');
+  const before = staged().length;
+  await page.locator('#run-query-btn').click();
+  await expect.poll(() => staged().length).toBeGreaterThan(before);
+  const body = JSON.parse(staged().at(-1).body);
+  expect(body.where.map(item => item.object)).toEqual([`<${funnelPk}Fire>`, '90']);
+});
+
+test('the filter funnel shows count errors with a retry', async ({ page }) => {
+  await addFunnelGraph(page);
+  await routeFunnelCounts(page, { fail: true });
+  await page.locator('#filter-funnel-btn').click();
+  await expect(page.locator('#filter-funnel-status')).toHaveText('Could not count results: endpoint unavailable');
+  await expect(page.locator('#filter-funnel-retry')).toBeVisible();
+  await page.unroute('**/api/query/count');
+  await routeFunnelCounts(page);
+  await page.locator('#filter-funnel-retry').click();
+  await expect(page.locator('#filter-funnel-result')).toHaveText('Result: 7 ?p of 151.');
+  await expect(page.locator('#filter-funnel-retry')).toBeHidden();
+});
+
+test('the filter funnel explains an empty query and follows graph edits with one debounced refresh', async ({ page }) => {
+  await disableAutoLayout(page);
+  const requests = await routeFunnelCounts(page);
+  await page.locator('#filter-funnel-btn').click();
+  await expect(page.locator('#filter-funnel-status')).toHaveText('Add a relation with a variable to see how its filters narrow the result.');
+  expect(requests).toEqual([]);
+
+  await addFunnelGraph(page);
+  await page.evaluate(() => {
+    cy.getElementById('speed-value').data({ value: '95', label: '≥ 95' });
+    cy.getElementById('speed-value').data({ value: '90', label: '≥ 90' });
+  });
+  await expect(page.locator('#filter-funnel-result')).toHaveText('Result: 7 ?p of 151.');
+  expect(requests).toHaveLength(3);
+});
+
+test('a superseded funnel refresh is aborted and its counts are not shown', async ({ page }) => {
+  await addFunnelGraph(page);
+  const counted = [];
+  let releaseSlow;
+  await page.route('**/api/query/count', async route => {
+    const body = JSON.parse(route.request().postData());
+    counted.push(body.where.map(item => item.object).join(','));
+    if (counted.length === 1) {
+      await new Promise(resolve => { releaseSlow = resolve; });
+      await route.fulfill({ contentType: 'application/json', body: '{"data":{"variableName":"?p","count":999}}' }).catch(() => {});
+      return;
+    }
+    await route.fulfill({ contentType: 'application/json', body: JSON.stringify({ data: { variableName: '?p', count: 5 } }) });
+  });
+  await page.locator('#filter-funnel-btn').click();
+  await expect.poll(() => counted.length).toBe(1);
+  await page.locator('#filter-funnel-steps .funnel-toggle', { hasText: 'type = Fire' }).click();
+  await expect(page.locator('#filter-funnel-result')).toHaveText('Result: 5 ?p of 5. Preview without 1 filter; Run Query still applies every filter.');
+  releaseSlow();
+  await page.waitForTimeout(100);
+  await expect(page.locator('#filter-funnel-steps')).not.toContainText('999');
+});
+
+test('the filter funnel is keyboard reachable and Escape returns focus to its button', async ({ page }) => {
+  await addFunnelGraph(page);
+  await routeFunnelCounts(page);
+  await page.locator('#filter-funnel-btn').focus();
+  await page.keyboard.press('Enter');
+  await expect(page.locator('#filter-funnel-close')).toBeFocused();
+  await expect(page.locator('#filter-funnel-result')).toHaveText('Result: 7 ?p of 151.');
+  await page.keyboard.press('Tab');
+  await expect(page.locator('[data-step-key="type"]')).toBeFocused();
+  await page.keyboard.press('Space');
+  await expect(page.locator('#filter-funnel-result')).toContainText('Result: 40 ?p');
+  await expect(page.locator('[data-step-key="type"]')).toBeFocused();
+  await page.keyboard.press('Escape');
+  await expect(page.locator('#filter-funnel-panel')).toBeHidden();
+  await expect(page.locator('#filter-funnel-btn')).toBeFocused();
+  await expect(page.locator('#filter-funnel-btn')).toHaveAttribute('aria-expanded', 'false');
+});
+
+test('the filter funnel caps counted steps and fits a narrow viewport', async ({ page }) => {
+  await page.setViewportSize({ width: 360, height: 740 });
+  await disableAutoLayout(page);
+  const requests = await routeFunnelCounts(page);
+  await page.evaluate(pk => {
+    cy.add({ group: 'nodes', data: { id: '?p', value: '?p', label: '?', type: 'variable' }, position: { x: 100, y: 100 } });
+    for (let index = 0; index < 10; index++) {
+      cy.add([
+        { group: 'nodes', data: { id: `v${index}`, value: String(index), label: `≥ ${index}`, type: 'label', filterType: 2 }, position: { x: 200, y: 40 * index } },
+        { group: 'edges', data: { id: `stat${index}`, source: '?p', target: `v${index}`, nodeId: `<${pk}stat${index}>`, label: `stat${index}` } },
+      ]);
+    }
+  }, funnelPk);
+  await page.locator('#filter-funnel-btn').click();
+  await expect(page.locator('#filter-funnel-result')).toContainText('Only the first 8 filters are counted.');
+  await expect(page.locator('#filter-funnel-steps > li')).toHaveCount(11);
+  await expect(page.locator('#filter-funnel-steps > li.funnel-uncounted')).toHaveCount(2);
+  await expect(page.locator('[data-step-key="stat9"]')).toBeDisabled();
+  await expect.poll(() => requests.length).toBe(9);
+  await expect(page.locator('#filter-funnel-status')).toBeHidden();
+  const box = await page.locator('#filter-funnel-panel').boundingBox();
+  expect(box.x).toBeGreaterThanOrEqual(0);
+  expect(box.x + box.width).toBeLessThanOrEqual(360);
+  expect(await page.evaluate(() => document.getElementById('filter-funnel-panel').scrollWidth <= document.getElementById('filter-funnel-panel').clientWidth)).toBe(true);
+});
+
 // FE-026: histogram with a two-handle range slider inside the numeric filter editor.
 const speedProfile = (numbers, extra = {}) => ({
   subject: '?p',

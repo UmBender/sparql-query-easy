@@ -83,6 +83,7 @@ class StaticFrontendRoutesTest {
                 "apiUrl('/api/query/relationship-value')",
                 "apiUrl('/api/query')",
                 "apiUrl('/api/query/sparql')",
+                "apiUrl('/api/query/count')",
             ).forEach { requestPath ->
                 page.contains(requestPath) shouldBe true
             }
@@ -92,7 +93,14 @@ class StaticFrontendRoutesTest {
 
     // Classic scripts that index2.html loads in order before its inline bootstrap.
     private val pageScripts =
-        listOf("app-core.js", "stage-order.js", "stage-exploration.js", "graph-nodes.js", "graph-menus.js")
+        listOf(
+            "app-core.js",
+            "stage-order.js",
+            "stage-exploration.js",
+            "filter-funnel.js",
+            "graph-nodes.js",
+            "graph-menus.js",
+        )
 
     private suspend fun ApplicationTestBuilder.frontendSource(): String =
         (listOf("index2.html") + pageScripts).map { client.get("/$it").bodyAsText() }.joinToString("\n")

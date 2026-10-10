@@ -98,6 +98,115 @@ export function numericProfileRequest({ endpointUrl, edges, literalId, limit = 5
   };
 }
 
+/** At most this many filter steps are counted by the funnel (FE-028). */
+export const MAX_FUNNEL_STEPS = 8;
+
+/** Variables standing in for a relaxed step value; the count route never sees user names with it. */
+const funnelVariablePrefix = '?__funnel';
+
+/**
+ * @typedef {{
+ *   key: string,
+ *   index: number,
+ *   counted: boolean,
+ *   extreme: boolean,
+ * }} FunnelStep
+ */
+
+/**
+ * @typedef {{
+ *   variableName: string,
+ *   steps: FunnelStep[],
+ *   extremes: number,
+ *   requests: ({endpointUrl: string, variableName: string, where: QueryFilter[]} | null)[],
+ * }} FunnelPlan
+ */
+
+/**
+ * A filter step is a fixed-predicate relation whose object is a fixed value (an IRI or
+ * a literal, with or without a comparison). MAX/MIN (BE-004) are extreme steps: they
+ * keep every row tied at the extreme of the rest of the query.
+ * @param {FilterEdge} edge
+ * @returns {'step' | 'extreme' | null}
+ */
+export function funnelStepKind(edge) {
+  const predicate = edge.nodeId;
+  const object = edge.targetValue || edge.target;
+  if (!predicate || !predicate.startsWith('<') || /^[?$]/.test(object)) return null;
+  const filterType = filterTypeOf(edge.filterType);
+  return filterType === 4 || filterType === 5 ? 'extreme' : 'step';
+}
+
+/**
+ * Count requests of the filter funnel (POST /api/query/count). `requests[0]` is the
+ * base: every step relaxed to "has this relation with any value". `requests[i]`
+ * applies the enabled steps among the first i; it is null when step i is disabled,
+ * because its count is the previous one. Steps beyond [maxSteps] stay relaxed and
+ * are not counted. Disabling a step therefore only changes later counts.
+ * MAX/MIN steps come after the other steps: their extreme is taken over the rest of
+ * the query (BE-004), so each count is what the query returns with the steps so far
+ * and the last count is the query's result.
+ * @param {{endpointUrl: string, edges: FilterEdge[], variableName: string, disabled?: Iterable<string>, maxSteps?: number}} input
+ * @returns {FunnelPlan}
+ */
+export function filterFunnelPlan({ endpointUrl, edges, variableName, disabled = [], maxSteps = MAX_FUNNEL_STEPS }) {
+  const off = new Set(disabled);
+  /** @type {FunnelStep[]} */
+  const steps = [];
+  /** @type {Map<FilterEdge, number>} */
+  const stepIndex = new Map();
+  for (const wanted of ['step', 'extreme']) {
+    edges.forEach(edge => {
+      if (funnelStepKind(edge) !== wanted) return;
+      stepIndex.set(edge, steps.length);
+      steps.push({ key: funnelStepKey(edge), index: steps.length, counted: steps.length < maxSteps, extreme: wanted === 'extreme' });
+    });
+  }
+  const extremes = steps.filter(step => step.extreme).length;
+  /** @param {number} applied */
+  const where = applied => buildFilters(edges.map((edge, position) => {
+    const kind = funnelStepKind(edge);
+    const index = stepIndex.get(edge);
+    const keep = kind !== null && index !== undefined && index < applied && !off.has(steps[index].key);
+    if (kind === null || keep) return edge;
+    return { ...edge, target: `${funnelVariablePrefix}${position}`, targetValue: `${funnelVariablePrefix}${position}`, filterType: null };
+  }));
+  const counted = steps.filter(step => step.counted);
+  const requests = [
+    { endpointUrl, variableName, where: where(0) },
+    ...counted.map(step => off.has(step.key) ? null : { endpointUrl, variableName, where: where(step.index + 1) }),
+  ];
+  return { variableName, steps, extremes, requests };
+}
+
+/**
+ * Stable identity of a step: the relation id when the graph gives one.
+ * @param {FilterEdge} edge
+ * @returns {string}
+ */
+export function funnelStepKey(edge) {
+  return edge.id || JSON.stringify([edge.source, edge.nodeId, edge.target]);
+}
+
+/**
+ * Remaining count after each counted step; a disabled step (null request) repeats
+ * the previous count.
+ * @param {FunnelPlan['requests']} requests
+ * @param {(number | undefined)[]} counts aligned with requests; undefined while unknown
+ * @returns {(number | null)[]} one entry per counted step, null while unknown
+ */
+export function funnelStepCounts(requests, counts) {
+  /** @type {(number | null)[]} */
+  const result = [];
+  let previous = counts[0] ?? null;
+  for (let index = 1; index < requests.length; index++) {
+    const current = requests[index] === null ? previous : (counts[index] ?? null);
+    result.push(current);
+    previous = current;
+  }
+  return result;
+}
+
 /** @typedef {{min: number, max: number, step: number, decimals: number}} RangeScale */
 
 /**

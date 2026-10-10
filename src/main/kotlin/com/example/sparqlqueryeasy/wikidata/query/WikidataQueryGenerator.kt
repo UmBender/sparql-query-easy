@@ -258,6 +258,16 @@ data class NumericProfileQuery(
     }
 }
 
+/** Number of distinct values of [variable] under [patterns] (FE-028 filter funnel). */
+data class CountQuery(
+    val variable: QueryVariable,
+    val patterns: List<TriplePattern>,
+) : WikidataQuery {
+    init {
+        require(patterns.isNotEmpty()) { "A count requires at least one pattern" }
+    }
+}
+
 interface WikidataQueryGenerator {
     fun generate(input: WikidataQuery): String
 }
@@ -290,6 +300,7 @@ class CSharpCompatibleWikidataQueryGenerator(
             is SearchSelectQuery -> search(input)
             is StageCandidateQuery -> stageCandidates(input)
             is NumericProfileQuery -> numericProfile(input)
+            is CountQuery -> count(input)
         }
 
     private fun generalSelect(input: GeneralSelectQuery): String {
@@ -402,6 +413,16 @@ class CSharpCompatibleWikidataQueryGenerator(
             line("GROUP BY ?__profileEntity ?__profileValue")
             line("ORDER BY ?__profileValue ?__profileEntity")
             line("LIMIT ${input.limit}")
+        }.build()
+
+    private fun count(input: CountQuery): String =
+        QueryText(false).apply {
+            line("SELECT (COUNT(DISTINCT ${input.variable.render()}) AS ?__countValue)")
+            line("WHERE {")
+            input.patterns.forEachIndexed { index, pattern -> pattern(pattern, index) }
+            // Maximum/Minimum count every tied value (BE-004); a count has no LIMIT to cap.
+            extremes(input.patterns) {}
+            line("}")
         }.build()
 
     private fun stageCandidates(input: StageCandidateQuery): String {

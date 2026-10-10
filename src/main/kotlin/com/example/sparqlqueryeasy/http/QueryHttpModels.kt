@@ -7,6 +7,7 @@ import com.example.sparqlqueryeasy.application.query.NumericProfileRequest
 import com.example.sparqlqueryeasy.application.query.PROFILE_DEFAULT_LIMIT
 import com.example.sparqlqueryeasy.application.query.PROFILE_MAX_LIMIT
 import com.example.sparqlqueryeasy.application.query.PropertyResult
+import com.example.sparqlqueryeasy.application.query.ResultCountRequest
 import com.example.sparqlqueryeasy.application.query.StageCandidatePage
 import com.example.sparqlqueryeasy.application.query.StageQueryRequest
 import com.example.sparqlqueryeasy.domain.model.BlankNode
@@ -177,6 +178,23 @@ data class NumericProfileHttpResponse(
 )
 
 @Serializable
+data class ResultCountHttpRequest(
+    @JsonSchema.Default("\"$DEFAULT_ENDPOINT_URL\"")
+    val endpointUrl: String = DEFAULT_ENDPOINT_URL,
+    @JsonSchema.Description("Counted SPARQL variable, with or without the leading ?.")
+    val variableName: String? = null,
+    @JsonSchema.Description("Graph patterns; at least one. Maximum/Minimum filters are rejected.")
+    val where: List<WhereHttpRequest>? = null,
+)
+
+@Serializable
+data class ResultCountHttpResponse(
+    val variableName: String,
+    @JsonSchema.Description("Distinct values of variableName under where; no LIMIT applies.")
+    val count: Long,
+)
+
+@Serializable
 data class StageCandidateHttpResponse(
     val term: RdfTermHttp,
     val label: String?,
@@ -313,6 +331,12 @@ internal fun NumericProfile.toResponse() =
                     it.number.toDouble(),
                 )
             },
+    )
+
+internal fun ResultCountHttpRequest.toCountRequest(): ResultCountRequest =
+    ResultCountRequest(
+        variable = QueryVariable(requireValue(variableName, "variableName").removePrefix("?")),
+        patterns = requireNotNull(where) { "Missing required field: where" }.map(WhereHttpRequest::toPattern),
     )
 
 internal fun StageQueryHttpRequest.toStageRequest(): StageQueryRequest =

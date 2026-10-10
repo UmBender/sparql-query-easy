@@ -151,6 +151,14 @@
                             <ol id="variable-order-list"></ol>
                             <span id="variable-order-status" class="visually-hidden" aria-live="polite"></span>
                         </div>
+                        <button id="filter-funnel-btn"
+                                class="btn waves-effect waves-light blue lighten-1"
+                                type="button"
+                                aria-expanded="false"
+                                aria-controls="filter-funnel-panel"
+                                title="Show how each filter narrows the result">
+                            <i class="material-icons left" aria-hidden="true">filter_list</i>Filter funnel
+                        </button>
                         <button id="run-query-btn"
                                 class="btn waves-effect waves-light green darken-1"
                                 type="submit"
@@ -197,6 +205,17 @@
                     <li><span class="possible-swatch open"></span>Open variable</li>
                 </ul>
             </section>
+
+            <aside id="filter-funnel-panel" hidden aria-labelledby="filter-funnel-title">
+                <button id="filter-funnel-close" type="button" class="btn-flat" aria-label="Close filter funnel" title="Close">Close</button>
+                <h2 id="filter-funnel-title">Filter funnel</h2>
+                <p id="filter-funnel-variable"></p>
+                <ol id="filter-funnel-steps" aria-label="Remaining results after each filter"></ol>
+                <p id="filter-funnel-status" role="status" aria-live="polite"></p>
+                <button id="filter-funnel-retry" type="button" class="btn-small" hidden>Retry</button>
+                <p id="filter-funnel-result" aria-live="polite"></p>
+                <p id="filter-funnel-note">Unticking a filter previews the result without it. The first row keeps each filtered relation with any value.</p>
+            </aside>
 
             <aside id="two-variable-panel" hidden aria-labelledby="two-variable-panel-title" aria-describedby="two-variable-panel-description">
                 <button id="two-variable-panel-close" type="button" class="btn-flat" aria-label="Close query variable exploration" title="Back to graph">Close</button>
@@ -335,6 +354,7 @@
     <script src="app-core.js"></script>
     <script src="stage-order.js"></script>
     <script src="stage-exploration.js"></script>
+    <script src="filter-funnel.js"></script>
     <script src="graph-nodes.js"></script>
     <script src="graph-menus.js"></script>
 
@@ -373,12 +393,17 @@
                     graphMenus.cancelConnection();
                     return;
                 }
+                if (e.key === 'Escape' && document.getElementById('filter-funnel-panel').contains(document.activeElement)) {
+                    closeFilterFunnel();
+                    return;
+                }
                 if (e.key === 'Escape' && !document.getElementById('two-variable-panel').hidden) {
                     closeTwoVariablePanel();
                     return;
                 }
                 const tag = document.activeElement.tagName;
                 if (document.getElementById('two-variable-panel').contains(document.activeElement)) return;
+                if (document.getElementById('filter-funnel-panel').contains(document.activeElement)) return;
                 if (e.key === 'Enter' && tag !== 'INPUT' && tag !== 'TEXTAREA' && tag !== 'BUTTON') {
                     runQuery();
                 }
@@ -661,6 +686,7 @@
                 const lastPage = exploration?.pages[exploration.pages.length - 1];
                 if (lastPage) loadStagePage(lastPage.offset + lastPage.limit);
             });
+            initFilterFunnel();
             initVariableOrderDrag();
             initVariableEmphasis();
             cy.on('add remove data', scheduleVariableOrderRefresh);

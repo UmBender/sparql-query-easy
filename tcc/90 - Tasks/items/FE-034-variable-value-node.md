@@ -65,8 +65,8 @@ node. Skill: `tcc-fullstack`.
 5. **Without a filter.** Is a variable value node without a filter allowed
    (meaning "any literal")? Recommended: yes, so Convert to variable can
    produce it.
-6. **Max/Min (filterType 4/5).** These only order results and are rejected by
-   staging. Recommended: not offered on this node in the first slice.
+6. **Max/Min (filterType 4/5).** Since BE-004 they keep every tied row, but
+   staging still rejects them. Recommended: not offered on this node in the first slice.
 
 ## Scope (after the decisions)
 

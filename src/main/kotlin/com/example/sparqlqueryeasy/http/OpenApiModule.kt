@@ -197,6 +197,28 @@ internal fun Route.documentNumericProfile(): Route =
         }
     }
 
+internal fun Route.documentResultCount(): Route =
+    describe {
+        operationId = "countQueryResults"
+        summary = "Count the distinct values of one query variable"
+        description =
+            "Returns the number of distinct values of variableName under the where patterns, without a LIMIT " +
+            "and without the rdf:type requirement of the general query. where needs at least one pattern. " +
+            "Maximum/Minimum keep every value tied at the extreme of the rest of the query."
+        tag("Query")
+        requestBody {
+            required = true
+            ContentType.Application.Json { schema = jsonSchema<ResultCountHttpRequest>() }
+        }
+        responses {
+            HttpStatusCode.OK {
+                description = "The distinct count."
+                schema = jsonSchema<DataResponse<ResultCountHttpResponse>>()
+            }
+            commonQueryErrors(includeUpstreamFailure = true)
+        }
+    }
+
 internal fun Route.documentSparqlGeneration(): Route =
     describe {
         operationId = "generateSparql"
