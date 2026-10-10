@@ -35,7 +35,7 @@ Ordered by dependencies, then priority among selection candidates. See [worker r
 | DATA-003 | DONE | P1 | data | [Extend PokemonGen1 with per-Pokémon strengths and Pokédex lore links](<items/DATA-003-pokemon-matchups-and-lore.md>) |
 | OPS-001 | DONE | P2 | operations | [Define container and JVM runtime packaging](<items/OPS-001-container-runtime.md>) |
 | DEC-009 | DONE | P1 | decision | [Decide captured C# versus Kotlin health response contract](<items/DEC-009-health-response-contract.md>) |
-| DEC-010 | BLOCKED | P1 | decision | [Choose which numeric-filter visualization is merged into main](<items/DEC-010-choose-filter-visualization.md>) |
+| DEC-010 | DONE | P1 | decision | [Choose which numeric-filter visualization is merged into main](<items/DEC-010-choose-filter-visualization.md>) |
 | FE-001 | DONE | P1 | frontend | [Add browser-level tests for authoritative frontend flows](<items/FE-001-browser-frontend-flow-tests.md>) |
 | FE-002 | DONE | P1 | frontend | [Replace the node radial menu with a persistent left-click action list](<items/FE-002-left-click-node-action-menu.md>) |
 | FE-003 | DONE | P1 | frontend | [Let users convert a graph relation into a projected predicate variable](<items/FE-003-predicate-variable-edge.md>) |
@@ -65,7 +65,7 @@ Ordered by dependencies, then priority among selection candidates. See [worker r
 | FE-026 | DONE | P1 | frontend | [Visualize a numeric filter as a range slider over a histogram](<items/FE-026-filter-range-histogram.md>) |
 | FE-027 | CANCELLED | P1 | frontend | [Visualize a numeric filter as a dot strip with a live count badge on the graph](<items/FE-027-filter-dot-strip-badge.md>) |
 | FE-028 | DONE | P1 | frontend | [Visualize how each filter narrows the result as a funnel](<items/FE-028-filter-funnel.md>) |
-| FE-029 | READY | P1 | frontend | [Show the filtered result as a live graph that changes with the range](<items/FE-029-filter-live-result-graph.md>) |
+| FE-029 | CANCELLED | P1 | frontend | [Show the filtered result as a live graph that changes with the range](<items/FE-029-filter-live-result-graph.md>) |
 | FE-030 | DONE | P1 | frontend | [Add a value filter to a variable node from its action list](<items/FE-030-add-value-filter-node-action.md>) |
 | FE-031 | DONE | P1 | analysis | [Propose how to make frontend changes less error prone](<items/FE-031-frontend-reliability-proposal.md>) |
 | QUAL-005 | BACKLOG | P1 | quality | [Reproduce value-node bugs and cover every node kind against every action](<items/QUAL-005-node-kind-action-regressions.md>) |

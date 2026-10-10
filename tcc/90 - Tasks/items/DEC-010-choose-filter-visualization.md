@@ -1,7 +1,7 @@
 ---
 id: DEC-010
 title: Choose which numeric-filter visualization is merged into main
-status: BLOCKED
+status: DONE
 priority: P1
 type: decision
 depends_on: [FE-026, FE-027, FE-028, FE-029]
@@ -37,3 +37,7 @@ combined into the chosen one?
   and FE-028 remain open.
 - 2026-10-09: FE-028 (filter funnel) accepted and merged into `main`, with
   MAX/MIN as tie-keeping steps. Still open: FE-036 (badge) and FE-029.
+- 2026-10-09: FE-029 tested and dropped (FE-035 covers it). Decision complete:
+  `main` has FE-026 (histogram), FE-035 (kept-entity cycling with a mini
+  result graph), FE-028 (funnel) and BE-004 (tie-keeping MAX/MIN); FE-027's
+  dot strip is dropped and its badge is follow-up FE-036.

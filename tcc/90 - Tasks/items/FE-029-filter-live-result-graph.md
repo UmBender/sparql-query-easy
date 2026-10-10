@@ -1,13 +1,13 @@
 ---
 id: FE-029
 title: Show the filtered result as a live graph that changes with the range
-status: READY
+status: CANCELLED
 priority: P1
 type: frontend
 depends_on: [BE-003]
 human_gate: false
 created: 2026-10-07
-updated: 2026-10-07
+updated: 2026-10-09
 ---
 # Show the filtered result as a live graph that changes with the range
 
@@ -31,3 +31,6 @@ The possible-graph window (or a mini graph) shows the matching entities as nodes
 ## Execution log
 
 - 2026-10-07: Created; BE-003 provides the profile and labels.
+- 2026-10-07: Implemented on branch `FE-029-filter-live-result-graph` (`f86a00d`, not merged).
+- 2026-10-09: User tested it and dropped it per DEC-010: the FE-035 mini result
+  graph in the filter editor already covers it, readably. Branch kept unmerged.
