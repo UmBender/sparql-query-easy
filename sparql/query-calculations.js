@@ -98,6 +98,98 @@ export function numericProfileRequest({ endpointUrl, edges, literalId, limit = 5
   };
 }
 
+/**
+ * Inclusive numeric range kept by At least, At most and Between (FE-027);
+ * null for every other filter.
+ * @param {number | string | null | undefined} filterType
+ * @param {string} value
+ * @returns {{min: number, max: number} | null}
+ */
+export function filterRange(filterType, value) {
+  const type = filterTypeOf(filterType);
+  if (type === 6) return parseBetween(value);
+  const text = String(value ?? '').trim();
+  if ((type !== 2 && type !== 3) || !numberPattern.test(text)) return null;
+  return type === 2 ? { min: Number(text), max: Infinity } : { min: -Infinity, max: Number(text) };
+}
+
+/**
+ * @typedef {{count: number, truncated: boolean, max?: number | null, values: {number: number}[]}} BadgeProfile
+ * @typedef {{kept: number, total: number, exact: boolean, truncated: boolean}} BadgeCount
+ */
+
+/**
+ * How many profiled rows a numeric filter keeps, for the graph badge (FE-036).
+ * Range filters count the rows inside the range; MAX/MIN count the rows tied
+ * at the extreme. A truncated profile lists the lowest values only, so a count
+ * that depends on the omitted rows is a lower bound (`exact: false`), except
+ * when the range clearly keeps all or none of them. Null for other filters.
+ * @param {BadgeProfile} profile
+ * @param {number | string | null | undefined} filterType
+ * @param {string} value
+ * @returns {BadgeCount | null}
+ */
+export function filterBadgeCount(profile, filterType, value) {
+  const numbers = profile.values.map(item => item.number);
+  const total = Math.max(profile.count, numbers.length);
+  const truncated = Boolean(profile.truncated) && total > numbers.length;
+  const last = numbers.length ? numbers[numbers.length - 1] : -Infinity;
+  const tied = (/** @type {number} */ extreme) => numbers.filter(number => number === extreme).length;
+  const type = filterTypeOf(filterType);
+  if (type === 4 || type === 5) {
+    if (!numbers.length) return { kept: 0, total, exact: true, truncated };
+    if (type === 5) return { kept: tied(numbers[0]), total, exact: !truncated || last > numbers[0], truncated };
+    if (!truncated) return { kept: tied(last), total, exact: true, truncated };
+    return { kept: Math.max(1, profile.max == null ? 0 : tied(profile.max)), total, exact: false, truncated };
+  }
+  const range = filterRange(type, value);
+  if (!range) return null;
+  const kept = numbers.filter(number => number >= range.min && number <= range.max).length;
+  if (!truncated || range.max < last) return { kept, total, exact: true, truncated };
+  if (range.min <= last && profile.max != null && range.max >= profile.max) {
+    return { kept: kept + total - numbers.length, total, exact: true, truncated };
+  }
+  return { kept, total, exact: false, truncated };
+}
+
+/**
+ * Request for POST /api/query/relationship-value giving the actual values of a
+ * filtered literal node once its subject is a fixed entity (FE-036): exactly
+ * one relation points at the node, from an IRI through a fixed IRI predicate.
+ * @param {{endpointUrl: string, edges: FilterEdge[], literalId: string}} input
+ * @returns {{endpointUrl: string, subjectId: string, predicateId: string, isLiteral: true} | null}
+ */
+export function actualValueRequest({ endpointUrl, edges, literalId }) {
+  const incoming = edges.filter(edge => edge.target === literalId);
+  if (incoming.length !== 1) return null;
+  const [edge] = incoming;
+  const subject = edge.sourceValue || edge.source;
+  const predicate = edge.nodeId;
+  if (!subject.startsWith('<') || !predicate || !predicate.startsWith('<') || predicate.includes('>/<')) return null;
+  return { endpointUrl, subjectId: subject, predicateId: predicate, isLiteral: true };
+}
+
+/**
+ * Whether an entity's actual values pass its kept filter (FE-036): the query
+ * keeps the entity when any value passes. Null when the values alone cannot
+ * tell (MAX/MIN depend on other entities) or when there is no filter.
+ * @param {number | string | null | undefined} filterType
+ * @param {string} filterValue
+ * @param {string[]} values
+ * @returns {boolean | null}
+ */
+export function filterAccepts(filterType, filterValue, values) {
+  const type = filterTypeOf(filterType);
+  if (type === 0) return values.some(value => value.startsWith(filterValue));
+  if (type === 1) return values.some(value => value.includes(filterValue));
+  const range = filterRange(type, filterValue);
+  if (!range) return null;
+  return values.some(value => {
+    const text = value.trim();
+    return numberPattern.test(text) && Number(text) >= range.min && Number(text) <= range.max;
+  });
+}
+
 /** At most this many filter steps are counted by the funnel (FE-028). */
 export const MAX_FUNNEL_STEPS = 8;
 

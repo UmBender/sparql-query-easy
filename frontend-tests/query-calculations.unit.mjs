@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
-import { buildFilters, countInRange, cycleMode, filterFunnelPlan, filterLabel, filterTypeOf, funnelStepCounts, funnelStepKind, getQueryVariables, hasParallelPredicateVariables, histogramBins, numericProfileRequest, parseBetween, rangeFilter, rangeFromFilter, rangeScale, keptEntities, possibilityGraph, relationLabelKind } from '../sparql/query-calculations.js';
+import { actualValueRequest, buildFilters, countInRange, cycleMode, filterAccepts, filterBadgeCount, filterFunnelPlan, filterLabel, filterRange, filterTypeOf, funnelStepCounts, funnelStepKind, getQueryVariables, hasParallelPredicateVariables, histogramBins, numericProfileRequest, parseBetween, rangeFilter, rangeFromFilter, rangeScale, keptEntities, possibilityGraph, relationLabelKind } from '../sparql/query-calculations.js';
 
 test('filters preserve edge order, fixed RDF terms, and numeric filterType zero', () => {
   assert.deepEqual(buildFilters([
@@ -207,4 +207,63 @@ test('the possibility graph puts each shown entity above its values, linked by t
     ['e1-e1v0', 'HP', undefined],
   ]);
   assert.deepEqual(possibilityGraph([], 'HP'), []);
+});
+
+test('FE-036: only at least, at most and between filters have a numeric range', () => {
+  assert.deepEqual(filterRange(2, '100'), { min: 100, max: Infinity });
+  assert.deepEqual(filterRange('3', ' 80 '), { min: -Infinity, max: 80 });
+  assert.deepEqual(filterRange(6, '40..80'), { min: 40, max: 80 });
+  assert.equal(filterRange(6, '80..40'), null);
+  assert.equal(filterRange(2, 'abc'), null);
+  for (const type of [null, '', 0, 1, 4, 5]) assert.equal(filterRange(type, '45'), null);
+});
+
+test('FE-036: badge counts are exact unless they depend on the rows a truncated profile omits', () => {
+  const values = [10, 20, 20, 30, 40].map(number => ({ number }));
+  const full = { count: 5, truncated: false, max: 40, values };
+  const cut = { count: 9, truncated: true, max: 70, values };
+  assert.deepEqual(filterBadgeCount(full, 2, '15'), { kept: 4, total: 5, exact: true, truncated: false });
+  assert.deepEqual(filterBadgeCount(full, 6, '50..60'), { kept: 0, total: 5, exact: true, truncated: false });
+  assert.deepEqual(filterBadgeCount(cut, 3, '25'), { kept: 3, total: 9, exact: true, truncated: true });
+  // Every omitted row lies in [40, 70]: an open upper end keeps all of them.
+  assert.deepEqual(filterBadgeCount(cut, 2, '35'), { kept: 5, total: 9, exact: true, truncated: true });
+  assert.deepEqual(filterBadgeCount(cut, 6, '35..50'), { kept: 1, total: 9, exact: false, truncated: true });
+  assert.deepEqual(filterBadgeCount(cut, 2, '45'), { kept: 0, total: 9, exact: false, truncated: true });
+  assert.equal(filterBadgeCount(full, 2, 'abc'), null);
+  for (const type of [null, 0, 1]) assert.equal(filterBadgeCount(full, type, '20'), null);
+});
+
+test('FE-036: MAX and MIN badges count the rows tied at the extreme', () => {
+  const values = [10, 10, 20, 40, 40].map(number => ({ number }));
+  assert.deepEqual(filterBadgeCount({ count: 5, truncated: false, values }, 5, 'MIN'), { kept: 2, total: 5, exact: true, truncated: false });
+  assert.deepEqual(filterBadgeCount({ count: 5, truncated: false, values }, '4', 'MAX'), { kept: 2, total: 5, exact: true, truncated: false });
+  // Truncated: the minimum ties are all listed once a larger value follows them.
+  assert.deepEqual(filterBadgeCount({ count: 8, truncated: true, max: 90, values }, 5, ''), { kept: 2, total: 8, exact: true, truncated: true });
+  assert.deepEqual(filterBadgeCount({ count: 8, truncated: true, max: 90, values }, 4, ''), { kept: 1, total: 8, exact: false, truncated: true });
+  const flat = [7, 7].map(number => ({ number }));
+  assert.deepEqual(filterBadgeCount({ count: 6, truncated: true, max: 7, values: flat }, 5, ''), { kept: 2, total: 6, exact: false, truncated: true });
+  assert.deepEqual(filterBadgeCount({ count: 0, truncated: false, values: [] }, 4, ''), { kept: 0, total: 0, exact: true, truncated: false });
+});
+
+test('FE-036: an actual value is looked up only for a fixed entity through one fixed relation', () => {
+  const edge = { source: '<https://e/Pikachu>', target: 'n1', sourceValue: '<https://e/Pikachu>', targetValue: '90', nodeId: '<https://e/speed>', fallbackPredicate: '?x' };
+  assert.deepEqual(actualValueRequest({ endpointUrl: 'g', edges: [edge], literalId: 'n1' }),
+    { endpointUrl: 'g', subjectId: '<https://e/Pikachu>', predicateId: '<https://e/speed>', isLiteral: true });
+  assert.equal(actualValueRequest({ endpointUrl: 'g', edges: [{ ...edge, source: '?p', sourceValue: '?p' }], literalId: 'n1' }), null);
+  assert.equal(actualValueRequest({ endpointUrl: 'g', edges: [{ ...edge, nodeId: '?pred' }], literalId: 'n1' }), null);
+  assert.equal(actualValueRequest({ endpointUrl: 'g', edges: [{ ...edge, nodeId: '<https://e/a>/<https://e/b>' }], literalId: 'n1' }), null);
+  assert.equal(actualValueRequest({ endpointUrl: 'g', edges: [edge, { ...edge }], literalId: 'n1' }), null);
+  assert.equal(actualValueRequest({ endpointUrl: 'g', edges: [edge], literalId: 'other' }), null);
+});
+
+test('FE-036: actual values pass a filter when any of them does', () => {
+  assert.equal(filterAccepts(2, '90', ['90']), true);
+  assert.equal(filterAccepts(2, '90', ['85']), false);
+  assert.equal(filterAccepts(3, '50', ['85', '45']), true);
+  assert.equal(filterAccepts(6, '40..80', ['80']), true);
+  assert.equal(filterAccepts(6, '40..80', ['not a number']), false);
+  assert.equal(filterAccepts(0, 'Pika', ['Pikachu']), true);
+  assert.equal(filterAccepts(1, 'chu', ['PIKACHU']), false);
+  for (const type of [null, 4, 5]) assert.equal(filterAccepts(type, '90', ['90']), null);
+  assert.equal(filterAccepts(6, '80..40', ['60']), null);
 });

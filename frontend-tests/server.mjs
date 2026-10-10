@@ -63,6 +63,13 @@ function respondApi(response, path, body) {
       data: { variableName: request.variableName, offset: request.offset ?? 0, limit: request.limit ?? 20, hasMore: false, candidates: [] },
     });
   }
+  if (path === '/api/query/numeric-profile') {
+    // Deterministic default: an empty distribution; tests route specific profiles.
+    const request = JSON.parse(body || '{}');
+    return respond(response, {
+      data: { subject: request.subject, predicate: request.predicate, count: 0, min: null, max: null, truncated: false, values: [] },
+    });
+  }
   if (path === '/api/query/sparql') return respond(response, { data: 'SELECT DISTINCT ?item WHERE { ?item ?p ?o } LIMIT 20' });
   return respond(response, { data: [] });
 }
