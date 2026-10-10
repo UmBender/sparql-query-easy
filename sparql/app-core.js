@@ -114,20 +114,32 @@ function filterEdgeItems(component) {
 }
 
 /**
- * BE-003: distribution of the numeric relation pointing at a literal node, under
- * the rest of its query component. Resolves to null when the node has no single
- * fixed relation to profile; rejects with the server error otherwise.
+ * BE-003: request profiling the numeric relation pointing at a literal node,
+ * under the rest of its query component; null when it has no single fixed relation.
  */
-async function fetchNumericProfile(literalNodeId, { limit, signal } = {}) {
+function numericProfileRequestFor(literalNodeId, limit) {
     const node = cy.getElementById(literalNodeId);
     if (!node.length) return null;
-    const request = window.queryCalculations.numericProfileRequest({
+    return window.queryCalculations.numericProfileRequest({
         endpointUrl: getEndpoint(),
         edges: filterEdgeItems(node.component()),
         literalId: literalNodeId,
         limit,
     });
-    if (!request) return null;
+}
+
+/**
+ * BE-003: distribution of the numeric relation pointing at a literal node, under
+ * the rest of its query component. Resolves to null when the node has no single
+ * fixed relation to profile; rejects with the server error otherwise.
+ */
+async function fetchNumericProfile(literalNodeId, { limit, signal } = {}) {
+    const request = numericProfileRequestFor(literalNodeId, limit);
+    return request ? postNumericProfile(request, signal) : null;
+}
+
+/** POST a numeric profile request; rejects with the server error. */
+async function postNumericProfile(request, signal) {
     const response = await fetch(apiUrl('/api/query/numeric-profile'), {
         method: 'POST',
         headers: { 'content-type': 'application/json' },
@@ -137,6 +149,22 @@ async function fetchNumericProfile(literalNodeId, { limit, signal } = {}) {
     const body = await response.json().catch(() => null);
     if (!response.ok) throw new Error(body?.error || `Numeric profile failed (${response.status}).`);
     return body.data;
+}
+
+/**
+ * FE-036: literal values of one fixed entity's relation (relationship-value with
+ * isLiteral), as strings; rejects with the server error.
+ */
+async function postActualValues(request) {
+    const response = await fetch(apiUrl('/api/query/relationship-value'), {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify(request),
+    });
+    const body = await response.json().catch(() => null);
+    if (!response.ok) throw new Error(body?.error || `Value lookup failed (${response.status}).`);
+    if (!Array.isArray(body?.data)) throw new Error('Unexpected value response.');
+    return body.data.map(item => String(item.propertyLabel ?? item.propertyId ?? ''));
 }
 
 /**

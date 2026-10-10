@@ -2506,3 +2506,190 @@ test('Add value filter on a relation without numbers opens the text editor on an
   await expect(page.locator('#modal-change-value')).toContainText('Starts with');
   await expect(page.locator('#modal-new-value')).toHaveValue('');
 });
+
+// FE-036: kept/total badges over filtered nodes and, once the subject is a
+// fixed entity, its actual value next to the kept filter.
+const filterBadge = page => page.locator('#filter-badge-layer .filter-badge');
+const actualValueChip = page => page.locator('#filter-badge-layer .filter-actual-value');
+// Editing a filter replaces the value node, so it is found by type, not id.
+const speedNodeData = page => page.evaluate(() => {
+  const { id, ...data } = cy.nodes('[type = "label"]')[0].data();
+  return data;
+});
+const sentFilters = page => page.evaluate(() => buildFilters(cy.elements()));
+
+test('a numeric filter node shows a live kept/total badge that never changes query data', async ({ page }) => {
+  await addSpeedFilterGraph(page);
+  await routeSpeedProfile(page, fulfillProfile(speedProfile([43, 45, 65, 90, 100, 100])));
+  await page.waitForTimeout(500);
+  await expect(filterBadge(page)).toHaveCount(0); // an exact value is not a filter
+
+  await editSpeedFilter(page, 'At least', '60');
+  await expect(filterBadge(page)).toHaveText('4 / 6');
+  await expect(filterBadge(page)).toHaveAttribute('data-state', 'ok');
+  await expect(filterBadge(page)).toHaveAttribute('aria-label', 'This filter keeps 4 of 6 values.');
+  await expect(actualValueChip(page)).toHaveCount(0);
+
+  await editSpeedFilter(page, 'Between', '200..300');
+  await expect(filterBadge(page)).toHaveText('0 / 6');
+  await expect(filterBadge(page)).toHaveAttribute('data-state', 'none');
+  expect(await page.evaluate(() => cy.nodes('[type = "label"]')[0].hasClass('filter-keeps-none'))).toBe(true);
+
+  await editSpeedFilter(page, 'MAX', '90');
+  await expect(filterBadge(page)).toHaveText('2 / 6');
+  await editSpeedFilter(page, 'MIN', '90');
+  await expect(filterBadge(page)).toHaveText('1 / 6');
+  expect(await page.evaluate(() => cy.nodes('[type = "label"]')[0].hasClass('filter-keeps-none'))).toBe(false);
+
+  // The badge is an overlay: node data and the sent filter are the editor's.
+  await editSpeedFilter(page, 'At most', '50');
+  await expect(filterBadge(page)).toHaveText('2 / 6');
+  expect(await speedNodeData(page)).toEqual({ value: '50', label: '≤ 50', type: 'label', filterType: 3 });
+  expect(await sentFilters(page)).toEqual([{ subject: '?p', predicate: '<https://example.test/speed>', object: '50', filterType: 3 }]);
+
+  await editSpeedFilter(page, 'Exactly Equal', '45');
+  await expect(filterBadge(page)).toHaveCount(0);
+});
+
+test('the badge marks a partial profile and ignores a stale response after an endpoint edit', async ({ page }) => {
+  await addSpeedFilterGraph(page);
+  let releaseFirst;
+  const firstGate = new Promise(resolve => { releaseFirst = resolve; });
+  const requests = await routeSpeedProfile(page, async route => {
+    if (requests.length === 1) {
+      await firstGate;
+      return fulfillProfile(speedProfile([43, 45, 65, 90, 100]))(route);
+    }
+    return fulfillProfile(speedProfile([43, 45, 65, 90], { count: 9, truncated: true, max: 150 }))(route);
+  });
+  await page.evaluate(() => { cy.nodes('[type = "label"]')[0].data({ value: '60..120', label: '60–120', filterType: 6 }); });
+  await expect(filterBadge(page)).toHaveAttribute('data-state', 'loading');
+
+  await page.locator('#input-endpoint-sparql').fill('PokemonGen1');
+  await expect(filterBadge(page)).toHaveText('2+ / 9');
+  await expect(filterBadge(page)).toHaveAttribute('data-state', 'truncated');
+  await expect(filterBadge(page)).toHaveAttribute('aria-label', 'This filter keeps at least 2 of 9 values (only the lowest 4 values were loaded).');
+  expect(requests.map(request => request.endpointUrl)).toEqual(['CampeonatoBrasileiro2023', 'PokemonGen1']);
+
+  releaseFirst();
+  await page.waitForTimeout(600);
+  await expect(filterBadge(page)).toHaveText('2+ / 9');
+});
+
+test('the badge follows its node and reports a profile error', async ({ page }) => {
+  await addSpeedFilterGraph(page);
+  await routeSpeedProfile(page, route => route.fulfill({ status: 502, contentType: 'application/json', body: '{"error":"endpoint unavailable"}' }));
+  await page.evaluate(() => { cy.nodes('[type = "label"]')[0].data({ value: '60', label: '≥ 60', filterType: 2 }); });
+  await expect(filterBadge(page)).toHaveText('?');
+  await expect(filterBadge(page)).toHaveAttribute('aria-label', 'Could not count values: endpoint unavailable');
+
+  const before = await filterBadge(page).boundingBox();
+  await page.evaluate(() => { cy.nodes('[type = "label"]')[0].shift({ x: -60, y: 40 }); });
+  await expect.poll(async () => (await filterBadge(page).boundingBox()).y).toBeGreaterThan(before.y + 30);
+});
+
+async function assumeSpeedSubject(page, { filter = { value: '90', label: '≥ 90', filterType: 2 } } = {}) {
+  await addSpeedFilterGraph(page);
+  await page.evaluate(data => { cy.nodes('[type = "label"]')[0].data(data); }, filter);
+  await routeSpeedProfile(page, fulfillProfile(speedProfile([45, 90, 100])));
+  const stageRequests = await routeStages(page, request => ({ body: stagePage(request, [
+    iri('https://example.test/Pikachu', 'Pikachu'),
+    iri('https://example.test/Mew', 'Mew'),
+  ]) }));
+  await page.locator('#run-query-btn').click();
+  await expect(candidateButtons(page)).toHaveCount(2);
+  return stageRequests;
+}
+
+async function routeActualValues(page, respond) {
+  const requests = [];
+  await page.route('**/api/query/relationship-value', async route => {
+    requests.push(route.request().postDataJSON());
+    await respond(route, requests.length);
+  });
+  return requests;
+}
+const fulfillValues = values => route => route.fulfill({ contentType: 'application/json',
+  body: JSON.stringify({ data: values.map(value => ({ propertyId: value, propertyLabel: value, propertyType: 'text' })) }) });
+
+test('after Assume the filtered node shows the actual value, keeps its filter and checks it', async ({ page }) => {
+  const stageRequests = await assumeSpeedSubject(page);
+  expect(stageRequests[0].where).toEqual([{ subject: '?p', predicate: '<https://example.test/speed>', object: '90', filterType: 2 }]);
+  const valueRequests = await routeActualValues(page, fulfillValues(['90']));
+
+  await page.getByRole('button', { name: 'Assume ?p = Pikachu in the graph now' }).click();
+
+  await expect(actualValueChip(page)).toHaveText('90');
+  await expect(actualValueChip(page)).toHaveAttribute('aria-label', 'Actual value: 90');
+  await expect(filterBadge(page)).toHaveText('✓');
+  await expect(filterBadge(page)).toHaveAttribute('aria-label', 'The actual value 90 passes the filter ≥ 90.');
+  expect(valueRequests).toEqual([{ endpointUrl: 'CampeonatoBrasileiro2023', subjectId: '<https://example.test/Pikachu>', predicateId: '<https://example.test/speed>', isLiteral: true }]);
+  // Display only: the node keeps its filter, which is still sent.
+  expect(await speedNodeData(page)).toEqual({ value: '90', label: '≥ 90', type: 'label', filterType: 2 });
+  expect(await sentFilters(page)).toEqual([{ subject: '<https://example.test/Pikachu>', predicate: '<https://example.test/speed>', object: '90', filterType: 2 }]);
+
+  // A changed filter re-checks the same value without a new lookup. The node
+  // menu offers Edit value only under a variable, so the data is set directly.
+  const setSpeedFilter = data => page.evaluate(item => { cy.nodes('[type = "label"]')[0].data(item); }, data);
+  await setSpeedFilter({ value: '100', label: '≥ 100', filterType: 2 });
+  await expect(filterBadge(page)).toHaveText('✗');
+  await expect(filterBadge(page)).toHaveAttribute('data-state', 'none');
+  await expect(filterBadge(page)).toHaveAttribute('aria-label', 'The actual value 90 does not pass the filter ≥ 100.');
+  await expect(actualValueChip(page)).toHaveText('90');
+  expect(await page.evaluate(() => cy.nodes('[type = "label"]')[0].hasClass('filter-keeps-none'))).toBe(true);
+  expect(valueRequests).toHaveLength(1);
+
+  // MAX/MIN depend on other entities: the value shows without a verdict.
+  await setSpeedFilter({ value: '90', label: 'MAX', filterType: 4 });
+  await expect(filterBadge(page)).toHaveCount(0);
+  await expect(actualValueChip(page)).toHaveText('90');
+
+  // Removing the filter clears the shown value.
+  await setSpeedFilter({ value: '90', label: '90', filterType: null });
+  await expect(actualValueChip(page)).toHaveCount(0);
+  await expect(filterBadge(page)).toHaveCount(0);
+});
+
+test('after Apply several actual values are joined and a text filter is checked too', async ({ page }) => {
+  await assumeSpeedSubject(page, { filter: { value: '9', label: 'starts with 9', filterType: 0 } });
+  await routeActualValues(page, fulfillValues(['90', '95', '99', '120']));
+  await candidateButtons(page).first().click();
+  await page.getByRole('button', { name: 'Apply to graph' }).click();
+
+  await expect(actualValueChip(page)).toHaveText('90, 95, 99, …');
+  await expect(actualValueChip(page)).toHaveAttribute('title', 'Actual value: 90, 95, 99, 120');
+  await expect(filterBadge(page)).toHaveText('✓');
+  expect(await speedNodeData(page)).toEqual({ value: '9', label: 'starts with 9', type: 'label', filterType: 0 });
+});
+
+test('a failed or empty value lookup keeps the filter and says the value is unknown; stale lookups are ignored', async ({ page }) => {
+  await assumeSpeedSubject(page);
+  let release;
+  const gate = new Promise(resolve => { release = resolve; });
+  const valueRequests = await routeActualValues(page, async (route, count) => {
+    if (count === 1) {
+      await gate;
+      return fulfillValues(['10'])(route);
+    }
+    if (count === 2) return route.fulfill({ status: 502, contentType: 'application/json', body: '{"error":"endpoint unavailable"}' });
+    return fulfillValues([])(route);
+  });
+
+  await page.getByRole('button', { name: 'Assume ?p = Pikachu in the graph now' }).click();
+  await expect(actualValueChip(page)).toHaveText('…');
+  // A new endpoint makes a new lookup; the first one answers late and is ignored.
+  await page.locator('#input-endpoint-sparql').fill('PokemonGen1');
+  await expect(actualValueChip(page)).toHaveText('value unknown');
+  await expect(actualValueChip(page)).toHaveAttribute('title', 'Could not load the actual value: endpoint unavailable.');
+  await expect(filterBadge(page)).toHaveText('?');
+  release();
+  await page.waitForTimeout(600);
+  await expect(actualValueChip(page)).toHaveText('value unknown');
+
+  // The failure is not cached: the next graph change looks the value up again.
+  await page.evaluate(() => { cy.nodes('[type = "label"]')[0].data({ value: '80', label: '≥ 80' }); });
+  await expect.poll(() => valueRequests.length).toBe(3);
+  await expect(actualValueChip(page)).toHaveAttribute('title', 'This entity has no value for this relation.');
+  await expect(filterBadge(page)).toHaveAttribute('aria-label', 'This entity has no value for this relation. The filter ≥ 80 cannot be checked.');
+  expect(await speedNodeData(page)).toEqual({ value: '80', label: '≥ 80', type: 'label', filterType: 2 });
+});

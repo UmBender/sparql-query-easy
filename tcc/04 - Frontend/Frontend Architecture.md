@@ -156,6 +156,20 @@ lowest/highest profiled value and cycle them like a range; the profile holds
 the lowest values, so a partial profile names only the maximum value and says
 its entities are known after the query runs.
 
+**Confirmed (FE-036):** `filter-badges.js` overlays the main graph
+(`#filter-badge-layer`, refreshed 400 ms after graph or endpoint edits; stale
+responses ignored). A filtered value node under a variable gets a `kept / total`
+badge from the BE-003 profile (pure `filterBadgeCount`; At least, At most,
+Between, MAX/MIN ties; `+` for a lower bound, amber for a partial profile, red
+plus node class `filter-keeps-none` at 0). Once its subject is a fixed entity
+(Assume/Apply or built that way), `POST /api/query/relationship-value`
+(`isLiteral: true`, pure `actualValueRequest`) loads the entity's values into
+a chip under the node (first three, all in its title) and the badge shows ✓/✗
+from `filterAccepts` (none for MAX/MIN). Failed or empty lookups say the value
+is unknown. Overlays never change element data, so the filter is still sent.
+The node menu offers Edit value only under a variable, so a consolidated
+filter is not editable from the menu.
+
 **Confirmed (FE-014):** mouse-wheel zoom uses Cytoscape
 `wheelSensitivity: 0.2` (about 1.2× per notch, near the 1.25× zoom buttons);
 Cytoscape logs an expected one-time warning for the non-default value.

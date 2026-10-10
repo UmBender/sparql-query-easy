@@ -355,6 +355,7 @@
     <script src="stage-order.js"></script>
     <script src="stage-exploration.js"></script>
     <script src="filter-funnel.js"></script>
+    <script src="filter-badges.js"></script>
     <script src="graph-nodes.js"></script>
     <script src="graph-menus.js"></script>
 
@@ -587,6 +588,14 @@
                         }
                     },
                     {
+                        // FE-036: a filter that keeps nothing, or an assumed value it rejects.
+                        selector: 'node.filter-keeps-none',
+                        style: {
+                            'border-width': 4,
+                            'border-color': '#C62828'
+                        }
+                    },
+                    {
                         selector: 'node.connector-source',
                         style: {
                             'border-width': 4,
@@ -701,6 +710,9 @@
 
             // Keep status bar in sync
             cy.on('add remove', updateStatusBar);
+
+            // FE-036: kept/total or actual-value badges over filtered nodes.
+            initFilterBadges();
 
         }); // end DOMContentLoaded
 

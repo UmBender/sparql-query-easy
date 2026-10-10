@@ -1,7 +1,7 @@
 ---
 id: FE-036
 title: Show a kept/total badge on filter nodes and, once the variable is assumed, its actual value next to the filter
-status: BACKLOG
+status: DONE
 priority: P1
 type: frontend
 depends_on: [FE-035, BE-004]
@@ -58,13 +58,13 @@ never shows the entity's real value.
 
 ## Acceptance criteria
 
-- [ ] Badges behave as in FE-027 (plus MAX/MIN) on top of FE-026/FE-035; the
+- [x] Badges behave as in FE-027 (plus MAX/MIN) on top of FE-026/FE-035; the
       editor shows no dot strip; element query data is unchanged.
-- [ ] After Assume or Apply, a filtered value node shows the entity's actual
+- [x] After Assume or Apply, a filtered value node shows the entity's actual
       value(s) and still shows and sends its filter; the badge shows pass/fail.
-- [ ] Lookup errors, empty results and filter edits after consolidation are
+- [x] Lookup errors, empty results and filter edits after consolidation are
       handled; stale lookups are ignored.
-- [ ] Offline browser tests with mocked profile and relationship-value
+- [x] Offline browser tests with mocked profile and relationship-value
       routes; `npm run test:browser` passes (and the Kotlin static-route test
       if a new script is packaged).
 
@@ -74,3 +74,15 @@ never shows the entity's real value.
 - 2026-10-09: Extended at the user's request with the assumed value next to
   the kept filter; MAX/MIN added to the badge after BE-004. Not started: the
   user wants to clear the session memory first.
+- 2026-10-09: Implemented in `sparql/filter-badges.js` (packaged), pure
+  `filterRange`, `filterBadgeCount`, `actualValueRequest`, `filterAccepts` in
+  `query-calculations.js`, `postNumericProfile`/`postActualValues` in
+  `app-core.js`. Fixed the new browser tests: the filter editor replaces the
+  value node (new id) and `page.evaluate` must not return a Cytoscape
+  collection. Validation: `npm run test:query` (44 pass),
+  `npm run check:frontend-types`, `npm run test:browser` (94 pass),
+  `./gradlew ktlintCheck detekt test` (pass), `installDist` plus HTTP smoke of
+  `/filter-badges.js` (200 `text/javascript`).
+- Limitation: the node menu offers Edit value only under a variable, so after
+  Assume/Apply a kept filter cannot be edited from the menu; the badge reacts
+  to any data change (covered by tests changing the data directly).

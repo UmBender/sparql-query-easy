@@ -98,6 +98,7 @@ class StaticFrontendRoutesTest {
             "stage-order.js",
             "stage-exploration.js",
             "filter-funnel.js",
+            "filter-badges.js",
             "graph-nodes.js",
             "graph-menus.js",
         )
