@@ -389,7 +389,7 @@ No numeric values gives `count` 0 and null `min`/`max`. Errors as for
 
 ### `POST /api/query/count`
 
-FE-028 (branch `FE-028-filter-funnel`, one of the DEC-010 variants), additive.
+FE-028 (filter funnel, merged by DEC-010), additive.
 Number of distinct values of one variable under a query, for the filter
 funnel. Request:
 
@@ -408,8 +408,10 @@ Response: `{"data": {"variableName": "?p", "count": 7}}`. The generated query
 is `SELECT (COUNT(DISTINCT ?p) AS ?__countValue) WHERE { ... }` over the
 `where` patterns, with no LIMIT and without the rdf:type requirement of
 `/api/query`. `variableName` is required (with or without `?`); `where` needs
-at least one pattern; Maximum/Minimum filters and variable names starting with
-`__count` are rejected with `400`. Other errors as for `/api/query/stage`
+at least one pattern; variable names starting with `__count` are rejected with
+`400`. Maximum/Minimum use the BE-004 extreme subquery, so the count includes
+every tied value (not capped by `EASYQUERY_EXTREME_RESULT_LIMIT`, which only
+limits returned rows). Other errors as for `/api/query/stage`
 (`404` unknown local graph, `502` upstream failure).
 
 ## Endpoint selection

@@ -7,7 +7,7 @@ type: frontend
 depends_on: [BE-003]
 human_gate: false
 created: 2026-10-07
-updated: 2026-10-07
+updated: 2026-10-09
 ---
 # Visualize how each filter narrows the result as a funnel
 
@@ -53,3 +53,14 @@ A panel listing the query's filters in order with the remaining count after each
   (7 funnel cases with a mocked count route: cumulative counts, preview toggle
   vs Run Query, error/retry, empty query and debounce, abort, keyboard/Escape,
   step cap and 360 px viewport). Not merged into `main` (DEC-010).
+- 2026-10-09: User chose to add the funnel to `main`, matching BE-004 MAX/MIN.
+  Merged `main` into the branch (`0e58ae8`; conflicts resolved by keeping both
+  sides). MAX/MIN are now funnel steps (`funnelStepKind` → `extreme`), placed
+  after the other steps because BE-004 takes the extreme over the rest of the
+  query; the count route accepts them through the BE-004 extreme subquery
+  (uncapped count). Updated the Run Query check to `POST /api/query/stage`
+  (BUG-005 on `main`). Validation: `./gradlew ktlintCheck detekt test` exit 0
+  (new `ResultCountRoutesTest` tie counts on PokemonGen1: max evolutionStage
+  16, min 79, order-independent with a Fire type), `npm run test:query` 39/39,
+  `npm run check:frontend-types` clean, `npm run test:browser` 88/88 (new MAX
+  funnel case), docs check and `git diff --check` clean.

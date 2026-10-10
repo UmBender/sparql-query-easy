@@ -197,7 +197,7 @@ function renderFilterFunnel(view) {
     if (last != null) parts.push(`Result: ${last} ${plan.variableName}${base != null ? ` of ${base}` : ''}.`);
     if (off) parts.push(`Preview without ${off} filter${off === 1 ? '' : 's'}; Run Query still applies every filter.`);
     if (plan.steps.some(step => !step.counted)) parts.push(`Only the first ${window.queryCalculations.MAX_FUNNEL_STEPS} filters are counted.`);
-    if (plan.orderingOnly) parts.push('MAX/MIN only order the result and are not counted.');
+    if (plan.extremes) parts.push('MAX/MIN keep every tied result and come after the other filters, as in the query.');
     result.textContent = parts.join(' ');
 
     if (focusedKey) list.querySelector(`[data-step-key="${CSS.escape(focusedKey)}"]`)?.focus();

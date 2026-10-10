@@ -1927,6 +1927,40 @@ test('the filter funnel counts the remaining results after each cumulative filte
   ]);
 });
 
+// BE-004: MAX/MIN are funnel steps that keep every tie; they come after the other filters.
+test('a MAX step is counted after the other filters, wherever it sits in the graph', async ({ page }) => {
+  await disableAutoLayout(page);
+  await page.evaluate(pk => {
+    cy.add([
+      { group: 'nodes', data: { id: '?p', value: '?p', label: '?', type: 'variable' }, position: { x: 200, y: 200 } },
+      { group: 'nodes', data: { id: 'hp-value', value: '1', label: 'MAX', type: 'label', filterType: 4 }, position: { x: 450, y: 60 } },
+      { group: 'nodes', data: { id: 'fire', value: `<${pk}Fire>`, label: 'Fire', type: 'node' }, position: { x: 450, y: 200 } },
+      { group: 'edges', data: { id: 'hp', source: '?p', target: 'hp-value', nodeId: `<${pk}hp>`, label: 'hp' } },
+      { group: 'edges', data: { id: 'type', source: '?p', target: 'fire', nodeId: `<${pk}type>`, label: 'type' } },
+    ]);
+  }, funnelPk);
+  const requests = [];
+  await page.route('**/api/query/count', async route => {
+    const body = JSON.parse(route.request().postData());
+    requests.push(body);
+    const fire = body.where.some(item => item.object === `<${funnelPk}Fire>`);
+    const max = body.where.some(item => item.filterType === 4);
+    // Two Fire types tie for the highest hp; three Pokémon tie overall.
+    const count = fire && max ? 2 : max ? 3 : fire ? 12 : 151;
+    await route.fulfill({ contentType: 'application/json', body: JSON.stringify({ data: { variableName: body.variableName, count } }) });
+  });
+  await page.locator('#filter-funnel-btn').click();
+  await expect(page.locator('#filter-funnel-result')).toHaveText(
+    'Result: 2 ?p of 151. MAX/MIN keep every tied result and come after the other filters, as in the query.');
+  expect(await funnelRows(page)).toEqual([
+    'With these relations, any value | 151',
+    'type = Fire | 12 −139',
+    'hp MAX | 2 −10',
+  ]);
+  const hpMax = { subject: '?p', predicate: `<${funnelPk}hp>`, object: '1', filterType: 4 };
+  expect(requests.at(-1).where).toEqual([hpMax, { subject: '?p', predicate: `<${funnelPk}type>`, object: `<${funnelPk}Fire>`, filterType: null }]);
+});
+
 test('unticking a funnel step previews later counts only and Run Query still sends every filter', async ({ page }) => {
   await addFunnelGraph(page);
   const requests = await routeFunnelCounts(page);
@@ -1950,10 +1984,12 @@ test('unticking a funnel step previews later counts only and Run Query still sen
 
   await page.locator('#filter-funnel-steps .funnel-toggle', { hasText: 'type = Fire' }).click();
   await expect(page.locator('#filter-funnel-result')).toContainText('Preview without 1 filter');
-  const before = server.requests.filter(({ path }) => path === '/api/query').length;
+  // Run Query runs a staged query since BUG-005; it still sends every filter.
+  const staged = () => server.requests.filter(({ path }) => path === '/api/query/stage');
+  const before = staged().length;
   await page.locator('#run-query-btn').click();
-  await expect.poll(() => server.requests.filter(({ path }) => path === '/api/query').length).toBe(before + 1);
-  const body = JSON.parse(server.requests.filter(({ path }) => path === '/api/query').at(-1).body);
+  await expect.poll(() => staged().length).toBeGreaterThan(before);
+  const body = JSON.parse(staged().at(-1).body);
   expect(body.where.map(item => item.object)).toEqual([`<${funnelPk}Fire>`, '90']);
 });
 

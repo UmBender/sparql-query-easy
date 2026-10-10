@@ -26,6 +26,8 @@ class ResultCountRoutesTest {
     private val anyType = """{"subject":"?p","predicate":"<${pk}hasType>","object":"?t"}"""
     private val fireType = """{"subject":"?p","predicate":"<${pk}hasType>","object":"<${pk}FireType>"}"""
     private val maxSpeed = """{"subject":"?p","predicate":"<${pk}speed>","object":"1","filterType":4}"""
+    private val maxStage = """{"subject":"?p","predicate":"<${pk}evolutionStage>","object":"1","filterType":4}"""
+    private val minStage = """{"subject":"?p","predicate":"<${pk}evolutionStage>","object":"1","filterType":5}"""
     private val fastSpeed = """{"subject":"?p","predicate":"<${pk}speed>","object":"90","filterType":2}"""
 
     @Test
@@ -36,6 +38,19 @@ class ResultCountRoutesTest {
             client.count("?p", "$anySpeed,$anyType") shouldBe """{"data":{"variableName":"?p","count":151}}"""
             client.count("p", "$anySpeed,$fireType") shouldBe """{"data":{"variableName":"?p","count":12}}"""
             client.count("?p", "$fastSpeed,$fireType") shouldBe """{"data":{"variableName":"?p","count":7}}"""
+        }
+
+    @Test
+    fun `MAX and MIN count every tied value over the rest of the query`() =
+        testApplication {
+            application { module() }
+
+            client.count("?p", maxSpeed) shouldBe """{"data":{"variableName":"?p","count":1}}"""
+            // 16 Pokémon share the highest evolution stage (3); 79 the lowest (1).
+            client.count("?p", maxStage) shouldBe """{"data":{"variableName":"?p","count":16}}"""
+            client.count("?p", minStage) shouldBe """{"data":{"variableName":"?p","count":79}}"""
+            // The extreme is taken among Fire types, wherever MAX sits in the list.
+            client.count("?p", "$maxStage,$fireType") shouldBe client.count("?p", "$fireType,$maxStage")
         }
 
     @Test
@@ -66,7 +81,6 @@ class ResultCountRoutesTest {
                 """{"endpointUrl":"$POKEMON_ENDPOINT_ID","variableName":"?p"}""",
                 """{"endpointUrl":"$POKEMON_ENDPOINT_ID","where":[$anySpeed]}""",
                 """{"endpointUrl":"$POKEMON_ENDPOINT_ID","variableName":"?__countX","where":[$anySpeed]}""",
-                """{"endpointUrl":"$POKEMON_ENDPOINT_ID","variableName":"?p","where":[$maxSpeed]}""",
             ).forEach { body ->
                 val response = client.postJson(body)
                 response.status shouldBe HttpStatusCode.BadRequest

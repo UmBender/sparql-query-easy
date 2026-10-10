@@ -265,9 +265,6 @@ data class CountQuery(
 ) : WikidataQuery {
     init {
         require(patterns.isNotEmpty()) { "A count requires at least one pattern" }
-        require(patterns.none { it.filter == Maximum || it.filter == Minimum }) {
-            "Maximum and Minimum filters are not supported in counts"
-        }
     }
 }
 
@@ -423,6 +420,8 @@ class CSharpCompatibleWikidataQueryGenerator(
             line("SELECT (COUNT(DISTINCT ${input.variable.render()}) AS ?__countValue)")
             line("WHERE {")
             input.patterns.forEachIndexed { index, pattern -> pattern(pattern, index) }
+            // Maximum/Minimum count every tied value (BE-004); a count has no LIMIT to cap.
+            extremes(input.patterns) {}
             line("}")
         }.build()
 

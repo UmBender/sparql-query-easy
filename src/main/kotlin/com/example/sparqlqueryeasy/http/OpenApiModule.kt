@@ -203,8 +203,8 @@ internal fun Route.documentResultCount(): Route =
         summary = "Count the distinct values of one query variable"
         description =
             "Returns the number of distinct values of variableName under the where patterns, without a LIMIT " +
-            "and without the rdf:type requirement of the general query. where needs at least one pattern; " +
-            "Maximum/Minimum filters are rejected."
+            "and without the rdf:type requirement of the general query. where needs at least one pattern. " +
+            "Maximum/Minimum keep every value tied at the extreme of the rest of the query."
         tag("Query")
         requestBody {
             required = true

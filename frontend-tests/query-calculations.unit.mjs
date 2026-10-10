@@ -98,20 +98,26 @@ const evolves = { subject: '?p', predicate: `<${pk}evolvesTo>`, object: '?e', fi
 const speedFast = { subject: '?p', predicate: `<${pk}speed>`, object: '90', filterType: 2 };
 const speedAny = { subject: '?p', predicate: `<${pk}speed>`, object: '?__funnel2', filterType: null };
 const hpAny = { subject: '?p', predicate: `<${pk}hp>`, object: '?__funnel3', filterType: null };
+const hpMax = { subject: '?p', predicate: `<${pk}hp>`, object: '1', filterType: 4 };
 
-test('funnel steps are fixed-value relations; MAX/MIN only order and variables are structure', () => {
-  assert.deepEqual(funnelEdges.map(funnelStepKind), ['step', null, 'step', 'ordering']);
+test('funnel steps are fixed-value relations; MAX/MIN are extreme steps and variables are structure', () => {
+  assert.deepEqual(funnelEdges.map(funnelStepKind), ['step', null, 'step', 'extreme']);
   assert.equal(funnelStepKind({ ...funnelEdges[0], nodeId: '?pred' }), null);
 });
 
 test('the funnel relaxes every step for the base and applies them cumulatively', () => {
   const plan = filterFunnelPlan({ endpointUrl: 'PokemonGen1', edges: funnelEdges, variableName: '?p' });
-  assert.deepEqual(plan.steps, [{ key: 'type', index: 0, counted: true }, { key: 'speed', index: 1, counted: true }]);
-  assert.equal(plan.orderingOnly, 1);
+  assert.deepEqual(plan.steps, [
+    { key: 'type', index: 0, counted: true, extreme: false },
+    { key: 'speed', index: 1, counted: true, extreme: false },
+    { key: 'hp', index: 2, counted: true, extreme: true },
+  ]);
+  assert.equal(plan.extremes, 1);
   assert.deepEqual(plan.requests.map(request => request?.where), [
     [typeAny, evolves, speedAny, hpAny],
     [typeFire, evolves, speedAny, hpAny],
     [typeFire, evolves, speedFast, hpAny],
+    [typeFire, evolves, speedFast, hpMax],
   ]);
   assert.deepEqual(plan.requests[0], { endpointUrl: 'PokemonGen1', variableName: '?p', where: [typeAny, evolves, speedAny, hpAny] });
 });
@@ -120,13 +126,14 @@ test('a disabled step changes later counts only and repeats the previous count',
   const plan = filterFunnelPlan({ endpointUrl: 'g', edges: funnelEdges, variableName: '?p', disabled: ['type'] });
   assert.equal(plan.requests[1], null);
   assert.deepEqual(plan.requests[2]?.where, [typeAny, evolves, speedFast, hpAny]);
-  assert.deepEqual(funnelStepCounts(plan.requests, [151, undefined, 40]), [151, 40]);
-  assert.deepEqual(funnelStepCounts(plan.requests, [undefined, undefined, undefined]), [null, null]);
+  assert.deepEqual(plan.requests[3]?.where, [typeAny, evolves, speedFast, hpMax]);
+  assert.deepEqual(funnelStepCounts(plan.requests, [151, undefined, 40, 2]), [151, 40, 2]);
+  assert.deepEqual(funnelStepCounts(plan.requests, [undefined, undefined, undefined, undefined]), [null, null, null]);
 });
 
 test('steps beyond the cap stay relaxed and are not counted', () => {
   const plan = filterFunnelPlan({ endpointUrl: 'g', edges: funnelEdges, variableName: '?p', maxSteps: 1 });
-  assert.deepEqual(plan.steps.map(step => step.counted), [true, false]);
+  assert.deepEqual(plan.steps.map(step => step.counted), [true, false, false]);
   assert.equal(plan.requests.length, 2);
   assert.deepEqual(plan.requests[1]?.where, [typeFire, evolves, speedAny, hpAny]);
 });

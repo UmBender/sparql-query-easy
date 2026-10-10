@@ -109,6 +109,7 @@ const funnelVariablePrefix = '?__funnel';
  *   key: string,
  *   index: number,
  *   counted: boolean,
+ *   extreme: boolean,
  * }} FunnelStep
  */
 
@@ -116,24 +117,24 @@ const funnelVariablePrefix = '?__funnel';
  * @typedef {{
  *   variableName: string,
  *   steps: FunnelStep[],
- *   orderingOnly: number,
+ *   extremes: number,
  *   requests: ({endpointUrl: string, variableName: string, where: QueryFilter[]} | null)[],
  * }} FunnelPlan
  */
 
 /**
  * A filter step is a fixed-predicate relation whose object is a fixed value (an IRI or
- * a literal, with or without a comparison). MAX/MIN only order the result, so they
- * are not steps.
+ * a literal, with or without a comparison). MAX/MIN (BE-004) are extreme steps: they
+ * keep every row tied at the extreme of the rest of the query.
  * @param {FilterEdge} edge
- * @returns {'step' | 'ordering' | null}
+ * @returns {'step' | 'extreme' | null}
  */
 export function funnelStepKind(edge) {
   const predicate = edge.nodeId;
   const object = edge.targetValue || edge.target;
   if (!predicate || !predicate.startsWith('<') || /^[?$]/.test(object)) return null;
   const filterType = filterTypeOf(edge.filterType);
-  return filterType === 4 || filterType === 5 ? 'ordering' : 'step';
+  return filterType === 4 || filterType === 5 ? 'extreme' : 'step';
 }
 
 /**
@@ -142,6 +143,9 @@ export function funnelStepKind(edge) {
  * applies the enabled steps among the first i; it is null when step i is disabled,
  * because its count is the previous one. Steps beyond [maxSteps] stay relaxed and
  * are not counted. Disabling a step therefore only changes later counts.
+ * MAX/MIN steps come after the other steps: their extreme is taken over the rest of
+ * the query (BE-004), so each count is what the query returns with the steps so far
+ * and the last count is the query's result.
  * @param {{endpointUrl: string, edges: FilterEdge[], variableName: string, disabled?: Iterable<string>, maxSteps?: number}} input
  * @returns {FunnelPlan}
  */
@@ -149,21 +153,21 @@ export function filterFunnelPlan({ endpointUrl, edges, variableName, disabled = 
   const off = new Set(disabled);
   /** @type {FunnelStep[]} */
   const steps = [];
-  let orderingOnly = 0;
   /** @type {Map<FilterEdge, number>} */
   const stepIndex = new Map();
-  edges.forEach(edge => {
-    const kind = funnelStepKind(edge);
-    if (kind === 'ordering') orderingOnly += 1;
-    if (kind !== 'step') return;
-    stepIndex.set(edge, steps.length);
-    steps.push({ key: funnelStepKey(edge), index: steps.length, counted: steps.length < maxSteps });
-  });
+  for (const wanted of ['step', 'extreme']) {
+    edges.forEach(edge => {
+      if (funnelStepKind(edge) !== wanted) return;
+      stepIndex.set(edge, steps.length);
+      steps.push({ key: funnelStepKey(edge), index: steps.length, counted: steps.length < maxSteps, extreme: wanted === 'extreme' });
+    });
+  }
+  const extremes = steps.filter(step => step.extreme).length;
   /** @param {number} applied */
   const where = applied => buildFilters(edges.map((edge, position) => {
     const kind = funnelStepKind(edge);
     const index = stepIndex.get(edge);
-    const keep = kind === 'step' && index !== undefined && index < applied && !off.has(steps[index].key);
+    const keep = kind !== null && index !== undefined && index < applied && !off.has(steps[index].key);
     if (kind === null || keep) return edge;
     return { ...edge, target: `${funnelVariablePrefix}${position}`, targetValue: `${funnelVariablePrefix}${position}`, filterType: null };
   }));
@@ -172,7 +176,7 @@ export function filterFunnelPlan({ endpointUrl, edges, variableName, disabled = 
     { endpointUrl, variableName, where: where(0) },
     ...counted.map(step => off.has(step.key) ? null : { endpointUrl, variableName, where: where(step.index + 1) }),
   ];
-  return { variableName, steps, orderingOnly, requests };
+  return { variableName, steps, extremes, requests };
 }
 
 /**
