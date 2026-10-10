@@ -7,7 +7,7 @@ type: frontend
 depends_on: [FE-035, BE-004]
 human_gate: false
 created: 2026-10-09
-updated: 2026-10-09
+updated: 2026-10-10
 ---
 # Show a kept/total badge on filter nodes and, once the variable is assumed, its actual value next to the filter
 
@@ -86,3 +86,6 @@ never shows the entity's real value.
 - Limitation: the node menu offers Edit value only under a variable, so after
   Assume/Apply a kept filter cannot be edited from the menu; the badge reacts
   to any data change (covered by tests changing the data directly).
+- 2026-10-10: The user ran the branch, accepted it and asked to merge;
+  merged into `main` with `--no-ff` (merge tree identical to the tested
+  `fe12a92`, so its validation is reused).
