@@ -131,6 +131,9 @@ graph without a browser or a new dependency.
    action (results table, Assume, Apply, Convert, Edit/Add value filter,
    Remove, Connect). Each row checks the resulting kinds, IDs and query
    payload. Fix the reproduced bugs in this card.
+   *Done 2026-10-14: the table is in `index2.spec.mjs`. No bugs were reported;
+   three Convert-to-variable bugs found are tracked as expected failures in
+   the QUAL-005 card.*
 2. **FE-032, one kind model.** A checked `graph-model.js` owns
    `elementKind(data)` (`iri`, `literal`, `class`, `variable`, `many`, plus the
    filter) and the factory that writes node data from an `RdfTerm`. Callers

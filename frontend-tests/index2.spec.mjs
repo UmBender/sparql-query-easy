@@ -2693,3 +2693,469 @@ test('a failed or empty value lookup keeps the filter and says the value is unkn
   await expect(filterBadge(page)).toHaveAttribute('aria-label', 'This entity has no value for this relation. The filter ≥ 80 cannot be checked.');
   expect(await speedNodeData(page)).toEqual({ value: '80', label: '≥ 80', type: 'label', filterType: 2 });
 });
+
+// ── QUAL-005: every node kind against every node action ────────────────
+// The kinds are built with the app's own factories, so their data is what a
+// user gets. A row with `convertBug` states the intended result and is expected
+// to fail until that bug is fixed (see the QUAL-005 card).
+const kpk = 'https://example.test/';
+const kindIri = name => `<${kpk}${name}>`;
+const COMMON_ACTIONS = ['Connect with variable predicate', 'Connect with defined predicate', 'Convert to variable', 'Remove'];
+const VARIABLE_ACTIONS = ['Run query', 'Add value filter', ...COMMON_ACTIONS];
+const NODE_KINDS = [
+  { kind: 'variable', key: 'variable', actions: VARIABLE_ACTIONS },
+  { kind: '"N results"', key: 'results', actions: VARIABLE_ACTIONS,
+    convertBug: 'the converted variable keeps the gray "N results" color' },
+  { kind: 'IRI', key: 'iri', actions: ['Explore relationships', ...COMMON_ACTIONS] },
+  { kind: 'class', key: 'class', actions: ['Explore values', ...COMMON_ACTIONS] },
+  { kind: 'literal value', key: 'literal', actions: ['Edit value', ...COMMON_ACTIONS] },
+  { kind: 'Boolean value', key: 'boolean', actions: ['Toggle Boolean value', 'Edit value', ...COMMON_ACTIONS] },
+  { kind: 'filtered value', key: 'filtered', actions: ['Edit value', ...COMMON_ACTIONS],
+    convertBug: 'the converted variable keeps filterType, so the server rejects the query' },
+  { kind: 'image link', key: 'link', actions: ['Open link', 'Edit value', ...COMMON_ACTIONS],
+    convertBug: 'the converted variable keeps isLink and offers Open link instead of Run query' },
+  { kind: 'value of a fixed entity', key: 'fixedValue', actions: COMMON_ACTIONS },
+];
+
+// ?mon with one relation per kind, plus <Mew> name "Mew" as a separate group.
+async function addNodeKindGraph(page) {
+  await disableAutoLayout(page);
+  return page.evaluate(pk => {
+    const iriOf = name => `<${pk}${name}>`;
+    cy.add({ group: 'nodes', data: { id: '?mon', value: '?mon', label: '?', type: 'variable' } });
+    const relation = (id, text, type, predicate) =>
+      addNodeWithRelationship(cy, id, text, type, '?mon', iriOf(predicate), predicate);
+    relation(iriOf('Electric'), 'Electric', 'node', 'type');
+    relation('Pikachu', 'Pikachu', 'text', 'name');
+    relation('true', 'true', 'text', 'legendary');
+    relation('90', '90', 'text', 'speed');
+    changeElementStringValue('90', '90', '2');
+    relation(`${pk}pikachu.png`, `${pk}pikachu.png`, 'text', 'image');
+    relation('?node_moves', '3 results', 'many-results', 'move');
+    cy.add([
+      { group: 'nodes', data: { id: '?class', value: '?class', label: '?', type: 'variable' } },
+      { group: 'edges', data: { id: 'instance-of', source: '?mon', target: '?class', nodeId: iriOf('instanceOf'), label: 'instance of' } },
+    ]);
+    replaceWithNewNode(cy, '?class', iriOf('Pokemon'), 'Pokémon', 'default', iriOf('Pokemon'));
+    cy.add({ group: 'nodes', data: { id: iriOf('Mew'), value: iriOf('Mew'), label: 'Mew', type: 'node' } });
+    addNodeWithRelationship(cy, 'Mew', 'Mew', 'text', iriOf('Mew'), iriOf('name'), 'name');
+
+    const ids = {
+      variable: '?mon', results: '?node_moves', iri: iriOf('Electric'), class: iriOf('Pokemon'),
+      literal: 'Pikachu', boolean: 'true', filtered: cy.nodes('[filterType]').id(), link: `${pk}pikachu.png`, fixedValue: 'Mew',
+    };
+    const ring = ['results', 'iri', 'class', 'literal', 'boolean', 'filtered', 'link'];
+    cy.getElementById('?mon').position({ x: 330, y: 260 });
+    ring.forEach((key, index) => {
+      const angle = 2 * Math.PI * index / ring.length;
+      cy.getElementById(ids[key]).position({ x: 330 + 210 * Math.cos(angle), y: 260 + 180 * Math.sin(angle) });
+    });
+    cy.getElementById(iriOf('Mew')).position({ x: 660, y: 90 });
+    cy.getElementById('Mew').position({ x: 660, y: 230 });
+    return ids;
+  }, kpk);
+}
+
+const kindFilter = (subject, predicate, object, filterType = null) =>
+  ({ subject, predicate: kindIri(predicate), object, filterType });
+const KIND_GRAPH_FILTERS = [
+  kindFilter('?mon', 'type', kindIri('Electric')),
+  kindFilter('?mon', 'name', 'Pikachu'),
+  kindFilter('?mon', 'legendary', 'true'),
+  kindFilter('?mon', 'speed', '90', 2),
+  kindFilter('?mon', 'image', `${kpk}pikachu.png`),
+  kindFilter('?mon', 'move', '?node_moves'),
+  kindFilter('?mon', 'instanceOf', kindIri('Pokemon')),
+];
+const MEW_FILTER = kindFilter(kindIri('Mew'), 'name', 'Mew');
+// Filters are compared as multisets: element order is not part of the payload contract.
+const sortJson = items => items.map(item => JSON.stringify(item)).sort().map(item => JSON.parse(item));
+const allFilters = async page => sortJson(await page.evaluate(() => buildFilters(cy.elements())));
+const menuActions = page => page.locator('#node-action-menu-list button[data-action]').allTextContents();
+const nodeMenu = page => page.locator('#node-action-menu');
+const dismissMenus = page => page.locator('#cy').click({ position: { x: 16, y: 16 } });
+const edgeEnds = page => page.evaluate(() => cy.edges()
+  .map(edge => `${edge.id()}|${edge.data('source')}|${edge.data('nodeId')}|${edge.data('target')}`).sort());
+const nodeValue = (page, id) => page.evaluate(nodeId => cy.getElementById(nodeId).data('value'), id);
+const actionRequests = () => server.requests.filter(({ path }) => path !== '/api/query/numeric-profile');
+const VARIABLE_COLOR = 'rgb(169,209,142)';
+
+test('QUAL-005 the node-kind graph sends one filter per relation', async ({ page }) => {
+  await addNodeKindGraph(page);
+  expect(await allFilters(page)).toEqual(sortJson([...KIND_GRAPH_FILTERS, MEW_FILTER]));
+});
+
+test('QUAL-005 each node kind offers exactly its actions and selecting it sends no request', async ({ page }) => {
+  const ids = await addNodeKindGraph(page);
+  for (const row of NODE_KINDS) {
+    await test.step(row.kind, async () => {
+      await dismissMenus(page);
+      const before = actionRequests().length;
+      await clickGraphNode(page, ids[row.key]);
+      await expect(nodeMenu(page)).toHaveAttribute('data-node-id', ids[row.key]);
+      expect(await menuActions(page)).toEqual(row.actions);
+      expect(actionRequests().length).toBe(before);
+    });
+  }
+});
+
+for (const row of NODE_KINDS) {
+  test(`QUAL-005 Convert to variable turns a ${row.kind} node into a plain variable`, async ({ page }) => {
+    test.fail(Boolean(row.convertBug), `Known bug: ${row.convertBug}.`);
+    const ids = await addNodeKindGraph(page);
+    const oldId = ids[row.key];
+    const oldValue = await nodeValue(page, oldId);
+    const edgesBefore = await edgeEnds(page);
+    const filtersBefore = await allFilters(page);
+
+    await clickGraphNode(page, oldId);
+    await nodeMenu(page).getByRole('button', { name: 'Convert to variable' }).click();
+
+    const newId = await nodeMenu(page).getAttribute('data-node-id');
+    expect(newId).toMatch(/^\?node_\d+$/);
+    expect(await menuActions(page)).toEqual(VARIABLE_ACTIONS);
+    expect(await page.evaluate(([from, to]) => {
+      const node = cy.getElementById(to);
+      return { oldExists: cy.getElementById(from).length > 0, type: node.data('type'), value: node.data('value'),
+        label: node.data('label'), color: node.style('background-color') };
+    }, [oldId, newId])).toEqual({ oldExists: false, type: 'variable', value: newId, label: '?', color: VARIABLE_COLOR });
+    // Every relation keeps its ID and predicate and now ends at the variable.
+    expect(await edgeEnds(page)).toEqual(edgesBefore
+      .map(item => item.split('|').map((part, index) => (index !== 2 && part === oldId ? newId : part)).join('|')).sort());
+    expect(await allFilters(page)).toEqual(sortJson(filtersBefore.map(filter => ({
+      ...filter,
+      subject: filter.subject === oldValue ? newId : filter.subject,
+      object: filter.object === oldValue ? newId : filter.object,
+      filterType: filter.object === oldValue ? null : filter.filterType,
+    }))));
+  });
+}
+
+test('QUAL-005 Remove deletes only the chosen node of each kind and its relations', async ({ page }) => {
+  const ids = await addNodeKindGraph(page);
+  const variableLast = [...NODE_KINDS.slice(1), NODE_KINDS[0]];
+  for (const row of variableLast) {
+    await test.step(row.kind, async () => {
+      const id = ids[row.key];
+      const value = await nodeValue(page, id);
+      const expected = await page.evaluate(nodeId => ({
+        nodes: cy.nodes().map(node => node.id()).filter(other => other !== nodeId).sort(),
+        edges: cy.edges().filter(edge => edge.data('source') !== nodeId && edge.data('target') !== nodeId)
+          .map(edge => `${edge.id()}|${edge.data('source')}|${edge.data('nodeId')}|${edge.data('target')}`).sort(),
+      }), id);
+      const filtersBefore = await allFilters(page);
+
+      await dismissMenus(page);
+      await clickGraphNode(page, id);
+      await nodeMenu(page).getByRole('button', { name: 'Remove', exact: true }).click();
+
+      await expect(nodeMenu(page)).toBeHidden();
+      expect(await page.evaluate(() => cy.nodes().map(node => node.id()).sort())).toEqual(expected.nodes);
+      expect(await edgeEnds(page)).toEqual(expected.edges);
+      expect(await allFilters(page)).toEqual(filtersBefore.filter(filter => filter.subject !== value && filter.object !== value));
+    });
+  }
+  expect(await allFilters(page)).toEqual([]);
+});
+
+test('QUAL-005 every node kind connects to an existing node with a variable or a defined predicate', async ({ page }) => {
+  const ids = await addNodeKindGraph(page);
+  const kanto = kindIri('Kanto');
+  await page.evaluate(id => {
+    cy.add({ group: 'nodes', data: { id, value: id, label: 'Kanto', type: 'node' }, position: { x: 660, y: 400 } });
+  }, kanto);
+  const newEdge = async (before) => page.evaluate(known => {
+    const added = cy.edges().filter(edge => !known.includes(edge.id()));
+    return added.map(edge => ({ source: edge.data('source'), target: edge.data('target'), nodeId: edge.data('nodeId'),
+      label: edge.data('label'), type: edge.data('type') ?? null }));
+  }, before);
+  const edgeIds = () => page.evaluate(() => cy.edges().map(edge => edge.id()));
+
+  for (const row of NODE_KINDS) {
+    await test.step(row.kind, async () => {
+      const id = ids[row.key];
+      const value = await nodeValue(page, id);
+
+      let before = await edgeIds();
+      await dismissMenus(page);
+      await clickGraphNode(page, id);
+      await nodeMenu(page).getByRole('button', { name: 'Connect with variable predicate' }).click();
+      await clickGraphNode(page, kanto);
+      const [variableEdge] = await newEdge(before);
+      expect(variableEdge).toMatchObject({ source: id, target: kanto, label: '?', type: 'variable' });
+      expect(variableEdge.nodeId).toMatch(/^\?predicate_\d+$/);
+      expect(await allFilters(page)).toContainEqual({ subject: value, predicate: variableEdge.nodeId, object: kanto, filterType: null });
+
+      before = await edgeIds();
+      const relationshipCount = server.requests.filter(({ path }) => path === '/api/query/relationships').length;
+      await clickGraphNode(page, id);
+      await nodeMenu(page).getByRole('button', { name: 'Connect with defined predicate' }).click();
+      await nodeMenu(page).getByRole('button', { name: 'name', exact: true }).click();
+      await clickGraphNode(page, kanto);
+      const relationshipRequests = server.requests.filter(({ path }) => path === '/api/query/relationships');
+      expect(relationshipRequests).toHaveLength(relationshipCount + 1);
+      expect(JSON.parse(relationshipRequests.at(-1).body).id).toBe(value);
+      expect(await newEdge(before)).toEqual([
+        { source: id, target: kanto, nodeId: '<https://example.test/hasName>', label: 'name', type: null },
+      ]);
+      expect(await allFilters(page)).toContainEqual({ subject: value, predicate: '<https://example.test/hasName>', object: kanto, filterType: null });
+    });
+  }
+});
+
+test('QUAL-005 type-specific node actions change only their node and the next query payload', async ({ page }) => {
+  const ids = await addNodeKindGraph(page);
+  const lastRequest = path => JSON.parse(server.requests.filter(request => request.path === path).at(-1).body);
+  const selected = () => nodeMenu(page).getAttribute('data-node-id');
+  const selectedData = () => page.evaluate(() => {
+    const { id, ...data } = cy.getElementById(document.getElementById('node-action-menu').dataset.nodeId).data();
+    return { value: data.value, label: data.label, type: data.type, filterType: data.filterType ?? null };
+  });
+  const runAction = async (id, action) => {
+    await dismissMenus(page);
+    await clickGraphNode(page, id);
+    await nodeMenu(page).getByRole('button', { name: action, exact: true }).click();
+  };
+  const applyEditor = (filterType, value) => page.evaluate(([type, text]) => {
+    document.querySelector(`#modal-change-value input[name=filter-type][value="${type}"]`).checked = true;
+    document.getElementById('modal-new-value').value = text;
+    document.getElementById('apply-filter-btn').click();
+  }, [filterType, value]);
+  const relationTarget = predicate => page.evaluate(nodeId => cy.edges()
+    .filter(edge => edge.data('source') === '?mon' && edge.data('nodeId') === nodeId)
+    .map(edge => edge.data('target')), kindIri(predicate));
+  const filters = KIND_GRAPH_FILTERS.slice();
+  const replaceFilter = (predicate, object, filterType = null) => {
+    const index = filters.findIndex(filter => filter.predicate === kindIri(predicate));
+    filters[index] = kindFilter('?mon', predicate, object, filterType);
+  };
+
+  await test.step('Toggle Boolean value', async () => {
+    await runAction(ids.boolean, 'Toggle Boolean value');
+    const id = await selected();
+    expect(id).toMatch(/^node_\d+$/);
+    expect(await selectedData()).toEqual({ value: 'false', label: 'false', type: 'label', filterType: null });
+    expect(await relationTarget('legendary')).toEqual([id]);
+    replaceFilter('legendary', 'false');
+    expect(await allFilters(page)).toEqual(sortJson([...filters, MEW_FILTER]));
+  });
+
+  await test.step('Edit value of a literal value', async () => {
+    await runAction(ids.literal, 'Edit value');
+    await expect(page.locator('#modal-new-value')).toHaveValue('Pikachu');
+    await expect(page.locator('#modal-change-value')).toContainText('Starts with');
+    await applyEditor('0', 'Pi');
+    const id = await selected();
+    expect(id).toMatch(/^node_\d+$/);
+    expect(await selectedData()).toEqual({ value: 'Pi', label: 'starts with Pi', type: 'label', filterType: 0 });
+    expect(await relationTarget('name')).toEqual([id]);
+    replaceFilter('name', 'Pi', 0);
+    expect(await allFilters(page)).toEqual(sortJson([...filters, MEW_FILTER]));
+  });
+
+  await test.step('Edit value of a filtered value', async () => {
+    await runAction(ids.filtered, 'Edit value');
+    await expect(page.locator('#modal-new-value')).toHaveValue('90');
+    expect(await checkedFilter(page)).toBe('At least (≥)');
+    await applyEditor('6', '80..100');
+    const id = await selected();
+    expect(id).not.toBe(ids.filtered);
+    expect(await selectedData()).toEqual({ value: '80..100', label: '80–100', type: 'label', filterType: 6 });
+    expect(await relationTarget('speed')).toEqual([id]);
+    replaceFilter('speed', '80..100', 6);
+    expect(await allFilters(page)).toEqual(sortJson([...filters, MEW_FILTER]));
+  });
+
+  await test.step('Explore relationships of an IRI', async () => {
+    const before = server.requests.length;
+    await runAction(ids.iri, 'Explore relationships');
+    await expect.poll(() => server.requests.slice(before).some(({ path }) => path === '/api/query/relationships')).toBe(true);
+    expect(lastRequest('/api/query/relationships')).toEqual({ endpointUrl: 'CampeonatoBrasileiro2023', id: kindIri('Electric') });
+  });
+
+  await test.step('Explore values of a class', async () => {
+    const before = server.requests.length;
+    await runAction(ids.class, 'Explore values');
+    await expect.poll(() => server.requests.slice(before).some(({ path }) => path === '/api/query')).toBe(true);
+    const request = lastRequest('/api/query');
+    expect(request.variableName).toMatch(/^\?default_\d+$/);
+    expect(request.where).toEqual([{ subject: request.variableName, predicate: 'rdfs:domain', object: kindIri('Pokemon') }]);
+  });
+
+  await test.step('Open link of an image link', async () => {
+    await page.evaluate(() => { window.open = (...args) => { window.__openedLink = args; }; });
+    await runAction(ids.link, 'Open link');
+    expect(await page.evaluate(() => window.__openedLink)).toEqual([`${kpk}pikachu.png`, '_blank', 'noopener,noreferrer']);
+  });
+
+  for (const [kind, id] of [['variable', ids.variable], ['"N results"', ids.results]]) {
+    await test.step(`Run query on a ${kind} node`, async () => {
+      const before = server.requests.length;
+      await runAction(id, 'Run query');
+      await expect.poll(() => server.requests.slice(before).some(({ path }) => path === '/api/query')).toBe(true);
+      const request = lastRequest('/api/query');
+      expect(request.variableName).toBe(id);
+      expect(sortJson(request.where)).toEqual(sortJson(filters));
+    });
+  }
+
+  await test.step('Add value filter on a "N results" node', async () => {
+    await runAction(ids.results, 'Add value filter');
+    await nodeMenu(page).getByRole('button', { name: 'name', exact: true }).click();
+    await expect(page.locator('#modal-change-value')).toContainText('Starts with');
+    const valueId = await page.locator('#modal-change-value-content').getAttribute('data-node-id');
+    expect(valueId).toMatch(/^value_\d+$/);
+    await applyEditor('', 'Tackle');
+    const edges = await page.evaluate(() => cy.edges().filter(edge => edge.data('nodeId') === '<https://example.test/hasName>')
+      .map(edge => ({ source: edge.data('source'), target: cy.getElementById(edge.data('target')).data() })));
+    expect(edges).toHaveLength(1);
+    expect(edges[0].source).toBe(ids.results);
+    expect(edges[0].target).toMatchObject({ value: 'Tackle', label: 'Tackle', type: 'label' });
+    expect(await allFilters(page)).toEqual(sortJson([...filters, MEW_FILTER,
+      { subject: ids.results, predicate: '<https://example.test/hasName>', object: 'Tackle', filterType: null }]));
+  });
+});
+
+test('QUAL-005 a results-table choice replaces the variable and refetches each relation from the chosen IRI', async ({ page }) => {
+  const ids = await addNodeKindGraph(page);
+  const pikachu = kindIri('Pikachu');
+  await page.route('**/api/query', route => route.fulfill({ contentType: 'application/json',
+    body: JSON.stringify({ data: [{ propertyId: pikachu, propertyLabel: 'Pikachu', propertyType: 'object', propertyClass: null }] }) }));
+  const valueRequests = [];
+  await page.route('**/api/query/relationship-value', route => {
+    const request = route.request().postDataJSON();
+    valueRequests.push(request);
+    const name = request.predicateId.slice(kpk.length + 1, -1);
+    return route.fulfill({ contentType: 'application/json',
+      body: JSON.stringify({ data: [{ propertyId: `${name}-value`, propertyLabel: `${name}-value`, propertyType: 'text' }] }) });
+  });
+
+  await runLegacyQueryFromNode(page, ids.variable);
+  await expect(page.locator('#table-results-body')).toContainText('Pikachu');
+  await page.locator('#table-results-body tr.query-row').dispatchEvent('click');
+
+  const predicates = KIND_GRAPH_FILTERS.map(filter => filter.predicate).sort();
+  await expect.poll(() => valueRequests.length).toBe(predicates.length);
+  expect(valueRequests.map(request => request.subjectId)).toEqual(predicates.map(() => pikachu));
+  expect(valueRequests.map(request => request.predicateId).sort()).toEqual(predicates);
+  await expect.poll(() => page.evaluate(() => cy.nodes().length)).toBe(predicates.length + 3);
+  expect(await page.evaluate(id => cy.getElementById(id).data(), pikachu))
+    .toEqual({ id: pikachu, value: pikachu, label: 'Pikachu', type: 'node' });
+  expect(await page.evaluate(() => cy.getElementById('?mon').length)).toBe(0);
+  // Each relation of the chosen value now ends at its own fetched value.
+  expect(await allFilters(page)).toEqual(sortJson([MEW_FILTER, ...KIND_GRAPH_FILTERS.map(filter => kindFilter(
+    pikachu, filter.predicate.slice(kpk.length + 1, -1), `${filter.predicate.slice(kpk.length + 1, -1)}-value`))]));
+});
+
+test('QUAL-005 a results-table choice for a value variable becomes a literal value node', async ({ page }) => {
+  const ids = await addNodeKindGraph(page);
+  await page.route('**/api/query', route => route.fulfill({ contentType: 'application/json',
+    body: JSON.stringify({ data: [{ propertyId: 'Thunderbolt', propertyLabel: 'Thunderbolt', propertyType: 'text', propertyClass: null }] }) }));
+  const edgesBefore = await edgeEnds(page);
+
+  await runLegacyQueryFromNode(page, ids.results);
+  await expect(page.locator('#table-results-body')).toContainText('Thunderbolt');
+  await page.locator('#table-results-body tr.query-row').dispatchEvent('click');
+
+  expect(await page.evaluate(() => cy.getElementById('Thunderbolt').data()))
+    .toEqual({ id: 'Thunderbolt', value: 'Thunderbolt', label: 'Thunderbolt', type: 'label' });
+  expect(await edgeEnds(page)).toEqual(edgesBefore.map(item => item.replace(/\|\?node_moves$/, '|Thunderbolt')).sort());
+  await clickGraphNode(page, 'Thunderbolt');
+  expect(await menuActions(page)).toEqual(['Edit value', ...COMMON_ACTIONS]);
+  expect(await allFilters(page)).toEqual(sortJson([MEW_FILTER, ...KIND_GRAPH_FILTERS
+    .map(filter => (filter.object === '?node_moves' ? { ...filter, object: 'Thunderbolt' } : filter))]));
+});
+
+const thunderbolt = { term: { type: 'literal', value: 'Thunderbolt', datatype: null, language: null }, label: null, selectable: true };
+async function stageNodeKindGraph(page) {
+  const ids = await addNodeKindGraph(page);
+  const edgesBefore = await edgeEnds(page);
+  const requests = await routeStages(page, request => ({ body: stagePage(request,
+    request.variableName === '?mon' ? [iri(`${kpk}Pikachu`, 'Pikachu')] : [thunderbolt]) }));
+  await expect(blockNames(page)).toHaveText(['?mon', '?node_moves']);
+  await page.locator('#run-query-btn').click();
+  await expect(candidateButtons(page)).toHaveCount(1);
+  return { ids, requests, edgesBefore };
+}
+
+// Both stages bound: ?mon is <Pikachu> and ?node_moves is the literal "Thunderbolt".
+async function expectBoundNodeKindGraph(page, edgesBefore) {
+  const pikachu = kindIri('Pikachu');
+  expect(await page.evaluate(() => cy.nodes().filter(node => node.data('type') === 'variable').length)).toBe(0);
+  expect(await page.evaluate(id => cy.getElementById(id).data(), pikachu))
+    .toEqual({ id: pikachu, value: pikachu, label: 'Pikachu', type: 'node' });
+  expect(await page.evaluate(() => cy.getElementById('Thunderbolt').data()))
+    .toEqual({ id: 'Thunderbolt', value: 'Thunderbolt', label: 'Thunderbolt', type: 'label' });
+  expect(await edgeEnds(page)).toEqual(edgesBefore.map(item => item.split('|')
+    .map((part, index) => (index === 2 ? part : part === '?mon' ? pikachu : part === '?node_moves' ? 'Thunderbolt' : part))
+    .join('|')).sort());
+  // The filtered value keeps its filter.
+  expect(await page.evaluate(() => cy.nodes('[filterType]').map(node => [node.data('value'), node.data('filterType')])))
+    .toEqual([['90', 2]]);
+  expect(await allFilters(page)).toEqual(sortJson([MEW_FILTER, ...KIND_GRAPH_FILTERS.map(filter => ({
+    ...filter, subject: pikachu, object: filter.object === '?node_moves' ? 'Thunderbolt' : filter.object,
+  }))]));
+}
+
+test('QUAL-005 Assume binds an IRI variable and then a value variable in the node-kind graph', async ({ page }) => {
+  const { requests, edgesBefore } = await stageNodeKindGraph(page);
+
+  await page.getByRole('button', { name: 'Assume ?mon = Pikachu in the graph now' }).click();
+  await expect(page.locator('#stage-heading')).toHaveText('Stage 1 of 1: ?node_moves');
+  const last = requests.at(-1);
+  expect(last.variableName).toBe('?node_moves');
+  expect(last.bindings).toEqual([]);
+  expect(sortJson(last.where)).toEqual(sortJson(KIND_GRAPH_FILTERS.map(filter => ({ ...filter, subject: kindIri('Pikachu') }))));
+
+  await page.getByRole('button', { name: 'Assume ?node_moves = Thunderbolt in the graph now' }).click();
+  await expect(page.locator('#two-variable-panel')).toBeHidden();
+  await expectBoundNodeKindGraph(page, edgesBefore);
+});
+
+test('QUAL-005 Apply to graph binds the same node kinds as Assume', async ({ page }) => {
+  const { edgesBefore } = await stageNodeKindGraph(page);
+
+  await candidateButtons(page).first().click();
+  await expect(page.locator('#stage-heading')).toHaveText('Stage 2 of 2: ?node_moves');
+  await expect(candidateButtons(page)).toHaveCount(1);
+  await candidateButtons(page).first().click();
+  await page.getByRole('button', { name: 'Apply to graph' }).click();
+
+  await expect(page.locator('#two-variable-panel')).toBeHidden();
+  await expectBoundNodeKindGraph(page, edgesBefore);
+});
+
+test('QUAL-005 Remove relation deletes only the chosen relation of each kind', async ({ page }) => {
+  const ids = await addNodeKindGraph(page);
+  await page.evaluate(([source, target]) => {
+    cy.add({ group: 'edges', data: { id: 'variable-relation', source, target, nodeId: '?predicate_9', label: '?', type: 'variable' } });
+  }, [ids.variable, ids.iri]);
+  const relations = [
+    ['fixed IRI relation', `${kindIri('type')}0`],
+    ['variable predicate relation', 'variable-relation'],
+    ['relation to a literal value', `${kindIri('name')}0`],
+    ['relation to a filtered value', `${kindIri('speed')}0`],
+    ['relation of a fixed entity', `${kindIri('name')}0_1`],
+  ];
+  for (const [kind, edgeId] of relations) {
+    await test.step(kind, async () => {
+      const nodesBefore = await page.evaluate(() => cy.nodes().map(node => node.id()).sort());
+      const edgesBefore = await edgeEnds(page);
+      const filtersBefore = await allFilters(page);
+      const removed = await page.evaluate(id => {
+        const edge = cy.getElementById(id);
+        return buildFilters(edge)[0];
+      }, edgeId);
+      await dismissMenus(page);
+      await clickGraphEdge(page, edgeId);
+      await expect(page.locator('#edge-action-menu')).toHaveAttribute('data-edge-id', edgeId);
+      await page.locator('#edge-action-menu').getByRole('button', { name: 'Remove relation' }).click();
+
+      expect(await page.evaluate(() => cy.nodes().map(node => node.id()).sort())).toEqual(nodesBefore);
+      expect(await edgeEnds(page)).toEqual(edgesBefore.filter(item => !item.startsWith(`${edgeId}|`)));
+      const index = filtersBefore.findIndex(filter => JSON.stringify(filter) === JSON.stringify(removed));
+      expect(index).toBeGreaterThanOrEqual(0);
+      expect(await allFilters(page)).toEqual(filtersBefore.filter((_, other) => other !== index));
+    });
+  }
+});

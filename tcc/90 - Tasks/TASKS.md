@@ -68,7 +68,7 @@ Ordered by dependencies, then priority among selection candidates. See [worker r
 | FE-029 | CANCELLED | P1 | frontend | [Show the filtered result as a live graph that changes with the range](<items/FE-029-filter-live-result-graph.md>) |
 | FE-030 | DONE | P1 | frontend | [Add a value filter to a variable node from its action list](<items/FE-030-add-value-filter-node-action.md>) |
 | FE-031 | DONE | P1 | analysis | [Propose how to make frontend changes less error prone](<items/FE-031-frontend-reliability-proposal.md>) |
-| QUAL-005 | BACKLOG | P1 | quality | [Reproduce value-node bugs and cover every node kind against every action](<items/QUAL-005-node-kind-action-regressions.md>) |
+| QUAL-005 | DONE | P1 | quality | [Reproduce value-node bugs and cover every node kind against every action](<items/QUAL-005-node-kind-action-regressions.md>) |
 | FE-032 | BACKLOG | P1 | refactor | [Decide graph element kinds in one checked module](<items/FE-032-graph-element-kind-model.md>) |
 | FE-033 | BACKLOG | P1 | refactor | [Bind a variable to a value through one tested graph function](<items/FE-033-single-variable-binding-path.md>) |
 | FE-034 | BACKLOG | P1 | fullstack | [Add a variable value node that holds a filter and becomes a value when chosen](<items/FE-034-variable-value-node.md>) |
