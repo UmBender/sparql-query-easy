@@ -487,7 +487,7 @@ function applyChoicesToGraph(choices) {
                     const edge = cy.getElementById(id);
                     if (!edge.length || edge.data('nodeId') !== variableName) return;
                     edge.data({ nodeId: value, label });
-                    if (edge.data('type') === 'variable') edge.removeData('type');
+                    if (window.graphModel.isVariableEdge(edge.data())) edge.removeData('type');
                 });
             }
             entry.nodeIds.forEach(id => replaceVariableNodeWithTerm(id, term, value, label));
@@ -503,7 +503,7 @@ function replaceVariableNodeWithTerm(oldId, term, value, label) {
     if (!cy.getElementById(value).length) {
         cy.add({
             group: 'nodes',
-            data: { id: value, value, label, type: term.type === 'iri' ? 'node' : 'label' },
+            data: window.graphModel.nodeDataForTerm(term, label),
             position: { ...oldNode.position() },
         });
     }

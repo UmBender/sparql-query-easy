@@ -83,6 +83,7 @@ tasks.named<Copy>("processResources") {
             "query-calculations.js",
             "query-stages.js",
             "graph-actions.js",
+            "graph-model.js",
             "app-core.js",
             "stage-order.js",
             "stage-exploration.js",

@@ -3,9 +3,11 @@
  * offers, and the next free predicate-variable name. The browser adapter owns
  * Cytoscape, the DOM and the action handlers.
  * @typedef {{id: string, label: string, danger?: boolean}} MenuAction
- * @typedef {{type?: string, label?: string, isLink?: boolean}} MenuNodeData
+ * @typedef {{type?: string, label?: string, isLink?: boolean, color?: string}} MenuNodeData
  * @typedef {{nodeId?: string}} MenuEdgeData
  */
+
+import { isEditableValue, isVariableName, nodeKind } from './graph-model.js';
 
 /**
  * Type-specific action first, then value edits for nodes fed by a variable,
@@ -17,14 +19,15 @@
 export function nodeActions(data, hasVariableSource) {
   /** @type {MenuAction[]} */
   const actions = [];
+  const { kind, isLink } = nodeKind(data);
 
-  if (data.isLink) {
+  if (isLink) {
     actions.push({ id: 'open-link', label: 'Open link' });
-  } else if (data.type === 'node') {
+  } else if (kind === 'iri') {
     actions.push({ id: 'explore-relationships', label: 'Explore relationships' });
-  } else if (data.type === 'default') {
+  } else if (kind === 'class') {
     actions.push({ id: 'explore-default', label: 'Explore values' });
-  } else if (data.type === 'variable') {
+  } else if (kind === 'variable' || kind === 'many') {
     actions.push({ id: 'run-query', label: 'Run query' });
     actions.push({ id: 'add-value-filter', label: 'Add value filter' });
   }
@@ -32,7 +35,7 @@ export function nodeActions(data, hasVariableSource) {
   if (hasVariableSource && (data.label === 'true' || data.label === 'false')) {
     actions.push({ id: 'toggle-boolean', label: 'Toggle Boolean value' });
   }
-  if (hasVariableSource && data.type === 'label') {
+  if (hasVariableSource && isEditableValue(data)) {
     actions.push({ id: 'edit-value', label: 'Edit value' });
   }
 
@@ -50,7 +53,7 @@ export function nodeActions(data, hasVariableSource) {
  * @returns {MenuAction[]}
  */
 export function edgeActions(data) {
-  const actions = data.nodeId?.startsWith('?')
+  const actions = isVariableName(data.nodeId)
     ? []
     : [{ id: 'convert-predicate-variable', label: 'Convert relation to variable' }];
   return [...actions, { id: 'remove-relation', label: 'Remove relation', danger: true }];

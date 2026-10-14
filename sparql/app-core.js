@@ -75,7 +75,7 @@ function getAllNodes() {
     const nodes = [];
     cy.elements().components().forEach(component => {
         component.forEach(item => {
-            if (!item.data('id').includes('?')) nodes.push(item.data('id'));
+            if (!window.graphModel.hasVariableMark(item.data('id'))) nodes.push(item.data('id'));
         });
     });
     return nodes;
@@ -174,10 +174,11 @@ function extractVariableName(component) {
     let variableName = '';
     for (let i = 0; i < component.length; i++) {
         const item = component[i];
-        if (item.data('source') && item.data('source').includes('?')) variableName = item.data('source');
-        if (item.data('target') && item.data('target').includes('?')) variableName = item.data('target');
-        if (item.data('id')     && item.data('id').includes('?'))     variableName = item.data('id');
-        if (item.data('nodeId') && item.data('nodeId').startsWith('?')) variableName = item.data('nodeId');
+        const model = window.graphModel;
+        if (model.hasVariableMark(item.data('source'))) variableName = item.data('source');
+        if (model.hasVariableMark(item.data('target'))) variableName = item.data('target');
+        if (model.hasVariableMark(item.data('id')))     variableName = item.data('id');
+        if (model.isVariableName(item.data('nodeId')))  variableName = item.data('nodeId');
     }
     return variableName;
 }
@@ -453,7 +454,7 @@ function replacePredicateVariable(nodeLine) {
         const edge = cy.getElementById(id);
         if (!edge.length || !edge.isEdge() || edge.data('nodeId') !== p.variableName) return;
         edge.data({ nodeId: p.nodeId, label: p.nodeLabel });
-        if (edge.data('type') === 'variable') edge.removeData('type');
+        if (window.graphModel.isVariableEdge(edge.data())) edge.removeData('type');
     });
     $('#grid-resultado-consulta').modal('close');
 }
@@ -472,7 +473,7 @@ function newQuery() {
 
 function addNewVariable() {
     const newId = `?node_${Date.now()}`;
-    cy.add({ group: 'nodes', data: { id: newId, value: newId, label: '?', type: 'variable' } });
+    cy.add({ group: 'nodes', data: window.graphModel.variableNodeData(newId) });
     if (document.getElementById('auto-layout').checked) cy.layout({ name: 'cose' }).run();
     updateStatusBar();
 }

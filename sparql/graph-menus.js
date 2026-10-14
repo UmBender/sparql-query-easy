@@ -69,7 +69,7 @@ function initGraphMenus() {
         cy.add({ group: 'edges', data: {
             source: source.id(), target: target.id(), nodeId: connection.predicateId,
             label: connection.predicateLabel,
-            ...(connection.predicateId.startsWith('?') ? { type: 'variable' } : {})
+            ...(window.graphModel.isVariableName(connection.predicateId) ? { type: 'variable' } : {})
         } });
         updateStatusBar();
     }
@@ -106,7 +106,7 @@ function initGraphMenus() {
     function hasVariableSource(node) {
         return cy.edges().some(edge =>
             edge.data('target') === node.id() &&
-            cy.getElementById(edge.data('source')).data('type') === 'variable'
+            window.graphModel.isVariableNode(cy.getElementById(edge.data('source')).data())
         );
     }
 
@@ -238,14 +238,11 @@ function initGraphMenus() {
     function convertMenuNodeToVariable(node) {
         const oldId    = node.id();
         const newVarId = `?node_${Date.now()}`;
-        // QUAL-005: a value's filter, an image link and the gray "N results"
-        // color describe the old value, not the new variable.
-        const { filterType, isLink, href, color, ...oldData } = node.data();
         const oldPos   = node.position();
 
         cy.add({
             group: 'nodes',
-            data:  Object.assign({}, oldData, { id: newVarId, value: newVarId, label: '?', type: 'variable' }),
+            data:  window.graphModel.convertedVariableData(node.data(), newVarId),
             position: oldPos
         });
         rewireEdges(oldId, newVarId);
@@ -490,7 +487,7 @@ function initGraphMenus() {
         } else {
             const newId = `?node_${Date.now()}`;
             cy.add([
-                { group: 'nodes', data: { id: newId, value: newId, label: '?', type: 'variable' }, position: released },
+                { group: 'nodes', data: window.graphModel.variableNodeData(newId), position: released },
                 { group: 'edges', data: { id: `?edge-${cy.edges().length + 1}`, label: '?', source: dragOriginPrivate.data.id, target: newId, type: 'variable' } }
             ]);
         }
@@ -547,11 +544,7 @@ function initGraphMenus() {
         const lbl = ele.data('label');
         if (lbl !== 'true' && lbl !== 'false') return;
 
-        const srcEdges = cy.edges().filter(
-            e => e.data('target') === ele.id() &&
-                 cy.getElementById(e.data('source')).data('type') === 'variable'
-        );
-        if (!srcEdges.length) return;
+        if (!hasVariableSource(ele)) return;
 
         const newNodeId = `node_${Date.now()}`;
         const newValue  = lbl === 'true' ? 'false' : 'true';
@@ -574,7 +567,7 @@ function initGraphMenus() {
         const valueId = `value_${Date.now()}`;
         const position = node.position();
         cy.add([
-            { group: 'nodes', data: { id: valueId, value: '', label: '', type: 'label' },
+            { group: 'nodes', data: window.graphModel.emptyValueNodeData(valueId),
               position: { x: position.x + 220, y: position.y - 120 } },
             { group: 'edges', data: { id: `${valueId}_relation`, source: node.id(), target: valueId,
               nodeId: predicate.propertyId, label: predicate.propertyLabel || predicate.propertyId } },
@@ -595,13 +588,7 @@ function initGraphMenus() {
     }
 
     function changeElementStringValueModal(ele) {
-        if (ele.data('type') !== 'label') return;
-
-        const srcEdges = cy.edges().filter(
-            e => e.data('target') === ele.id() &&
-                 cy.getElementById(e.data('source')).data('type') === 'variable'
-        );
-        if (!srcEdges.length) return;
+        if (!window.graphModel.isEditableValue(ele.data()) || !hasVariableSource(ele)) return;
 
         const contentEl = document.getElementById('modal-change-value-content');
         contentEl.setAttribute('data-node-id', ele.id());

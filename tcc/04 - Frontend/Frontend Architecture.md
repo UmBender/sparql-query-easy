@@ -14,6 +14,7 @@
 | Confirmed | `sparql/graph-nodes.js` | Classic script: node factory, connection discovery, intro hint and change-value modal. |
 | Confirmed | `sparql/graph-menus.js` | Classic script: `initGraphMenus()` owns node/edge action menus, connection preview, Alt+drag and their Cytoscape listeners; returns a small API to the bootstrap. |
 | Confirmed | `sparql/graph-actions.js` | DOM-free node/edge action lists and predicate-variable naming; checked with JSDoc/TypeScript. |
+| Confirmed | `sparql/graph-model.js` | Node kind (`iri`, `literal`, `class`, `variable`, `many`, link, filter) read from stored fields, node colour/shape, and the node data written for new nodes (FE-032); the only place that tests stored `type` values or `?` marks. Edge kind stays in `relationLabelKind`. |
 | Confirmed | `sparql/query-calculations.js` | DOM-free query filter and variable calculations; checked with JSDoc/TypeScript. |
 | Confirmed | `sparql/query-stages.js` | DOM-free ordered-exploration state: variable registry, query signature, block moves and the possible-graph assignments/caption; checked with JSDoc/TypeScript. |
 | Confirmed | `sparql/cytoscape.min.js` | Local graph rendering library. |

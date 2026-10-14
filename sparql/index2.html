@@ -346,9 +346,11 @@
         import * as queryCalculations from './query-calculations.js';
         import * as queryStages from './query-stages.js';
         import * as graphActions from './graph-actions.js';
+        import * as graphModel from './graph-model.js';
         window.queryCalculations = queryCalculations;
         window.queryStages = queryStages;
         window.graphActions = graphActions;
+        window.graphModel = graphModel;
     </script>
 
     <script src="app-core.js"></script>
@@ -576,8 +578,8 @@
                         style: {
                             'background-color': getNodeColor,
                             'width':  '120px',
-                            'shape':  node => ['label', 'label-filter'].includes(node.data('type')) ? 'rectangle' : 'ellipse',
-                            'height': node => ['label', 'label-filter'].includes(node.data('type')) ? '50px' : '120px'
+                            'shape':  node => window.graphModel.nodeShape(node.data()).shape,
+                            'height': node => window.graphModel.nodeShape(node.data()).height
                         }
                     },
                     {
@@ -668,7 +670,7 @@
                         let label = String(data.label || '');
                         if (label.includes(')')) label = label.split(')')[1].trimStart();
                         const bigClass = label.length > 15 ? ' node-label-big' : '';
-                        const cls = data.type === 'variable' ? 'node-label-variable' : 'node-label';
+                        const cls = window.graphModel.isVariableNode(data) ? 'node-label-variable' : 'node-label';
                         return `<div class="${cls}${bigClass}">${escapeHTML(label)}</div>`;
                     }
                 }

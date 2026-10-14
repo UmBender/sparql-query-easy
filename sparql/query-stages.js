@@ -25,6 +25,11 @@
  * @typedef {{group: 'nodes' | 'edges', data: Record<string, string>, classes: string, position?: {x: number, y: number}}} ConsolidatedElement
  */
 
+import { nodeKind } from './graph-model.js';
+
+// Kept here for callers of window.queryStages; the graph model owns it (FE-032).
+export { termGraphValue } from './graph-model.js';
+
 export const MAX_POSSIBLE_VALUES = 3;
 
 export const MAX_STAGE_PAGE_SIZE = 50;
@@ -159,16 +164,6 @@ export function termHint(term) {
     return `literal ${term.datatype.slice(Math.max(term.datatype.lastIndexOf('#'), term.datatype.lastIndexOf('/')) + 1)}`;
   }
   return 'literal';
-}
-
-/**
- * Value used by the legacy graph/query model when a binding is applied.
- * IRIs keep angle brackets; literals use their lexical form like other literal nodes.
- * @param {RdfTerm} term
- * @returns {string}
- */
-export function termGraphValue(term) {
-  return term.type === 'iri' ? `<${term.value}>` : term.value;
 }
 
 /**
@@ -356,7 +351,7 @@ export function consolidatedGraphElements(items, assignments) {
       return { ...node, data: { id, label: assignment.text }, classes: `${assignment.state} ${kind}` };
     }
     if (isVariable) return { ...node, data: { id, label: /** @type {string} */ (name) }, classes: 'open' };
-    const kind = item.type === 'label' || item.type === 'label-filter' ? 'literal' : 'iri';
+    const kind = nodeKind(item).kind === 'literal' ? 'literal' : 'iri';
     return { ...node, data: { id, label: item.label || item.value || item.id || '' }, classes: `fixed ${kind}` };
   });
 }

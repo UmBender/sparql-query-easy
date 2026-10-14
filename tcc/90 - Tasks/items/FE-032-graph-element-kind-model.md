@@ -1,13 +1,13 @@
 ---
 id: FE-032
 title: Decide graph element kinds in one checked module
-status: BACKLOG
+status: DONE
 priority: P1
 type: refactor
 depends_on: [QUAL-005]
 human_gate: false
 created: 2026-10-09
-updated: 2026-10-09
+updated: 2026-10-14
 ---
 # Decide graph element kinds in one checked module
 
@@ -48,3 +48,25 @@ checks (FE-031). Behavior-preserving. Skill: `tcc-refactor`.
 
 `npm run test:query`, `npm run check:frontend-types`, `npm run test:browser`,
 Gradle `test` for packaging. Rollback: revert the commit.
+
+## Result
+
+- 2026-10-14: `sparql/graph-model.js` owns `nodeKind` (`iri`, `literal`,
+  `class`, `variable`, `many`, `unknown`, plus `isLink`, `legacyFilter` for
+  imported `label-filter` nodes and `filterType`), `nodeColor`, `nodeShape`,
+  the variable predicates (`isVariableNode`, `isEditableValue`,
+  `isVariableEdge`, `isVariableName`, `hasVariableMark`) and the node data
+  writers (`nodeDataForTerm`, `nodeDataForResult`, `nodeDataForRelationValue`,
+  `variableNodeData`, `iriNodeData`, `emptyValueNodeData`,
+  `convertedVariableData`). `termGraphValue` moved here and is re-exported by
+  `query-stages.js`. Stored field values are unchanged.
+- `rg` check: outside `graph-model.js`, the remaining `type` comparisons in
+  `sparql/` are RDF term types (`term.type`), API `propertyType`, edge writes
+  of `type: 'variable'` and `relationLabelKind`; no `?`-prefix or `data('type')`
+  node-kind test remains.
+- The legacy `?`-anywhere test (`hasVariableMark`) is kept as is (QUAL-005
+  records it as a known limitation).
+- Validation: `npm run test:query` (52 pass), `npm run check:frontend-types`
+  (clean), `npm run test:browser` (113 pass, QUAL-005 table unchanged),
+  Gradle `test` (pass), `installDist` with an HTTP smoke of `/graph-model.js`,
+  `/graph-actions.js` and `/index2.html` (200).

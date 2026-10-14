@@ -5,20 +5,13 @@
 
 // ── Node/edge factory helpers ─────────────────────────────────────
 function getNodeColor(node) {
-    const colors = {
-        variable:      '#A9D18E',
-        'label-filter':'#7030A0',
-        label:         '#F48FB1',
-        default:       '#FDD835'
-    };
-    if (node.data('color')) return '#999999';
-    return colors[node.data('type')] || '#4472C4';
+    return window.graphModel.nodeColor(node.data());
 }
 
 function addNode(theCy, id, text) {
     theCy.add({
         group: 'nodes',
-        data:  { id, value: id, label: text, type: 'node' },
+        data:  window.graphModel.iriNodeData(id, text),
         position: { x: 200, y: 200 }
     });
     if (document.getElementById('auto-layout').checked) theCy.layout({ name: 'cose' }).run();
@@ -30,17 +23,13 @@ function replaceWithNewNode(theCy, varName, nodeId, nodeLabel, propertyType, pro
     const oldElement = theCy.getElementById(varName);
     const oldId      = varName;
 
-    let nodeType  = (propertyType === 'text' || nodeId === nodeLabel) ? 'label' : 'node';
-    let nodeValue = nodeId;
-    if (propertyType === 'default') { nodeType = 'default'; nodeValue = propertyClass; }
-
     if (!oldElement.length) return;
     // BUG-003: a value already in the graph (common in cycles) is reused, as
     // Apply to graph does; adding a second element with its ID would throw.
     if (!cy.getElementById(nodeId).length) {
         cy.add({
             group: 'nodes',
-            data:  { id: nodeId, value: nodeValue, label: nodeLabel, type: nodeType },
+            data:  window.graphModel.nodeDataForResult({ id: nodeId, label: nodeLabel, propertyType, propertyClass }),
             position: oldElement.position()
         });
     }
@@ -56,25 +45,21 @@ function replaceWithNewNode(theCy, varName, nodeId, nodeLabel, propertyType, pro
         if (edge.data('target') === oldId) ends.target = nodeId;
         edge.move(ends);
         if (ends.source && edge.data('target') !== nodeId) {
-            outgoing.push({ ...edge.data(), targetType: edge.target().data('type') });
+            outgoing.push({ ...edge.data(), targetIsIri: window.graphModel.nodeKind(edge.target().data()).kind === 'iri' });
         }
     });
     oldElement.remove();
 
     // BUG-006: a fixed IRI target is fetched again as an IRI with its label;
     // only other targets (values, variables) keep the literal request.
-    outgoing.forEach(({ target, label: eLabel, nodeId: eNodeId, targetType }) => {
+    outgoing.forEach(({ target, label: eLabel, nodeId: eNodeId, targetIsIri }) => {
         cy.getElementById(target).remove();
-        getRelationshipValueChange(nodeId, eNodeId, eLabel, targetType !== 'node');
+        getRelationshipValueChange(nodeId, eNodeId, eLabel, !targetIsIri);
     });
     updateStatusBar();
 }
 
 function addNodeWithRelationship(theCy, id, text, type, sourceNodeId, predicateId, predicateLabel, theSubject, predicateIndex = 0) {
-    const typeMap  = { text: 'label', 'many-results': 'variable' };
-    const nodeType = typeMap[type] || 'node';
-    const isLink   = predicateLabel === 'image';
-    const newText  = isLink ? 'View image' : text;
     const theSource = theSubject || sourceNodeId;
     const theTarget = theSource === sourceNodeId ? id : sourceNodeId;
 
@@ -83,8 +68,7 @@ function addNodeWithRelationship(theCy, id, text, type, sourceNodeId, predicateI
     if (!theCy.getElementById(id).length) {
         theCy.add({
             group: 'nodes',
-            data:  { id, value: id, label: newText, type: nodeType, isLink, href: text,
-                     color: type === 'many-results' ? 'gray' : '' },
+            data:  window.graphModel.nodeDataForRelationValue({ id, text, valueType: type, predicateLabel }),
             position: { x: 200, y: 200 }
         });
     }
