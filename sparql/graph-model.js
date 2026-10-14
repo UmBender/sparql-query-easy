@@ -7,16 +7,19 @@
  *
  * Stored `type` values: `node` (IRI), `label` (literal value), `label-filter`
  * (literal of an older filter format, only in imported graphs), `default`
- * (class) and `variable`; a variable with a `color` is an "N results" node.
+ * (class), `variable` and `value-variable` (FE-034: a variable restricted to
+ * literal values, whose optional filter is `filterType` + `filterValue`); a
+ * variable with a `color` is an "N results" node.
  *
- * @typedef {'iri' | 'literal' | 'class' | 'variable' | 'many' | 'unknown'} NodeKindName
- * @typedef {{type?: string, color?: string, isLink?: boolean, filterType?: number | string | null}} KindData
+ * @typedef {'iri' | 'literal' | 'class' | 'variable' | 'many' | 'value-variable' | 'unknown'} NodeKindName
+ * @typedef {{type?: string, color?: string, isLink?: boolean, filterType?: number | string | null, filterValue?: string, value?: string}} KindData
+ * @typedef {{variableName: string, filterType: number | null, value: string | null}} VariableFilter
  * @typedef {{kind: NodeKindName, isLink: boolean, legacyFilter: boolean, filterType: number | null}} NodeKind
  * @typedef {{type: string, value: string, datatype?: string | null, language?: string | null}} GraphTerm
  * @typedef {{id: string, value: string, label: string, type: string, isLink?: boolean, href?: string, color?: string}} NodeData
  */
 
-import { filterTypeOf } from './query-calculations.js';
+import { filterLabel, filterTypeOf } from './query-calculations.js';
 
 /**
  * @param {KindData | null | undefined} data node data
@@ -30,6 +33,7 @@ export function nodeKind(data) {
   else if (type === 'label' || type === 'label-filter') kind = 'literal';
   else if (type === 'default') kind = 'class';
   else if (type === 'node') kind = 'iri';
+  else if (type === 'value-variable') kind = 'value-variable';
   return {
     kind,
     isLink: Boolean(data?.isLink),
@@ -44,7 +48,15 @@ export function nodeKind(data) {
  */
 export function isVariableNode(data) {
   const { kind } = nodeKind(data);
-  return kind === 'variable' || kind === 'many';
+  return kind === 'variable' || kind === 'many' || kind === 'value-variable';
+}
+
+/**
+ * A variable restricted to literal values (FE-034).
+ * @param {KindData | null | undefined} data
+ */
+export function isValueVariable(data) {
+  return nodeKind(data).kind === 'value-variable';
 }
 
 /**
@@ -63,20 +75,79 @@ export function isEditableValue(data) {
 export function nodeColor(data) {
   if (data.color) return '#999999';
   const { kind, legacyFilter } = nodeKind(data);
-  if (kind === 'variable' || kind === 'many') return '#A9D18E';
+  if (kind === 'variable' || kind === 'many' || kind === 'value-variable') return '#A9D18E';
   if (kind === 'literal') return legacyFilter ? '#7030A0' : '#F48FB1';
   if (kind === 'class') return '#FDD835';
   return '#4472C4';
 }
 
 /**
- * Literal values are drawn as boxes, every other node as a circle.
+ * Literal values and value variables are drawn as boxes, every other node as a circle.
  * @param {KindData} data
  */
 export function nodeShape(data) {
-  return nodeKind(data).kind === 'literal'
+  const { kind } = nodeKind(data);
+  return kind === 'literal' || kind === 'value-variable'
     ? { shape: 'rectangle', height: '50px' }
     : { shape: 'ellipse', height: '120px' };
+}
+
+/**
+ * A value variable keeps the value box with the value's pink as its border (FE-034).
+ * @param {KindData} data
+ */
+export function nodeBorder(data) {
+  return isValueVariable(data) ? { width: 4, color: '#F48FB1' } : { width: 0, color: '#000000' };
+}
+
+/**
+ * The filter a node holds, for display (badges, editor): a filtered literal
+ * keeps its filter text in `value`, a value variable in `filterValue`.
+ * Null when the node has no filter (an exact literal, any value).
+ * @param {KindData | null | undefined} data
+ * @returns {{filterType: number | null, value: string} | null}
+ */
+export function nodeFilter(data) {
+  const { kind, filterType } = nodeKind(data);
+  if (kind === 'value-variable') {
+    const value = String(data?.filterValue ?? '');
+    return filterType === null && value === '' ? null : { filterType, value };
+  }
+  return filterType === null ? null : { filterType, value: String(data?.value ?? '') };
+}
+
+/**
+ * Request filter of a value variable (FE-034): `filterType` with its value, an
+ * exact value (no filterType), or neither for any literal. Null for other nodes.
+ * @param {KindData | null | undefined} data
+ * @returns {VariableFilter | null}
+ */
+export function variableFilterOf(data) {
+  if (!isValueVariable(data)) return null;
+  const filter = nodeFilter(data);
+  return { variableName: String(data?.value ?? ''), filterType: filter?.filterType ?? null, value: filter ? filter.value : null };
+}
+
+/**
+ * Label of a value variable: `?` for any value, otherwise `?` and the filter.
+ * @param {number | string | null | undefined} filterType
+ * @param {string} value
+ */
+export function valueVariableLabel(filterType, value) {
+  const type = filterTypeOf(filterType);
+  if (type === null) return value === '' ? '?' : `? = ${value}`;
+  return type === 6 ? `? in ${filterLabel(type, value)}` : `? ${filterLabel(type, value)}`;
+}
+
+/**
+ * Stored fields of a value variable's filter; an empty value means any value.
+ * @param {number | string | null | undefined} filterType
+ * @param {string} value
+ */
+export function valueVariableFilterData(filterType, value) {
+  const filterValue = String(value ?? '').trim();
+  const type = filterValue === '' ? null : filterTypeOf(filterType);
+  return { filterType: type, filterValue, label: valueVariableLabel(type, filterValue) };
 }
 
 /**
@@ -134,6 +205,15 @@ export function variableNodeData(id) {
 }
 
 /**
+ * A value variable without a filter (any literal value).
+ * @param {string} id
+ * @returns {NodeData & {filterType: null, filterValue: string}}
+ */
+export function valueVariableNodeData(id) {
+  return { id, value: id, label: '?', type: 'value-variable', filterType: null, filterValue: '' };
+}
+
+/**
  * An IRI node, such as a search result.
  * @param {string} id
  * @param {string} label
@@ -181,11 +261,14 @@ export function nodeDataForRelationValue({ id, text, valueType, predicateLabel }
 
 /**
  * Data a node keeps when it becomes a variable: its own extra fields, but not
- * the old value's filter, link or "N results" color (QUAL-005).
+ * the old value's filter, link or "N results" color (QUAL-005). A literal
+ * value becomes a value variable without a filter (FE-034); every other node,
+ * a value variable included, becomes a plain variable.
  * @param {Record<string, unknown>} data
  * @param {string} id
  */
 export function convertedVariableData(data, id) {
-  const { filterType, isLink, href, color, ...rest } = data;
-  return { ...rest, ...variableNodeData(id) };
+  const { filterType, filterValue, isLink, href, color, ...rest } = data;
+  const literal = nodeKind(/** @type {KindData} */ (data)).kind === 'literal';
+  return { ...rest, ...(literal ? valueVariableNodeData(id) : variableNodeData(id)) };
 }

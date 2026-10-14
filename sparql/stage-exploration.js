@@ -21,6 +21,7 @@ function startExploration(order, component) {
         signature: variableOrderState.signature,
         order: order.slice(),
         where: buildFilters(component),
+        variableFilters: variableFilterItems(component),
         stage: 0,
         bindings: [],
         labels: [],
@@ -200,6 +201,7 @@ function stageRequestFor(stage, bindings, offset) {
     return window.queryStages.stageRequest({
         endpointUrl: getEndpoint(),
         where: exploration.where,
+        variableFilters: exploration.variableFilters,
         variableName: exploration.order[stage],
         bindings,
         limit: getLimit(),

@@ -111,6 +111,19 @@ class OpenApiRoutesTest {
             val candidate = document.resolve(document.resolve(stageData.property("candidates")).requiredObject("items"))
             val term = document.resolve(candidate.property("term"))
             assertEquals(listOf("iri", "literal", "bnode"), document.resolve(term.property("type")).requiredArray("enum").strings())
+            // FE-034: optional variable filters, without Maximum/Minimum.
+            val filteredRoutes =
+                listOf("/api/query", "/api/query/stage", "/api/query/count", "/api/query/numeric-profile", "/api/query/sparql")
+            for (path in filteredRoutes) {
+                val request = document.requestSchema(document.operation(path, "post"), "application/json")
+                val filters = document.resolve(request.property("variableFilters"))
+                val filter = document.resolve(filters.requiredObject("items"))
+                assertEquals(
+                    listOf("0", "1", "2", "3", "6"),
+                    document.resolve(filter.property("filterType")).requiredArray("enum").strings(),
+                    path,
+                )
+            }
         }
 
     @Test

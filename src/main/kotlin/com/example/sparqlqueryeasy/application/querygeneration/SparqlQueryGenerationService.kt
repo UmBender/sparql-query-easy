@@ -6,12 +6,14 @@ import com.example.sparqlqueryeasy.rdf.SparqlSyntaxValidator
 import com.example.sparqlqueryeasy.wikidata.query.DisplaySelectQuery
 import com.example.sparqlqueryeasy.wikidata.query.QueryVariable
 import com.example.sparqlqueryeasy.wikidata.query.TriplePattern
+import com.example.sparqlqueryeasy.wikidata.query.VariableFilter
 import com.example.sparqlqueryeasy.wikidata.query.WikidataQueryGenerator
 
 data class SparqlQueryGenerationRequest(
     val variable: QueryVariable,
     val patterns: List<TriplePattern> = emptyList(),
     val limit: Int = 20,
+    val variableFilters: List<VariableFilter> = emptyList(),
 )
 
 sealed interface SparqlQueryGenerationResult {
@@ -42,6 +44,8 @@ class SparqlQueryGenerationService(
                         patterns = request.patterns.map { it.copy(filter = null) },
                         limit = request.limit,
                         useWikidataPrefixes = endpoint.isWikidata,
+                        // FE-034: variable filters are new, so the preview shows them.
+                        variableFilters = request.variableFilters,
                     ),
                 )
             } catch (exception: IllegalArgumentException) {

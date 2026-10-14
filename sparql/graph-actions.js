@@ -30,6 +30,9 @@ export function nodeActions(data, hasVariableSource) {
   } else if (kind === 'variable' || kind === 'many') {
     actions.push({ id: 'run-query', label: 'Run query' });
     actions.push({ id: 'add-value-filter', label: 'Add value filter' });
+  } else if (kind === 'value-variable') {
+    // FE-034: its values are literals, settled through staged Run Query.
+    actions.push({ id: 'edit-filter', label: 'Edit filter' });
   }
 
   if (hasVariableSource && (data.label === 'true' || data.label === 'false')) {

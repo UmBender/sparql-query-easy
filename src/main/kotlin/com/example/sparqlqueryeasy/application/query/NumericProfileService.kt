@@ -15,6 +15,7 @@ import com.example.sparqlqueryeasy.wikidata.query.NumericProfileQuery
 import com.example.sparqlqueryeasy.wikidata.query.QueryTerm
 import com.example.sparqlqueryeasy.wikidata.query.TermObject
 import com.example.sparqlqueryeasy.wikidata.query.TriplePattern
+import com.example.sparqlqueryeasy.wikidata.query.VariableFilter
 import com.example.sparqlqueryeasy.wikidata.query.VariableTerm
 import com.example.sparqlqueryeasy.wikidata.query.WikidataQueryGenerator
 import java.math.BigDecimal
@@ -28,6 +29,7 @@ data class NumericProfileRequest(
     val predicate: IriTerm,
     val patterns: List<TriplePattern>,
     val limit: Int = PROFILE_DEFAULT_LIMIT,
+    val variableFilters: List<VariableFilter> = emptyList(),
 )
 
 /** One distinct entity/value pair; [label] is display-only. */
@@ -152,6 +154,7 @@ class NumericProfileService(
                 limit = request.limit,
                 useWikidataLabels = endpoint.isWikidata,
                 values = values,
+                variableFilters = request.variableFilters,
             ),
         )
 

@@ -101,11 +101,35 @@ function showIntroAlert(name, text) {
     localStorage.setItem(name, 'true');
 }
 
+// FE-034: a value variable fed by sourceId through a relation; it keeps any
+// value until a filter is applied. Returns its ID.
+function addValueVariableNode(theCy, sourceId, predicateId, predicateLabel, valueId = `?value_${Date.now()}`) {
+    const position = theCy.getElementById(sourceId).position();
+    theCy.add([
+        { group: 'nodes', data: window.graphModel.valueVariableNodeData(valueId),
+          position: { x: position.x + 220, y: position.y - 120 } },
+        { group: 'edges', data: { id: `${valueId.slice(1)}_relation`, source: sourceId, target: valueId,
+          nodeId: predicateId, label: predicateLabel } },
+    ]);
+    return valueId;
+}
+
 // ── Change-value modal content ────────────────────────────────────
-function getModalReplaceContent(theId, theValue) {
+// A value variable (FE-034) offers Any value, the text and the range filters
+// and always the histogram; MAX and MIN are not offered on it.
+function getModalReplaceContent(theId, theValue, { variable = false } = {}) {
     const safeVal = escapeHTML(theValue);
     const isNumericOrSpecial = (theValue !== '' && !isNaN(theValue)) || theValue === 'MAX' || theValue === 'MIN'
         || window.queryCalculations.parseBetween(theValue) !== null;
+
+    const variableFilters = `
+                <label><input type="radio" name="filter-type" value="any" checked><span>Any value</span></label>
+                <label><input type="radio" name="filter-type" value=""><span>Exact match</span></label>
+                <label><input type="radio" name="filter-type" value="0"><span>Starts with</span></label>
+                <label><input type="radio" name="filter-type" value="1"><span>Contains</span></label>
+                <label><input type="radio" name="filter-type" value="2"><span>At least (&ge;)</span></label>
+                <label><input type="radio" name="filter-type" value="3"><span>At most (&le;)</span></label>
+                <label><input type="radio" name="filter-type" value="6"><span>Between (min..max, e.g. 40..80)</span></label>`;
 
     const textFilters = `
                 <label><input type="radio" name="filter-type" value="" checked><span>Exact match</span></label>
@@ -126,10 +150,10 @@ function getModalReplaceContent(theId, theValue) {
                     <input type="text" id="modal-new-value" value="${safeVal}" placeholder="Enter new value" autocomplete="off">
                     <label for="modal-new-value" class="active">New Value</label>
                 </div>
-                ${isNumericOrSpecial ? '<div id="filter-histogram" class="filter-histogram" hidden></div>' : ''}
+                ${variable || isNumericOrSpecial ? '<div id="filter-histogram" class="filter-histogram" hidden></div>' : ''}
                 <div class="filter-options" style="margin-top:10px;">
                     <p style="margin:0 0 4px; font-weight:600;">Filter Type:</p>
-                    ${isNumericOrSpecial ? numFilters : textFilters}
+                    ${variable ? variableFilters : isNumericOrSpecial ? numFilters : textFilters}
                 </div>
                 <div style="text-align:right; margin-top:16px;">
                     <a href="#!" class="modal-close btn-flat waves-effect grey-text">Cancel</a>
@@ -138,6 +162,10 @@ function getModalReplaceContent(theId, theValue) {
 }
 
 function changeElementStringValue(elementId, newValue, filterType) {
+    if (window.graphModel.isValueVariable(cy.getElementById(elementId).data())) {
+        changeValueVariableFilter(elementId, newValue, filterType);
+        return;
+    }
     filterType = window.queryCalculations.filterTypeOf(filterType);
     if (filterType === 6 && !window.queryCalculations.parseBetween(newValue)) {
         toast('Between needs two numbers as min..max, with min not above max (e.g. 40..80).', 'error');
@@ -162,6 +190,23 @@ function changeElementStringValue(elementId, newValue, filterType) {
     ele.remove();
     $('#modal-change-value').modal('close');
     updateStatusBar();
+}
+
+// FE-034: a value variable's filter changes in place; the variable keeps its
+// ID, relations and stage. "any" or an empty value keeps any value.
+function changeValueVariableFilter(elementId, newValue, filterType) {
+    const any = filterType === 'any' || String(newValue ?? '').trim() === '';
+    const type = any ? null : window.queryCalculations.filterTypeOf(filterType);
+    if (type === 6 && !window.queryCalculations.parseBetween(newValue)) {
+        toast('Between needs two numbers as min..max, with min not above max (e.g. 40..80).', 'error');
+        return;
+    }
+    if ((type === 2 || type === 3) && !Number.isFinite(Number(String(newValue).trim()))) {
+        toast('At least and At most need a number.', 'error');
+        return;
+    }
+    cy.getElementById(elementId).data(window.graphModel.valueVariableFilterData(type, any ? '' : newValue));
+    $('#modal-change-value').modal('close');
 }
 
 // ── FE-026: value histogram with a range slider in the filter editor ──

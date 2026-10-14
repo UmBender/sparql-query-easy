@@ -13,6 +13,11 @@ test('each node type offers its own first action before the common actions', () 
   assert.deepEqual(ids(nodeActions({ type: 'label' }, false)), COMMON);
 });
 
+test('a value variable offers Edit filter, not Run query or Add value filter (FE-034)', () => {
+  assert.deepEqual(ids(nodeActions({ type: 'value-variable' }, false)), ['edit-filter', ...COMMON]);
+  assert.deepEqual(ids(nodeActions({ type: 'value-variable', label: '?' }, true)), ['edit-filter', ...COMMON]);
+});
+
 test('value edits appear only for nodes fed by a variable', () => {
   assert.deepEqual(ids(nodeActions({ type: 'label', label: 'true' }, true)),
     ['toggle-boolean', 'edit-value', ...COMMON]);

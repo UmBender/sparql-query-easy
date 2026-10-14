@@ -15,6 +15,7 @@ import com.example.sparqlqueryeasy.wikidata.query.StageBinding
 import com.example.sparqlqueryeasy.wikidata.query.StageCandidateQuery
 import com.example.sparqlqueryeasy.wikidata.query.TermObject
 import com.example.sparqlqueryeasy.wikidata.query.TriplePattern
+import com.example.sparqlqueryeasy.wikidata.query.VariableFilter
 import com.example.sparqlqueryeasy.wikidata.query.VariableTerm
 import com.example.sparqlqueryeasy.wikidata.query.WikidataQueryGenerator
 
@@ -30,6 +31,7 @@ data class StageQueryRequest(
     val bindings: List<StageBinding> = emptyList(),
     val limit: Int = 20,
     val offset: Int = 0,
+    val variableFilters: List<VariableFilter> = emptyList(),
 )
 
 /** A distinct typed value; [label] is display-only and never used as a binding. */
@@ -126,6 +128,7 @@ class StageQueryService(
                         limit = request.limit,
                         offset = request.offset,
                         useWikidataLabels = endpoint.isWikidata,
+                        variableFilters = request.variableFilters,
                     ),
                 ),
             )

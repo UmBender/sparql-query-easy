@@ -106,11 +106,19 @@ function filterEdgeItems(component) {
             sourceValue,
             targetValue,
             nodeId: item.data('nodeId'),
-            filterType: targetNode.data('filterType'),
+            // FE-034: a value variable's filter is sent as a variable filter instead.
+            filterType: window.graphModel.isValueVariable(targetNode.data()) ? null : targetNode.data('filterType'),
             fallbackPredicate: item.data('nodeId') || `?empty_${Date.now()}`
         });
     }
     return items;
+}
+
+/** FE-034: the filters of the value variables in a component (or any collection). */
+function variableFilterItems(elements) {
+    return elements.nodes()
+        .map(node => window.graphModel.variableFilterOf(node.data()))
+        .filter(Boolean);
 }
 
 /**
@@ -125,6 +133,7 @@ function numericProfileRequestFor(literalNodeId, limit) {
         edges: filterEdgeItems(node.component()),
         literalId: literalNodeId,
         limit,
+        variableFilters: variableFilterItems(node.component()),
     });
 }
 
@@ -241,12 +250,12 @@ function seeSparqlQuery() {
         url:         apiUrl('/api/query/sparql'),
         type:        'POST',
         contentType: 'application/json',
-        data: JSON.stringify({
+        data: JSON.stringify(window.queryCalculations.withVariableFilters({
             endpointUrl:  getEndpoint(),
             where:        filters,
             variableName: variableName,
             limit:        getLimit()
-        }),
+        }, variableFilterItems(component))),
         success(data) {
             hideLoading();
             // Use .text() to avoid XSS — jQuery escapes the content automatically
@@ -308,7 +317,7 @@ function getElementInfo(elementId) {
 }
 
 // ── API: run query ────────────────────────────────────────────────
-function getQuery(variableName, filters, showDefault, anotherAction) {
+function getQuery(variableName, filters, showDefault, anotherAction, variableFilters = []) {
     const predicateEdgeIds = cy.edges()
         .filter(edge => edge.data('nodeId') === variableName)
         .map(edge => edge.id());
@@ -320,12 +329,12 @@ function getQuery(variableName, filters, showDefault, anotherAction) {
         url:         apiUrl('/api/query'),
         type:        'POST',
         contentType: 'application/json',
-        data: JSON.stringify({
+        data: JSON.stringify(window.queryCalculations.withVariableFilters({
             endpointUrl:  getEndpoint(),
             where:        filters,
             variableName: variableName,
             limit:        getLimit()
-        }),
+        }, variableFilters)),
         success(data) {
             hideLoading();
             trData = {};
@@ -521,7 +530,7 @@ function runQuery() {
         return;
     }
 
-    getQuery(variableName, filters, true);
+    getQuery(variableName, filters, true, undefined, variableFilterItems(component));
 }
 
 function hasParallelPredicateVariables(component) {

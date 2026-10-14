@@ -581,7 +581,10 @@
                             'background-color': getNodeColor,
                             'width':  '120px',
                             'shape':  node => window.graphModel.nodeShape(node.data()).shape,
-                            'height': node => window.graphModel.nodeShape(node.data()).height
+                            'height': node => window.graphModel.nodeShape(node.data()).height,
+                            // FE-034: a value variable has the value's pink border.
+                            'border-width': node => window.graphModel.nodeBorder(node.data()).width,
+                            'border-color': node => window.graphModel.nodeBorder(node.data()).color
                         }
                     },
                     {

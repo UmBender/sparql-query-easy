@@ -15,6 +15,7 @@
 
 /** @typedef {QueryItem & {source: string, target: string, fallbackPredicate: string}} FilterEdge */
 /** @typedef {{subject: string, predicate: string, object: string, filterType: number | null}} QueryFilter */
+/** @typedef {{variableName: string, filterType: number | null, value: string | null}} VariableFilter */
 
 const variablePattern = /^[?$][A-Za-z_][A-Za-z0-9_]*$/;
 
@@ -29,6 +30,32 @@ export function buildFilters(edges) {
     object: edge.targetValue || edge.target,
     filterType: filterTypeOf(edge.filterType),
   }));
+}
+
+/**
+ * FE-034: the variable filters a request can carry are those of variables
+ * that are the object of one of its where patterns (a profile leaves out the
+ * profiled relation, so its own value variable is not filtered).
+ * @param {QueryFilter[]} where
+ * @param {VariableFilter[]} variableFilters
+ * @returns {VariableFilter[]}
+ */
+export function variableFiltersFor(where, variableFilters) {
+  const objects = new Set(where.map(item => item.object));
+  return variableFilters.filter(filter => objects.has(filter.variableName));
+}
+
+/**
+ * Adds `variableFilters` to a request only when it has some, so requests
+ * without value variables stay as they were.
+ * @template {{where: QueryFilter[]}} T
+ * @param {T} request
+ * @param {VariableFilter[]} variableFilters
+ * @returns {T & {variableFilters?: VariableFilter[]}}
+ */
+export function withVariableFilters(request, variableFilters) {
+  const used = variableFiltersFor(request.where, variableFilters);
+  return used.length ? { ...request, variableFilters: used } : request;
 }
 
 /**
@@ -80,22 +107,22 @@ export function filterLabel(filterType, value) {
  * Request for POST /api/query/numeric-profile (BE-003): the distribution of the
  * relation that points at the literal node [literalId], under the rest of the query.
  * Returns null unless exactly one fixed-IRI relation points at that node.
- * @param {{endpointUrl: string, edges: FilterEdge[], literalId: string, limit?: number}} input
- * @returns {{endpointUrl: string, where: QueryFilter[], subject: string, predicate: string, limit: number} | null}
+ * @param {{endpointUrl: string, edges: FilterEdge[], literalId: string, limit?: number, variableFilters?: VariableFilter[]}} input
+ * @returns {{endpointUrl: string, where: QueryFilter[], subject: string, predicate: string, limit: number, variableFilters?: VariableFilter[]} | null}
  */
-export function numericProfileRequest({ endpointUrl, edges, literalId, limit = 500 }) {
+export function numericProfileRequest({ endpointUrl, edges, literalId, limit = 500, variableFilters = [] }) {
   const profiled = edges.filter(edge => edge.target === literalId);
   if (profiled.length !== 1) return null;
   const [edge] = profiled;
   const predicate = edge.nodeId;
   if (!predicate || !predicate.startsWith('<') || predicate.includes('>/<')) return null;
-  return {
+  return withVariableFilters({
     endpointUrl,
     where: buildFilters(edges.filter(item => item !== edge)),
     subject: edge.sourceValue || edge.source,
     predicate,
     limit,
-  };
+  }, variableFilters);
 }
 
 /**
@@ -210,7 +237,7 @@ const funnelVariablePrefix = '?__funnel';
  *   variableName: string,
  *   steps: FunnelStep[],
  *   extremes: number,
- *   requests: ({endpointUrl: string, variableName: string, where: QueryFilter[]} | null)[],
+ *   requests: ({endpointUrl: string, variableName: string, where: QueryFilter[], variableFilters?: VariableFilter[]} | null)[],
  * }} FunnelPlan
  */
 
@@ -237,11 +264,12 @@ export function funnelStepKind(edge) {
  * are not counted. Disabling a step therefore only changes later counts.
  * MAX/MIN steps come after the other steps: their extreme is taken over the rest of
  * the query (BE-004), so each count is what the query returns with the steps so far
- * and the last count is the query's result.
- * @param {{endpointUrl: string, edges: FilterEdge[], variableName: string, disabled?: Iterable<string>, maxSteps?: number}} input
+ * and the last count is the query's result. Value-variable filters (FE-034) are
+ * not steps: every count applies them.
+ * @param {{endpointUrl: string, edges: FilterEdge[], variableName: string, disabled?: Iterable<string>, maxSteps?: number, variableFilters?: VariableFilter[]}} input
  * @returns {FunnelPlan}
  */
-export function filterFunnelPlan({ endpointUrl, edges, variableName, disabled = [], maxSteps = MAX_FUNNEL_STEPS }) {
+export function filterFunnelPlan({ endpointUrl, edges, variableName, disabled = [], maxSteps = MAX_FUNNEL_STEPS, variableFilters = [] }) {
   const off = new Set(disabled);
   /** @type {FunnelStep[]} */
   const steps = [];
@@ -264,9 +292,10 @@ export function filterFunnelPlan({ endpointUrl, edges, variableName, disabled = 
     return { ...edge, target: `${funnelVariablePrefix}${position}`, targetValue: `${funnelVariablePrefix}${position}`, filterType: null };
   }));
   const counted = steps.filter(step => step.counted);
+  const request = (/** @type {number} */ applied) => withVariableFilters({ endpointUrl, variableName, where: where(applied) }, variableFilters);
   const requests = [
-    { endpointUrl, variableName, where: where(0) },
-    ...counted.map(step => off.has(step.key) ? null : { endpointUrl, variableName, where: where(step.index + 1) }),
+    request(0),
+    ...counted.map(step => off.has(step.key) ? null : request(step.index + 1)),
   ];
   return { variableName, steps, extremes, requests };
 }

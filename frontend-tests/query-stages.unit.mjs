@@ -84,6 +84,17 @@ test('stage requests cap page size and cache keys include the binding path', () 
   assert.equal(stagePageSize(Number.NaN), 20);
   assert.equal(stagePageSize(0), 1);
   assert.notEqual(stageCacheKey(first), stageCacheKey(assumed));
+  assert.equal('variableFilters' in first, false);
+});
+
+test('a stage request carries the filters of its value variables (FE-034)', () => {
+  const where = [{ subject: '?mon', predicate: '<https://e/hp>', object: '?hp', filterType: null }];
+  const hp = { variableName: '?hp', filterType: 2, value: '90' };
+  const request = stageRequest({ endpointUrl: 'graph', where, variableName: '?mon', bindings: [], limit: 20,
+    variableFilters: [hp, { variableName: '?other', filterType: null, value: null }] });
+  assert.deepEqual(request.variableFilters, [hp]);
+  const items = [{ id: '?hp', value: '?hp', type: 'value-variable', filterType: 2, filterValue: '90' }];
+  assert.notEqual(explorationSignature('graph', items), explorationSignature('graph', [{ ...items[0], filterValue: '100' }]));
 });
 
 test('terms keep their type in hints and graph values; labels are display only', () => {

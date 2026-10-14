@@ -12,6 +12,7 @@ import com.example.sparqlqueryeasy.wikidata.query.CountQuery
 import com.example.sparqlqueryeasy.wikidata.query.QueryVariable
 import com.example.sparqlqueryeasy.wikidata.query.TermObject
 import com.example.sparqlqueryeasy.wikidata.query.TriplePattern
+import com.example.sparqlqueryeasy.wikidata.query.VariableFilter
 import com.example.sparqlqueryeasy.wikidata.query.VariableTerm
 import com.example.sparqlqueryeasy.wikidata.query.WikidataQueryGenerator
 
@@ -20,6 +21,7 @@ private const val RESERVED_COUNT_PREFIX = "__count"
 data class ResultCountRequest(
     val variable: QueryVariable,
     val patterns: List<TriplePattern>,
+    val variableFilters: List<VariableFilter> = emptyList(),
 )
 
 sealed interface ResultCountResult {
@@ -75,7 +77,8 @@ class ResultCountService(
         val query =
             try {
                 validate(request)?.let { throw IllegalArgumentException(it) }
-                Result.success(queryGenerator.generate(CountQuery(request.variable, request.patterns)))
+                val query = CountQuery(request.variable, request.patterns, request.variableFilters)
+                Result.success(queryGenerator.generate(query))
             } catch (exception: IllegalArgumentException) {
                 Result.failure(exception)
             }

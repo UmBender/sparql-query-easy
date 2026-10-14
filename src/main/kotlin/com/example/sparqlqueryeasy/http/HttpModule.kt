@@ -239,7 +239,13 @@ private fun Route.queryRoutes(dependencies: QueryHttpDependencies) {
                 when (
                     val result =
                         dependencies.generalQueryService.execute(
-                            GeneralQueryRequest(request.toVariable(), request.toPatterns(), request.limit, request.ignoreWikidata),
+                            GeneralQueryRequest(
+                                request.toVariable(),
+                                request.toPatterns(),
+                                request.limit,
+                                request.ignoreWikidata,
+                                request.toVariableFilters(),
+                            ),
                             dependencies.endpointContextResolver.resolve(request.endpointUrl),
                         )
                 ) {
@@ -318,7 +324,12 @@ private fun Route.queryRoutes(dependencies: QueryHttpDependencies) {
                         when (
                             val result =
                                 dependencies.sparqlQueryGenerationService.generate(
-                                    SparqlQueryGenerationRequest(request.toVariable(), request.toPatterns(), request.limit),
+                                    SparqlQueryGenerationRequest(
+                                        request.toVariable(),
+                                        request.toPatterns(),
+                                        request.limit,
+                                        request.toVariableFilters(),
+                                    ),
                                     endpoint.context,
                                 )
                         ) {

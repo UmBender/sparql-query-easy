@@ -1,9 +1,10 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
 import {
-  convertedVariableData, emptyValueNodeData, hasVariableMark, iriNodeData, isEditableValue, isVariableEdge,
-  isVariableName, isVariableNode, nodeColor, nodeDataForRelationValue, nodeDataForResult, nodeDataForTerm,
-  nodeKind, nodeShape, termGraphValue, variableNodeData,
+  convertedVariableData, emptyValueNodeData, hasVariableMark, iriNodeData, isEditableValue, isValueVariable, isVariableEdge,
+  isVariableName, isVariableNode, nodeBorder, nodeColor, nodeDataForRelationValue, nodeDataForResult, nodeDataForTerm,
+  nodeFilter, nodeKind, nodeShape, termGraphValue, valueVariableFilterData, valueVariableNodeData, variableFilterOf,
+  variableNodeData,
 } from '../sparql/graph-model.js';
 
 // Stored node data of every kind, as the app writes it.
@@ -98,5 +99,48 @@ test('new variables, search results and empty value nodes', () => {
 
 test('a converted node keeps its own fields but not the old value filter, link or color', () => {
   const old = { id: 'n', value: '90', label: '≥ 90', type: 'label', filterType: 2, isLink: true, href: 'h', color: 'gray', custom: 'kept' };
-  assert.deepEqual(convertedVariableData(old, '?node_1'), { id: '?node_1', value: '?node_1', label: '?', type: 'variable', custom: 'kept' });
+  // FE-034: a literal value becomes a value variable without a filter.
+  assert.deepEqual(convertedVariableData(old, '?node_1'),
+    { id: '?node_1', value: '?node_1', label: '?', type: 'value-variable', filterType: null, filterValue: '', custom: 'kept' });
+  assert.deepEqual(convertedVariableData({ id: '<https://e/a>', value: '<https://e/a>', label: 'A', type: 'node', color: 'gray' }, '?node_2'),
+    { id: '?node_2', value: '?node_2', label: '?', type: 'variable' });
+  const valueVariable = { ...valueVariableNodeData('?v'), ...valueVariableFilterData(2, '90') };
+  assert.deepEqual(convertedVariableData(valueVariable, '?node_3'), { id: '?node_3', value: '?node_3', label: '?', type: 'variable' });
+});
+
+test('a value variable is a green variable drawn as a value box with a pink border (FE-034)', () => {
+  const data = valueVariableNodeData('?value_1');
+  assert.deepEqual(data, { id: '?value_1', value: '?value_1', label: '?', type: 'value-variable', filterType: null, filterValue: '' });
+  assert.equal(nodeKind(data).kind, 'value-variable');
+  assert.equal(isVariableNode(data), true);
+  assert.equal(isValueVariable(data), true);
+  assert.equal(isValueVariable({ type: 'variable' }), false);
+  assert.equal(isEditableValue(data), false);
+  assert.equal(nodeColor(data), '#A9D18E');
+  assert.deepEqual(nodeShape(data), { shape: 'rectangle', height: '50px' });
+  assert.deepEqual(nodeBorder(data), { width: 4, color: '#F48FB1' });
+  assert.deepEqual(nodeBorder({ type: 'label' }), { width: 0, color: '#000000' });
+});
+
+test('a value variable keeps its filter in filterType and filterValue', () => {
+  assert.deepEqual(valueVariableFilterData('2', ' 90 '), { filterType: 2, filterValue: '90', label: '? ≥ 90' });
+  assert.deepEqual(valueVariableFilterData('6', '40..80'), { filterType: 6, filterValue: '40..80', label: '? in 40–80' });
+  assert.deepEqual(valueVariableFilterData('0', 'Pi'), { filterType: 0, filterValue: 'Pi', label: '? starts with Pi' });
+  assert.deepEqual(valueVariableFilterData('', 'Rio'), { filterType: null, filterValue: 'Rio', label: '? = Rio' });
+  // An empty value is any value, whatever the chosen type.
+  assert.deepEqual(valueVariableFilterData('2', ''), { filterType: null, filterValue: '', label: '?' });
+
+  const any = valueVariableNodeData('?v');
+  const atLeast = { ...any, ...valueVariableFilterData(2, '90') };
+  const exact = { ...any, ...valueVariableFilterData(null, 'Rio') };
+  assert.equal(nodeFilter(any), null);
+  assert.deepEqual(nodeFilter(atLeast), { filterType: 2, value: '90' });
+  assert.deepEqual(nodeFilter(exact), { filterType: null, value: 'Rio' });
+  assert.deepEqual(variableFilterOf(any), { variableName: '?v', filterType: null, value: null });
+  assert.deepEqual(variableFilterOf(atLeast), { variableName: '?v', filterType: 2, value: '90' });
+  assert.deepEqual(variableFilterOf(exact), { variableName: '?v', filterType: null, value: 'Rio' });
+  assert.equal(variableFilterOf({ type: 'variable', value: '?x' }), null);
+  // A filtered literal keeps its filter text in value, as before.
+  assert.deepEqual(nodeFilter({ type: 'label', value: '90', filterType: 2 }), { filterType: 2, value: '90' });
+  assert.equal(nodeFilter({ type: 'label', value: 'Rio' }), null);
 });

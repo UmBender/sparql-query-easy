@@ -299,9 +299,11 @@ function initGraphMenus() {
         } else if (action === 'run-query') {
             const component = cy.elements().components()
                 .find(items => items.some(item => item.id() === data.id));
-            if (component) getQuery(data.value, buildFilters(component), true);
+            if (component) getQuery(data.value, buildFilters(component), true, undefined, variableFilterItems(component));
         } else if (action === 'add-value-filter') {
             loadPredicateChoices(node, 'value');
+        } else if (action === 'edit-filter') {
+            editValueVariableFilter(node);
         } else if (action === 'toggle-boolean') {
             changeElementBooleanValue(node);
         } else if (action === 'edit-value') {
@@ -559,19 +561,13 @@ function initGraphMenus() {
         ele.remove();
     }
 
-    // FE-030: adds a value node fed by the variable through the chosen relation,
-    // seeded with the smallest numeric value under the rest of the query (empty
-    // when the relation has none), then opens its filter editor.
+    // FE-030/FE-034: adds a value variable fed by the node through the chosen
+    // relation and opens its filter editor, seeded with the smallest numeric
+    // value under the rest of the query (empty when the relation has none).
+    // Without an applied filter the variable keeps any value.
     async function addValueFilter(node, predicate) {
         closeNodeActionMenu();
-        const valueId = `value_${Date.now()}`;
-        const position = node.position();
-        cy.add([
-            { group: 'nodes', data: window.graphModel.emptyValueNodeData(valueId),
-              position: { x: position.x + 220, y: position.y - 120 } },
-            { group: 'edges', data: { id: `${valueId}_relation`, source: node.id(), target: valueId,
-              nodeId: predicate.propertyId, label: predicate.propertyLabel || predicate.propertyId } },
-        ]);
+        const valueId = addValueVariableNode(cy, node.id(), predicate.propertyId, predicate.propertyLabel || predicate.propertyId);
         updateStatusBar();
         let seed = '';
         try {
@@ -582,9 +578,29 @@ function initGraphMenus() {
         }
         const valueNode = cy.getElementById(valueId);
         if (!valueNode.length) return;
-        valueNode.data({ value: seed, label: seed });
         if (document.getElementById('auto-layout').checked) cy.layout({ name: 'cose' }).run();
-        changeElementStringValueModal(valueNode);
+        editValueVariableFilter(valueNode, seed);
+    }
+
+    // FE-034: the filter editor of a value variable, which keeps its ID.
+    function editValueVariableFilter(ele, seed = '') {
+        if (!window.graphModel.isValueVariable(ele.data())) return;
+        const filter = window.graphModel.nodeFilter(ele.data());
+        const contentEl = document.getElementById('modal-change-value-content');
+        contentEl.setAttribute('data-node-id', ele.id());
+        contentEl.innerHTML = getModalReplaceContent(ele.id(), filter ? filter.value : seed, { variable: true });
+        const checked = filter === null ? 'any' : filter.filterType === null ? '' : String(filter.filterType);
+        const option = contentEl.querySelector(`input[name=filter-type][value="${checked}"]`);
+        if (option) option.checked = true;
+        // Typing a value while "Any value" is chosen means that exact value.
+        const input = document.getElementById('modal-new-value');
+        input.addEventListener('input', () => {
+            const any = contentEl.querySelector('input[name=filter-type][value="any"]');
+            if (any.checked) contentEl.querySelector('input[name=filter-type][value=""]').checked = true;
+        }, { capture: true });
+        loadFilterHistogram(ele.id());
+        M.updateTextFields();
+        openChangeValueModal();
     }
 
     function changeElementStringValueModal(ele) {

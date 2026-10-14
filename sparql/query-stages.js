@@ -10,6 +10,7 @@
  *   target?: string,
  *   nodeId?: string,
  *   filterType?: number | string | null,
+ *   filterValue?: string,
  * }} GraphItem
  * @typedef {{name: string, nodeIds: string[], edgeIds: string[]}} QueryVariableEntry
  * @typedef {{type: 'iri' | 'literal' | 'bnode', value: string, datatype?: string | null, language?: string | null}} RdfTerm
@@ -17,7 +18,8 @@
  * @typedef {{variableName: string, offset: number, limit: number, hasMore: boolean, candidates: StageCandidate[]}} StagePage
  * @typedef {{variableName: string, term: RdfTerm}} StageBinding
  * @typedef {{subject: string, predicate: string, object: string, filterType: number | null}} WhereItem
- * @typedef {{endpointUrl: string, variableName: string, where: WhereItem[], bindings: StageBinding[], limit: number, offset: number}} StageRequest
+ * @typedef {{variableName: string, filterType: number | null, value: string | null}} VariableFilter
+ * @typedef {{endpointUrl: string, variableName: string, where: WhereItem[], bindings: StageBinding[], limit: number, offset: number, variableFilters?: VariableFilter[]}} StageRequest
  * @typedef {{key: string | null, status: 'idle' | 'loading' | 'loaded' | 'error', page?: StagePage, error?: string}} PreviewState
  * @typedef {'committed' | 'assumed' | 'possible'} AssignmentState
  * @typedef {{term: RdfTerm, text: string, state: AssignmentState}} Assignment
@@ -26,6 +28,7 @@
  */
 
 import { nodeKind } from './graph-model.js';
+import { withVariableFilters } from './query-calculations.js';
 
 // Kept here for callers of window.queryStages; the graph model owns it (FE-032).
 export { termGraphValue } from './graph-model.js';
@@ -82,7 +85,7 @@ export function queryComponentChoice(components) {
  */
 export function explorationSignature(endpointUrl, items) {
   const parts = items
-    .map(item => [item.id ?? '', item.value ?? '', item.source ?? '', item.target ?? '', item.nodeId ?? '', item.filterType ?? ''])
+    .map(item => [item.id ?? '', item.value ?? '', item.source ?? '', item.target ?? '', item.nodeId ?? '', item.filterType ?? '', item.filterValue ?? ''])
     .map(part => JSON.stringify(part))
     .sort(compare);
   return JSON.stringify([endpointUrl, parts]);
@@ -111,18 +114,18 @@ export function stagePageSize(limit) {
 }
 
 /**
- * @param {{endpointUrl: string, where: WhereItem[], variableName: string, bindings: StageBinding[], limit: number, offset?: number}} input
+ * @param {{endpointUrl: string, where: WhereItem[], variableName: string, bindings: StageBinding[], limit: number, offset?: number, variableFilters?: VariableFilter[]}} input
  * @returns {StageRequest}
  */
-export function stageRequest({ endpointUrl, where, variableName, bindings, limit, offset = 0 }) {
-  return {
+export function stageRequest({ endpointUrl, where, variableName, bindings, limit, offset = 0, variableFilters = [] }) {
+  return withVariableFilters({
     endpointUrl,
     variableName,
     where,
     bindings: bindings.map(binding => ({ variableName: binding.variableName, term: binding.term })),
     limit: stagePageSize(limit),
     offset,
-  };
+  }, variableFilters);
 }
 
 /**

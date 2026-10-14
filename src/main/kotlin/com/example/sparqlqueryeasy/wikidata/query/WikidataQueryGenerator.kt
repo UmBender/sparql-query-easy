@@ -135,15 +135,51 @@ data class TriplePattern(
     }
 }
 
+/**
+ * FE-034: a variable object restricted to literal values, rendered as `FILTER (isLiteral(?v) && …)`
+ * after the patterns. Without [filter] and [exactValue] it keeps any literal; [exactValue] matches
+ * the lexical form. Maximum/Minimum are not supported on a variable.
+ */
+data class VariableFilter(
+    val variable: QueryVariable,
+    val filter: QueryFilter? = null,
+    val exactValue: String? = null,
+) {
+    init {
+        require(filter == null || exactValue == null) { "A variable filter takes a filter or an exact value, not both" }
+        require(filter != Maximum && filter != Minimum) {
+            "Maximum and Minimum filters are not supported on a variable filter"
+        }
+    }
+}
+
+/** Each filtered variable is the object of a pattern and has one filter. */
+private fun requireFilteredObjects(
+    patterns: List<TriplePattern>,
+    variableFilters: List<VariableFilter>,
+) {
+    val objects = patterns.mapNotNull { ((it.`object` as? TermObject)?.term as? VariableTerm)?.variable }.toSet()
+    variableFilters.forEach { filter ->
+        require(filter.variable in objects) {
+            "Variable filter ${filter.variable.render()} must be the object of a where pattern"
+        }
+    }
+    require(variableFilters.map(VariableFilter::variable).distinct().size == variableFilters.size) {
+        "A variable may have only one variable filter"
+    }
+}
+
 data class GeneralSelectQuery(
     val variable: QueryVariable,
     val patterns: List<TriplePattern>,
     val limit: Int,
     val useWikidataLabels: Boolean = true,
     val useWikidataPrefixes: Boolean = useWikidataLabels,
+    val variableFilters: List<VariableFilter> = emptyList(),
 ) : WikidataQuery {
     init {
         require(limit >= 0) { "LIMIT must not be negative" }
+        requireFilteredObjects(patterns, variableFilters)
     }
 }
 
@@ -152,9 +188,11 @@ data class DisplaySelectQuery(
     val patterns: List<TriplePattern>,
     val limit: Int,
     val useWikidataPrefixes: Boolean = true,
+    val variableFilters: List<VariableFilter> = emptyList(),
 ) : WikidataQuery {
     init {
         require(limit >= 0) { "LIMIT must not be negative" }
+        requireFilteredObjects(patterns, variableFilters)
     }
 }
 
@@ -226,9 +264,11 @@ data class StageCandidateQuery(
     val limit: Int,
     val offset: Int,
     val useWikidataLabels: Boolean,
+    val variableFilters: List<VariableFilter> = emptyList(),
 ) : WikidataQuery {
     init {
         require(patterns.isNotEmpty()) { "A staged query requires at least one pattern" }
+        requireFilteredObjects(patterns, variableFilters)
         require(limit > 0) { "LIMIT must be positive" }
         require(offset >= 0) { "OFFSET must not be negative" }
         require(patterns.none { it.filter == Maximum || it.filter == Minimum }) {
@@ -248,8 +288,10 @@ data class NumericProfileQuery(
     val limit: Int,
     val useWikidataLabels: Boolean,
     val values: Boolean,
+    val variableFilters: List<VariableFilter> = emptyList(),
 ) : WikidataQuery {
     init {
+        requireFilteredObjects(patterns, variableFilters)
         require(limit > 0) { "LIMIT must be positive" }
         require(subject is VariableTerm || subject is IriTerm) { "subject must be a variable or an IRI" }
         require(patterns.none { it.filter == Maximum || it.filter == Minimum }) {
@@ -262,9 +304,11 @@ data class NumericProfileQuery(
 data class CountQuery(
     val variable: QueryVariable,
     val patterns: List<TriplePattern>,
+    val variableFilters: List<VariableFilter> = emptyList(),
 ) : WikidataQuery {
     init {
         require(patterns.isNotEmpty()) { "A count requires at least one pattern" }
+        requireFilteredObjects(patterns, variableFilters)
     }
 }
 
@@ -319,7 +363,8 @@ class CSharpCompatibleWikidataQueryGenerator(
                     rdfType(variable)
                     label(variable, input.useWikidataLabels)
                 }
-                extremes(input.patterns) { rdfType(variable) }
+                variableFilterLines(input.variableFilters).forEach(::line)
+                extremes(input.patterns, input.variableFilters) { rdfType(variable) }
             }
             finishWhere()
             limit(input.limit)
@@ -335,7 +380,8 @@ class CSharpCompatibleWikidataQueryGenerator(
                 pattern(pattern, index)
                 label(variable, false)
             }
-            extremes(input.patterns) {}
+            variableFilterLines(input.variableFilters).forEach(::line)
+            extremes(input.patterns, input.variableFilters) {}
             finishWhere()
             limit(input.limit)
         }.build()
@@ -393,6 +439,7 @@ class CSharpCompatibleWikidataQueryGenerator(
             }
             line("WHERE {")
             input.patterns.forEachIndexed { index, pattern -> pattern(pattern, index) }
+            variableFilterLines(input.variableFilters).forEach(::line)
             line("${input.subject.render()} ${input.predicate.render()} ?__profileValue .")
             line("BIND(${input.subject.render()} AS ?__profileEntity)")
             line("FILTER (isNumeric(?__profileValue))")
@@ -420,8 +467,9 @@ class CSharpCompatibleWikidataQueryGenerator(
             line("SELECT (COUNT(DISTINCT ${input.variable.render()}) AS ?__countValue)")
             line("WHERE {")
             input.patterns.forEachIndexed { index, pattern -> pattern(pattern, index) }
+            variableFilterLines(input.variableFilters).forEach(::line)
             // Maximum/Minimum count every tied value (BE-004); a count has no LIMIT to cap.
-            extremes(input.patterns) {}
+            extremes(input.patterns, input.variableFilters) {}
             line("}")
         }.build()
 
@@ -438,6 +486,7 @@ class CSharpCompatibleWikidataQueryGenerator(
                 line("VALUES ($names) { ($values) }")
             }
             input.patterns.forEachIndexed { index, pattern -> pattern(pattern, index) }
+            variableFilterLines(input.variableFilters).forEach(::line)
             line("OPTIONAL { $variable rdfs:label ?__stageLabel . FILTER (lang(?__stageLabel) = \"en\") }")
             if (input.useWikidataLabels) {
                 line(
@@ -489,12 +538,8 @@ class CSharpCompatibleWikidataQueryGenerator(
             if (!constrained) return
             when (val filter = pattern.filter) {
                 null -> line("FILTER (str($literal) = ${pattern.`object`.render()}) .")
-                is StartsWith -> line("FILTER (STRSTARTS(STR($literal), \"${filter.value.escapeSparqlString()}\"))")
-                is Contains -> line("FILTER (CONTAINS(STR($literal), \"${filter.value.escapeSparqlString()}\"))")
-                is GreaterOrEqual -> line("FILTER ($literal >= ${filter.value})")
-                is LessOrEqual -> line("FILTER ($literal <= ${filter.value})")
-                is Between -> line("FILTER ($literal >= ${filter.minimum} && $literal <= ${filter.maximum})")
                 Maximum, Minimum -> hasExtreme = true
+                else -> line("FILTER (${filter.condition(literal)})")
             }
         }
 
@@ -505,6 +550,7 @@ class CSharpCompatibleWikidataQueryGenerator(
          */
         fun extremes(
             patterns: List<TriplePattern>,
+            variableFilters: List<VariableFilter>,
             subjectConstraints: QueryText.() -> Unit,
         ) {
             patterns.forEachIndexed { index, target ->
@@ -522,6 +568,7 @@ class CSharpCompatibleWikidataQueryGenerator(
                     val ownExtreme = pattern.filter == Maximum || pattern.filter == Minimum
                     pattern(pattern, other, "?__extremeValue${index}_$other", constrained = !ownExtreme)
                 }
+                variableFilterLines(variableFilters).forEach(::line)
                 subjectConstraints()
                 line("}")
                 line("}")
@@ -575,6 +622,28 @@ class CSharpCompatibleWikidataQueryGenerator(
         fun build(): String = lines.joinToString("\n", postfix = "\n")
     }
 }
+
+/** FE-034: one FILTER per variable restricted to literals, written after the patterns it constrains. */
+private fun variableFilterLines(filters: List<VariableFilter>): List<String> =
+    filters.map { item ->
+        val variable = item.variable.render()
+        val condition =
+            item.filter?.condition(variable)
+                ?: item.exactValue?.let { "str($variable) = \"${it.escapeSparqlString()}\"" }
+        val literal = "isLiteral($variable)"
+        if (condition == null) "FILTER ($literal)" else "FILTER ($literal && $condition)"
+    }
+
+/** The row condition of a non-extreme filter on [term]. */
+private fun QueryFilter.condition(term: String): String =
+    when (this) {
+        is StartsWith -> "STRSTARTS(STR($term), \"${value.escapeSparqlString()}\")"
+        is Contains -> "CONTAINS(STR($term), \"${value.escapeSparqlString()}\")"
+        is GreaterOrEqual -> "$term >= $value"
+        is LessOrEqual -> "$term <= $value"
+        is Between -> "$term >= $minimum && $term <= $maximum"
+        Maximum, Minimum -> error("Maximum and Minimum have no row condition")
+    }
 
 private fun String.escapeSparqlString(): String =
     buildString {

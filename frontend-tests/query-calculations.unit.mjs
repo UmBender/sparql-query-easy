@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
-import { actualValueRequest, buildFilters, countInRange, cycleMode, filterAccepts, filterBadgeCount, filterFunnelPlan, filterLabel, filterRange, filterTypeOf, funnelStepCounts, funnelStepKind, getQueryVariables, hasParallelPredicateVariables, histogramBins, numericProfileRequest, parseBetween, rangeFilter, rangeFromFilter, rangeScale, keptEntities, possibilityGraph, relationLabelKind } from '../sparql/query-calculations.js';
+import { actualValueRequest, buildFilters, countInRange, cycleMode, filterAccepts, filterBadgeCount, filterFunnelPlan, filterLabel, filterRange, filterTypeOf, funnelStepCounts, funnelStepKind, getQueryVariables, variableFiltersFor, withVariableFilters, hasParallelPredicateVariables, histogramBins, numericProfileRequest, parseBetween, rangeFilter, rangeFromFilter, rangeScale, keptEntities, possibilityGraph, relationLabelKind } from '../sparql/query-calculations.js';
 
 test('filters preserve edge order, fixed RDF terms, and numeric filterType zero', () => {
   assert.deepEqual(buildFilters([
@@ -266,4 +266,33 @@ test('FE-036: actual values pass a filter when any of them does', () => {
   assert.equal(filterAccepts(1, 'chu', ['PIKACHU']), false);
   for (const type of [null, 4, 5]) assert.equal(filterAccepts(type, '90', ['90']), null);
   assert.equal(filterAccepts(6, '80..40', ['60']), null);
+});
+
+// FE-034: value-variable filters travel beside where, only for variables it uses.
+const hpEdge = { id: 'hp', source: '?mon', target: '?hp', targetValue: '?hp', nodeId: '<https://e/hp>', fallbackPredicate: '?f' };
+const speedEdge = { id: 'speed', source: '?mon', target: '?speed', targetValue: '?speed', nodeId: '<https://e/speed>', fallbackPredicate: '?f' };
+const hpFilter = { variableName: '?hp', filterType: 2, value: '90' };
+const speedFilter = { variableName: '?speed', filterType: null, value: null };
+
+test('variable filters are sent only for object variables of the request and only when present', () => {
+  const where = buildFilters([hpEdge]);
+  assert.deepEqual(variableFiltersFor(where, [hpFilter, speedFilter]), [hpFilter]);
+  assert.deepEqual(withVariableFilters({ where }, [hpFilter, speedFilter]), { where, variableFilters: [hpFilter] });
+  assert.deepEqual(withVariableFilters({ where }, [speedFilter]), { where });
+  assert.deepEqual(withVariableFilters({ where }, []), { where });
+});
+
+test('a profile of a value variable leaves out its own filter and keeps the others', () => {
+  const request = numericProfileRequest({ endpointUrl: 'g', edges: [hpEdge, speedEdge], literalId: '?hp', limit: 5, variableFilters: [hpFilter, speedFilter] });
+  assert.deepEqual(request, {
+    endpointUrl: 'g', where: buildFilters([speedEdge]), subject: '?mon', predicate: '<https://e/hp>', limit: 5, variableFilters: [speedFilter],
+  });
+  assert.equal('variableFilters' in numericProfileRequest({ endpointUrl: 'g', edges: [hpEdge], literalId: '?hp' }), false);
+});
+
+test('every funnel count applies the value-variable filters', () => {
+  const fixed = { id: 'type', source: '?mon', target: '<https://e/Fire>', nodeId: '<https://e/type>', fallbackPredicate: '?f' };
+  const plan = filterFunnelPlan({ endpointUrl: 'g', edges: [fixed, hpEdge], variableName: '?mon', variableFilters: [hpFilter] });
+  assert.equal(plan.steps.length, 1);
+  assert.ok(plan.requests.every(request => request && JSON.stringify(request.variableFilters) === JSON.stringify([hpFilter])));
 });

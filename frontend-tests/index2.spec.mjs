@@ -2485,19 +2485,25 @@ test('Add value filter lists datatype relations and opens the editor on a seeded
     where: [{ subject: '?mon', predicate: '<https://e/hasType>', object: '<https://e/Fire>', filterType: null }],
     subject: '?mon', predicate: '<https://e/hp>', limit: 1,
   });
-  const value = await page.evaluate(() => {
-    const node = cy.nodes('[type = "label"]')[0];
+  // FE-034: the new node is a value variable that keeps any value until a filter is applied.
+  expect(await checkedFilter(page)).toBe('Any value');
+  const valueVariable = () => page.evaluate(() => {
+    const node = cy.nodes('[type = "value-variable"]')[0];
     const edge = node.connectedEdges()[0];
-    return { value: node.data('value'), label: node.data('label'), source: edge.data('source'), nodeId: edge.data('nodeId'), edgeLabel: edge.data('label') };
+    return { id: node.id(), value: node.data('value'), label: node.data('label'), filterType: node.data('filterType'), filterValue: node.data('filterValue'),
+      source: edge.data('source'), nodeId: edge.data('nodeId'), edgeLabel: edge.data('label') };
   });
-  expect(value).toEqual({ value: '39', label: '39', source: '?mon', nodeId: '<https://e/hp>', edgeLabel: 'HP' });
+  const added = await valueVariable();
+  expect(added.id).toMatch(/^\?value_\d+$/);
+  expect(added).toEqual({ id: added.id, value: added.id, label: '?', filterType: null, filterValue: '',
+    source: '?mon', nodeId: '<https://e/hp>', edgeLabel: 'HP' });
 
   await page.evaluate(() => {
     document.querySelector('#modal-change-value input[name=filter-type][value="2"]').checked = true;
     document.getElementById('modal-new-value').value = '60';
     document.getElementById('apply-filter-btn').click();
   });
-  expect(await filterNode(page)).toEqual({ label: '≥ 60', value: '60', filterType: 2 });
+  expect(await valueVariable()).toMatchObject({ id: added.id, label: '? ≥ 60', filterType: 2, filterValue: '60', edgeLabel: 'HP' });
 });
 
 test('Add value filter on a relation without numbers opens the text editor on an empty value', async ({ page }) => {
@@ -2701,6 +2707,9 @@ const kpk = 'https://example.test/';
 const kindIri = name => `<${kpk}${name}>`;
 const COMMON_ACTIONS = ['Connect with variable predicate', 'Connect with defined predicate', 'Convert to variable', 'Remove'];
 const VARIABLE_ACTIONS = ['Run query', 'Add value filter', ...COMMON_ACTIONS];
+const VALUE_VARIABLE_ACTIONS = ['Edit filter', ...COMMON_ACTIONS];
+// FE-034: literal kinds convert to a value variable; `valueVariable` rows need
+// the value variable ?value_hp (hp ≥ 100) in the graph.
 const NODE_KINDS = [
   { kind: 'variable', key: 'variable', actions: VARIABLE_ACTIONS },
   { kind: '"N results"', key: 'results', actions: VARIABLE_ACTIONS },
@@ -2711,12 +2720,15 @@ const NODE_KINDS = [
   { kind: 'filtered value', key: 'filtered', actions: ['Edit value', ...COMMON_ACTIONS] },
   { kind: 'image link', key: 'link', actions: ['Open link', 'Edit value', ...COMMON_ACTIONS] },
   { kind: 'value of a fixed entity', key: 'fixedValue', actions: COMMON_ACTIONS },
+  { kind: 'value variable', key: 'valueVariable', actions: VALUE_VARIABLE_ACTIONS, valueVariable: true },
 ];
+const LITERAL_KINDS = new Set(['literal', 'boolean', 'filtered', 'link', 'fixedValue']);
 
-// ?mon with one relation per kind, plus <Mew> name "Mew" as a separate group.
-async function addNodeKindGraph(page) {
+// ?mon with one relation per kind, plus <Mew> name "Mew" as a separate group;
+// with `valueVariable`, also ?mon hp ?value_hp kept at hp ≥ 100 (FE-034).
+async function addNodeKindGraph(page, { valueVariable = false } = {}) {
   await disableAutoLayout(page);
-  return page.evaluate(pk => {
+  return page.evaluate(([pk, withValueVariable]) => {
     const iriOf = name => `<${pk}${name}>`;
     cy.add({ group: 'nodes', data: { id: '?mon', value: '?mon', label: '?', type: 'variable' } });
     const relation = (id, text, type, predicate) =>
@@ -2741,6 +2753,11 @@ async function addNodeKindGraph(page) {
       literal: 'Pikachu', boolean: 'true', filtered: cy.nodes('[filterType]').id(), link: `${pk}pikachu.png`, fixedValue: 'Mew',
     };
     const ring = ['results', 'iri', 'class', 'literal', 'boolean', 'filtered', 'link'];
+    if (withValueVariable) {
+      ids.valueVariable = addValueVariableNode(cy, '?mon', iriOf('hp'), 'hp', '?value_hp');
+      changeElementStringValue('?value_hp', '100', '2');
+      ring.push('valueVariable');
+    }
     cy.getElementById('?mon').position({ x: 330, y: 260 });
     ring.forEach((key, index) => {
       const angle = 2 * Math.PI * index / ring.length;
@@ -2749,7 +2766,7 @@ async function addNodeKindGraph(page) {
     cy.getElementById(iriOf('Mew')).position({ x: 660, y: 90 });
     cy.getElementById('Mew').position({ x: 660, y: 230 });
     return ids;
-  }, kpk);
+  }, [kpk, valueVariable]);
 }
 
 const kindFilter = (subject, predicate, object, filterType = null) =>
@@ -2764,6 +2781,7 @@ const KIND_GRAPH_FILTERS = [
   kindFilter('?mon', 'instanceOf', kindIri('Pokemon')),
 ];
 const MEW_FILTER = kindFilter(kindIri('Mew'), 'name', 'Mew');
+const VALUE_VARIABLE_RELATION = kindFilter('?mon', 'hp', '?value_hp');
 // Filters are compared as multisets: element order is not part of the payload contract.
 const sortJson = items => items.map(item => JSON.stringify(item)).sort().map(item => JSON.parse(item));
 const allFilters = async page => sortJson(await page.evaluate(() => buildFilters(cy.elements())));
@@ -2782,7 +2800,7 @@ test('QUAL-005 the node-kind graph sends one filter per relation', async ({ page
 });
 
 test('QUAL-005 each node kind offers exactly its actions and selecting it sends no request', async ({ page }) => {
-  const ids = await addNodeKindGraph(page);
+  const ids = await addNodeKindGraph(page, { valueVariable: true });
   for (const row of NODE_KINDS) {
     await test.step(row.kind, async () => {
       await dismissMenus(page);
@@ -2796,8 +2814,9 @@ test('QUAL-005 each node kind offers exactly its actions and selecting it sends 
 });
 
 for (const row of NODE_KINDS) {
-  test(`QUAL-005 Convert to variable turns a ${row.kind} node into a plain variable`, async ({ page }) => {
-    const ids = await addNodeKindGraph(page);
+  const valueVariable = LITERAL_KINDS.has(row.key);
+  test(`QUAL-005 Convert to variable turns a ${row.kind} node into a ${valueVariable ? 'value variable' : 'plain variable'}`, async ({ page }) => {
+    const ids = await addNodeKindGraph(page, { valueVariable: Boolean(row.valueVariable) });
     const oldId = ids[row.key];
     const oldValue = await nodeValue(page, oldId);
     const edgesBefore = await edgeEnds(page);
@@ -2808,12 +2827,14 @@ for (const row of NODE_KINDS) {
 
     const newId = await nodeMenu(page).getAttribute('data-node-id');
     expect(newId).toMatch(/^\?node_\d+$/);
-    expect(await menuActions(page)).toEqual(VARIABLE_ACTIONS);
+    expect(await menuActions(page)).toEqual(valueVariable ? VALUE_VARIABLE_ACTIONS : VARIABLE_ACTIONS);
     expect(await page.evaluate(([from, to]) => {
       const node = cy.getElementById(to);
       return { oldExists: cy.getElementById(from).length > 0, type: node.data('type'), value: node.data('value'),
-        label: node.data('label'), color: node.style('background-color') };
-    }, [oldId, newId])).toEqual({ oldExists: false, type: 'variable', value: newId, label: '?', color: VARIABLE_COLOR });
+        label: node.data('label'), color: node.style('background-color'), shape: node.style('shape'),
+        filterType: node.data('filterType') ?? null, filterValue: node.data('filterValue') ?? null };
+    }, [oldId, newId])).toEqual({ oldExists: false, type: valueVariable ? 'value-variable' : 'variable', value: newId, label: '?',
+      color: VARIABLE_COLOR, shape: valueVariable ? 'rectangle' : 'ellipse', filterType: null, filterValue: valueVariable ? '' : null });
     // Every relation keeps its ID and predicate and now ends at the variable.
     expect(await edgeEnds(page)).toEqual(edgesBefore
       .map(item => item.split('|').map((part, index) => (index !== 2 && part === oldId ? newId : part)).join('|')).sort());
@@ -2827,7 +2848,7 @@ for (const row of NODE_KINDS) {
 }
 
 test('QUAL-005 Remove deletes only the chosen node of each kind and its relations', async ({ page }) => {
-  const ids = await addNodeKindGraph(page);
+  const ids = await addNodeKindGraph(page, { valueVariable: true });
   const variableLast = [...NODE_KINDS.slice(1), NODE_KINDS[0]];
   for (const row of variableLast) {
     await test.step(row.kind, async () => {
@@ -2854,7 +2875,7 @@ test('QUAL-005 Remove deletes only the chosen node of each kind and its relation
 });
 
 test('QUAL-005 every node kind connects to an existing node with a variable or a defined predicate', async ({ page }) => {
-  const ids = await addNodeKindGraph(page);
+  const ids = await addNodeKindGraph(page, { valueVariable: true });
   const kanto = kindIri('Kanto');
   await page.evaluate(id => {
     cy.add({ group: 'nodes', data: { id, value: id, label: 'Kanto', type: 'node' }, position: { x: 660, y: 400 } });
@@ -2899,7 +2920,7 @@ test('QUAL-005 every node kind connects to an existing node with a variable or a
 });
 
 test('QUAL-005 type-specific node actions change only their node and the next query payload', async ({ page }) => {
-  const ids = await addNodeKindGraph(page);
+  const ids = await addNodeKindGraph(page, { valueVariable: true });
   const lastRequest = path => JSON.parse(server.requests.filter(request => request.path === path).at(-1).body);
   const selected = () => nodeMenu(page).getAttribute('data-node-id');
   const selectedData = () => page.evaluate(() => {
@@ -2919,7 +2940,8 @@ test('QUAL-005 type-specific node actions change only their node and the next qu
   const relationTarget = predicate => page.evaluate(nodeId => cy.edges()
     .filter(edge => edge.data('source') === '?mon' && edge.data('nodeId') === nodeId)
     .map(edge => edge.data('target')), kindIri(predicate));
-  const filters = KIND_GRAPH_FILTERS.slice();
+  const filters = [...KIND_GRAPH_FILTERS, VALUE_VARIABLE_RELATION];
+  let hpFilter = { variableName: '?value_hp', filterType: 2, value: '100' };
   const replaceFilter = (predicate, object, filterType = null) => {
     const index = filters.findIndex(filter => filter.predicate === kindIri(predicate));
     filters[index] = kindFilter('?mon', predicate, object, filterType);
@@ -2961,6 +2983,22 @@ test('QUAL-005 type-specific node actions change only their node and the next qu
     expect(await allFilters(page)).toEqual(sortJson([...filters, MEW_FILTER]));
   });
 
+  await test.step('Edit filter of a value variable', async () => {
+    await runAction(ids.valueVariable, 'Edit filter');
+    await expect(page.locator('#modal-new-value')).toHaveValue('100');
+    expect(await checkedFilter(page)).toBe('At least (≥)');
+    await expect(page.locator('#modal-change-value')).not.toContainText('MAX');
+    await applyEditor('6', '80..120');
+    // The variable keeps its ID and relation; only its filter changes.
+    expect(await selected()).toBe(ids.valueVariable);
+    expect(await page.evaluate(id => {
+      const { filterType, filterValue, label, type } = cy.getElementById(id).data();
+      return { filterType, filterValue, label, type };
+    }, ids.valueVariable)).toEqual({ filterType: 6, filterValue: '80..120', label: '? in 80–120', type: 'value-variable' });
+    hpFilter = { variableName: '?value_hp', filterType: 6, value: '80..120' };
+    expect(await allFilters(page)).toEqual(sortJson([...filters, MEW_FILTER]));
+  });
+
   await test.step('Explore relationships of an IRI', async () => {
     const before = server.requests.length;
     await runAction(ids.iri, 'Explore relationships');
@@ -2991,6 +3029,7 @@ test('QUAL-005 type-specific node actions change only their node and the next qu
       const request = lastRequest('/api/query');
       expect(request.variableName).toBe(id);
       expect(sortJson(request.where)).toEqual(sortJson(filters));
+      expect(request.variableFilters).toEqual([hpFilter]);
     });
   }
 
@@ -2999,15 +3038,16 @@ test('QUAL-005 type-specific node actions change only their node and the next qu
     await nodeMenu(page).getByRole('button', { name: 'name', exact: true }).click();
     await expect(page.locator('#modal-change-value')).toContainText('Starts with');
     const valueId = await page.locator('#modal-change-value-content').getAttribute('data-node-id');
-    expect(valueId).toMatch(/^value_\d+$/);
+    expect(valueId).toMatch(/^\?value_\d+$/);
     await applyEditor('', 'Tackle');
     const edges = await page.evaluate(() => cy.edges().filter(edge => edge.data('nodeId') === '<https://example.test/hasName>')
       .map(edge => ({ source: edge.data('source'), target: cy.getElementById(edge.data('target')).data() })));
     expect(edges).toHaveLength(1);
     expect(edges[0].source).toBe(ids.results);
-    expect(edges[0].target).toMatchObject({ value: 'Tackle', label: 'Tackle', type: 'label' });
+    // FE-034: the new value is a value variable holding the exact match.
+    expect(edges[0].target).toMatchObject({ id: valueId, value: valueId, label: '? = Tackle', type: 'value-variable', filterType: null, filterValue: 'Tackle' });
     expect(await allFilters(page)).toEqual(sortJson([...filters, MEW_FILTER,
-      { subject: ids.results, predicate: '<https://example.test/hasName>', object: 'Tackle', filterType: null }]));
+      { subject: ids.results, predicate: '<https://example.test/hasName>', object: valueId, filterType: null }]));
   });
 });
 
@@ -3153,4 +3193,127 @@ test('QUAL-005 Remove relation deletes only the chosen relation of each kind', a
       expect(await allFilters(page)).toEqual(filtersBefore.filter((_, other) => other !== index));
     });
   }
+});
+
+// ── FE-034: a value variable holds a filter and becomes a value when chosen ──
+const hpIri = '<https://example.test/hp>';
+const literal160 = { term: { type: 'literal', value: '160', datatype: XSD_INTEGER, language: null }, label: null, selectable: true };
+
+// ?pokemon hp ?hp with ?hp kept at ≥ 90, made with the app's own functions.
+async function addHpValueVariable(page) {
+  await disableAutoLayout(page);
+  await page.evaluate(hp => {
+    cy.add({ group: 'nodes', data: { id: '?pokemon', value: '?pokemon', label: '?', type: 'variable' }, position: { x: 200, y: 320 } });
+    addValueVariableNode(cy, '?pokemon', hp, 'HP', '?hp');
+    changeElementStringValue('?hp', '90', '2');
+  }, hpIri);
+}
+
+test('FE-034 a value variable looks like a value in variable green with a pink border and its filter as label', async ({ page }) => {
+  await addHpValueVariable(page);
+  expect(await page.evaluate(() => {
+    const node = cy.getElementById('?hp');
+    return { shape: node.style('shape'), height: node.style('height'), color: node.style('background-color'),
+      border: node.style('border-color'), borderWidth: node.style('border-width'), label: node.data('label') };
+  })).toEqual({ shape: 'rectangle', height: '50px', color: VARIABLE_COLOR, border: 'rgb(244,143,177)', borderWidth: '4px', label: '? ≥ 90' });
+  // The relation shows the plain predicate; the filter is on the node.
+  expect(await page.evaluate(() => edgeLabelHtml(cy.edges()[0].data()))).toBe('<div class="edge-label">HP</div>');
+  expect(await page.evaluate(() => buildFilters(cy.elements())))
+    .toEqual([{ subject: '?pokemon', predicate: '<https://example.test/hp>', object: '?hp', filterType: null }]);
+});
+
+test('FE-034 staged Run Query sends the value variable filter and Apply turns it into the chosen value', async ({ page }) => {
+  await addHpValueVariable(page);
+  const requests = await routeStages(page, request => ({ body: stagePage(request,
+    request.variableName === '?hp' ? [literal160] : [iri('https://example.test/Snorlax', 'Snorlax')]) }));
+  await expect(blockNames(page)).toHaveText(['?hp', '?pokemon']);
+  await page.locator('#run-query-btn').click();
+  await expect(candidateButtons(page)).toHaveCount(1);
+  const hpFilter = { variableName: '?hp', filterType: 2, value: '90' };
+  expect(requests[0]).toMatchObject({ variableName: '?hp', variableFilters: [hpFilter], bindings: [] });
+  expect(requests[0].where).toEqual([{ subject: '?pokemon', predicate: hpIri, object: '?hp', filterType: null }]);
+
+  await candidateButtons(page).first().click();
+  await expect(page.locator('#stage-heading')).toHaveText('Stage 2 of 2: ?pokemon');
+  expect(requests.at(-1)).toMatchObject({ variableName: '?pokemon', variableFilters: [hpFilter], bindings: [{ variableName: '?hp', term: literal160.term }] });
+  await candidateButtons(page).first().click();
+  await page.getByRole('button', { name: 'Apply to graph' }).click();
+
+  const snorlax = '<https://example.test/Snorlax>';
+  expect(await page.evaluate(() => cy.nodes().map(node => node.data()).sort((a, b) => (a.id < b.id ? -1 : 1)))).toEqual([
+    { id: '160', value: '160', label: '160', type: 'label' },
+    { id: snorlax, value: snorlax, label: 'Snorlax', type: 'node' },
+  ]);
+  expect(await page.evaluate(() => buildFilters(cy.elements())))
+    .toEqual([{ subject: snorlax, predicate: hpIri, object: '160', filterType: null }]);
+  expect(await page.evaluate(() => variableFilterItems(cy.elements()))).toEqual([]);
+});
+
+test('FE-034 Assume settles the value variable at once, without its filter', async ({ page }) => {
+  await addHpValueVariable(page);
+  await routeStages(page, request => ({ body: stagePage(request,
+    request.variableName === '?hp' ? [literal160] : [iri('https://example.test/Snorlax', 'Snorlax')]) }));
+  await page.locator('#run-query-btn').click();
+  await page.getByRole('button', { name: 'Assume ?hp = 160 in the graph now' }).click();
+  await expect(page.locator('#stage-heading')).toHaveText('Stage 1 of 1: ?pokemon');
+  expect(await page.evaluate(() => {
+    const { id, ...data } = cy.getElementById('160').data();
+    return { exists: cy.getElementById('?hp').length > 0, data };
+  })).toEqual({ exists: false, data: { value: '160', label: '160', type: 'label' } });
+});
+
+test('FE-034 View SPARQL, legacy Run query and the badge use the value variable filter', async ({ page }) => {
+  await addHpValueVariable(page);
+  const profiles = await routeSpeedProfile(page, fulfillProfile(speedProfile([45, 90, 106, 160])));
+  const hpFilter = { variableName: '?hp', filterType: 2, value: '90' };
+
+  // The test server keeps requests from earlier tests: read only the new ones.
+  const sentAfter = (before, path) => server.requests.slice(before).filter(request => request.path === path);
+  let before = server.requests.length;
+  await page.evaluate(() => window.seeSparqlQuery());
+  await expect.poll(() => sentAfter(before, '/api/query/sparql').length).toBe(1);
+  expect(JSON.parse(sentAfter(before, '/api/query/sparql')[0].body).variableFilters).toEqual([hpFilter]);
+
+  before = server.requests.length;
+  await clickGraphNode(page, '?pokemon');
+  await nodeMenu(page).getByRole('button', { name: 'Run query', exact: true }).click();
+  await expect.poll(() => sentAfter(before, '/api/query').length).toBe(1);
+  expect(JSON.parse(sentAfter(before, '/api/query')[0].body).variableFilters).toEqual([hpFilter]);
+
+  // The badge profiles the relation without the variable's own filter.
+  await expect(filterBadge(page)).toHaveText('3 / 4');
+  expect(profiles.at(-1)).toEqual({ endpointUrl: 'CampeonatoBrasileiro2023', where: [], subject: '?pokemon', predicate: hpIri, limit: 500 });
+});
+
+test('FE-034 Convert to variable on a value gives a value variable whose editor starts at Any value', async ({ page }) => {
+  await disableAutoLayout(page);
+  await page.evaluate(() => {
+    cy.add({ group: 'nodes', data: { id: '?pokemon', value: '?pokemon', label: '?', type: 'variable' }, position: { x: 200, y: 320 } });
+    addNodeWithRelationship(cy, '45', '45', 'text', '?pokemon', '<https://example.test/hp>', 'HP');
+    cy.getElementById('45').position({ x: 420, y: 200 });
+  });
+  await clickGraphNode(page, '45');
+  await nodeMenu(page).getByRole('button', { name: 'Convert to variable' }).click();
+  const id = await nodeMenu(page).getAttribute('data-node-id');
+  expect(await menuActions(page)).toEqual(VALUE_VARIABLE_ACTIONS);
+
+  await nodeMenu(page).getByRole('button', { name: 'Edit filter' }).click();
+  expect(await checkedFilter(page)).toBe('Any value');
+  await expect(page.locator('#modal-change-value')).not.toContainText('MAX');
+  await expect(histogram(page)).toHaveJSProperty('hidden', false);
+  // Typing a value picks Exact match; an empty value goes back to any value.
+  await page.evaluate(() => {
+    const input = document.getElementById('modal-new-value');
+    input.value = '45';
+    input.dispatchEvent(new Event('input', { bubbles: true }));
+  });
+  expect(await checkedFilter(page)).toBe('Exact match');
+  await page.evaluate(() => document.getElementById('apply-filter-btn').click());
+  expect(await page.evaluate(nodeId => cy.getElementById(nodeId).data('label'), id)).toBe('? = 45');
+  await page.evaluate(nodeId => changeElementStringValue(nodeId, '', '2'), id);
+  expect(await page.evaluate(nodeId => {
+    const { label, filterType, filterValue } = cy.getElementById(nodeId).data();
+    return { label, filterType, filterValue };
+  }, id)).toEqual({ label: '?', filterType: null, filterValue: '' });
+  expect(await page.evaluate(() => variableFilterItems(cy.elements()))).toEqual([{ variableName: id, filterType: null, value: null }]);
 });

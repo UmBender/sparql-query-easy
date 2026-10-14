@@ -3,7 +3,7 @@ import fs from 'node:fs';
 import { test } from 'node:test';
 import vm from 'node:vm';
 import { bindPredicateEdges, bindVariable } from '../sparql/graph-binding.js';
-import { nodeDataForResult, nodeDataForTerm } from '../sparql/graph-model.js';
+import { nodeDataForResult, nodeDataForTerm, nodeKind, valueVariableFilterData, valueVariableNodeData } from '../sparql/graph-model.js';
 
 // The bundled Cytoscape, loaded as the page loads it (a global script).
 vm.runInThisContext(fs.readFileSync(new URL('../sparql/cytoscape.min.js', import.meta.url), 'utf8'));
@@ -134,4 +134,18 @@ test('predicate-variable edges are bound in place and lose the variable mark', (
   assert.equal(cy.getElementById('e2').data('nodeId'), '?q');
   assert.equal(cy.getElementById('e2').data('type'), 'variable');
   assert.equal(cy.getElementById('a').data('nodeId'), undefined);
+});
+
+test('a settled value variable becomes a plain value node without its filter (FE-034)', () => {
+  const cy = graph([
+    node('?mon', { type: 'variable' }),
+    { group: 'nodes', data: { ...valueVariableNodeData('?hp'), ...valueVariableFilterData(2, '90') }, position: { x: 10, y: 20 } },
+    edge('hp', '?mon', '?hp', { nodeId: '<https://e/hp>', label: 'HP' }),
+  ]);
+  const value = nodeDataForTerm({ type: 'literal', value: '160', datatype: 'http://www.w3.org/2001/XMLSchema#integer' }, '160');
+  assert.equal(bindVariable(cy, '?hp', value), true);
+  assert.equal(cy.getElementById('?hp').length, 0);
+  assert.deepEqual(cy.getElementById('160').data(), { id: '160', value: '160', label: '160', type: 'label' });
+  assert.equal(nodeKind(cy.getElementById('160').data()).filterType, null);
+  assert.deepEqual(ends(cy, 'hp'), ['?mon', '160']);
 });

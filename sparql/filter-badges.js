@@ -71,17 +71,20 @@ function wantedFilterBadges() {
     const endpointUrl = getEndpoint();
     const wanted = new Map();
     cy.nodes().forEach(node => {
-        const filterType = qc.filterTypeOf(node.data('filterType'));
-        if (filterType === null) return;
+        // FE-034: a value variable's filter shows the same badges as a filtered value.
+        const filter = window.graphModel.nodeFilter(node.data());
+        if (filter?.filterType == null) return;
+        const { filterType } = filter;
         const edges = filterEdgeItems(node.component());
         const literalId = node.id();
-        const filter = { filterType, value: String(node.data('value') ?? '') };
         const actual = qc.actualValueRequest({ endpointUrl, edges, literalId });
         if (actual) {
             wanted.set(literalId, { kind: 'actual', request: actual, ...filter });
             return;
         }
-        const profile = filterType >= 2 && qc.numericProfileRequest({ endpointUrl, edges, literalId });
+        const profile = filterType >= 2 && qc.numericProfileRequest({
+            endpointUrl, edges, literalId, variableFilters: variableFilterItems(node.component()),
+        });
         if (profile) wanted.set(literalId, { kind: 'count', request: profile, ...filter });
     });
     return wanted;

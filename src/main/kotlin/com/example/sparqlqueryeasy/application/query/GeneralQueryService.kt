@@ -8,6 +8,7 @@ import com.example.sparqlqueryeasy.rdf.SparqlSyntaxValidator
 import com.example.sparqlqueryeasy.wikidata.query.GeneralSelectQuery
 import com.example.sparqlqueryeasy.wikidata.query.QueryVariable
 import com.example.sparqlqueryeasy.wikidata.query.TriplePattern
+import com.example.sparqlqueryeasy.wikidata.query.VariableFilter
 import com.example.sparqlqueryeasy.wikidata.query.WikidataQueryGenerator
 
 data class GeneralQueryRequest(
@@ -15,6 +16,7 @@ data class GeneralQueryRequest(
     val patterns: List<TriplePattern> = emptyList(),
     val limit: Int = 20,
     val ignoreWikidata: Boolean = true,
+    val variableFilters: List<VariableFilter> = emptyList(),
 )
 
 sealed interface GeneralQueryResult {
@@ -84,6 +86,7 @@ class GeneralQueryService(
                         limit = request.limit,
                         useWikidataLabels = endpoint.isWikidata && !request.ignoreWikidata,
                         useWikidataPrefixes = endpoint.isWikidata,
+                        variableFilters = request.variableFilters,
                     ),
                 ),
             )

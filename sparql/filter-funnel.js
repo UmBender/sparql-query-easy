@@ -93,6 +93,7 @@ function funnelInput() {
         edges,
         variableName,
         disabled: funnelState.disabled,
+        variableFilters: variableFilterItems(component),
     });
     const present = new Set(plan.steps.map(step => step.key));
     funnelState.disabled.forEach(key => { if (!present.has(key)) funnelState.disabled.delete(key); });

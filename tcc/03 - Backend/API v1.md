@@ -72,6 +72,37 @@ and `SELECT-ORDER-MIN-001` keep their captures and still match by result.
 An omitted `filterType` produces an exact `str()` match. The `/api/query/sparql` display route deliberately ignores a
 provided `filterType`, preserving C# behavior.
 
+### Variable filters (FE-034)
+
+`POST /api/query`, `/api/query/sparql`, `/api/query/stage`, `/api/query/count`
+and `/api/query/numeric-profile` accept an optional `variableFilters` list. It
+restricts a variable object to literal values, so the filtered value is a real
+query variable that can be a stage, a Run Query target or a result. Requests
+without it are unchanged, and the literal-object `filterType` form above stays
+as it is.
+
+```json
+"variableFilters": [
+  {"variableName": "?hp", "filterType": 2, "value": "90"}
+]
+```
+
+Each item renders one `FILTER (isLiteral(?v) && …)` after the patterns, and
+inside every Maximum/Minimum subquery:
+
+- Without `filterType` or `value`, the item keeps any literal (`FILTER (isLiteral(?v))`).
+- With `value` but no `filterType`, it is an exact `str(?v) = "value"` match.
+- `filterType` `0`, `1`, `2`, `3` and `6` work as in the literal form, with `value` as the operand.
+
+The display route applies variable filters, because they are new. The request
+returns `400` when:
+
+- `variableName` is not a variable or is not the object of a `where` pattern;
+- a variable has two filters;
+- `filterType` is set without `value`;
+- `filterType` is `4`/`5` (Maximum/Minimum are not offered on a variable);
+- a numeric value or a Between range is invalid.
+
 ## Routes
 
 ### `GET /`

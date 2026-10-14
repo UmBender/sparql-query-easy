@@ -35,6 +35,7 @@ import com.example.sparqlqueryeasy.wikidata.query.StageBindingValue
 import com.example.sparqlqueryeasy.wikidata.query.StartsWith
 import com.example.sparqlqueryeasy.wikidata.query.TermObject
 import com.example.sparqlqueryeasy.wikidata.query.TriplePattern
+import com.example.sparqlqueryeasy.wikidata.query.VariableFilter
 import com.example.sparqlqueryeasy.wikidata.query.VariableTerm
 import io.ktor.openapi.JsonSchema
 import kotlinx.serialization.Serializable
@@ -83,6 +84,10 @@ data class GeneralQueryHttpRequest(
     val variableName: String? = null,
     @JsonSchema.Default("true")
     val ignoreWikidata: Boolean = true,
+    @JsonSchema.Description(
+        "FE-034: variables restricted to literal values, each the object of a where pattern; optional.",
+    )
+    val variableFilters: List<VariableFilterHttpRequest> = emptyList(),
 )
 
 @Serializable
@@ -96,6 +101,20 @@ data class WhereHttpRequest(
     )
     @JsonSchema.Enum("0", "1", "2", "3", "4", "5", "6")
     val filterType: Int? = null,
+)
+
+/**
+ * FE-034: `FILTER (isLiteral(?v) && …)` on a variable object. Without filterType and value the
+ * variable keeps any literal; a value without filterType is an exact lexical match.
+ */
+@Serializable
+data class VariableFilterHttpRequest(
+    @JsonSchema.Description("The filtered SPARQL variable, with or without the leading ?.")
+    val variableName: String? = null,
+    @JsonSchema.Description("0 Starts, 1 Contains, 2 Greater/equal, 3 Lesser/equal, 6 Between (value min..max).")
+    @JsonSchema.Enum("0", "1", "2", "3", "6")
+    val filterType: Int? = null,
+    val value: String? = null,
 )
 
 @Serializable
@@ -136,6 +155,10 @@ data class StageQueryHttpRequest(
     @JsonSchema.Default("0")
     @JsonSchema.Description("Page offset, 0 to 10000.")
     val offset: Int = 0,
+    @JsonSchema.Description(
+        "FE-034: variables restricted to literal values, each the object of a where pattern; optional.",
+    )
+    val variableFilters: List<VariableFilterHttpRequest> = emptyList(),
 )
 
 @Serializable
@@ -151,6 +174,10 @@ data class NumericProfileHttpRequest(
     @JsonSchema.Default("$PROFILE_DEFAULT_LIMIT")
     @JsonSchema.Description("Maximum number of values returned, 1 to $PROFILE_MAX_LIMIT.")
     val limit: Int = PROFILE_DEFAULT_LIMIT,
+    @JsonSchema.Description(
+        "FE-034: variables restricted to literal values, each the object of a where pattern; optional.",
+    )
+    val variableFilters: List<VariableFilterHttpRequest> = emptyList(),
 )
 
 @Serializable
@@ -185,6 +212,10 @@ data class ResultCountHttpRequest(
     val variableName: String? = null,
     @JsonSchema.Description("Graph patterns; at least one. Maximum/Minimum filters are rejected.")
     val where: List<WhereHttpRequest>? = null,
+    @JsonSchema.Description(
+        "FE-034: variables restricted to literal values, each the object of a where pattern; optional.",
+    )
+    val variableFilters: List<VariableFilterHttpRequest> = emptyList(),
 )
 
 @Serializable
@@ -220,6 +251,27 @@ internal fun GeneralQueryHttpRequest.toVariable(): QueryVariable =
 
 internal fun GeneralQueryHttpRequest.toPatterns(): List<TriplePattern> =
     requireNotNull(where) { "Missing required field: where" }.map(WhereHttpRequest::toPattern)
+
+internal fun GeneralQueryHttpRequest.toVariableFilters(): List<VariableFilter> =
+    variableFilters.map(
+        VariableFilterHttpRequest::toVariableFilter,
+    )
+
+internal fun VariableFilterHttpRequest.toVariableFilter(): VariableFilter {
+    val variable = requireValue(variableName, "variableFilters.variableName")
+    if (!variable.startsWith("?")) throw HttpRequestValidationFailure("variableFilters.variableName must be a SPARQL variable")
+    val name = (variable.toQueryTerm("variableFilters.variableName") as VariableTerm).variable
+    return try {
+        when (filterType) {
+            null -> VariableFilter(name, exactValue = value?.takeUnless(String::isEmpty))
+            4, 5 -> throw HttpRequestValidationFailure("Maximum and Minimum filters are not supported on a variable filter")
+            else -> VariableFilter(name, filterType.toFilter(requireValue(value, "variableFilters.value")))
+        }
+    } catch (exception: IllegalArgumentException) {
+        if (exception is HttpRequestValidationFailure) throw exception
+        throw HttpRequestValidationFailure(exception.message ?: "Invalid variable filter", exception)
+    }
+}
 
 internal fun RelationshipsHttpRequest.toElement(): QueryTerm = id.toQueryTerm("id")
 
@@ -311,6 +363,7 @@ internal fun NumericProfileHttpRequest.toProfileRequest(): NumericProfileRequest
                 ?: throw HttpRequestValidationFailure("predicate must be a single IRI"),
         patterns = where.map(WhereHttpRequest::toPattern),
         limit = limit,
+        variableFilters = variableFilters.map(VariableFilterHttpRequest::toVariableFilter),
     )
 
 internal fun NumericProfile.toResponse() =
@@ -337,6 +390,7 @@ internal fun ResultCountHttpRequest.toCountRequest(): ResultCountRequest =
     ResultCountRequest(
         variable = QueryVariable(requireValue(variableName, "variableName").removePrefix("?")),
         patterns = requireNotNull(where) { "Missing required field: where" }.map(WhereHttpRequest::toPattern),
+        variableFilters = variableFilters.map(VariableFilterHttpRequest::toVariableFilter),
     )
 
 internal fun StageQueryHttpRequest.toStageRequest(): StageQueryRequest =
@@ -346,6 +400,7 @@ internal fun StageQueryHttpRequest.toStageRequest(): StageQueryRequest =
         bindings = bindings.map(StageBindingHttpRequest::toBinding),
         limit = limit,
         offset = offset,
+        variableFilters = variableFilters.map(VariableFilterHttpRequest::toVariableFilter),
     )
 
 private fun StageBindingHttpRequest.toBinding(): StageBinding =
