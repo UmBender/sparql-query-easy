@@ -69,13 +69,11 @@ the Operational Map (`npm run test:query`, `npm run check:frontend-types`,
   failures below). No product file changed, so the Gradle resource test was
   not needed.
 
-### Bugs found (not reported, so not fixed here)
+### Bugs found and fixed
 
-These are tested as the intended result with `test.fail`. Each one failed for
-exactly its stated reason when checked without `test.fail`. Fixing one turns
-its expected failure into an error, so that row's `convertBug` must then be
-removed. `convertMenuNodeToVariable` copies every old data field onto the new
-variable:
+These were found unreported and first committed as expected failures. Each one
+failed for exactly its stated reason. `convertMenuNodeToVariable` copied every
+old data field onto the new variable:
 
 1. **Filtered value → variable keeps `filterType`.** The query sends
    `filterType: 2` with a variable object, and the server rejects it
@@ -113,4 +111,11 @@ variable:
 - A literal whose ID contains `?` is treated as a variable by the legacy
   `extractVariableName`/`getAllNodes`.
 
-Commit: completion commit for this task.
+- 2026-10-14: At the user's request, fixed the three Convert bugs in
+  `sparql/graph-menus.js`: the new variable drops `filterType`, `isLink`,
+  `href` and `color` and keeps other data (the existing convert test checks
+  custom data is kept). The `test.fail` markers were removed, and the rows now
+  pass. Validation: `npm run test:query` (44 pass),
+  `npm run check:frontend-types` (clean), `npm run test:browser` (113 pass).
+
+Commits: `c9cf089` (matrix) and the fix commit for this task.

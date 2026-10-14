@@ -2696,24 +2696,20 @@ test('a failed or empty value lookup keeps the filter and says the value is unkn
 
 // ── QUAL-005: every node kind against every node action ────────────────
 // The kinds are built with the app's own factories, so their data is what a
-// user gets. A row with `convertBug` states the intended result and is expected
-// to fail until that bug is fixed (see the QUAL-005 card).
+// user gets.
 const kpk = 'https://example.test/';
 const kindIri = name => `<${kpk}${name}>`;
 const COMMON_ACTIONS = ['Connect with variable predicate', 'Connect with defined predicate', 'Convert to variable', 'Remove'];
 const VARIABLE_ACTIONS = ['Run query', 'Add value filter', ...COMMON_ACTIONS];
 const NODE_KINDS = [
   { kind: 'variable', key: 'variable', actions: VARIABLE_ACTIONS },
-  { kind: '"N results"', key: 'results', actions: VARIABLE_ACTIONS,
-    convertBug: 'the converted variable keeps the gray "N results" color' },
+  { kind: '"N results"', key: 'results', actions: VARIABLE_ACTIONS },
   { kind: 'IRI', key: 'iri', actions: ['Explore relationships', ...COMMON_ACTIONS] },
   { kind: 'class', key: 'class', actions: ['Explore values', ...COMMON_ACTIONS] },
   { kind: 'literal value', key: 'literal', actions: ['Edit value', ...COMMON_ACTIONS] },
   { kind: 'Boolean value', key: 'boolean', actions: ['Toggle Boolean value', 'Edit value', ...COMMON_ACTIONS] },
-  { kind: 'filtered value', key: 'filtered', actions: ['Edit value', ...COMMON_ACTIONS],
-    convertBug: 'the converted variable keeps filterType, so the server rejects the query' },
-  { kind: 'image link', key: 'link', actions: ['Open link', 'Edit value', ...COMMON_ACTIONS],
-    convertBug: 'the converted variable keeps isLink and offers Open link instead of Run query' },
+  { kind: 'filtered value', key: 'filtered', actions: ['Edit value', ...COMMON_ACTIONS] },
+  { kind: 'image link', key: 'link', actions: ['Open link', 'Edit value', ...COMMON_ACTIONS] },
   { kind: 'value of a fixed entity', key: 'fixedValue', actions: COMMON_ACTIONS },
 ];
 
@@ -2801,7 +2797,6 @@ test('QUAL-005 each node kind offers exactly its actions and selecting it sends 
 
 for (const row of NODE_KINDS) {
   test(`QUAL-005 Convert to variable turns a ${row.kind} node into a plain variable`, async ({ page }) => {
-    test.fail(Boolean(row.convertBug), `Known bug: ${row.convertBug}.`);
     const ids = await addNodeKindGraph(page);
     const oldId = ids[row.key];
     const oldValue = await nodeValue(page, oldId);

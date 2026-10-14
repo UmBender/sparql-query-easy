@@ -238,7 +238,9 @@ function initGraphMenus() {
     function convertMenuNodeToVariable(node) {
         const oldId    = node.id();
         const newVarId = `?node_${Date.now()}`;
-        const oldData  = node.data();
+        // QUAL-005: a value's filter, an image link and the gray "N results"
+        // color describe the old value, not the new variable.
+        const { filterType, isLink, href, color, ...oldData } = node.data();
         const oldPos   = node.position();
 
         cy.add({
