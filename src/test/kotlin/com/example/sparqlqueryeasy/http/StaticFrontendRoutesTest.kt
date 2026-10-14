@@ -39,6 +39,7 @@ class StaticFrontendRoutesTest {
             val stageModule = client.get("/query-stages.js")
             val actionModule = client.get("/graph-actions.js")
             val modelModule = client.get("/graph-model.js")
+            val bindingModule = client.get("/graph-binding.js")
 
             page.status shouldBe HttpStatusCode.OK
             val source = frontendSource()
@@ -63,6 +64,8 @@ class StaticFrontendRoutesTest {
             actionModule.bodyAsText().contains("export function nodeActions") shouldBe true
             modelModule.status shouldBe HttpStatusCode.OK
             modelModule.bodyAsText().contains("export function nodeKind") shouldBe true
+            bindingModule.status shouldBe HttpStatusCode.OK
+            bindingModule.bodyAsText().contains("export function bindVariable") shouldBe true
             pageScripts.forEach { script ->
                 val response = client.get("/$script")
                 response.status shouldBe HttpStatusCode.OK

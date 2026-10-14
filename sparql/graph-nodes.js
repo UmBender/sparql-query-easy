@@ -19,44 +19,16 @@ function addNode(theCy, id, text) {
     showIntroAlert('newNode', 'Click a node to open its action list.');
 }
 
+// Results-table choice: the shared binding path (FE-033), plus a fresh fetch
+// of each outgoing relation from the chosen value.
 function replaceWithNewNode(theCy, varName, nodeId, nodeLabel, propertyType, propertyClass) {
-    const oldElement = theCy.getElementById(varName);
-    const oldId      = varName;
-
-    if (!oldElement.length) return;
-    // BUG-003: a value already in the graph (common in cycles) is reused, as
-    // Apply to graph does; adding a second element with its ID would throw.
-    if (!cy.getElementById(nodeId).length) {
-        cy.add({
-            group: 'nodes',
-            data:  window.graphModel.nodeDataForResult({ id: nodeId, label: nodeLabel, propertyType, propertyClass }),
-            position: oldElement.position()
-        });
-    }
-    nodeActionMenuController?.retarget(oldId, nodeId);
-
-    // Edges keep their IDs and data. Each outgoing target is then replaced by
-    // the chosen value's own relationship value, except the replacement node
-    // itself (a loop after the merge), which stays with its edge.
-    const outgoing = [];
-    oldElement.connectedEdges().forEach(edge => {
-        const ends = {};
-        if (edge.data('source') === oldId) ends.source = nodeId;
-        if (edge.data('target') === oldId) ends.target = nodeId;
-        edge.move(ends);
-        if (ends.source && edge.data('target') !== nodeId) {
-            outgoing.push({ ...edge.data(), targetIsIri: window.graphModel.nodeKind(edge.target().data()).kind === 'iri' });
-        }
+    const nodeData = window.graphModel.nodeDataForResult({ id: nodeId, label: nodeLabel, propertyType, propertyClass });
+    const bound = window.graphBinding.bindVariable(theCy, varName, nodeData, {
+        retarget: (oldId, newId) => nodeActionMenuController?.retarget(oldId, newId),
+        refetchRelation: (sourceId, relation) => getRelationshipValueChange(
+            sourceId, relation.predicateId, relation.predicateLabel, !relation.targetIsIri),
     });
-    oldElement.remove();
-
-    // BUG-006: a fixed IRI target is fetched again as an IRI with its label;
-    // only other targets (values, variables) keep the literal request.
-    outgoing.forEach(({ target, label: eLabel, nodeId: eNodeId, targetIsIri }) => {
-        cy.getElementById(target).remove();
-        getRelationshipValueChange(nodeId, eNodeId, eLabel, !targetIsIri);
-    });
-    updateStatusBar();
+    if (bound) updateStatusBar();
 }
 
 function addNodeWithRelationship(theCy, id, text, type, sourceNodeId, predicateId, predicateLabel, theSubject, predicateIndex = 0) {

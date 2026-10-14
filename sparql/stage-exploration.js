@@ -483,38 +483,16 @@ function applyChoicesToGraph(choices) {
             if (!entry) continue;
             const value = window.queryStages.termGraphValue(term);
             if (term.type === 'iri') {
-                entry.edgeIds.forEach(id => {
-                    const edge = cy.getElementById(id);
-                    if (!edge.length || edge.data('nodeId') !== variableName) return;
-                    edge.data({ nodeId: value, label });
-                    if (window.graphModel.isVariableEdge(edge.data())) edge.removeData('type');
-                });
+                window.graphBinding.bindPredicateEdges(cy, entry.edgeIds, variableName, value, label);
             }
-            entry.nodeIds.forEach(id => replaceVariableNodeWithTerm(id, term, value, label));
+            const nodeData = window.graphModel.nodeDataForTerm(term, label);
+            entry.nodeIds.forEach(id => window.graphBinding.bindVariable(cy, id, nodeData, {
+                retarget: (oldId, newId) => nodeActionMenuController?.retarget(oldId, newId),
+            }));
         }
     });
     updateStatusBar();
     toast(`Applied ${choices.length} bindings to the graph.`, 'success');
-}
-
-function replaceVariableNodeWithTerm(oldId, term, value, label) {
-    const oldNode = cy.getElementById(oldId);
-    if (!oldNode.length || oldNode.id() === value) return;
-    if (!cy.getElementById(value).length) {
-        cy.add({
-            group: 'nodes',
-            data: window.graphModel.nodeDataForTerm(term, label),
-            position: { ...oldNode.position() },
-        });
-    }
-    oldNode.connectedEdges().forEach(edge => {
-        const ends = {};
-        if (edge.data('source') === oldId) ends.source = value;
-        if (edge.data('target') === oldId) ends.target = value;
-        edge.move(ends);
-    });
-    nodeActionMenuController?.retarget(oldId, value);
-    oldNode.remove();
 }
 
 function invalidateExploration(state, signatureChanged) {

@@ -1,13 +1,13 @@
 ---
 id: FE-033
 title: Bind a variable to a value through one tested graph function
-status: BACKLOG
+status: DONE
 priority: P1
 type: refactor
 depends_on: [FE-032]
 human_gate: false
 created: 2026-10-09
-updated: 2026-10-09
+updated: 2026-10-14
 ---
 # Bind a variable to a value through one tested graph function
 
@@ -45,3 +45,38 @@ the other. Merge them without changing behavior. Skill: `tcc-refactor`.
 
 `npm run test:query` (adds the headless test file), `npm run
 check:frontend-types`, `npm run test:browser`. Rollback: revert the commit.
+
+## Result
+
+- 2026-10-14: `sparql/graph-binding.js` has `bindVariable(cy, variableId,
+  nodeData, {retarget, refetchRelation})` and `bindPredicateEdges(cy, edgeIds,
+  variableName, predicateId, label)`. `replaceWithNewNode` (results table) is
+  now a thin wrapper that passes `nodeDataForResult` and the
+  `getRelationshipValueChange` refetch. `applyChoicesToGraph` passes
+  `nodeDataForTerm` without a refetch. `replacePredicateVariable` and Apply
+  share `bindPredicateEdges`. `replaceVariableNodeWithTerm` and the copied
+  edge loops are removed. The node data passed in replaces the `term`
+  parameter from the scope, because results-table rows have no `RdfTerm`.
+- Differences that were not intended are now aligned to the Apply/Assume
+  behavior:
+  - The results table retargets the open action menu after the edges move,
+    so the menu sees the value's incoming relations, as Apply does.
+  - A results-table choice whose ID equals the variable's ID is a no-op. It
+    used to remove the node, which only a literal spelled like a
+    `?node_…` ID could trigger.
+  - Apply checks `isEdge()` when binding predicate edges, like the results
+    table.
+- Headless tests (`frontend-tests/graph-binding.unit.mjs`, bundled
+  `cytoscape.min.js` loaded through `vm`, preset layout) cover:
+  - A new value and a value already in the graph (cycle).
+  - A self-loop.
+  - A missing variable, and a variable that is already the value.
+  - Kept versus refetched neighbours, with IRI and literal targets (BUG-006).
+  - Predicate-variable edges.
+- Validation:
+  - `npm run test:query` (59 pass).
+  - `npm run check:frontend-types` (clean).
+  - `npm run test:browser` (113 pass; the QUAL-005 table is unchanged).
+  - Gradle `test` (pass).
+  - `installDist` with an HTTP smoke test of `/graph-binding.js`,
+    `/graph-model.js` and `/index2.html` (200).

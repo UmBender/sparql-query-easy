@@ -450,12 +450,7 @@ function getRelationshipValueChange(subject, predicate, predicateLabel, isLitera
 function replacePredicateVariable(nodeLine) {
     const p = trData[nodeLine];
     if (!p) return;
-    p.predicateEdgeIds.forEach(id => {
-        const edge = cy.getElementById(id);
-        if (!edge.length || !edge.isEdge() || edge.data('nodeId') !== p.variableName) return;
-        edge.data({ nodeId: p.nodeId, label: p.nodeLabel });
-        if (window.graphModel.isVariableEdge(edge.data())) edge.removeData('type');
-    });
+    window.graphBinding.bindPredicateEdges(cy, p.predicateEdgeIds, p.variableName, p.nodeId, p.nodeLabel);
     $('#grid-resultado-consulta').modal('close');
 }
 
