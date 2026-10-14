@@ -3351,3 +3351,86 @@ test('FE-037 Add Value Variable adds a value variable that a defined predicate c
   expect(await page.evaluate(() => variableFilterItems(cy.elements()))).toEqual([{ variableName: id, filterType: 0, value: 'Pi' }]);
   expect(await page.evaluate(nodeId => cy.getElementById(nodeId).data('label'), id)).toBe('? starts with Pi');
 });
+
+// ── FE-038: text values suggested while typing in the filter editor ──
+const literalTerm = value => ({ term: { type: 'literal', value, datatype: null, language: 'en' }, label: null, selectable: true });
+const typeInEditor = (page, text) => page.evaluate(value => {
+  const input = document.getElementById('modal-new-value');
+  input.value = value;
+  input.dispatchEvent(new Event('input', { bubbles: true }));
+}, text);
+const chooseFilterType = (page, value) => page.evaluate(type => {
+  const radio = document.querySelector(`#modal-change-value input[name=filter-type][value="${type}"]`);
+  radio.checked = true;
+  radio.dispatchEvent(new Event('change', { bubbles: true }));
+}, value);
+const suggestionTexts = page => page.locator('#filter-suggestions button.filter-suggestion').allTextContents();
+const suggestionStatus = page => page.locator('#filter-suggestions .filter-suggestions-status');
+
+test('FE-038 typing in a value variable filter suggests the values that start with the text and a choice is an exact match', async ({ page }) => {
+  await disableAutoLayout(page);
+  await page.evaluate(() => {
+    cy.add({ group: 'nodes', data: { id: '?pokemon', value: '?pokemon', label: '?', type: 'variable' }, position: { x: 200, y: 320 } });
+    addValueVariableNode(cy, '?pokemon', '<https://example.test/name>', 'name', '?name');
+    cy.getElementById('?name').position({ x: 460, y: 200 });
+  });
+  const requests = await routeStages(page, request => ({ body: stagePage(request,
+    [literalTerm('Pikachu'), literalTerm('Pidgey'), { ...literalTerm('Pikachu'), term: { type: 'literal', value: 'Pikachu', datatype: null, language: 'fr' } }]) }));
+  await clickGraphNode(page, '?name');
+  await nodeMenu(page).getByRole('button', { name: 'Edit filter' }).click();
+  await chooseFilterType(page, '0');
+  await typeInEditor(page, 'P');
+  await typeInEditor(page, 'Pi');
+
+  await expect.poll(() => suggestionTexts(page)).toEqual(['Pikachu', 'Pidgey']);
+  // Typing again within the delay sends one request, for the last text.
+  expect(requests).toEqual([{
+    endpointUrl: 'CampeonatoBrasileiro2023', variableName: '?name', bindings: [], limit: 20, offset: 0,
+    where: [{ subject: '?pokemon', predicate: '<https://example.test/name>', object: '?name', filterType: null }],
+    variableFilters: [{ variableName: '?name', filterType: 0, value: 'Pi' }],
+  }]);
+
+  await page.evaluate(() => document.querySelector('#filter-suggestions button.filter-suggestion').click());
+  await expect(page.locator('#modal-new-value')).toHaveValue('Pikachu');
+  expect(await checkedFilter(page)).toBe('Exact match');
+  await expect(page.locator('#filter-suggestions')).toBeHidden();
+  await page.waitForTimeout(600);
+  expect(requests).toHaveLength(1);
+  await page.evaluate(() => document.getElementById('apply-filter-btn').click());
+  expect(await page.evaluate(() => cy.getElementById('?name').data('label'))).toBe('? = Pikachu');
+});
+
+test('FE-038 Edit value on a value node suggests values containing the text through a stand-in variable', async ({ page }) => {
+  await disableAutoLayout(page);
+  await page.evaluate(() => {
+    cy.add({ group: 'nodes', data: { id: '?pokemon', value: '?pokemon', label: '?', type: 'variable' }, position: { x: 200, y: 320 } });
+    addNodeWithRelationship(cy, 'Pikachu', 'Pikachu', 'text', '?pokemon', '<https://example.test/name>', 'name');
+    cy.getElementById('Pikachu').position({ x: 460, y: 200 });
+  });
+  let fail = false;
+  const requests = await routeStages(page, request => (fail
+    ? { status: 502, body: { error: 'upstream down' } }
+    : { body: stagePage(request, request.variableFilters[0].value === 'chu' ? [literalTerm('Pikachu'), literalTerm('Raichu')] : []) }));
+  await clickGraphNode(page, 'Pikachu');
+  await nodeMenu(page).getByRole('button', { name: 'Edit value' }).click();
+  await typeInEditor(page, 'chu');
+
+  await expect.poll(() => suggestionTexts(page)).toEqual(['Pikachu', 'Raichu']);
+  expect(requests[0]).toMatchObject({
+    variableName: '?suggestedValue',
+    where: [{ subject: '?pokemon', predicate: '<https://example.test/name>', object: '?suggestedValue', filterType: null }],
+    variableFilters: [{ variableName: '?suggestedValue', filterType: 1, value: 'chu' }],
+  });
+
+  await typeInEditor(page, 'xyz');
+  await expect(suggestionStatus(page)).toHaveText('No value contains “xyz”.');
+  fail = true;
+  await typeInEditor(page, 'Ra');
+  await expect(suggestionStatus(page)).toHaveText('Could not load matching values: upstream down');
+  // Clearing the text hides the list and sends nothing.
+  const sent = requests.length;
+  await typeInEditor(page, '');
+  await expect(page.locator('#filter-suggestions')).toBeHidden();
+  await page.waitForTimeout(600);
+  expect(requests).toHaveLength(sent);
+});

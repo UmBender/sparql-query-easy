@@ -150,6 +150,10 @@ function getModalReplaceContent(theId, theValue, { variable = false } = {}) {
                     <input type="text" id="modal-new-value" value="${safeVal}" placeholder="Enter new value" autocomplete="off">
                     <label for="modal-new-value" class="active">New Value</label>
                 </div>
+                <div id="filter-suggestions" class="filter-suggestions" hidden>
+                    <p class="filter-suggestions-status" role="status"></p>
+                    <ul class="filter-suggestions-list" aria-label="Matching values"></ul>
+                </div>
                 ${variable || isNumericOrSpecial ? '<div id="filter-histogram" class="filter-histogram" hidden></div>' : ''}
                 <div class="filter-options" style="margin-top:10px;">
                     <p style="margin:0 0 4px; font-weight:600;">Filter Type:</p>
@@ -207,6 +211,97 @@ function changeValueVariableFilter(elementId, newValue, filterType) {
     }
     cy.getElementById(elementId).data(window.graphModel.valueVariableFilterData(type, any ? '' : newValue));
     $('#modal-change-value').modal('close');
+}
+
+// ── FE-038: text values suggested while typing in the filter editor ──
+// Like Search nodes: 400 ms after typing, the values of the node's relation
+// that start with (Starts with) or contain (other types) the text, under the
+// rest of the query, case-sensitive. Choosing one fills the input and selects
+// Exact match. A newer request aborts an older one; stale answers are ignored.
+const FILTER_SUGGESTION_DELAY_MS = 400;
+let filterSuggestionTimer = null;
+let filterSuggestionRequest = null;
+
+function stopFilterSuggestions() {
+    clearTimeout(filterSuggestionTimer);
+    filterSuggestionTimer = null;
+    filterSuggestionRequest?.abort();
+    filterSuggestionRequest = null;
+}
+
+function attachFilterSuggestions(nodeId) {
+    stopFilterSuggestions();
+    const box = document.getElementById('filter-suggestions');
+    const input = document.getElementById('modal-new-value');
+    if (!box || !input) return;
+    const status = box.querySelector('.filter-suggestions-status');
+    const list = box.querySelector('.filter-suggestions-list');
+    const radios = () => [...document.querySelectorAll('#modal-change-value-content input[name=filter-type]')];
+    const hide = () => { box.hidden = true; list.innerHTML = ''; status.textContent = ''; };
+
+    function choose(value) {
+        stopFilterSuggestions();
+        input.value = value;
+        const exact = radios().find(radio => radio.value === '');
+        if (exact) exact.checked = true;
+        hide();
+        // The histogram and the Any value switch read the input.
+        input.dispatchEvent(new Event('input', { bubbles: true }));
+        stopFilterSuggestions();
+        input.focus();
+    }
+
+    function refresh() {
+        stopFilterSuggestions();
+        const text = input.value;
+        const startsWith = radios().find(radio => radio.checked)?.value === '0';
+        const request = textSuggestionRequestFor(nodeId, text, startsWith);
+        if (!request) { hide(); return; }
+        filterSuggestionTimer = setTimeout(() => {
+            const controller = new AbortController();
+            filterSuggestionRequest = controller;
+            const stale = () => controller.signal.aborted || !box.isConnected;
+            box.hidden = false;
+            status.textContent = 'Looking for matching values…';
+            list.innerHTML = '';
+            fetchStagePage(request, controller.signal).then(page => {
+                if (stale()) return;
+                const values = window.queryCalculations.suggestedTexts(page);
+                status.textContent = values.length ? '' : `No value ${startsWith ? 'starts with' : 'contains'} “${text}”.`;
+                list.innerHTML = values.map(value => `<li><button type="button" class="filter-suggestion"
+                    data-value="${escapeHTML(value)}">${escapeHTML(value)}</button></li>`).join('');
+            }, error => {
+                if (stale()) return;
+                status.textContent = `Could not load matching values: ${error.message}`;
+            });
+        }, FILTER_SUGGESTION_DELAY_MS);
+    }
+
+    input.addEventListener('input', refresh);
+    radios().forEach(radio => radio.addEventListener('change', refresh));
+    list.addEventListener('click', event => {
+        const button = event.target.closest('button.filter-suggestion');
+        if (button) choose(button.dataset.value);
+    });
+    // Arrow Down moves from the input into the list.
+    input.addEventListener('keydown', event => {
+        if (event.key !== 'ArrowDown') return;
+        const first = list.querySelector('button.filter-suggestion');
+        if (!first) return;
+        event.preventDefault();
+        first.focus();
+    });
+    list.addEventListener('keydown', event => {
+        if (event.key !== 'ArrowDown' && event.key !== 'ArrowUp') return;
+        const buttons = [...list.querySelectorAll('button.filter-suggestion')];
+        const index = buttons.indexOf(document.activeElement);
+        if (index < 0) return;
+        event.preventDefault();
+        if (event.key === 'ArrowUp' && index === 0) input.focus();
+        else buttons[Math.min(buttons.length - 1, Math.max(0, index + (event.key === 'ArrowDown' ? 1 : -1)))].focus();
+    });
+    document.querySelectorAll('#modal-change-value-content .modal-close, #apply-filter-btn')
+        .forEach(button => button.addEventListener('click', stopFilterSuggestions));
 }
 
 // ── FE-026: value histogram with a range slider in the filter editor ──

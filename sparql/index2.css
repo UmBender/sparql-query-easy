@@ -540,6 +540,43 @@ main {
 
 .filter-histogram-error { color: #c62828; }
 
+/* FE-038: text values matching the typed filter, like the Search nodes list. */
+.filter-suggestions {
+    margin: -12px 0 12px;
+    border: 1px solid #e0e0e0;
+    border-radius: 2px;
+    max-height: 220px;
+    overflow-y: auto;
+}
+
+.filter-suggestions-status {
+    margin: 6px 12px;
+    font-size: 0.9rem;
+    color: #616161;
+}
+
+.filter-suggestions-status:empty { display: none; }
+
+.filter-suggestions-list { margin: 0; }
+
+.filter-suggestion {
+    display: block;
+    width: 100%;
+    padding: 8px 12px;
+    border: 0;
+    background: none;
+    text-align: left;
+    font-size: 1rem;
+    color: #1565c0;
+    cursor: pointer;
+}
+
+.filter-suggestion:hover,
+.filter-suggestion:focus {
+    background: #e3f2fd;
+    outline: none;
+}
+
 /* FE-035: kept entities shown a few at a time, in large type and as a mini graph. */
 .filter-cycle {
     margin: 12px 0 0;

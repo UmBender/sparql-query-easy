@@ -75,6 +75,7 @@ Ordered by dependencies, then priority among selection candidates. See [worker r
 | FE-035 | DONE | P1 | frontend | [Cycle over the entities a numeric filter keeps, in large type and as a mini result graph](<items/FE-035-filter-cycle-preview.md>) |
 | FE-036 | DONE | P1 | frontend | [Show a kept/total badge on filter nodes and, once the variable is assumed, its actual value next to the filter](<items/FE-036-filter-count-badge.md>) |
 | FE-037 | DONE | P1 | frontend | [Add a value variable from the toolbar, like Add Variable](<items/FE-037-add-value-variable-button.md>) |
+| FE-038 | DONE | P1 | frontend | [Suggest matching text values while typing a filter, like Search nodes](<items/FE-038-filter-text-suggestions.md>) |
 | BE-004 | DONE | P1 | fullstack | [Make MAX and MIN keep every entity with the extreme value, capped by a configurable limit](<items/BE-004-max-min-all-ties.md>) |
 | INV-001 | DONE | P1 | investigation | [Investigate Ktor HTTP-client and runtime resource lifecycle](<items/INV-001-runtime-resource-lifecycle.md>) |
 | LEARN-001 | REVIEW | P1 | learning | [Learn the Linux shell and networking needed to debug a web app](<items/LEARN-001-linux-shell-networking.md>) |

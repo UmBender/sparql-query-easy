@@ -125,6 +125,53 @@ export function numericProfileRequest({ endpointUrl, edges, literalId, limit = 5
   }, variableFilters);
 }
 
+/** Variable that stands for a value node's text in a suggestion request (FE-038). */
+const suggestionVariable = '?suggestedValue';
+
+/**
+ * Request for POST /api/query/stage listing the text values a filter editor
+ * can suggest (FE-038): the distinct literal values of the one fixed-IRI
+ * relation pointing at node [nodeId], under the rest of the query, that start
+ * with [text] (`startsWith`) or contain it (otherwise). Case-sensitive, like
+ * the filter it fills. A value variable lists itself without its own filter;
+ * a value node is replaced by a stand-in variable. Null without text or
+ * without exactly one fixed relation.
+ * @param {{endpointUrl: string, edges: FilterEdge[], nodeId: string, text: string, startsWith: boolean, variableFilters?: VariableFilter[], limit?: number}} input
+ * @returns {{endpointUrl: string, variableName: string, where: QueryFilter[], bindings: [], limit: number, offset: number, variableFilters: VariableFilter[]} | null}
+ */
+export function textSuggestionRequest({ endpointUrl, edges, nodeId, text, startsWith, variableFilters = [], limit = 20 }) {
+  if (!text) return null;
+  const incoming = edges.filter(edge => edge.target === nodeId);
+  if (incoming.length !== 1) return null;
+  const [edge] = incoming;
+  const predicate = edge.nodeId;
+  if (!predicate || !predicate.startsWith('<') || predicate.includes('>/<')) return null;
+  const object = edge.targetValue || edge.target;
+  const ownVariable = variablePattern.test(object);
+  const variableName = ownVariable ? object : suggestionVariable;
+  const where = buildFilters(ownVariable ? edges : edges.map(item => (item === edge
+    ? { ...item, target: variableName, targetValue: variableName, filterType: null } : item)));
+  const others = variableFiltersFor(where, variableFilters).filter(filter => filter.variableName !== variableName);
+  return {
+    endpointUrl,
+    variableName,
+    where,
+    bindings: [],
+    limit,
+    offset: 0,
+    variableFilters: [...others, { variableName, filterType: startsWith ? 0 : 1, value: text }],
+  };
+}
+
+/**
+ * Distinct literal texts of a stage page, in page order (FE-038).
+ * @param {{candidates: {term: {type: string, value: string}}[]}} page
+ * @returns {string[]}
+ */
+export function suggestedTexts(page) {
+  return [...new Set(page.candidates.filter(candidate => candidate.term.type === 'literal').map(candidate => candidate.term.value))];
+}
+
 /**
  * Inclusive numeric range kept by At least, At most and Between (FE-027);
  * null for every other filter.

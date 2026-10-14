@@ -129,6 +129,26 @@ class VariableFilterRoutesTest {
         }
 
     @Test
+    fun `FE-038 text suggestions list the language-tagged values that start with the text, case-sensitively`() =
+        testApplication {
+            application { module() }
+
+            val where = """"where":[{"subject":"?pokemon","predicate":"<${pk}category>","object":"?category"}]"""
+            val suggest = { text: String ->
+                """{"endpointUrl":"$POKEMON_ENDPOINT_ID","variableName":"?category",$where,""" +
+                    """"variableFilters":[{"variableName":"?category","filterType":0,"value":"$text"}]}"""
+            }
+
+            val matching = client.postJson("/api/query/stage", suggest("Mouse"))
+            matching.status shouldBe HttpStatusCode.OK
+            val terms = matching.candidates().map { it.getValue("term").jsonObject }
+            terms.map { it.getValue("value").jsonPrimitive.content } shouldBe listOf("Mouse Pokémon")
+            terms.single().getValue("language").jsonPrimitive.content shouldBe "en"
+
+            client.postJson("/api/query/stage", suggest("mouse")).candidates() shouldBe emptyList()
+        }
+
+    @Test
     fun `invalid variable filters are rejected with 400`() =
         testApplication {
             application { module() }

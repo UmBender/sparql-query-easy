@@ -138,6 +138,23 @@ function numericProfileRequestFor(literalNodeId, limit) {
 }
 
 /**
+ * FE-038: stage request for the text values a filter editor suggests for a
+ * node; null without text or without one fixed relation into the node.
+ */
+function textSuggestionRequestFor(nodeId, text, startsWith) {
+    const node = cy.getElementById(nodeId);
+    if (!node.length) return null;
+    return window.queryCalculations.textSuggestionRequest({
+        endpointUrl: getEndpoint(),
+        edges: filterEdgeItems(node.component()),
+        nodeId,
+        text,
+        startsWith,
+        variableFilters: variableFilterItems(node.component()),
+    });
+}
+
+/**
  * BE-003: distribution of the numeric relation pointing at a literal node, under
  * the rest of its query component. Resolves to null when the node has no single
  * fixed relation to profile; rejects with the server error otherwise.

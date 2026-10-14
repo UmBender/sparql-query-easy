@@ -599,6 +599,7 @@ function initGraphMenus() {
             if (any.checked) contentEl.querySelector('input[name=filter-type][value=""]').checked = true;
         }, { capture: true });
         loadFilterHistogram(ele.id());
+        attachFilterSuggestions(ele.id());
         M.updateTextFields();
         openChangeValueModal();
     }
@@ -617,6 +618,7 @@ function initGraphMenus() {
             : contentEl.querySelector(`input[name=filter-type][value="${storedType}"]`);
         if (storedOption) storedOption.checked = true;
         loadFilterHistogram(ele.id());
+        attachFilterSuggestions(ele.id());
         M.updateTextFields();
         openChangeValueModal();
     }

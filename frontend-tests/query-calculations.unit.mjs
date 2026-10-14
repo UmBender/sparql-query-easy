@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
-import { actualValueRequest, buildFilters, countInRange, cycleMode, filterAccepts, filterBadgeCount, filterFunnelPlan, filterLabel, filterRange, filterTypeOf, funnelStepCounts, funnelStepKind, getQueryVariables, variableFiltersFor, withVariableFilters, hasParallelPredicateVariables, histogramBins, numericProfileRequest, parseBetween, rangeFilter, rangeFromFilter, rangeScale, keptEntities, possibilityGraph, relationLabelKind } from '../sparql/query-calculations.js';
+import { actualValueRequest, buildFilters, countInRange, cycleMode, filterAccepts, filterBadgeCount, filterFunnelPlan, filterLabel, filterRange, filterTypeOf, funnelStepCounts, funnelStepKind, getQueryVariables, variableFiltersFor, withVariableFilters, textSuggestionRequest, suggestedTexts, hasParallelPredicateVariables, histogramBins, numericProfileRequest, parseBetween, rangeFilter, rangeFromFilter, rangeScale, keptEntities, possibilityGraph, relationLabelKind } from '../sparql/query-calculations.js';
 
 test('filters preserve edge order, fixed RDF terms, and numeric filterType zero', () => {
   assert.deepEqual(buildFilters([
@@ -295,4 +295,41 @@ test('every funnel count applies the value-variable filters', () => {
   const plan = filterFunnelPlan({ endpointUrl: 'g', edges: [fixed, hpEdge], variableName: '?mon', variableFilters: [hpFilter] });
   assert.equal(plan.steps.length, 1);
   assert.ok(plan.requests.every(request => request && JSON.stringify(request.variableFilters) === JSON.stringify([hpFilter])));
+});
+
+// FE-038: text suggestions for a filter editor go through the stage route.
+test('a value variable suggests its own values under the rest of the query, without its own filter', () => {
+  const nameEdge = { id: 'name', source: '?mon', target: '?name', targetValue: '?name', nodeId: '<https://e/name>', fallbackPredicate: '?f' };
+  const request = textSuggestionRequest({
+    endpointUrl: 'g', edges: [nameEdge, hpEdge], nodeId: '?name', text: 'Pi', startsWith: true,
+    variableFilters: [hpFilter, { variableName: '?name', filterType: 1, value: 'old' }],
+  });
+  assert.deepEqual(request, {
+    endpointUrl: 'g', variableName: '?name', where: buildFilters([nameEdge, hpEdge]), bindings: [], limit: 20, offset: 0,
+    variableFilters: [hpFilter, { variableName: '?name', filterType: 0, value: 'Pi' }],
+  });
+  assert.equal(textSuggestionRequest({ endpointUrl: 'g', edges: [nameEdge], nodeId: '?name', text: 'ka', startsWith: false })
+    .variableFilters[0].filterType, 1);
+});
+
+test('a value node is replaced by a stand-in variable that keeps no old filter', () => {
+  const literal = { id: 'name', source: '?mon', target: 'n1', targetValue: 'Pi', nodeId: '<https://e/name>', filterType: 0, fallbackPredicate: '?f' };
+  const request = textSuggestionRequest({ endpointUrl: 'g', edges: [literal], nodeId: 'n1', text: 'Pik', startsWith: false });
+  assert.equal(request.variableName, '?suggestedValue');
+  assert.deepEqual(request.where, [{ subject: '?mon', predicate: '<https://e/name>', object: '?suggestedValue', filterType: null }]);
+  assert.deepEqual(request.variableFilters, [{ variableName: '?suggestedValue', filterType: 1, value: 'Pik' }]);
+});
+
+test('no suggestion request without text or without one fixed relation', () => {
+  const edge = { id: 'e', source: '?mon', target: '?v', targetValue: '?v', nodeId: '<https://e/name>', fallbackPredicate: '?f' };
+  assert.equal(textSuggestionRequest({ endpointUrl: 'g', edges: [edge], nodeId: '?v', text: '', startsWith: false }), null);
+  assert.equal(textSuggestionRequest({ endpointUrl: 'g', edges: [], nodeId: '?v', text: 'a', startsWith: false }), null);
+  assert.equal(textSuggestionRequest({ endpointUrl: 'g', edges: [{ ...edge, nodeId: '?p' }], nodeId: '?v', text: 'a', startsWith: false }), null);
+  assert.equal(textSuggestionRequest({ endpointUrl: 'g', edges: [edge, { ...edge, id: 'f', source: '?x' }], nodeId: '?v', text: 'a', startsWith: false }), null);
+});
+
+test('suggested texts are the distinct literal values of a stage page', () => {
+  const literal = value => ({ term: { type: 'literal', value } });
+  assert.deepEqual(suggestedTexts({ candidates: [literal('Pikachu'), { term: { type: 'iri', value: 'https://e/x' } }, literal('Pidgey'), literal('Pikachu')] }),
+    ['Pikachu', 'Pidgey']);
 });
