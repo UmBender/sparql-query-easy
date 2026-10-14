@@ -3317,3 +3317,37 @@ test('FE-034 Convert to variable on a value gives a value variable whose editor 
   }, id)).toEqual({ label: '?', filterType: null, filterValue: '' });
   expect(await page.evaluate(() => variableFilterItems(cy.elements()))).toEqual([{ variableName: id, filterType: null, value: null }]);
 });
+
+// ── FE-037: Add Value Variable button ──────────────────────────────
+test('FE-037 Add Value Variable adds a value variable that a defined predicate connects and Edit filter filters', async ({ page }) => {
+  await disableAutoLayout(page);
+  await page.evaluate(() => {
+    cy.add({ group: 'nodes', data: { id: '?pokemon', value: '?pokemon', label: '?', type: 'variable' }, position: { x: 200, y: 320 } });
+  });
+  await page.locator('#add-value-variable-btn').click();
+  await expect(page.locator('#status-nodes')).toHaveText('Nodes: 2');
+  const id = await page.evaluate(() => cy.nodes('[type = "value-variable"]').id());
+  expect(id).toMatch(/^\?value_\d+$/);
+  expect(await page.evaluate(nodeId => {
+    const node = cy.getElementById(nodeId);
+    node.position({ x: 460, y: 200 });
+    const { filterType, filterValue, label } = node.data();
+    return { filterType, filterValue, label, shape: node.style('shape'), border: node.style('border-color') };
+  }, id)).toEqual({ filterType: null, filterValue: '', label: '?', shape: 'rectangle', border: 'rgb(244,143,177)' });
+
+  await clickGraphNode(page, id);
+  expect(await menuActions(page)).toEqual(VALUE_VARIABLE_ACTIONS);
+
+  // Connect ?pokemon to it through a defined predicate.
+  await dismissMenus(page);
+  await clickGraphNode(page, '?pokemon');
+  await nodeMenu(page).getByRole('button', { name: 'Connect with defined predicate' }).click();
+  await nodeMenu(page).getByRole('button', { name: 'name', exact: true }).click();
+  await clickGraphNode(page, id);
+  expect(await page.evaluate(() => buildFilters(cy.elements())))
+    .toEqual([{ subject: '?pokemon', predicate: '<https://example.test/hasName>', object: id, filterType: null }]);
+
+  await page.evaluate(nodeId => changeElementStringValue(nodeId, 'Pi', '0'), id);
+  expect(await page.evaluate(() => variableFilterItems(cy.elements()))).toEqual([{ variableName: id, filterType: 0, value: 'Pi' }]);
+  expect(await page.evaluate(nodeId => cy.getElementById(nodeId).data('label'), id)).toBe('? starts with Pi');
+});

@@ -482,6 +482,16 @@ function addNewVariable() {
     updateStatusBar();
 }
 
+// FE-037: a value variable (FE-034) without a relation or filter; connect a
+// subject to it with a defined predicate, then use its Edit filter.
+function addNewValueVariable() {
+    const newId = `?value_${Date.now()}`;
+    cy.add({ group: 'nodes', data: window.graphModel.valueVariableNodeData(newId) });
+    if (document.getElementById('auto-layout').checked) cy.layout({ name: 'cose' }).run();
+    updateStatusBar();
+    return newId;
+}
+
 function saveQuery() {
     const blob   = new Blob([JSON.stringify(cy.json())], { type: 'application/json' });
     const blobUrl = URL.createObjectURL(blob);
