@@ -4,7 +4,7 @@ title: Draw and edit the query graph on a Cytoscape canvas driven by the store
 status: BACKLOG
 priority: P1
 type: frontend
-depends_on: [FE-041, FE-043]
+depends_on: [FE-041, FE-050, FE-043]
 human_gate: false
 created: 2026-10-16
 updated: 2026-10-16

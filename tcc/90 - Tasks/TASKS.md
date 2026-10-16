@@ -86,7 +86,7 @@ Ordered by dependencies, then priority among selection candidates. See [worker r
 | QUAL-008 | BACKLOG | P1 | quality | [Capture legacy request, response and SPARQL fixtures on PokemonGen1 with one command](<items/QUAL-008-legacy-fixture-capture-harness.md>) |
 | QUAL-009 | BACKLOG | P1 | quality | [Capture at least 15 PokemonGen1 queries covering every node kind, filter and Run Query flow](<items/QUAL-009-legacy-characterization-corpus.md>) |
 | QUAL-010 | BACKLOG | P1 | documentation | [Document the legacy drawn-graph request and saved-query formats field by field](<items/QUAL-010-legacy-wire-format-docs.md>) |
-| FE-041 | BACKLOG | P1 | frontend | [Define design tokens, Tailwind and shadcn-svelte styling shared with Cytoscape, and a style skill](<items/FE-041-design-tokens-and-style-skill.md>) |
+| FE-041 | BACKLOG | P1 | frontend | [Define design tokens, Tailwind and shadcn-svelte theme and the Cytoscape stylesheet from one source](<items/FE-041-design-tokens-and-style-skill.md>) |
 | FE-050 | BACKLOG | P1 | frontend | [Build the token-styled base components and a /styleguide route in both themes](<items/FE-050-base-components-and-styleguide.md>) |
 | FE-051 | BACKLOG | P1 | documentation | [Add a style skill that makes every UI change follow the tokens and the styleguide](<items/FE-051-style-skill.md>) |
 | FE-042 | BACKLOG | P1 | frontend | [Model the drawn query as a typed QueryGraph with a versioned saved format](<items/FE-042-querygraph-domain-model.md>) |

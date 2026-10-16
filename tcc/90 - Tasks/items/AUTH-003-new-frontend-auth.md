@@ -4,7 +4,7 @@ title: Register, log in and log out in the new frontend
 status: BACKLOG
 priority: P1
 type: frontend
-depends_on: [AUTH-001, FE-041, FE-043]
+depends_on: [AUTH-001, FE-041, FE-050, FE-043]
 human_gate: false
 created: 2026-10-16
 updated: 2026-10-16
