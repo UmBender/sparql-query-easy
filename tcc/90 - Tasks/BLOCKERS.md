@@ -35,21 +35,17 @@ decisions remain deferred.
 
 ## Production operations tasks
 
-OPS-001 defines local JVM/container packaging. Production domain, hosting,
-security, TLS/CORS, monitoring, and backup decisions are still open under
-OPS-002–OPS-004 and SEC-001. No deployment or infrastructure mutation is
+OPS-001 defines local JVM/container packaging. Hosting is decided (DEC-003,
+university server); domain, TLS, monitoring, backup and security limits are
+still open under OPS-002, OPS-004, OPS-005 and SEC-001. No deployment or infrastructure mutation is
 authorized; see [[../07 - Operations/Local JVM and Container Runtime]].
 
-## AUTH-000 — Authentication contract
+## University server facts (OPS-002, OPS-004, OPS-005)
 
-Authentication is intentionally deferred until user testing. Its eventual
-implementation is approved, but credentials, sessions,
-anonymous access, protected routes, cookie/CSRF/rate-limit policy, and
-registration/recovery scope are not.
+DEC-003 chose the university server with Docker Compose. Go-live stays
+blocked until these are known:
 
-**Question when this work resumes:** Approve the recommended first
-contract—environment-configured
-bootstrap user(s) with password hashes, server-side same-origin session cookie,
-no anonymous graph/API access, public login/logout/session and health routes,
-no registration/password recovery, and public Swagger/OpenAPI documentation—or
-specify the changes.
+**Questions:** Is the server publicly reachable on 80/443? Under which DNS
+name, and who issues its TLS certificate (Let's Encrypt or the university)?
+How can a deploy reach it (SSH, VPN, nothing from GitHub)? Where can off-host
+database backups be stored?

@@ -4,10 +4,10 @@ title: Implement the approved Ktor authentication backend
 status: READY
 priority: P0
 type: security
-depends_on: [AUTH-000]
+depends_on: [AUTH-000, BE-005]
 human_gate: false
 created: 2026-09-21
-updated: 2026-09-21
+updated: 2026-10-16
 ---
 # Implement the approved Ktor authentication backend
 
@@ -85,3 +85,8 @@ boundary or break same-origin frontend calls.
 
 - 2026-09-21: Created from DEC-001 analysis; implementation intentionally
   depends on the human-gated `AUTH-000` contract.
+- 2026-10-16: AUTH-000 approved; contract in
+  [[../../09 - Decisions/Authentication Contract]] (self-registration, public
+  query routes, `/api/study/**` protected, Argon2id, sessions in PostgreSQL).
+  Added dependency on BE-005 for user and session storage. Frontend work moved
+  to AUTH-003 in the new app.

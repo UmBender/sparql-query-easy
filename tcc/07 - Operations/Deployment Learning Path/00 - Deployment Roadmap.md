@@ -9,6 +9,10 @@ each piece yourself from the command line.
 
 Progress is tracked in [[Deployment Learning Tracker]].
 
+> **2026-10-16, DEC-003:** production will run with Docker Compose on the
+> user's university server, not AWS. AWS-specific steps below are history;
+> see [[../../90 - Tasks/items/DEC-003-production-hosting-target]] and OPS-006.
+
 ## What exists today (evidence)
 
 - One Kotlin/Ktor JVM process (Java 21) serving the API **and** the static

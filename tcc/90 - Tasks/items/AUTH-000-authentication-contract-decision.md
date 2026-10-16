@@ -1,13 +1,13 @@
 ---
 id: AUTH-000
 title: Decide the authentication and authorization contract
-status: BLOCKED
+status: DONE
 priority: P0
 type: decision
 depends_on: [DEC-001]
 human_gate: true
 created: 2026-09-21
-updated: 2026-09-27
+updated: 2026-10-16
 ---
 # Decide the authentication and authorization contract
 
@@ -64,12 +64,12 @@ Decide and record:
 
 ## Acceptance criteria
 
-- [ ] Every numbered contract choice is recorded in a decision note.
-- [ ] The protected/public route matrix is explicit.
-- [ ] Registration and password recovery are either scoped with follow-up
+- [x] Every numbered contract choice is recorded in a decision note.
+- [x] The protected/public route matrix is explicit.
+- [x] Registration and password recovery are either scoped with follow-up
       tasks or explicitly disabled/removed from the initial UI.
-- [ ] No secret value or production credential is committed.
-- [ ] `AUTH-001` and `AUTH-002` are updated to reflect the approved contract.
+- [x] No secret value or production credential is committed.
+- [x] `AUTH-001` and `AUTH-002` are updated to reflect the approved contract.
 
 ## Verification commands
 
@@ -110,6 +110,14 @@ git diff --check
   (application-owned users) and item 7 (storage); hashing parameters and
   every other item remain undecided, so the task stays `BLOCKED`. `LEARN-008`
   prepares the user to answer the remaining questions.
+- 2026-10-16: User answered (D4 of [[../../05 - Migration/Frontend Migration Conflict Report]]):
+  the login screen also creates users; the query editor works without login,
+  but anonymous users get no questionnaire; no password recovery for now.
+  Security defaults (Argon2id, server-side session in an `HttpOnly`
+  `SameSite=Lax` cookie, Origin check, rate limit, route matrix) recorded with
+  them in [[../../09 - Decisions/Authentication Contract]]; they are reversible
+  and listed for the user's veto. AUTH-001 now also depends on BE-005;
+  AUTH-002 is superseded by AUTH-003. Completion commit for this task.
 
 ## Source files
 

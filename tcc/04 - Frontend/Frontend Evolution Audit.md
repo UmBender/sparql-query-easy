@@ -3,6 +3,12 @@
 DEV-001, 2026-09-28. Analysis only: no application code, dependency or bundler
 was changed. At audit time, follow-up cards remained BACKLOG.
 
+**Direction revised 2026-10-16 (DEC-011).** The user chose a SvelteKit
+rewrite in `frontend/`, built beside `index2.html` and cut over by FE-049.
+The Option B work and the analysis below remain valid evidence: the node-kind
+rules are ported first as a framework-free TypeScript domain (FE-042).
+See [[../90 - Tasks/items/DEC-011-frontend-stack-decision]].
+
 ## Incremental Option B follow-up (2026-09-28)
 
 The user selected a bounded Option B step and deferred a full frontend port.

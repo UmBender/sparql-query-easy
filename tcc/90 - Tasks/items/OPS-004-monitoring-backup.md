@@ -7,7 +7,7 @@ type: operations
 depends_on: [OPS-001, SEC-001]
 human_gate: true
 created: 2026-09-16
-updated: 2026-09-16
+updated: 2026-10-16
 ---
 # Define monitoring backup and recovery plan
 
@@ -45,3 +45,7 @@ Uploaded graphs are process-local and may not be backup candidates; confirm prod
   logger`, so it emits no application or Ktor logs. Any log shipping
   (`docker logs`, CloudWatch) needs a logging backend such as Logback first.
   Not changed here; the task remains blocked on the architecture choice.
+- 2026-10-16: DEC-003 chose the university server with Docker Compose
+  (OPS-006 builds the stack locally). Still `BLOCKED` on server facts: public
+  80/443 reachability, DNS name and TLS issuer, deploy access, off-host backup
+  location (see BLOCKERS).

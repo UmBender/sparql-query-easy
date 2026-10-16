@@ -7,7 +7,7 @@ type: operations
 depends_on: [OPS-001]
 human_gate: true
 created: 2026-09-16
-updated: 2026-09-16
+updated: 2026-10-16
 ---
 # Define DNS TLS reverse-proxy and production CORS policy
 
@@ -40,3 +40,7 @@ Origin mistakes can break browser access or expose APIs.
 
 ## Execution log
 - 2026-09-16: Blocked; production domain is unknown.
+- 2026-10-16: DEC-003 chose the university server with Docker Compose
+  (OPS-006 builds the stack locally). Still `BLOCKED` on server facts: public
+  80/443 reachability, DNS name and TLS issuer, deploy access, off-host backup
+  location (see BLOCKERS).

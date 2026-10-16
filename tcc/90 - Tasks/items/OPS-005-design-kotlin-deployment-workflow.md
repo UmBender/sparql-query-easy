@@ -7,7 +7,7 @@ type: operations
 depends_on: [OPS-001]
 human_gate: true
 created: 2026-09-27
-updated: 2026-09-27
+updated: 2026-10-16
 ---
 # Design a new Kotlin deployment workflow after hosting is chosen
 
@@ -70,3 +70,7 @@ or access a live environment without an approved rollout/rollback plan.
 - 2026-09-27: Created when the user deferred choosing where/how to deploy
   Kotlin and requested archiving the old .NET workflow. No Kotlin CI/CD or
   deployment was created.
+- 2026-10-16: DEC-003 chose the university server with Docker Compose
+  (OPS-006 builds the stack locally). Still `BLOCKED` on server facts: public
+  80/443 reachability, DNS name and TLS issuer, deploy access, off-host backup
+  location (see BLOCKERS).

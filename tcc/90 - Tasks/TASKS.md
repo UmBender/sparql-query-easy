@@ -7,9 +7,13 @@ Ordered by dependencies, then priority among selection candidates. See [worker r
 | DOC-001 | DONE | P0 | documentation | [Bootstrap evidence-based thesis knowledge base](<items/DOC-001-knowledge-base-bootstrap.md>) |
 | DOC-003 | DONE | P1 | documentation | [Document every deployment step and a hands-on learning path to do it by hand](<items/DOC-003-deployment-roadmap-and-learning-path.md>) |
 | DEC-001 | DONE | P0 | decision | [Resolve vault ownership login page and OpenAPI scope](<items/DEC-001-project-scope-decisions.md>) |
-| AUTH-000 | BLOCKED | P0 | decision | [Decide the authentication and authorization contract](<items/AUTH-000-authentication-contract-decision.md>) |
+| DEC-003 | DONE | P0 | decision | [Host production with Docker Compose on the university server](<items/DEC-003-production-hosting-target.md>) |
+| DEC-011 | DONE | P0 | decision | [Build a SvelteKit frontend in frontend/ beside index2.html, then cut over](<items/DEC-011-frontend-stack-decision.md>) |
+| AUTH-000 | DONE | P0 | decision | [Decide the authentication and authorization contract](<items/AUTH-000-authentication-contract-decision.md>) |
 | AUTH-001 | READY | P0 | security | [Implement the approved Ktor authentication backend](<items/AUTH-001-ktor-session-authentication.md>) |
-| AUTH-002 | READY | P0 | frontend | [Integrate the login and logout frontend flow](<items/AUTH-002-login-frontend-integration.md>) |
+| AUTH-002 | CANCELLED | P0 | frontend | [Integrate the login and logout frontend flow](<items/AUTH-002-login-frontend-integration.md>) |
+| BE-005 | BACKLOG | P1 | backend | [Add PostgreSQL persistence with Exposed, HikariCP and Flyway migrations at startup](<items/BE-005-postgresql-persistence-foundation.md>) |
+| AUTH-003 | BACKLOG | P1 | frontend | [Register, log in and log out in the new frontend](<items/AUTH-003-new-frontend-auth.md>) |
 | BUG-001 | DONE | P0 | bug | [Repair C# local-search capture instrumentation and recapture baselines](<items/BUG-001-csharp-local-search-harness.md>) |
 | DEV-001 | DONE | P0 | development | [Tornar o desenvolvimento econômico, autônomo e verificável](<items/TASK-DEV-001.md>) |
 | DEV-002 | CANCELLED | P0 | development | [Approve the revised feature delivery workflow](<items/DEV-002-approve-feature-delivery-workflow.md>) |
@@ -77,6 +81,21 @@ Ordered by dependencies, then priority among selection candidates. See [worker r
 | FE-037 | DONE | P1 | frontend | [Add a value variable from the toolbar, like Add Variable](<items/FE-037-add-value-variable-button.md>) |
 | FE-038 | DONE | P1 | frontend | [Suggest matching text values while typing a filter, like Search nodes](<items/FE-038-filter-text-suggestions.md>) |
 | FE-039 | DONE | P1 | frontend | [Count value-variable filters as funnel steps and show each step on its badge](<items/FE-039-filter-stack-value-variables.md>) |
+| FE-040 | BACKLOG | P1 | frontend | [Scaffold the SvelteKit app in frontend/ beside the legacy page](<items/FE-040-sveltekit-foundation.md>) |
+| QUAL-006 | BACKLOG | P1 | quality | [Map every legacy frontend behavior to a parity check for the new app](<items/QUAL-006-legacy-parity-checklist.md>) |
+| FE-041 | BACKLOG | P1 | frontend | [Define design tokens, Tailwind and shadcn-svelte styling shared with Cytoscape, and a style skill](<items/FE-041-design-tokens-and-style-skill.md>) |
+| FE-042 | BACKLOG | P1 | frontend | [Model the drawn query as a typed QueryGraph with a versioned saved format](<items/FE-042-querygraph-domain-model.md>) |
+| FE-043 | BACKLOG | P1 | frontend | [Own the QueryGraph in one rune store and call the API through a typed client](<items/FE-043-store-and-typed-api-client.md>) |
+| FE-044 | BACKLOG | P1 | frontend | [Draw and edit the query graph on a Cytoscape canvas driven by the store](<items/FE-044-graph-canvas.md>) |
+| FE-045 | BACKLOG | P1 | frontend | [Edit value and value-variable filters with histogram and text suggestions](<items/FE-045-filter-editor.md>) |
+| FE-046 | BACKLOG | P1 | frontend | [Run the query as ordered stages, choose values and apply them to the graph](<items/FE-046-run-query-exploration.md>) |
+| FE-047 | BACKLOG | P1 | frontend | [Show the filter funnel with switchable steps and kept/total badges](<items/FE-047-filter-funnel-and-badges.md>) |
+| FE-048 | BACKLOG | P1 | frontend | [Upload triples, load and export queries, auto layout and the guided tour](<items/FE-048-editor-utilities.md>) |
+| QUAL-007 | BACKLOG | P1 | quality | [Add the new frontend test layers and a GitHub Actions CI for all gates](<items/QUAL-007-new-frontend-tests-and-ci.md>) |
+| STUDY-001 | BACKLOG | P1 | fullstack | [Let a logged-in user solve proposed queries and submit answers once](<items/STUDY-001-proposed-queries-and-submission.md>) |
+| STUDY-002 | BACKLOG | P1 | fullstack | [Show two questionnaires to logged-in users and store their answers](<items/STUDY-002-questionnaires.md>) |
+| OPS-006 | BACKLOG | P1 | operations | [Run db, backend and web together with Docker Compose](<items/OPS-006-docker-compose-stack.md>) |
+| FE-049 | BACKLOG | P1 | frontend | [Make the SvelteKit app the authoritative frontend and retire index2.html](<items/FE-049-legacy-cutover.md>) |
 | BE-004 | DONE | P1 | fullstack | [Make MAX and MIN keep every entity with the extreme value, capped by a configurable limit](<items/BE-004-max-min-all-ties.md>) |
 | INV-001 | DONE | P1 | investigation | [Investigate Ktor HTTP-client and runtime resource lifecycle](<items/INV-001-runtime-resource-lifecycle.md>) |
 | LEARN-001 | REVIEW | P1 | learning | [Learn the Linux shell and networking needed to debug a web app](<items/LEARN-001-linux-shell-networking.md>) |
@@ -101,6 +120,6 @@ Ordered by dependencies, then priority among selection candidates. See [worker r
 | DOC-002 | DONE | P2 | documentation | [Reconcile migration and compatibility documentation](<items/DOC-002-reconcile-migration-docs.md>) |
 | INV-003 | DONE | P2 | analysis | [Propose other query types the tool could support](<items/INV-003-query-types-proposal.md>) |
 | OPS-002 | BLOCKED | P2 | operations | [Define DNS TLS reverse-proxy and production CORS policy](<items/OPS-002-dns-tls-cors.md>) |
-| OPS-003 | BLOCKED | P2 | operations | [Produce AWS deployment plan](<items/OPS-003-aws-deployment-plan.md>) |
+| OPS-003 | CANCELLED | P2 | operations | [Produce AWS deployment plan](<items/OPS-003-aws-deployment-plan.md>) |
 | OPS-004 | BLOCKED | P2 | operations | [Define monitoring backup and recovery plan](<items/OPS-004-monitoring-backup.md>) |
 | OPS-005 | BLOCKED | P2 | operations | [Design a new Kotlin deployment workflow after hosting is chosen](<items/OPS-005-design-kotlin-deployment-workflow.md>) |

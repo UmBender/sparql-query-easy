@@ -1,15 +1,18 @@
 ---
 id: AUTH-002
 title: Integrate the login and logout frontend flow
-status: READY
+status: CANCELLED
 priority: P0
 type: frontend
 depends_on: [AUTH-001]
 human_gate: false
 created: 2026-09-21
-updated: 2026-09-21
+updated: 2026-10-16
 ---
 # Integrate the login and logout frontend flow
+
+**Superseded by AUTH-003 (2026-10-16).** DEC-011 moves login to the new
+SvelteKit app; the legacy `login.html` is retired at FE-049. Retained as history.
 
 ## Objective
 

@@ -7,11 +7,12 @@ The decision index and dated approvals below provide rationale and history.
 |---|---|---|
 | DATA-001 | Approved | Keep the C# Brazilian football asset as the sole canonical built-in dataset. |
 | DEC-002 | Approved | Version the Markdown vault; keep PDF binaries external to Git. Applied by `REPO-001`. |
-| DEC-003 | Decision required | Production hosting platform, domain, DNS, TLS termination, and frontend origin. |
+| DEC-003 | Approved (2026-10-16) | University server with Docker Compose (`db`, `backend`, `web` same origin); server DNS/TLS/access facts still open in OPS-002/005. [[../90 - Tasks/items/DEC-003-production-hosting-target]]. |
 | DEC-004 | Decision required | Production remote-SPARQL endpoint policy: arbitrary endpoint versus allow-list. |
 | DEC-005 | Decision required | Upload graph size, cache size, persistence, retention, and access-control policy. |
-| DEC-006 | Decision direction approved | Implement authentication; `AUTH-000` must decide identity, sessions, anonymous access, protected routes, and security controls first. |
+| DEC-006 | Approved (2026-10-16) | AUTH-000: self-registration at login, anonymous query editor, study routes need a session, no recovery. [[Authentication Contract]]. |
 | DEC-007 | Approved | Generate OpenAPI 3.1 from Ktor code; publish public `/swagger` and `/openapi.json` endpoints in every environment; defer authentication. |
+| DEC-011 | Approved (2026-10-16) | SvelteKit app in `frontend/` beside `index2.html`, cutover by FE-049. [[../90 - Tasks/items/DEC-011-frontend-stack-decision]]. |
 | DEC-009 | Resolved | Keep Kotlin `200 application/json {"status":"ok"}` as an approved intentional difference from captured C# `200 text/plain Healthy`; do not claim equivalence. |
 
 ## Already documented decisions

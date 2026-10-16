@@ -1,15 +1,18 @@
 ---
 id: OPS-003
 title: Produce AWS deployment plan
-status: BLOCKED
+status: CANCELLED
 priority: P2
 type: operations
 depends_on: [OPS-001, OPS-002]
 human_gate: true
 created: 2026-09-16
-updated: 2026-09-16
+updated: 2026-10-16
 ---
 # Produce AWS deployment plan
+
+**Superseded by DEC-003 (2026-10-16).** The user chose the university server
+with Docker Compose; see OPS-006 and OPS-002/004/005. Retained as history.
 
 ## Objective
 Produce a decision-ready AWS architecture only after the hosting/domain/runtime choices are known.
