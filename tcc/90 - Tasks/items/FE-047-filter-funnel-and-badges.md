@@ -20,15 +20,11 @@ filters row of [[../../09 - Decisions/Current Contracts]].
 
 Funnel panel from `count` (one step per filter, MAX/MIN last, preview-only
 toggles); badges above filtered nodes (kept/total, or actual value with ✓/✗
-for a fixed-entity subject).
+for a fixed-entity subject). The step on/off state belongs to the domain
+(FE-042 toggle operation) and the store (FE-043 `$derived` funnel steps);
+this card renders it and sends `count` requests for it (T4, confirmed
+2026-10-16).
 
 ## Acceptance criteria
 
 - [ ] QUAL-006 rows for funnel and badges pass with identical counts.
-
-## Proposed amendment from the T4 brief (2026-10-16, pending user confirmation)
-
-Conflict rule EXTENDS: the T4 brief moves the funnel step on/off state into
-the domain (FE-042 toggle operation) and the store (FE-043 `$derived` funnel
-steps). This card then renders that state and sends `count` requests for it;
-it does not own the toggle state. Approved scope is otherwise unchanged.
