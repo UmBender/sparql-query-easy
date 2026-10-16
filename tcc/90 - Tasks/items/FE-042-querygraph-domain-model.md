@@ -38,3 +38,15 @@ Excluded: Svelte, Cytoscape, HTTP, legacy export files.
 - [ ] Ported unit cases pass unchanged in Vitest.
 - [ ] For the QUAL-005 graphs the payload equals the legacy payload.
 - [ ] Round-trip save/load is lossless.
+
+## Proposed amendment (2026-10-16, pending user confirmation)
+
+From the T2 brief (QUAL-008–QUAL-010, conflict rule EXTENDS). Approved scope
+above is unchanged; apply only after the user confirms.
+
+- `depends_on` adds QUAL-009 and QUAL-010.
+- [ ] For every `fixtures/legacy/<name>` scenario whose graph the domain can
+      build, the mapped request equals `<name>.request.json` (filters and
+      unordered lists compared as multisets).
+- [ ] The QueryGraph and the versioned format cover every field listed in the
+      QUAL-010 request documentation, or the card records why one is dropped.

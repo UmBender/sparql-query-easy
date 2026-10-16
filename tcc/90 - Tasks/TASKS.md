@@ -83,6 +83,9 @@ Ordered by dependencies, then priority among selection candidates. See [worker r
 | FE-039 | DONE | P1 | frontend | [Count value-variable filters as funnel steps and show each step on its badge](<items/FE-039-filter-stack-value-variables.md>) |
 | FE-040 | BACKLOG | P1 | frontend | [Scaffold the SvelteKit app in frontend/ beside the legacy page](<items/FE-040-sveltekit-foundation.md>) |
 | QUAL-006 | BACKLOG | P1 | quality | [Map every legacy frontend behavior to a parity check for the new app](<items/QUAL-006-legacy-parity-checklist.md>) |
+| QUAL-008 | BACKLOG | P1 | quality | [Capture legacy request, response and SPARQL fixtures on PokemonGen1 with one command](<items/QUAL-008-legacy-fixture-capture-harness.md>) |
+| QUAL-009 | BACKLOG | P1 | quality | [Capture at least 15 PokemonGen1 queries covering every node kind, filter and Run Query flow](<items/QUAL-009-legacy-characterization-corpus.md>) |
+| QUAL-010 | BACKLOG | P1 | documentation | [Document the legacy drawn-graph request and saved-query formats field by field](<items/QUAL-010-legacy-wire-format-docs.md>) |
 | FE-041 | BACKLOG | P1 | frontend | [Define design tokens, Tailwind and shadcn-svelte styling shared with Cytoscape, and a style skill](<items/FE-041-design-tokens-and-style-skill.md>) |
 | FE-042 | BACKLOG | P1 | frontend | [Model the drawn query as a typed QueryGraph with a versioned saved format](<items/FE-042-querygraph-domain-model.md>) |
 | FE-043 | BACKLOG | P1 | frontend | [Own the QueryGraph in one rune store and call the API through a typed client](<items/FE-043-store-and-typed-api-client.md>) |

@@ -38,3 +38,11 @@ Excluded: changing legacy behavior or existing assertions.
 ## Validation
 
 `npm run test:browser -- --grep '<new case>'`, then `npm run test:browser`.
+
+## Proposed amendment (2026-10-16, pending user confirmation)
+
+From the T2 brief (conflict rule EXTENDS). Behavior parity stays here;
+payload parity is QUAL-008–QUAL-010. Apply only after the user confirms.
+
+- [ ] Each checklist row that sends a backend request names the
+      `fixtures/legacy/` scenario (QUAL-009) its target card must reproduce.
