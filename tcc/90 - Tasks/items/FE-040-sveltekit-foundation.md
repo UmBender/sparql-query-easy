@@ -40,3 +40,35 @@ Excluded: design system (FE-041), domain (FE-042), production serving
 
 New-app commands above (proposed until this card adds them); legacy
 `npm run test:browser`; docs check.
+
+## Proposed amendment (2026-10-16, pending user confirmation)
+
+The T1 brief duplicates this card (conflict rule DUPLICATE). It does not
+change the approved scope above; it adds the T1 items this card lacks.
+Apply only after the user confirms.
+
+Additional scope:
+
+- `lint` script (ESLint + Prettier check) beside `dev`, `build`, `check`, `test`.
+- Folder layout: `src/lib/domain` (pure TS), `src/lib/stores`, `src/lib/api`,
+  `src/lib/components`, `src/lib/features/<feature>`, `src/routes`
+  (empty folders keep a short README or `.gitkeep`).
+- Playwright installed and configured inside `frontend/` with one passing
+  offline smoke test (the page renders; `/health` stubbed, QUAL-003 egress
+  rule). The legacy configs keep `testDir: frontend-tests`, so the suites stay
+  separate. Real e2e/visual/a11y layers stay in QUAL-007.
+- Tailwind CSS and shadcn-svelte installed with their default setup only;
+  tokens, theme and component styling stay in FE-041 (FE-041 then configures
+  instead of installing).
+- Root `README.md`: a section on running the legacy page and the new app side
+  by side (Ktor on 8080 serving `index2.html`, Vite dev server proxying to it).
+
+Additional acceptance criteria:
+
+- [ ] From a clean clone, `npm --prefix frontend ci` followed by `build`,
+      `check`, `lint` and `test` all pass (Vitest and Playwright examples).
+- [ ] The folder layout above exists and `svelte-check` reports no errors.
+- [ ] Tailwind utility classes render on the placeholder page; no tokens or
+      custom theme are defined yet.
+- [ ] The README side-by-side section is followed verbatim and both
+      frontends load at the same time.
