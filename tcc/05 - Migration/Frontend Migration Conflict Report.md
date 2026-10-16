@@ -228,7 +228,7 @@ card; the deploy scope is spread over one done and four blocked cards:
 - **OpenAPI:** present: OpenAPI 3.1 at `/openapi.json`, code-generated from route `describe` blocks, covered by `OpenApiRoutesTest`. To verify in T4 by actually generating a TypeScript client: whether every request/response schema is complete, and that `filterType` is published as string enums `"0"…"6"` while the JSON uses integers. `/health`, `/swagger` and `/openapi.json` sit outside `/api`, so the web proxy must forward them or the contract must call them internal.
 - **Drawn-graph JSON:** none. The API takes a flat `where` list of `{subject, predicate, object, filterType}` strings plus `variableFilters`; node identity, kinds and stage order exist only in the browser (Cytoscape data plus `graph-model.js`). T4 needs a `QueryGraph` schema with kinds, typed RDF terms (datatype/language are lost today, per the audit) and a mapping to the existing request DTOs, so the backend contract does not change.
 - **CORS/same origin:** no CORS plugin; same origin is assumed (Current Contracts Runtime). Keep it: Vite dev server proxies to `:8080`, production proxies through the `web` service. Cookie sessions (AUTH-000) also depend on same origin.
-- **Saved-query format:** none on the server. Export is `JSON.stringify(cy.json())` saved as `query_exported.json` and imported with `cy.json({elements})` (`app-core.js`, `index2.html`): Cytoscape-internal, unversioned, includes positions and styles. T4/T8 need a versioned format (`formatVersion` field) and, per D6, a legacy importer.
+- **Saved-query format:** none on the server. Export is `JSON.stringify(cy.json())` saved as `query_exported.json` and imported with `cy.json({elements})` (`app-core.js`, `index2.html`): Cytoscape-internal, unversioned, includes positions and styles. T4/T8 need a versioned format (`formatVersion` field); no legacy importer (D6b).
 - **Persistence and identity:** no database, users or sessions; uploaded graphs live in memory (`LocalGraphCache`) and are lost on restart. T6 adds PostgreSQL; graph persistence remains DEC-005.
 
 ## Decisions taken (2026-10-16)
@@ -241,6 +241,7 @@ card; the deploy scope is spread over one done and four blocked cards:
 | D4 | Login creates users; anonymous query editor without questionnaires; no recovery | AUTH-000 (DONE), [[../09 - Decisions/Authentication Contract]] |
 | D5 | LGPD ignored for now | DEC-003, STUDY-002 exclusions |
 | D6 | Answered as: no access to proposed queries after final submission | STUDY-001 |
+| D6b | Legacy `query_exported.json` files are not imported; new versioned format only | FE-042, FE-048 |
 
 Planned cards (all BACKLOG): T1 FE-040, T2 QUAL-006, T3 FE-041, T4 FE-042 +
 FE-043, T5 FE-044–FE-048, T6 BE-005, T7 AUTH-001 (reused) + AUTH-003, T8

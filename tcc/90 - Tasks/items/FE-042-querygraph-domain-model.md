@@ -27,13 +27,14 @@ first. Skill: `tcc-refactor` (port) with `tcc-test`.
   tests are the oracle and must keep their expected values.
 - Mapping `QueryGraph` → existing request DTOs (`where`, `variableFilters`,
   stage bindings); same payloads as the legacy page for the same graph.
-- Versioned saved format (`formatVersion: 1`) with Zod schema; importer for a
-  legacy `query_exported.json` (`cy.json()`) file.
+- Versioned saved format (`formatVersion: 1`) with Zod schema. No importer
+  for legacy `query_exported.json` (`cy.json()`) files: dropped by the user
+  on 2026-10-16.
 
-Excluded: Svelte, Cytoscape, HTTP.
+Excluded: Svelte, Cytoscape, HTTP, legacy export files.
 
 ## Acceptance criteria
 
 - [ ] Ported unit cases pass unchanged in Vitest.
 - [ ] For the QUAL-005 graphs the payload equals the legacy payload.
-- [ ] Round-trip save/load is lossless; a legacy export file loads.
+- [ ] Round-trip save/load is lossless.
