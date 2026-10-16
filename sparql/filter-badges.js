@@ -1,6 +1,7 @@
 // FE-036: badges over filtered value nodes in the main graph (badge ported from FE-027).
-// - While the node's subject is a variable: a live "kept / total" count from the
-//   BE-003 numeric profile, for At least, At most, Between, MAX and MIN.
+// - While the node's subject is a variable: its filter funnel step as "kept / total"
+//   (FE-039): results kept after this filter of those reaching it from the earlier
+//   filters, counted like the funnel (FE-028) for the query as it runs.
 // - Once the subject is a fixed entity (Assume/Apply, or built that way): the
 //   entity's actual values in a chip under the node, and a ✓/✗ badge saying
 //   whether they pass the filter the node keeps.
@@ -12,8 +13,8 @@
 const FILTER_BADGE_DEBOUNCE_MS = 400;
 const FILTER_BADGE_CACHE_SIZE = 60;
 const FILTER_ACTUAL_SHOWN = 3;
-// Lookups are keyed by their whole request, so a new filter value on the same
-// relation reuses the loaded distribution or values. Failures are not kept.
+// Lookups are keyed by their whole request, so a new filter on the same relation
+// reuses the loaded values. Failures are not kept.
 const filterBadgeCache = new Map();
 
 function cachedBadgeLookup(kind, request, load) {
@@ -26,16 +27,6 @@ function cachedBadgeLookup(kind, request, load) {
         if (filterBadgeCache.size > FILTER_BADGE_CACHE_SIZE) filterBadgeCache.delete(filterBadgeCache.keys().next().value);
     }
     return entry;
-}
-
-function loadBadgeProfile(request) {
-    return cachedBadgeLookup('profile', request, async item => {
-        const profile = await postNumericProfile(item);
-        if (!profile || !Array.isArray(profile.values) || !Number.isFinite(profile.count)) {
-            throw new Error('Unexpected numeric profile response.');
-        }
-        return profile;
-    });
 }
 
 function loadActualValues(request) {
@@ -65,16 +56,16 @@ function scheduleFilterBadgeRefresh() {
     filterBadges.timer = setTimeout(refreshFilterBadges, FILTER_BADGE_DEBOUNCE_MS);
 }
 
-/** What each filtered node shows: an actual-value check or a profile count. */
+/** What each filtered node shows: an actual-value check or its funnel step count. */
 function wantedFilterBadges() {
     const qc = window.queryCalculations;
     const endpointUrl = getEndpoint();
     const wanted = new Map();
+    let funnel;
     cy.nodes().forEach(node => {
         // FE-034: a value variable's filter shows the same badges as a filtered value.
         const filter = window.graphModel.nodeFilter(node.data());
         if (filter?.filterType == null) return;
-        const { filterType } = filter;
         const edges = filterEdgeItems(node.component());
         const literalId = node.id();
         const actual = qc.actualValueRequest({ endpointUrl, edges, literalId });
@@ -82,12 +73,20 @@ function wantedFilterBadges() {
             wanted.set(literalId, { kind: 'actual', request: actual, ...filter });
             return;
         }
-        const profile = filterType >= 2 && qc.numericProfileRequest({
-            endpointUrl, edges, literalId, variableFilters: variableFilterItems(node.component()),
-        });
-        if (profile) wanted.set(literalId, { kind: 'count', request: profile, ...filter });
+        funnel ??= currentFunnelPlan([]);
+        const step = funnelStepOf(funnel, literalId);
+        if (step) wanted.set(literalId, { kind: 'count', ...step });
     });
     return wanted;
+}
+
+/** The counted funnel step of the relation into a node, with its before/after requests. */
+function funnelStepOf({ plan, edges }, nodeId) {
+    if (!plan) return null;
+    const keys = new Set(edges.filter(edge => edge.target === nodeId).map(window.queryCalculations.funnelStepKey));
+    const step = plan.steps.find(item => keys.has(item.key));
+    if (!step?.counted) return null;
+    return { variableName: plan.variableName, before: plan.requests[step.index], after: plan.requests[step.index + 1] };
 }
 
 function refreshFilterBadges() {
@@ -99,32 +98,37 @@ function refreshFilterBadges() {
     }
     const current = nodeId => generation === filterBadges.generation && cy.getElementById(nodeId).length > 0;
     wanted.forEach((item, nodeId) => {
-        if (item.kind === 'count') showFilterCount(nodeId, item, current);
-        else showActualValue(nodeId, item, current);
+        if (item.kind === 'actual') showActualValue(nodeId, item, current);
+        else setFilterCountLoading(nodeId);
     });
+    // Counts go one at a time, like the funnel, so the endpoint load stays bounded.
+    (async () => {
+        for (const [nodeId, item] of wanted) {
+            if (generation !== filterBadges.generation) return;
+            if (item.kind === 'count') await showFilterCount(nodeId, item, current);
+        }
+    })();
 }
 
-function showFilterCount(nodeId, { request, filterType, value }, current) {
+function setFilterCountLoading(nodeId) {
     setFilterChip(nodeId, null);
-    setFilterBadge(nodeId, { state: 'loading', text: '…', description: 'Counting values kept by this filter…' });
-    loadBadgeProfile(request).then(profile => {
+    setFilterBadge(nodeId, { state: 'loading', text: '…', description: 'Counting the results this filter keeps…' });
+}
+
+async function showFilterCount(nodeId, { variableName, before, after }, current) {
+    try {
+        const total = await loadResultCount(before);
+        const kept = await loadResultCount(after);
         if (!current(nodeId)) return;
-        const count = window.queryCalculations.filterBadgeCount(profile, filterType, value);
-        if (!count) {
-            setFilterBadge(nodeId, null);
-            return;
-        }
-        const { kept, total, exact, truncated } = count;
-        const note = truncated ? ` (only the lowest ${profile.values.length} values were loaded)` : '';
         setFilterBadge(nodeId, {
-            state: kept === 0 && exact ? 'none' : truncated ? 'truncated' : 'ok',
-            text: `${kept}${exact ? '' : '+'} / ${total}`,
-            description: `This filter keeps ${exact ? '' : 'at least '}${kept} of ${total} values${note}.`,
+            state: kept === 0 ? 'none' : 'ok',
+            text: `${kept} / ${total}`,
+            description: `This filter keeps ${kept} of the ${total} ${variableName} that reach it.`,
         });
-    }, error => {
+    } catch (error) {
         if (!current(nodeId)) return;
-        setFilterBadge(nodeId, { state: 'error', text: '?', description: `Could not count values: ${error.message}` });
-    });
+        setFilterBadge(nodeId, { state: 'error', text: '?', description: `Could not count results: ${error.message}` });
+    }
 }
 
 function showActualValue(nodeId, { request, filterType, value }, current) {

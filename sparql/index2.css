@@ -797,7 +797,6 @@ nav .brand-logo img {
     box-shadow: 0 1px 3px rgba(0, 0, 0, .3);
 }
 .filter-badge:focus-visible, .filter-actual-value:focus-visible { outline: 2px solid #1565C0; outline-offset: 2px; }
-.filter-badge[data-state="truncated"] { background: #FFB300; color: #212121; }
 .filter-badge[data-state="none"] { background: #C62828; }
 .filter-badge[data-state="loading"], .filter-badge[data-state="error"] { background: #757575; }
 .filter-actual-value {

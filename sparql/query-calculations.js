@@ -188,45 +188,6 @@ export function filterRange(filterType, value) {
 }
 
 /**
- * @typedef {{count: number, truncated: boolean, max?: number | null, values: {number: number}[]}} BadgeProfile
- * @typedef {{kept: number, total: number, exact: boolean, truncated: boolean}} BadgeCount
- */
-
-/**
- * How many profiled rows a numeric filter keeps, for the graph badge (FE-036).
- * Range filters count the rows inside the range; MAX/MIN count the rows tied
- * at the extreme. A truncated profile lists the lowest values only, so a count
- * that depends on the omitted rows is a lower bound (`exact: false`), except
- * when the range clearly keeps all or none of them. Null for other filters.
- * @param {BadgeProfile} profile
- * @param {number | string | null | undefined} filterType
- * @param {string} value
- * @returns {BadgeCount | null}
- */
-export function filterBadgeCount(profile, filterType, value) {
-  const numbers = profile.values.map(item => item.number);
-  const total = Math.max(profile.count, numbers.length);
-  const truncated = Boolean(profile.truncated) && total > numbers.length;
-  const last = numbers.length ? numbers[numbers.length - 1] : -Infinity;
-  const tied = (/** @type {number} */ extreme) => numbers.filter(number => number === extreme).length;
-  const type = filterTypeOf(filterType);
-  if (type === 4 || type === 5) {
-    if (!numbers.length) return { kept: 0, total, exact: true, truncated };
-    if (type === 5) return { kept: tied(numbers[0]), total, exact: !truncated || last > numbers[0], truncated };
-    if (!truncated) return { kept: tied(last), total, exact: true, truncated };
-    return { kept: Math.max(1, profile.max == null ? 0 : tied(profile.max)), total, exact: false, truncated };
-  }
-  const range = filterRange(type, value);
-  if (!range) return null;
-  const kept = numbers.filter(number => number >= range.min && number <= range.max).length;
-  if (!truncated || range.max < last) return { kept, total, exact: true, truncated };
-  if (range.min <= last && profile.max != null && range.max >= profile.max) {
-    return { kept: kept + total - numbers.length, total, exact: true, truncated };
-  }
-  return { kept, total, exact: false, truncated };
-}
-
-/**
  * Request for POST /api/query/relationship-value giving the actual values of a
  * filtered literal node once its subject is a fixed entity (FE-036): exactly
  * one relation points at the node, from an IRI through a fixed IRI predicate.
@@ -290,16 +251,23 @@ const funnelVariablePrefix = '?__funnel';
 
 /**
  * A filter step is a fixed-predicate relation whose object is a fixed value (an IRI or
- * a literal, with or without a comparison). MAX/MIN (BE-004) are extreme steps: they
- * keep every row tied at the extreme of the rest of the query.
+ * a literal, with or without a comparison) or a value variable that holds a filter
+ * (FE-039). MAX/MIN (BE-004) are extreme steps: they keep every row tied at the
+ * extreme of the rest of the query.
  * @param {FilterEdge} edge
+ * @param {VariableFilter[]} [variableFilters] value-variable filters of the graph
  * @returns {'step' | 'extreme' | null}
  */
-export function funnelStepKind(edge) {
+export function funnelStepKind(edge, variableFilters = []) {
   const predicate = edge.nodeId;
   const object = edge.targetValue || edge.target;
-  if (!predicate || !predicate.startsWith('<') || /^[?$]/.test(object)) return null;
-  const filterType = filterTypeOf(edge.filterType);
+  if (!predicate || !predicate.startsWith('<')) return null;
+  let filterType = filterTypeOf(edge.filterType);
+  if (/^[?$]/.test(object)) {
+    const filter = variableFilters.find(item => item.variableName === object);
+    if (!filter || (filter.filterType === null && filter.value === null)) return null;
+    filterType = filterTypeOf(filter.filterType);
+  }
   return filterType === 4 || filterType === 5 ? 'extreme' : 'step';
 }
 
@@ -311,8 +279,9 @@ export function funnelStepKind(edge) {
  * are not counted. Disabling a step therefore only changes later counts.
  * MAX/MIN steps come after the other steps: their extreme is taken over the rest of
  * the query (BE-004), so each count is what the query returns with the steps so far
- * and the last count is the query's result. Value-variable filters (FE-034) are
- * not steps: every count applies them.
+ * and the last count is the query's result. A value-variable filter (FE-034) is a
+ * step on the first relation into its variable (FE-039); relaxing it keeps the
+ * relation and leaves out the variable's filter.
  * @param {{endpointUrl: string, edges: FilterEdge[], variableName: string, disabled?: Iterable<string>, maxSteps?: number, variableFilters?: VariableFilter[]}} input
  * @returns {FunnelPlan}
  */
@@ -322,24 +291,43 @@ export function filterFunnelPlan({ endpointUrl, edges, variableName, disabled = 
   const steps = [];
   /** @type {Map<FilterEdge, number>} */
   const stepIndex = new Map();
+  /** @type {Set<string>} value variables that already have their step */
+  const stepVariables = new Set();
+  /** @type {Map<FilterEdge, 'step' | 'extreme' | null>} */
+  const kinds = new Map(edges.map(edge => {
+    const object = edge.targetValue || edge.target;
+    const kind = stepVariables.has(object) ? null : funnelStepKind(edge, variableFilters);
+    if (kind && /^[?$]/.test(object)) stepVariables.add(object);
+    return [edge, kind];
+  }));
   for (const wanted of ['step', 'extreme']) {
     edges.forEach(edge => {
-      if (funnelStepKind(edge) !== wanted) return;
+      if (kinds.get(edge) !== wanted) return;
       stepIndex.set(edge, steps.length);
       steps.push({ key: funnelStepKey(edge), index: steps.length, counted: steps.length < maxSteps, extreme: wanted === 'extreme' });
     });
   }
   const extremes = steps.filter(step => step.extreme).length;
   /** @param {number} applied */
-  const where = applied => buildFilters(edges.map((edge, position) => {
-    const kind = funnelStepKind(edge);
-    const index = stepIndex.get(edge);
-    const keep = kind !== null && index !== undefined && index < applied && !off.has(steps[index].key);
-    if (kind === null || keep) return edge;
-    return { ...edge, target: `${funnelVariablePrefix}${position}`, targetValue: `${funnelVariablePrefix}${position}`, filterType: null };
-  }));
+  const request = applied => {
+    /** @type {Set<string>} */
+    const relaxedVariables = new Set();
+    const where = buildFilters(edges.map((edge, position) => {
+      const kind = kinds.get(edge);
+      const index = stepIndex.get(edge);
+      const keep = kind != null && index !== undefined && index < applied && !off.has(steps[index].key);
+      if (kind == null || keep) return edge;
+      const object = edge.targetValue || edge.target;
+      if (/^[?$]/.test(object)) {
+        relaxedVariables.add(object);
+        return edge;
+      }
+      return { ...edge, target: `${funnelVariablePrefix}${position}`, targetValue: `${funnelVariablePrefix}${position}`, filterType: null };
+    }));
+    const kept = variableFilters.filter(filter => !relaxedVariables.has(filter.variableName));
+    return withVariableFilters({ endpointUrl, variableName, where }, kept);
+  };
   const counted = steps.filter(step => step.counted);
-  const request = (/** @type {number} */ applied) => withVariableFilters({ endpointUrl, variableName, where: where(applied) }, variableFilters);
   const requests = [
     request(0),
     ...counted.map(step => off.has(step.key) ? null : request(step.index + 1)),

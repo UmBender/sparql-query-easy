@@ -158,12 +158,21 @@ lowest/highest profiled value and cycle them like a range; the profile holds
 the lowest values, so a partial profile names only the maximum value and says
 its entities are known after the query runs.
 
+**Confirmed (FE-039):** a value variable's filter is a funnel step on the first
+relation into it; relaxing it keeps the relation and leaves out the variable's
+filter. The funnel counts the first entity (non-value) variable of the order by
+default; the picker still offers every variable.
+
 **Confirmed (FE-036):** `filter-badges.js` overlays the main graph
 (`#filter-badge-layer`, refreshed 400 ms after graph or endpoint edits; stale
 responses ignored). A filtered value node under a variable gets a `kept / total`
-badge from the BE-003 profile (pure `filterBadgeCount`; At least, At most,
-Between, MAX/MIN ties; `+` for a lower bound, amber for a partial profile, red
-plus node class `filter-keeps-none` at 0). Once its subject is a fixed entity
+badge: its filter funnel step (FE-039), i.e. distinct results of the funnel's
+counted variable after this filter of those reaching it from the earlier
+filters, for the query as it runs (preview toggles ignored); any filter type,
+MAX/MIN ties included; red plus node class `filter-keeps-none` at 0, `?` on a
+count error, none beyond the counted steps. Counts go through the funnel's
+shared cache and in-flight requests (`loadResultCount` in `filter-funnel.js`).
+Once its subject is a fixed entity
 (Assume/Apply or built that way), `POST /api/query/relationship-value`
 (`isLiteral: true`, pure `actualValueRequest`) loads the entity's values into
 a chip under the node (first three, all in its title) and the badge shows ✓/✗

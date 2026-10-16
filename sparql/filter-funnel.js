@@ -60,6 +60,7 @@ function setFunnelStepEnabled(key, enabled) {
 function setFunnelVariable(name) {
     funnelState.variable = name;
     refreshFilterFunnel();
+    scheduleFilterBadgeRefresh(); // FE-039: badges count the same variable
 }
 
 async function fetchResultCount(request, signal) {
@@ -75,8 +76,45 @@ async function fetchResultCount(request, signal) {
     return body.data.count;
 }
 
-/** What the funnel can count right now, or a message saying why it cannot. */
-function funnelInput() {
+// FE-039: badges share the funnel's counts; one in-flight request per count.
+const funnelCountLoads = new Map();
+
+function rememberFunnelCount(request, count) {
+    if (funnelCountCache.size >= FUNNEL_CACHE_LIMIT) funnelCountCache.clear();
+    funnelCountCache.set(funnelCacheKey(request), count);
+}
+
+/** Share an in-flight count so badges wait for it instead of asking again. */
+function trackResultCount(request, load) {
+    const key = funnelCacheKey(request);
+    const tracked = load.then(count => {
+        rememberFunnelCount(request, count);
+        return count;
+    }).finally(() => { if (funnelCountLoads.get(key) === tracked) funnelCountLoads.delete(key); });
+    funnelCountLoads.set(key, tracked);
+    return tracked;
+}
+
+/** A cached count, or the one request for it; an aborted funnel request is asked again. */
+function loadResultCount(request) {
+    const key = funnelCacheKey(request);
+    if (funnelCountCache.has(key)) return Promise.resolve(funnelCountCache.get(key));
+    const shared = funnelCountLoads.get(key);
+    if (shared) return shared.catch(error => (error?.name === 'AbortError' ? loadResultCount(request) : Promise.reject(error)));
+    return trackResultCount(request, fetchResultCount(request));
+}
+
+/** Variable counted by default: the first entity variable, not a value variable (FE-039). */
+function defaultFunnelVariable(variables) {
+    const isValueVariable = name => cy.nodes().some(node => node.data('value') === name && window.graphModel.isValueVariable(node.data()));
+    return variables.find(name => !isValueVariable(name)) ?? variables[0];
+}
+
+/**
+ * The funnel plan for the current graph, or a message saying why it cannot count.
+ * Badges (FE-039) ask for it without preview toggles: the query as it runs.
+ */
+function currentFunnelPlan(disabled = funnelState.disabled) {
     const { component, ambiguous } = selectQueryComponent();
     if (ambiguous) return { message: SEPARATE_VARIABLE_GROUPS_MESSAGE };
     if (!component || !component.edges().length) return { message: 'Add a relation with a variable to see how its filters narrow the result.' };
@@ -86,15 +124,23 @@ function funnelInput() {
         if (name) variables.push(name);
     }
     if (!variables.length) return { message: 'Add at least one variable (?) node to count results.' };
-    const variableName = variables.includes(funnelState.variable) ? funnelState.variable : variables[0];
+    const variableName = variables.includes(funnelState.variable) ? funnelState.variable : defaultFunnelVariable(variables);
     const edges = filterEdgeItems(component);
     const plan = window.queryCalculations.filterFunnelPlan({
         endpointUrl: getEndpoint(),
         edges,
         variableName,
-        disabled: funnelState.disabled,
+        disabled,
         variableFilters: variableFilterItems(component),
     });
+    return { plan, variables, edges };
+}
+
+/** What the funnel can count right now, or a message saying why it cannot. */
+function funnelInput() {
+    const input = currentFunnelPlan();
+    if (!input.plan) return input;
+    const { plan, variables, edges } = input;
     const present = new Set(plan.steps.map(step => step.key));
     funnelState.disabled.forEach(key => { if (!present.has(key)) funnelState.disabled.delete(key); });
     return { plan, variables, labels: plan.steps.map(step => funnelStepLabel(step.key, edges)) };
@@ -104,6 +150,11 @@ function funnelStepLabel(key, edges) {
     const edge = edges.find(item => window.queryCalculations.funnelStepKey(item) === key);
     const relation = cy.getElementById(edge.id || '').data('label') || edge.nodeId;
     const target = cy.getElementById(edge.target);
+    if (window.graphModel.isValueVariable(target.data())) {
+        // FE-039: a value variable's step reads like a filtered value.
+        const { filterType, value } = window.graphModel.nodeFilter(target.data());
+        return filterType === null ? `${relation} = ${value}` : `${relation} ${window.queryCalculations.filterLabel(filterType, value)}`;
+    }
     const value = target.data('label') || edge.targetValue;
     const exact = window.queryCalculations.filterTypeOf(target.data('filterType')) === null;
     return `${relation} ${exact ? '= ' : ''}${value}`;
@@ -138,9 +189,7 @@ function refreshFilterFunnel() {
     funnelState.controller = controller;
     (async () => {
         for (const { request, index } of missing) {
-            const count = await fetchResultCount(request, controller.signal);
-            if (funnelCountCache.size >= FUNNEL_CACHE_LIMIT) funnelCountCache.clear();
-            funnelCountCache.set(funnelCacheKey(request), count);
+            const count = await trackResultCount(request, fetchResultCount(request, controller.signal));
             if (generation !== funnelState.generation) return;
             counts[index] = count;
             renderFilterFunnel(view);

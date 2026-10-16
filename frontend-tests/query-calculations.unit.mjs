@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
-import { actualValueRequest, buildFilters, countInRange, cycleMode, filterAccepts, filterBadgeCount, filterFunnelPlan, filterLabel, filterRange, filterTypeOf, funnelStepCounts, funnelStepKind, getQueryVariables, variableFiltersFor, withVariableFilters, textSuggestionRequest, suggestedTexts, hasParallelPredicateVariables, histogramBins, numericProfileRequest, parseBetween, rangeFilter, rangeFromFilter, rangeScale, keptEntities, possibilityGraph, relationLabelKind } from '../sparql/query-calculations.js';
+import { actualValueRequest, buildFilters, countInRange, cycleMode, filterAccepts, filterFunnelPlan, filterLabel, filterRange, filterTypeOf, funnelStepCounts, funnelStepKind, getQueryVariables, variableFiltersFor, withVariableFilters, textSuggestionRequest, suggestedTexts, hasParallelPredicateVariables, histogramBins, numericProfileRequest, parseBetween, rangeFilter, rangeFromFilter, rangeScale, keptEntities, possibilityGraph, relationLabelKind } from '../sparql/query-calculations.js';
 
 test('filters preserve edge order, fixed RDF terms, and numeric filterType zero', () => {
   assert.deepEqual(buildFilters([
@@ -101,7 +101,7 @@ const hpAny = { subject: '?p', predicate: `<${pk}hp>`, object: '?__funnel3', fil
 const hpMax = { subject: '?p', predicate: `<${pk}hp>`, object: '1', filterType: 4 };
 
 test('funnel steps are fixed-value relations; MAX/MIN are extreme steps and variables are structure', () => {
-  assert.deepEqual(funnelEdges.map(funnelStepKind), ['step', null, 'step', 'extreme']);
+  assert.deepEqual(funnelEdges.map(edge => funnelStepKind(edge)), ['step', null, 'step', 'extreme']);
   assert.equal(funnelStepKind({ ...funnelEdges[0], nodeId: '?pred' }), null);
 });
 
@@ -218,33 +218,6 @@ test('FE-036: only at least, at most and between filters have a numeric range', 
   for (const type of [null, '', 0, 1, 4, 5]) assert.equal(filterRange(type, '45'), null);
 });
 
-test('FE-036: badge counts are exact unless they depend on the rows a truncated profile omits', () => {
-  const values = [10, 20, 20, 30, 40].map(number => ({ number }));
-  const full = { count: 5, truncated: false, max: 40, values };
-  const cut = { count: 9, truncated: true, max: 70, values };
-  assert.deepEqual(filterBadgeCount(full, 2, '15'), { kept: 4, total: 5, exact: true, truncated: false });
-  assert.deepEqual(filterBadgeCount(full, 6, '50..60'), { kept: 0, total: 5, exact: true, truncated: false });
-  assert.deepEqual(filterBadgeCount(cut, 3, '25'), { kept: 3, total: 9, exact: true, truncated: true });
-  // Every omitted row lies in [40, 70]: an open upper end keeps all of them.
-  assert.deepEqual(filterBadgeCount(cut, 2, '35'), { kept: 5, total: 9, exact: true, truncated: true });
-  assert.deepEqual(filterBadgeCount(cut, 6, '35..50'), { kept: 1, total: 9, exact: false, truncated: true });
-  assert.deepEqual(filterBadgeCount(cut, 2, '45'), { kept: 0, total: 9, exact: false, truncated: true });
-  assert.equal(filterBadgeCount(full, 2, 'abc'), null);
-  for (const type of [null, 0, 1]) assert.equal(filterBadgeCount(full, type, '20'), null);
-});
-
-test('FE-036: MAX and MIN badges count the rows tied at the extreme', () => {
-  const values = [10, 10, 20, 40, 40].map(number => ({ number }));
-  assert.deepEqual(filterBadgeCount({ count: 5, truncated: false, values }, 5, 'MIN'), { kept: 2, total: 5, exact: true, truncated: false });
-  assert.deepEqual(filterBadgeCount({ count: 5, truncated: false, values }, '4', 'MAX'), { kept: 2, total: 5, exact: true, truncated: false });
-  // Truncated: the minimum ties are all listed once a larger value follows them.
-  assert.deepEqual(filterBadgeCount({ count: 8, truncated: true, max: 90, values }, 5, ''), { kept: 2, total: 8, exact: true, truncated: true });
-  assert.deepEqual(filterBadgeCount({ count: 8, truncated: true, max: 90, values }, 4, ''), { kept: 1, total: 8, exact: false, truncated: true });
-  const flat = [7, 7].map(number => ({ number }));
-  assert.deepEqual(filterBadgeCount({ count: 6, truncated: true, max: 7, values: flat }, 5, ''), { kept: 2, total: 6, exact: false, truncated: true });
-  assert.deepEqual(filterBadgeCount({ count: 0, truncated: false, values: [] }, 4, ''), { kept: 0, total: 0, exact: true, truncated: false });
-});
-
 test('FE-036: an actual value is looked up only for a fixed entity through one fixed relation', () => {
   const edge = { source: '<https://e/Pikachu>', target: 'n1', sourceValue: '<https://e/Pikachu>', targetValue: '90', nodeId: '<https://e/speed>', fallbackPredicate: '?x' };
   assert.deepEqual(actualValueRequest({ endpointUrl: 'g', edges: [edge], literalId: 'n1' }),
@@ -290,11 +263,34 @@ test('a profile of a value variable leaves out its own filter and keeps the othe
   assert.equal('variableFilters' in numericProfileRequest({ endpointUrl: 'g', edges: [hpEdge], literalId: '?hp' }), false);
 });
 
-test('every funnel count applies the value-variable filters', () => {
+test('FE-039: a value-variable filter is a funnel step whose relaxed form keeps the relation without the filter', () => {
   const fixed = { id: 'type', source: '?mon', target: '<https://e/Fire>', nodeId: '<https://e/type>', fallbackPredicate: '?f' };
-  const plan = filterFunnelPlan({ endpointUrl: 'g', edges: [fixed, hpEdge], variableName: '?mon', variableFilters: [hpFilter] });
-  assert.equal(plan.steps.length, 1);
-  assert.ok(plan.requests.every(request => request && JSON.stringify(request.variableFilters) === JSON.stringify([hpFilter])));
+  const anyFilter = { variableName: '?speed', filterType: null, value: null };
+  assert.equal(funnelStepKind(hpEdge, [hpFilter]), 'step');
+  assert.equal(funnelStepKind(hpEdge), null);
+  assert.equal(funnelStepKind(speedEdge, [anyFilter]), null);
+  assert.equal(funnelStepKind(hpEdge, [{ variableName: '?hp', filterType: null, value: '45' }]), 'step');
+  assert.equal(funnelStepKind({ ...hpEdge, nodeId: '?pred' }, [hpFilter]), null);
+
+  const plan = filterFunnelPlan({ endpointUrl: 'g', edges: [fixed, hpEdge, speedEdge], variableName: '?mon', variableFilters: [hpFilter, anyFilter] });
+  assert.deepEqual(plan.steps.map(step => step.key), ['type', 'hp']);
+  const where = buildFilters([fixed, hpEdge, speedEdge]);
+  const typeAnyWhere = [{ ...where[0], object: '?__funnel0' }, where[1], where[2]];
+  assert.deepEqual(plan.requests, [
+    { endpointUrl: 'g', variableName: '?mon', where: typeAnyWhere, variableFilters: [anyFilter] },
+    { endpointUrl: 'g', variableName: '?mon', where, variableFilters: [anyFilter] },
+    { endpointUrl: 'g', variableName: '?mon', where, variableFilters: [hpFilter, anyFilter] },
+  ]);
+  // Disabling the value-variable step previews the result without its filter.
+  const off = filterFunnelPlan({ endpointUrl: 'g', edges: [hpEdge, fixed], variableName: '?mon', variableFilters: [hpFilter], disabled: ['hp'] });
+  assert.equal(off.requests[1], null);
+  assert.deepEqual(off.requests[2], { endpointUrl: 'g', variableName: '?mon', where: buildFilters([hpEdge, fixed]) });
+});
+
+test('FE-039: a value variable reached by two relations is one step, on the first relation', () => {
+  const second = { ...hpEdge, id: 'hp2', source: '?other' };
+  const plan = filterFunnelPlan({ endpointUrl: 'g', edges: [hpEdge, second], variableName: '?mon', variableFilters: [hpFilter] });
+  assert.deepEqual(plan.steps.map(step => step.key), ['hp']);
 });
 
 // FE-038: text suggestions for a filter editor go through the stage route.

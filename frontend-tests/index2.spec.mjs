@@ -2019,7 +2019,8 @@ test('the filter funnel explains an empty query and follows graph edits with one
     cy.getElementById('speed-value').data({ value: '90', label: '≥ 90' });
   });
   await expect(page.locator('#filter-funnel-result')).toHaveText('Result: 7 ?p of 151.');
-  expect(requests).toHaveLength(3);
+  // One refresh: the ≥ 95 edit is never counted. The badge (FE-039) shares these counts.
+  expect(new Set(requests.map(request => JSON.stringify(request))).size).toBe(3);
 });
 
 test('a superseded funnel refresh is aborted and its counts are not shown', async ({ page }) => {
@@ -2524,17 +2525,57 @@ const speedNodeData = page => page.evaluate(() => {
 });
 const sentFilters = page => page.evaluate(() => buildFilters(cy.elements()));
 
+/**
+ * FE-039: the badge shows its funnel step. Distinct ?p after the speed filter
+ * among [speeds]: a request without the filter counts every entity.
+ */
+async function routeSpeedCounts(page, speeds, respond) {
+  const requests = [];
+  await page.route('**/api/query/count', async route => {
+    const body = JSON.parse(route.request().postData());
+    requests.push(body);
+    if (respond) {
+      await respond(route, requests.length, body);
+      return;
+    }
+    await route.fulfill({ contentType: 'application/json', body: JSON.stringify({ data: { variableName: body.variableName, count: speedCount(body, speeds) } }) });
+  });
+  return requests;
+}
+
+function speedCount(body, speeds) {
+  const filter = body.where.find(item => item.predicate === '<https://example.test/speed>' && item.filterType != null);
+  if (!filter) return speeds.length;
+  const value = Number(filter.object);
+  const [min, max] = filter.object.split('..').map(Number);
+  const keep = {
+    0: speed => String(speed).startsWith(filter.object),
+    2: speed => speed >= value,
+    3: speed => speed <= value,
+    4: speed => speed === Math.max(...speeds),
+    5: speed => speed === Math.min(...speeds),
+    6: speed => speed >= min && speed <= max,
+  }[filter.filterType];
+  return speeds.filter(keep).length;
+}
+
 test('a numeric filter node shows a live kept/total badge that never changes query data', async ({ page }) => {
   await addSpeedFilterGraph(page);
-  await routeSpeedProfile(page, fulfillProfile(speedProfile([43, 45, 65, 90, 100, 100])));
+  const requests = await routeSpeedCounts(page, [43, 45, 65, 90, 100, 100]);
   await page.waitForTimeout(500);
   await expect(filterBadge(page)).toHaveCount(0); // an exact value is not a filter
 
   await editSpeedFilter(page, 'At least', '60');
   await expect(filterBadge(page)).toHaveText('4 / 6');
   await expect(filterBadge(page)).toHaveAttribute('data-state', 'ok');
-  await expect(filterBadge(page)).toHaveAttribute('aria-label', 'This filter keeps 4 of 6 values.');
+  await expect(filterBadge(page)).toHaveAttribute('aria-label', 'This filter keeps 4 of the 6 ?p that reach it.');
   await expect(actualValueChip(page)).toHaveCount(0);
+  // The funnel's base and step requests: the relation with any value, then the filter.
+  const speed = { subject: '?p', predicate: '<https://example.test/speed>', object: '60', filterType: 2 };
+  expect(requests.slice(-2)).toEqual([
+    { endpointUrl: 'CampeonatoBrasileiro2023', variableName: '?p', where: [{ ...speed, object: '?__funnel0', filterType: null }] },
+    { endpointUrl: 'CampeonatoBrasileiro2023', variableName: '?p', where: [speed] },
+  ]);
 
   await editSpeedFilter(page, 'Between', '200..300');
   await expect(filterBadge(page)).toHaveText('0 / 6');
@@ -2553,41 +2594,42 @@ test('a numeric filter node shows a live kept/total badge that never changes que
   expect(await speedNodeData(page)).toEqual({ value: '50', label: '≤ 50', type: 'label', filterType: 3 });
   expect(await sentFilters(page)).toEqual([{ subject: '?p', predicate: '<https://example.test/speed>', object: '50', filterType: 3 }]);
 
+  // A text filter is counted too.
+  await page.evaluate(() => { cy.nodes('[type = "label"]')[0].data({ value: '4', label: 'starts with 4', filterType: 0 }); });
+  await expect(filterBadge(page)).toHaveText('2 / 6');
+
   await editSpeedFilter(page, 'Exactly Equal', '45');
   await expect(filterBadge(page)).toHaveCount(0);
 });
 
-test('the badge marks a partial profile and ignores a stale response after an endpoint edit', async ({ page }) => {
+test('the badge ignores a stale count after an endpoint edit', async ({ page }) => {
   await addSpeedFilterGraph(page);
   let releaseFirst;
   const firstGate = new Promise(resolve => { releaseFirst = resolve; });
-  const requests = await routeSpeedProfile(page, async route => {
-    if (requests.length === 1) {
-      await firstGate;
-      return fulfillProfile(speedProfile([43, 45, 65, 90, 100]))(route);
-    }
-    return fulfillProfile(speedProfile([43, 45, 65, 90], { count: 9, truncated: true, max: 150 }))(route);
+  const requests = await routeSpeedCounts(page, [], async (route, count, body) => {
+    if (count === 1) await firstGate;
+    const total = body.endpointUrl === 'PokemonGen1' ? 9 : 5;
+    const kept = body.where.some(item => item.filterType === 6) ? total - 3 : total;
+    await route.fulfill({ contentType: 'application/json', body: JSON.stringify({ data: { variableName: body.variableName, count: kept } }) });
   });
   await page.evaluate(() => { cy.nodes('[type = "label"]')[0].data({ value: '60..120', label: '60–120', filterType: 6 }); });
   await expect(filterBadge(page)).toHaveAttribute('data-state', 'loading');
 
   await page.locator('#input-endpoint-sparql').fill('PokemonGen1');
-  await expect(filterBadge(page)).toHaveText('2+ / 9');
-  await expect(filterBadge(page)).toHaveAttribute('data-state', 'truncated');
-  await expect(filterBadge(page)).toHaveAttribute('aria-label', 'This filter keeps at least 2 of 9 values (only the lowest 4 values were loaded).');
-  expect(requests.map(request => request.endpointUrl)).toEqual(['CampeonatoBrasileiro2023', 'PokemonGen1']);
+  await expect(filterBadge(page)).toHaveText('6 / 9');
+  expect(requests.map(request => request.endpointUrl)).toEqual(['CampeonatoBrasileiro2023', 'PokemonGen1', 'PokemonGen1']);
 
   releaseFirst();
   await page.waitForTimeout(600);
-  await expect(filterBadge(page)).toHaveText('2+ / 9');
+  await expect(filterBadge(page)).toHaveText('6 / 9');
 });
 
-test('the badge follows its node and reports a profile error', async ({ page }) => {
+test('the badge follows its node and reports a count error', async ({ page }) => {
   await addSpeedFilterGraph(page);
-  await routeSpeedProfile(page, route => route.fulfill({ status: 502, contentType: 'application/json', body: '{"error":"endpoint unavailable"}' }));
+  await routeSpeedCounts(page, [], route => route.fulfill({ status: 502, contentType: 'application/json', body: '{"error":"endpoint unavailable"}' }));
   await page.evaluate(() => { cy.nodes('[type = "label"]')[0].data({ value: '60', label: '≥ 60', filterType: 2 }); });
   await expect(filterBadge(page)).toHaveText('?');
-  await expect(filterBadge(page)).toHaveAttribute('aria-label', 'Could not count values: endpoint unavailable');
+  await expect(filterBadge(page)).toHaveAttribute('aria-label', 'Could not count results: endpoint unavailable');
 
   const before = await filterBadge(page).boundingBox();
   await page.evaluate(() => { cy.nodes('[type = "label"]')[0].shift({ x: -60, y: 40 }); });
@@ -3264,7 +3306,12 @@ test('FE-034 Assume settles the value variable at once, without its filter', asy
 
 test('FE-034 View SPARQL, legacy Run query and the badge use the value variable filter', async ({ page }) => {
   await addHpValueVariable(page);
-  const profiles = await routeSpeedProfile(page, fulfillProfile(speedProfile([45, 90, 106, 160])));
+  const counts = [];
+  await page.route('**/api/query/count', async route => {
+    const body = JSON.parse(route.request().postData());
+    counts.push(body);
+    await route.fulfill({ contentType: 'application/json', body: JSON.stringify({ data: { variableName: body.variableName, count: body.variableFilters ? 3 : 4 } }) });
+  });
   const hpFilter = { variableName: '?hp', filterType: 2, value: '90' };
 
   // The test server keeps requests from earlier tests: read only the new ones.
@@ -3280,9 +3327,64 @@ test('FE-034 View SPARQL, legacy Run query and the badge use the value variable 
   await expect.poll(() => sentAfter(before, '/api/query').length).toBe(1);
   expect(JSON.parse(sentAfter(before, '/api/query')[0].body).variableFilters).toEqual([hpFilter]);
 
-  // The badge profiles the relation without the variable's own filter.
+  // FE-039: the badge is the funnel step of the value variable's filter, counting ?pokemon.
   await expect(filterBadge(page)).toHaveText('3 / 4');
-  expect(profiles.at(-1)).toEqual({ endpointUrl: 'CampeonatoBrasileiro2023', where: [], subject: '?pokemon', predicate: hpIri, limit: 500 });
+  const where = [{ subject: '?pokemon', predicate: hpIri, object: '?hp', filterType: null }];
+  expect(counts.slice(-2)).toEqual([
+    { endpointUrl: 'CampeonatoBrasileiro2023', variableName: '?pokemon', where },
+    { endpointUrl: 'CampeonatoBrasileiro2023', variableName: '?pokemon', where, variableFilters: [hpFilter] },
+  ]);
+});
+
+// FE-039: value-variable filters are funnel steps and each badge shows its step.
+test('FE-039 value-variable filters are funnel steps counted on the entity variable and badges show each step', async ({ page }) => {
+  await disableAutoLayout(page);
+  await page.evaluate(pk => {
+    cy.add([
+      { group: 'nodes', data: { id: '?p', value: '?p', label: '?', type: 'variable' }, position: { x: 200, y: 250 } },
+      { group: 'nodes', data: { id: 'fire', value: `<${pk}Fire>`, label: 'Fire', type: 'node' }, position: { x: 450, y: 100 } },
+      { group: 'edges', data: { id: 'type', source: '?p', target: 'fire', nodeId: `<${pk}type>`, label: 'type' } },
+    ]);
+    addValueVariableNode(cy, '?p', `<${pk}speed>`, 'speed', '?speed');
+    changeElementStringValue('?speed', '90', '2');
+    addValueVariableNode(cy, '?p', `<${pk}hp>`, 'hp', '?hp');
+    changeElementStringValue('?hp', '80', '2');
+    cy.getElementById('?speed').position({ x: 450, y: 250 });
+    cy.getElementById('?hp').position({ x: 450, y: 400 });
+  }, funnelPk);
+  // 151 Pokémon; 12 Fire; 7 of them fast; 2 of those with high HP.
+  const requests = [];
+  await page.route('**/api/query/count', async route => {
+    const body = JSON.parse(route.request().postData());
+    requests.push(body);
+    const fire = body.where.some(item => item.object === `<${funnelPk}Fire>`);
+    const filtered = new Set((body.variableFilters ?? []).map(filter => filter.variableName));
+    const count = !fire ? 151 : filtered.has('?hp') ? 2 : filtered.has('?speed') ? 7 : 12;
+    await route.fulfill({ contentType: 'application/json', body: JSON.stringify({ data: { variableName: body.variableName, count } }) });
+  });
+
+  await page.locator('#filter-funnel-btn').click();
+  await expect(page.locator('#filter-funnel-result')).toHaveText('Result: 2 ?p of 151.');
+  await expect(page.locator('#filter-funnel-variable-select')).toHaveValue('?p');
+  expect(await funnelRows(page)).toEqual([
+    'With these relations, any value | 151',
+    'type = Fire | 12 −139',
+    'speed ≥ 90 | 7 −5',
+    'hp ≥ 80 | 2 −5',
+  ]);
+  const badgeOf = id => page.locator(`#filter-badge-layer .filter-badge[data-node-id="${id}"]`);
+  await expect(badgeOf('?speed')).toHaveText('7 / 12');
+  await expect(badgeOf('?hp')).toHaveText('2 / 7');
+  await expect(badgeOf('?hp')).toHaveAttribute('aria-label', 'This filter keeps 2 of the 7 ?p that reach it.');
+  // The base keeps both relations with any value and leaves out their filters.
+  const base = requests.find(request => request.where[0].object === '?__funnel0');
+  expect(base.where.map(item => item.object)).toEqual(['?__funnel0', '?speed', '?hp']);
+  expect(base.variableFilters).toBeUndefined();
+
+  // Unticking a value-variable step previews without its filter; badges keep the query as it runs.
+  await page.locator('#filter-funnel-steps .funnel-toggle', { hasText: 'speed ≥ 90' }).click();
+  await expect(page.locator('#filter-funnel-result')).toContainText('Preview without 1 filter');
+  await expect(badgeOf('?speed')).toHaveText('7 / 12');
 });
 
 test('FE-034 Convert to variable on a value gives a value variable whose editor starts at Any value', async ({ page }) => {
