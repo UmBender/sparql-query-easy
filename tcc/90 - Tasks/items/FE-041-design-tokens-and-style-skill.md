@@ -22,12 +22,14 @@ the Cytoscape stylesheet, so node colors and UI colors never drift. Skill:
 - Tokens (CSS variables + a TS export) for the node kinds: entity blue
   circle, variable green circle, value pink box, value variable green box
   with pink border, class yellow; plus UI colors, spacing, type, dark mode.
-- Tailwind config and shadcn-svelte (Bits UI) set up from the tokens.
+- Configure the Tailwind theme and shadcn-svelte (Bits UI) components from
+  the tokens; both packages are already installed with defaults by FE-040.
 - A pure function building the Cytoscape stylesheet from the tokens, unit-tested.
 - A new repository skill `.agents/skills/tcc-style/SKILL.md` and its entry in
   `AGENTS.md`: how to use tokens/components and what not to hard-code.
 
-Excluded: feature screens.
+Excluded: feature screens; installing Tailwind/shadcn-svelte and the
+`frontend/` scaffold (FE-040).
 
 ## Acceptance criteria
 
