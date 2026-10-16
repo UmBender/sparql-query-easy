@@ -25,3 +25,10 @@ for a fixed-entity subject).
 ## Acceptance criteria
 
 - [ ] QUAL-006 rows for funnel and badges pass with identical counts.
+
+## Proposed amendment from the T4 brief (2026-10-16, pending user confirmation)
+
+Conflict rule EXTENDS: the T4 brief moves the funnel step on/off state into
+the domain (FE-042 toggle operation) and the store (FE-043 `$derived` funnel
+steps). This card then renders that state and sends `count` requests for it;
+it does not own the toggle state. Approved scope is otherwise unchanged.

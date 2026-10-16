@@ -50,3 +50,48 @@ above is unchanged; apply only after the user confirms.
       unordered lists compared as multisets).
 - [ ] The QueryGraph and the versioned format cover every field listed in the
       QUAL-010 request documentation, or the card records why one is dropped.
+
+## Proposed amendment from the T4 brief (2026-10-16, pending user confirmation)
+
+The T4 brief duplicates this card (conflict rule DUPLICATE). Approved scope
+above is unchanged; apply only after the user confirms. It folds in the T2
+amendment above, so both are confirmed together.
+
+- Types named explicitly: `QueryGraph`, `Node` with a kind union (entity,
+  variable, value, value-variable, class), `Edge`, `Filter` union (exact,
+  starts with, contains, at least, at most, between, MAX, MIN),
+  `VariableOrder`, `Endpoint` (built-in dataset id or remote URL).
+- Operations added to the list: update node and edge, clear filter, reorder
+  variables, apply a chosen result to a variable (the ported binding rule),
+  validate (returns typed errors, no exceptions), toggle a funnel step on or
+  off (preview state only; the step's filter stays in the graph, see FE-047).
+- [ ] Every domain operation has unit tests; Vitest coverage of
+      `frontend/src/lib/domain` is at least 90% (lines and branches),
+      enforced as a threshold in the Vitest config.
+- [ ] No module under `frontend/src/lib/domain` imports `svelte`,
+      `cytoscape` or `@tanstack/*` (checked by a lint rule or test).
+- [ ] T2 fixture criterion of the amendment above, stated as: each mapped
+      request is JSON-equal to its `<name>.request.json` (byte-equal not
+      required; filters and unordered lists as multisets).
+
+## Pending decision D-T4a: legacy saved-query fixtures and migrator (CONTRADICTS)
+
+The T4 brief asks for "a migrator for legacy files" and "every legacy
+saved-query fixture loads and round-trips". On 2026-10-16 (D6b) the user
+decided legacy `query_exported.json` (`cy.json()`) files are not imported,
+and D-T2b (QUAL-010) is still open on whether such files are captured at all.
+
+- Option A: keep D6b. The loader dispatches on `formatVersion` and has a
+  migrator chain that today holds only v1 (ready for v2+). The fixture
+  criterion becomes "every checked-in v1 saved-query fixture loads and
+  round-trips"; files without `formatVersion` are rejected with a clear
+  error. Affects only this card.
+- Option B: reopen D6b. Add an importer from `cy.json()` to v1 (kinds from
+  `graph-model.js` classes, filters from node data, stage order, positions),
+  tested against legacy exports captured by QUAL-010 (forces D-T2b to option
+  B or C). Affects FE-042, FE-048, QUAL-010, the conflict report (D6b) and
+  DEC-011 notes; adds the risk that `cy.json()` carries no datatype/language,
+  so imported literals are untyped.
+- Recommendation: **A**, unless real users hold exported files they need to
+  reopen. The version-dispatch migrator gives the brief's structure at no
+  cost, and B depends on an unversioned Cytoscape-internal format.
