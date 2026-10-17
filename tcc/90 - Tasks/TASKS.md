@@ -12,7 +12,7 @@ Ordered by dependencies, then priority among selection candidates. See [worker r
 | AUTH-000 | DONE | P0 | decision | [Decide the authentication and authorization contract](<items/AUTH-000-authentication-contract-decision.md>) |
 | AUTH-001 | READY | P0 | security | [Implement the approved Ktor authentication backend](<items/AUTH-001-ktor-session-authentication.md>) |
 | AUTH-002 | CANCELLED | P0 | frontend | [Integrate the login and logout frontend flow](<items/AUTH-002-login-frontend-integration.md>) |
-| BE-005 | BACKLOG | P1 | backend | [Add PostgreSQL persistence with Exposed, HikariCP and Flyway migrations at startup](<items/BE-005-postgresql-persistence-foundation.md>) |
+| BE-005 | DONE | P1 | backend | [Add PostgreSQL persistence with Exposed, HikariCP and Flyway migrations at startup](<items/BE-005-postgresql-persistence-foundation.md>) |
 | AUTH-003 | BACKLOG | P1 | frontend | [Register, log in and log out in the new frontend](<items/AUTH-003-new-frontend-auth.md>) |
 | BUG-001 | DONE | P0 | bug | [Repair C# local-search capture instrumentation and recapture baselines](<items/BUG-001-csharp-local-search-harness.md>) |
 | DEV-001 | DONE | P0 | development | [Tornar o desenvolvimento econômico, autônomo e verificável](<items/TASK-DEV-001.md>) |

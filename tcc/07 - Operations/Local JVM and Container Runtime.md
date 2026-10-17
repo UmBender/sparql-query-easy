@@ -68,8 +68,18 @@ is defined.
   the app reads `.env` in its working directory (`./gradlew run` uses the
   repository root). `.env` is git- and Docker-ignored; copy `.env.example`.
   With Docker pass `--env-file .env`. An invalid value stops startup.
-- No other environment variable for credentials, allowed origins, endpoint policy,
-  upload size, or persistent storage is defined here. `SEC-001` and
+- PostgreSQL (BE-005): `EASYQUERY_DB_URL` (`jdbc:postgresql://…`),
+  `EASYQUERY_DB_USER`, `EASYQUERY_DB_PASSWORD` and `EASYQUERY_DB_POOL_SIZE`
+  (default 5, 1–50). Without a URL there is no database; a URL requires the
+  user and password. `EASYQUERY_ENVIRONMENT` is `development` (default) or
+  `production`; production refuses to start without a URL. Invalid values
+  stop startup with a message naming the setting. Flyway applies
+  `src/main/resources/db/migration` once at startup before routes serve; an
+  unreachable database is reported on stderr and retried at most every 5 s on
+  use, and query routes never depend on it. Keep the password in `.env` or the
+  environment, never in the repository.
+- No other environment variable for allowed origins, endpoint policy or
+  upload size is defined here. `SEC-001` and
   `AUTH-000` must define those contracts before user testing or deployment.
 - `/health` verifies only that the process can answer HTTP. `OPS-004` must
   decide readiness, metrics, backup and recovery for the selected architecture.

@@ -39,6 +39,8 @@ import com.example.sparqlqueryeasy.application.search.SearchResult
 import com.example.sparqlqueryeasy.application.search.SearchService
 import com.example.sparqlqueryeasy.config.AppSettings
 import com.example.sparqlqueryeasy.domain.model.SparqlQueryExecutionFailure
+import com.example.sparqlqueryeasy.persistence.DatabaseConnector
+import com.example.sparqlqueryeasy.persistence.reportDatabaseStartup
 import com.example.sparqlqueryeasy.rdf.jena.JenaGraphEndpointExecution
 import com.example.sparqlqueryeasy.rdf.jena.JenaSparqlSyntaxValidator
 import com.example.sparqlqueryeasy.rdf.jena.JenaTurtleParser
@@ -119,6 +121,8 @@ fun defaultHttpDependencies(settings: AppSettings = AppSettings.load()): HttpDep
             mapOf(POKEMON_ENDPOINT_ID to ParsedBuiltInGraphProvider(ClasspathTurtleTextSource(POKEMON_RESOURCE_NAME), parser)),
         )
     val relationshipResolver = EndpointExecutionResolverAdapter(endpointResolver)
+    // BE-005: migrations run before routes serve; query routes never wait for the database.
+    val database = DatabaseConnector(settings.database).also { reportDatabaseStartup(it.connect()) }
     return HttpDependencies(
         LocalDatabaseUploadService(parser, cache),
         QueryHttpDependencies(
@@ -132,7 +136,7 @@ fun defaultHttpDependencies(settings: AppSettings = AppSettings.load()): HttpDep
             NumericProfileService(generator, JenaSparqlSyntaxValidator()),
             ResultCountService(generator, JenaSparqlSyntaxValidator()),
         ),
-        ownedResources = listOf(httpClient),
+        ownedResources = listOf(httpClient, database),
     )
 }
 

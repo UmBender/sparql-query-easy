@@ -1,13 +1,13 @@
 ---
 id: BE-005
 title: Add PostgreSQL persistence with Exposed, HikariCP and Flyway migrations at startup
-status: BACKLOG
+status: DONE
 priority: P1
 type: backend
 depends_on: [DEC-003]
 human_gate: false
 created: 2026-10-16
-updated: 2026-10-16
+updated: 2026-10-17
 ---
 # Add PostgreSQL persistence with Exposed, HikariCP and Flyway migrations at startup
 
@@ -33,6 +33,21 @@ T6. Foundation for users, sessions, submissions and questionnaires. Skill:
 
 ## Acceptance criteria
 
-- [ ] Fresh database: migrations apply at startup; a second start is a no-op.
-- [ ] Missing/invalid database configuration fails with a clear message.
-- [ ] Existing Kotlin gate stays green; query routes unchanged.
+- [x] Fresh database: migrations apply at startup; a second start is a no-op.
+- [x] Missing/invalid database configuration fails with a clear message.
+- [x] Existing Kotlin gate stays green; query routes unchanged.
+
+## Result
+
+- `persistence/PostgresDatabase.kt`: Hikari pool, Flyway `db/migration`
+  (`V1__baseline.sql`, empty) at startup, Exposed transactions on the IO
+  dispatcher. `DatabaseConnector` owns it as an HTTP-owned resource and
+  retries an unavailable database at most every 5 s on use.
+- `application/persistence/`: `PersistenceStatus` and
+  `PersistenceUnavailableException` for AUTH-001 and study features.
+- `AppSettings`: `EASYQUERY_ENVIRONMENT`, `EASYQUERY_DB_URL/USER/PASSWORD/
+  POOL_SIZE`; production requires a URL; the password is not in `toString`.
+- Tests: embedded PostgreSQL 17 (`io.zonky.test`), recorded in the
+  Operational Map. Gate: ktlintCheck, detekt, test (180, 0 failures),
+  installDist and a smoke with an unreachable database and with production
+  missing its URL.

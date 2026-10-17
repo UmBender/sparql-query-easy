@@ -58,6 +58,13 @@ dependencies {
     implementation("org.apache.jena:jena-core:6.2.0")
     implementation("org.apache.jena:jena-arq:6.2.0")
 
+    implementation("org.postgresql:postgresql:42.7.13")
+    implementation("com.zaxxer:HikariCP:7.1.0")
+    implementation("org.flywaydb:flyway-core:13.9.0")
+    implementation("org.flywaydb:flyway-database-postgresql:13.9.0")
+    implementation("org.jetbrains.exposed:exposed-core:1.5.0")
+    implementation("org.jetbrains.exposed:exposed-jdbc:1.5.0")
+
     testImplementation("org.junit.jupiter:junit-jupiter:5.13.4")
     testImplementation(kotlin("test"))
     testImplementation("io.kotest:kotest-assertions-core-jvm:5.9.1")
@@ -65,6 +72,8 @@ dependencies {
     testImplementation("io.ktor:ktor-client-content-negotiation:$ktorVersion")
     testImplementation("io.ktor:ktor-client-mock:$ktorVersion")
     testImplementation("io.swagger.parser.v3:swagger-parser:2.1.48")
+    testImplementation("io.zonky.test:embedded-postgres:2.2.2")
+    testImplementation(platform("io.zonky.test.postgres:embedded-postgres-binaries-bom:17.10.0"))
 }
 
 tasks.test {

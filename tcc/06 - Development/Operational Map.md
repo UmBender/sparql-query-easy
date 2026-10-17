@@ -13,6 +13,7 @@ when the task crosses that responsibility. This is the canonical command map.
 | Graph UI and its owner | `sparql/index2.html` (markup, DOMContentLoaded bootstrap: `cy` init) and classic scripts `app-core.js` (state, API, `runQuery`), `stage-order.js`, `stage-exploration.js`, `graph-nodes.js`, `graph-menus.js` (menus, connection, Alt+drag); pure modules `query-calculations.js`, `query-stages.js`, `graph-actions.js`, `graph-model.js`, `graph-binding.js` (headless-Cytoscape unit tests) |
 | Browser oracles | `frontend-tests/index2.spec.mjs`, `server.mjs`, `cdn-stubs.mjs`, `external-assets.mjs`; end-to-end `frontend-tests/e2e/` with `fixtures/` |
 | Kotlin tests/captures | `src/test/kotlin/`, `compatibility/expected/`, `compatibility/retirement-expected/` |
+| Persistence (BE-005) | `persistence/PostgresDatabase.kt` (Hikari, Flyway, Exposed), `application/persistence/`, migrations `src/main/resources/db/migration/`; tests use embedded PostgreSQL 17 (`io.zonky.test`, binaries from a Maven artifact: no Docker or network) via `src/test/kotlin/.../persistence/TestPostgres.kt` |
 | Packaging | `build.gradle.kts` processResources explicit frontend includes; `Dockerfile` |
 | Work selection and cards | [[../90 - Tasks/TASKS]], [[../90 - Tasks/WORKER_PROMPT]], [[../90 - Tasks/FORMAT]] |
 
