@@ -13,6 +13,8 @@ Ordered by dependencies, then priority among selection candidates. See [worker r
 | AUTH-001 | DONE | P0 | security | [Implement the approved Ktor authentication backend](<items/AUTH-001-ktor-session-authentication.md>) |
 | AUTH-002 | CANCELLED | P0 | frontend | [Integrate the login and logout frontend flow](<items/AUTH-002-login-frontend-integration.md>) |
 | BE-005 | DONE | P1 | backend | [Add PostgreSQL persistence with Exposed, HikariCP and Flyway migrations at startup](<items/BE-005-postgresql-persistence-foundation.md>) |
+| DEC-012 | BLOCKED | P2 | decision | [Decide whether persistence tests keep embedded PostgreSQL or move to Testcontainers](<items/DEC-012-test-database-engine.md>) |
+| BE-007 | BACKLOG | P2 | backend | [Report database connectivity on GET /health without failing the query API](<items/BE-007-health-database-status.md>) |
 | AUTH-003 | DONE | P1 | frontend | [Register, log in and log out in the new frontend](<items/AUTH-003-new-frontend-auth.md>) |
 | BUG-001 | DONE | P0 | bug | [Repair C# local-search capture instrumentation and recapture baselines](<items/BUG-001-csharp-local-search-harness.md>) |
 | DEV-001 | DONE | P0 | development | [Tornar o desenvolvimento econômico, autônomo e verificável](<items/TASK-DEV-001.md>) |
@@ -102,6 +104,7 @@ Ordered by dependencies, then priority among selection candidates. See [worker r
 | STUDY-001 | BACKLOG | P1 | fullstack | [Let a logged-in user solve proposed queries and submit answers once](<items/STUDY-001-proposed-queries-and-submission.md>) |
 | STUDY-002 | BACKLOG | P1 | fullstack | [Show two questionnaires to logged-in users and store their answers](<items/STUDY-002-questionnaires.md>) |
 | OPS-006 | DONE | P1 | operations | [Run db, backend and web together with Docker Compose](<items/OPS-006-docker-compose-stack.md>) |
+| OPS-007 | BACKLOG | P2 | operations | [Start only PostgreSQL for local development and reach it from ./gradlew run](<items/OPS-007-local-dev-database.md>) |
 | FE-049 | DONE | P1 | frontend | [Make the SvelteKit app the authoritative frontend and retire index2.html](<items/FE-049-legacy-cutover.md>) |
 | BE-004 | DONE | P1 | fullstack | [Make MAX and MIN keep every entity with the extreme value, capped by a configurable limit](<items/BE-004-max-min-all-ties.md>) |
 | INV-001 | DONE | P1 | investigation | [Investigate Ktor HTTP-client and runtime resource lifecycle](<items/INV-001-runtime-resource-lifecycle.md>) |

@@ -7,7 +7,7 @@ type: backend
 depends_on: [DEC-003]
 human_gate: false
 created: 2026-10-16
-updated: 2026-10-17
+updated: 2026-10-18
 ---
 # Add PostgreSQL persistence with Exposed, HikariCP and Flyway migrations at startup
 
@@ -51,3 +51,16 @@ T6. Foundation for users, sessions, submissions and questionnaires. Skill:
   Operational Map. Gate: ktlintCheck, detekt, test (180, 0 failures),
   installDist and a smoke with an unreachable database and with production
   missing its URL.
+
+## Proposed follow-ups (2026-10-18)
+
+The T6 brief was compared with this card, and its done work is unchanged.
+These are T6 criteria the card did not cover, proposed as follow-up cards
+rather than reopening it:
+
+- Health route reports DB connectivity: BE-007.
+- Local dev PostgreSQL-only setup reachable from `./gradlew run`: OPS-007.
+- Integration tests against Testcontainers contradict the embedded choice
+  above: DEC-012 (decision, user's answer pending).
+- The repository pattern with an example table and tests already exists as
+  `V2__accounts.sql`, `PostgresAccountStore` and `AuthRoutesTest` (AUTH-001).
