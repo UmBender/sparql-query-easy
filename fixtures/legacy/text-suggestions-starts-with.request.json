@@ -1,0 +1,114 @@
+[
+  {
+    "body": {
+      "endpointUrl": "PokemonGen1",
+      "limit": 500,
+      "predicate": "<http://www.w3.org/2000/01/rdf-schema#label>",
+      "subject": "?pokemon",
+      "where": [
+        {
+          "filterType": null,
+          "object": "<http://easyquery.example.org/pokemon#PsychicType>",
+          "predicate": "<http://easyquery.example.org/pokemon#hasType>",
+          "subject": "?pokemon"
+        }
+      ]
+    },
+    "method": "POST",
+    "path": "/api/query/numeric-profile"
+  },
+  {
+    "body": {
+      "bindings": [],
+      "endpointUrl": "PokemonGen1",
+      "limit": 20,
+      "offset": 0,
+      "variableFilters": [
+        {
+          "filterType": 0,
+          "value": "Ka",
+          "variableName": "?name"
+        }
+      ],
+      "variableName": "?name",
+      "where": [
+        {
+          "filterType": null,
+          "object": "?name",
+          "predicate": "<http://www.w3.org/2000/01/rdf-schema#label>",
+          "subject": "?pokemon"
+        },
+        {
+          "filterType": null,
+          "object": "<http://easyquery.example.org/pokemon#PsychicType>",
+          "predicate": "<http://easyquery.example.org/pokemon#hasType>",
+          "subject": "?pokemon"
+        }
+      ]
+    },
+    "method": "POST",
+    "path": "/api/query/stage"
+  },
+  {
+    "body": {
+      "bindings": [],
+      "endpointUrl": "PokemonGen1",
+      "limit": 50,
+      "offset": 0,
+      "variableFilters": [
+        {
+          "filterType": null,
+          "value": "Kadabra",
+          "variableName": "?name"
+        }
+      ],
+      "variableName": "?pokemon",
+      "where": [
+        {
+          "filterType": null,
+          "object": "<http://easyquery.example.org/pokemon#PsychicType>",
+          "predicate": "<http://easyquery.example.org/pokemon#hasType>",
+          "subject": "?pokemon"
+        },
+        {
+          "filterType": null,
+          "object": "?name",
+          "predicate": "<http://www.w3.org/2000/01/rdf-schema#label>",
+          "subject": "?pokemon"
+        }
+      ]
+    },
+    "method": "POST",
+    "path": "/api/query/stage"
+  },
+  {
+    "body": {
+      "endpointUrl": "PokemonGen1",
+      "limit": 150,
+      "variableFilters": [
+        {
+          "filterType": null,
+          "value": "Kadabra",
+          "variableName": "?name"
+        }
+      ],
+      "variableName": "?name",
+      "where": [
+        {
+          "filterType": null,
+          "object": "<http://easyquery.example.org/pokemon#PsychicType>",
+          "predicate": "<http://easyquery.example.org/pokemon#hasType>",
+          "subject": "?pokemon"
+        },
+        {
+          "filterType": null,
+          "object": "?name",
+          "predicate": "<http://www.w3.org/2000/01/rdf-schema#label>",
+          "subject": "?pokemon"
+        }
+      ]
+    },
+    "method": "POST",
+    "path": "/api/query/sparql"
+  }
+]

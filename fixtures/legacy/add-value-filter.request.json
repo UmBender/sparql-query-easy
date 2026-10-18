@@ -1,0 +1,192 @@
+[
+  {
+    "body": {
+      "endpointUrl": "PokemonGen1",
+      "id": "?pokemon",
+      "limit": 150
+    },
+    "method": "POST",
+    "path": "/api/query/relationships"
+  },
+  {
+    "body": {
+      "endpointUrl": "PokemonGen1",
+      "limit": 1,
+      "predicate": "<http://easyquery.example.org/pokemon#speed>",
+      "subject": "?pokemon",
+      "where": [
+        {
+          "filterType": null,
+          "object": "<http://easyquery.example.org/pokemon#FireType>",
+          "predicate": "<http://easyquery.example.org/pokemon#hasType>",
+          "subject": "?pokemon"
+        }
+      ]
+    },
+    "method": "POST",
+    "path": "/api/query/numeric-profile"
+  },
+  {
+    "body": {
+      "endpointUrl": "PokemonGen1",
+      "limit": 500,
+      "predicate": "<http://easyquery.example.org/pokemon#speed>",
+      "subject": "?pokemon",
+      "where": [
+        {
+          "filterType": null,
+          "object": "<http://easyquery.example.org/pokemon#FireType>",
+          "predicate": "<http://easyquery.example.org/pokemon#hasType>",
+          "subject": "?pokemon"
+        }
+      ]
+    },
+    "method": "POST",
+    "path": "/api/query/numeric-profile"
+  },
+  {
+    "body": {
+      "bindings": [],
+      "endpointUrl": "PokemonGen1",
+      "limit": 20,
+      "offset": 0,
+      "variableFilters": [
+        {
+          "filterType": 1,
+          "value": "100",
+          "variableName": "?value_<ts1>"
+        }
+      ],
+      "variableName": "?value_<ts1>",
+      "where": [
+        {
+          "filterType": null,
+          "object": "?value_<ts1>",
+          "predicate": "<http://easyquery.example.org/pokemon#speed>",
+          "subject": "?pokemon"
+        },
+        {
+          "filterType": null,
+          "object": "<http://easyquery.example.org/pokemon#FireType>",
+          "predicate": "<http://easyquery.example.org/pokemon#hasType>",
+          "subject": "?pokemon"
+        }
+      ]
+    },
+    "method": "POST",
+    "path": "/api/query/stage"
+  },
+  {
+    "body": {
+      "endpointUrl": "PokemonGen1",
+      "variableName": "?pokemon",
+      "where": [
+        {
+          "filterType": null,
+          "object": "<http://easyquery.example.org/pokemon#FireType>",
+          "predicate": "<http://easyquery.example.org/pokemon#hasType>",
+          "subject": "?pokemon"
+        },
+        {
+          "filterType": null,
+          "object": "?value_<ts1>",
+          "predicate": "<http://easyquery.example.org/pokemon#speed>",
+          "subject": "?pokemon"
+        }
+      ]
+    },
+    "method": "POST",
+    "path": "/api/query/count"
+  },
+  {
+    "body": {
+      "endpointUrl": "PokemonGen1",
+      "variableFilters": [
+        {
+          "filterType": 2,
+          "value": "100",
+          "variableName": "?value_<ts1>"
+        }
+      ],
+      "variableName": "?pokemon",
+      "where": [
+        {
+          "filterType": null,
+          "object": "<http://easyquery.example.org/pokemon#FireType>",
+          "predicate": "<http://easyquery.example.org/pokemon#hasType>",
+          "subject": "?pokemon"
+        },
+        {
+          "filterType": null,
+          "object": "?value_<ts1>",
+          "predicate": "<http://easyquery.example.org/pokemon#speed>",
+          "subject": "?pokemon"
+        }
+      ]
+    },
+    "method": "POST",
+    "path": "/api/query/count"
+  },
+  {
+    "body": {
+      "bindings": [],
+      "endpointUrl": "PokemonGen1",
+      "limit": 50,
+      "offset": 0,
+      "variableFilters": [
+        {
+          "filterType": 2,
+          "value": "100",
+          "variableName": "?value_<ts1>"
+        }
+      ],
+      "variableName": "?pokemon",
+      "where": [
+        {
+          "filterType": null,
+          "object": "<http://easyquery.example.org/pokemon#FireType>",
+          "predicate": "<http://easyquery.example.org/pokemon#hasType>",
+          "subject": "?pokemon"
+        },
+        {
+          "filterType": null,
+          "object": "?value_<ts1>",
+          "predicate": "<http://easyquery.example.org/pokemon#speed>",
+          "subject": "?pokemon"
+        }
+      ]
+    },
+    "method": "POST",
+    "path": "/api/query/stage"
+  },
+  {
+    "body": {
+      "endpointUrl": "PokemonGen1",
+      "limit": 150,
+      "variableFilters": [
+        {
+          "filterType": 2,
+          "value": "100",
+          "variableName": "?value_<ts1>"
+        }
+      ],
+      "variableName": "?value_<ts1>",
+      "where": [
+        {
+          "filterType": null,
+          "object": "<http://easyquery.example.org/pokemon#FireType>",
+          "predicate": "<http://easyquery.example.org/pokemon#hasType>",
+          "subject": "?pokemon"
+        },
+        {
+          "filterType": null,
+          "object": "?value_<ts1>",
+          "predicate": "<http://easyquery.example.org/pokemon#speed>",
+          "subject": "?pokemon"
+        }
+      ]
+    },
+    "method": "POST",
+    "path": "/api/query/sparql"
+  }
+]

@@ -24,6 +24,10 @@ Endpoint picker; add entity/variable/value/value variable/class; search nodes
 by name; left-click action list; connect nodes with defined or variable
 predicates; convert, remove; zoom behavior.
 
+## Fixture scenarios (QUAL-009)
+
+`explore-relationship-value`, `node-run-query-table`, `class-explore-values`, `predicate-variable-edge`, `upload-local-graph` (search is not captured). See `fixtures/legacy/README.md` and [[../../04 - Frontend/Frontend Parity Checklist]].
+
 ## Acceptance criteria
 
 - [ ] The QUAL-006 rows for these features pass against the new app.

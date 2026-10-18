@@ -38,6 +38,10 @@ T4, part 2. Skill: `tcc-frontend`.
 - Record any OpenAPI schema gap found while generating (fix in Ktor only if
   additive and documented in [[../../03 - Backend/API v1]]).
 
+## Fixture scenarios (QUAL-009)
+
+Client and wrapper tests reuse captured responses (`*.response.json`) as MSW bodies. See `fixtures/legacy/README.md` and [[../../04 - Frontend/Frontend Parity Checklist]].
+
 ## Acceptance criteria
 
 - [ ] Store tests: actions produce the expected `QueryGraph`.

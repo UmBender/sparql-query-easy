@@ -1,0 +1,99 @@
+[
+  {
+    "body": {
+      "data": {
+        "count": 151,
+        "variableName": "?pokemon"
+      }
+    },
+    "status": 200
+  },
+  {
+    "body": {
+      "data": {
+        "count": 6,
+        "variableName": "?pokemon"
+      }
+    },
+    "status": 200
+  },
+  {
+    "body": {
+      "data": {
+        "candidates": [
+          {
+            "label": "Pikachu",
+            "selectable": true,
+            "term": {
+              "datatype": null,
+              "language": null,
+              "type": "iri",
+              "value": "http://easyquery.example.org/pokemon#Pikachu"
+            }
+          },
+          {
+            "label": "Raichu",
+            "selectable": true,
+            "term": {
+              "datatype": null,
+              "language": null,
+              "type": "iri",
+              "value": "http://easyquery.example.org/pokemon#Raichu"
+            }
+          },
+          {
+            "label": "Raticate",
+            "selectable": true,
+            "term": {
+              "datatype": null,
+              "language": null,
+              "type": "iri",
+              "value": "http://easyquery.example.org/pokemon#Raticate"
+            }
+          },
+          {
+            "label": "Rattata",
+            "selectable": true,
+            "term": {
+              "datatype": null,
+              "language": null,
+              "type": "iri",
+              "value": "http://easyquery.example.org/pokemon#Rattata"
+            }
+          },
+          {
+            "label": "Sandshrew",
+            "selectable": true,
+            "term": {
+              "datatype": null,
+              "language": null,
+              "type": "iri",
+              "value": "http://easyquery.example.org/pokemon#Sandshrew"
+            }
+          },
+          {
+            "label": "Sandslash",
+            "selectable": true,
+            "term": {
+              "datatype": null,
+              "language": null,
+              "type": "iri",
+              "value": "http://easyquery.example.org/pokemon#Sandslash"
+            }
+          }
+        ],
+        "hasMore": false,
+        "limit": 50,
+        "offset": 0,
+        "variableName": "?pokemon"
+      }
+    },
+    "status": 200
+  },
+  {
+    "body": {
+      "data": "PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>\nPREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>\nPREFIX owl: <http://www.w3.org/2002/07/owl#>\nSELECT DISTINCT ?pokemon ?pokemonLabel\nWHERE {\n?pokemon <http://easyquery.example.org/pokemon#category> ?literalValue0 .\nFILTER (str(?literalValue0) = \"Mouse\") .\nOPTIONAL {\n?pokemon rdfs:label ?pokemonLabel .\nFILTER (lang(?pokemonLabel) = \"en\")\n}\n}\nLIMIT 150\n"
+    },
+    "status": 200
+  }
+]

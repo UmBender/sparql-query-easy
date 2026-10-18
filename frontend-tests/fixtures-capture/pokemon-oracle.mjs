@@ -39,8 +39,8 @@ function tokens(text) {
 }
 
 /** @returns {Map<string, Map<string, {type: 'iri' | 'literal', value: string}[]>>} */
-export function loadPokemonGraph() {
-  const lines = readFileSync(DATASET, 'utf8').split('\n')
+export function loadPokemonGraph(file = DATASET) {
+  const lines = readFileSync(file, 'utf8').split('\n')
     .filter(line => !line.startsWith('#') && !line.startsWith('@prefix'));
   const graph = new Map();
   const statements = lines.join('\n').split(/\n(?=\S)/).map(block => block.trim()).filter(Boolean);

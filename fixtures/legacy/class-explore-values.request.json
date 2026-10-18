@@ -1,0 +1,28 @@
+[
+  {
+    "body": {
+      "endpointUrl": "PokemonGen1",
+      "limit": 150,
+      "variableName": "?default_<ts1>",
+      "where": [
+        {
+          "object": "<http://easyquery.example.org/pokemon#Type>",
+          "predicate": "rdfs:domain",
+          "subject": "?default_<ts1>"
+        }
+      ]
+    },
+    "method": "POST",
+    "path": "/api/query"
+  },
+  {
+    "body": {
+      "endpointUrl": "PokemonGen1",
+      "limit": 150,
+      "variableName": "",
+      "where": []
+    },
+    "method": "POST",
+    "path": "/api/query/sparql"
+  }
+]

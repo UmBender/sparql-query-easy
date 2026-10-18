@@ -1,0 +1,68 @@
+[
+  {
+    "body": {
+      "data": {
+        "count": 3,
+        "variableName": "?pokemon"
+      }
+    },
+    "status": 200
+  },
+  {
+    "body": {
+      "data": {
+        "count": 2,
+        "variableName": "?pokemon"
+      }
+    },
+    "status": 200
+  },
+  {
+    "body": {
+      "data": {
+        "count": 2,
+        "variableName": "?pokemon"
+      }
+    },
+    "status": 200
+  },
+  {
+    "body": {
+      "data": {
+        "candidates": [
+          {
+            "label": "Gastly",
+            "selectable": true,
+            "term": {
+              "datatype": null,
+              "language": null,
+              "type": "iri",
+              "value": "http://easyquery.example.org/pokemon#Gastly"
+            }
+          },
+          {
+            "label": "Haunter",
+            "selectable": true,
+            "term": {
+              "datatype": null,
+              "language": null,
+              "type": "iri",
+              "value": "http://easyquery.example.org/pokemon#Haunter"
+            }
+          }
+        ],
+        "hasMore": false,
+        "limit": 50,
+        "offset": 0,
+        "variableName": "?pokemon"
+      }
+    },
+    "status": 200
+  },
+  {
+    "body": {
+      "data": "PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>\nPREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>\nPREFIX owl: <http://www.w3.org/2002/07/owl#>\nSELECT DISTINCT ?hp ?hpLabel\nWHERE {\n?pokemon <http://easyquery.example.org/pokemon#hasType> <http://easyquery.example.org/pokemon#GhostType> .\nOPTIONAL {\n?hp rdfs:label ?hpLabel .\nFILTER (lang(?hpLabel) = \"en\")\n}\n?pokemon <http://easyquery.example.org/pokemon#weightKilograms> ?weight .\nOPTIONAL {\n?hp rdfs:label ?hpLabel .\nFILTER (lang(?hpLabel) = \"en\")\n}\n?pokemon <http://easyquery.example.org/pokemon#hp> ?hp .\nOPTIONAL {\n?hp rdfs:label ?hpLabel .\nFILTER (lang(?hpLabel) = \"en\")\n}\nFILTER (isLiteral(?weight) && ?weight >= 0 && ?weight <= 1)\nFILTER (isLiteral(?hp) && ?hp <= 45)\n}\nLIMIT 150\n"
+    },
+    "status": 200
+  }
+]

@@ -1,0 +1,530 @@
+[
+  {
+    "body": {
+      "data": {
+        "count": 32,
+        "max": 130,
+        "min": 20,
+        "predicate": "<http://easyquery.example.org/pokemon#hp>",
+        "subject": "?pokemon",
+        "truncated": false,
+        "values": [
+          {
+            "datatype": "http://www.w3.org/2001/XMLSchema#integer",
+            "entity": {
+              "datatype": null,
+              "language": null,
+              "type": "iri",
+              "value": "http://easyquery.example.org/pokemon#Magikarp"
+            },
+            "label": "Magikarp",
+            "number": 20,
+            "value": "20"
+          },
+          {
+            "datatype": "http://www.w3.org/2001/XMLSchema#integer",
+            "entity": {
+              "datatype": null,
+              "language": null,
+              "type": "iri",
+              "value": "http://easyquery.example.org/pokemon#Horsea"
+            },
+            "label": "Horsea",
+            "number": 30,
+            "value": "30"
+          },
+          {
+            "datatype": "http://www.w3.org/2001/XMLSchema#integer",
+            "entity": {
+              "datatype": null,
+              "language": null,
+              "type": "iri",
+              "value": "http://easyquery.example.org/pokemon#Kabuto"
+            },
+            "label": "Kabuto",
+            "number": 30,
+            "value": "30"
+          },
+          {
+            "datatype": "http://www.w3.org/2001/XMLSchema#integer",
+            "entity": {
+              "datatype": null,
+              "language": null,
+              "type": "iri",
+              "value": "http://easyquery.example.org/pokemon#Krabby"
+            },
+            "label": "Krabby",
+            "number": 30,
+            "value": "30"
+          },
+          {
+            "datatype": "http://www.w3.org/2001/XMLSchema#integer",
+            "entity": {
+              "datatype": null,
+              "language": null,
+              "type": "iri",
+              "value": "http://easyquery.example.org/pokemon#Shellder"
+            },
+            "label": "Shellder",
+            "number": 30,
+            "value": "30"
+          },
+          {
+            "datatype": "http://www.w3.org/2001/XMLSchema#integer",
+            "entity": {
+              "datatype": null,
+              "language": null,
+              "type": "iri",
+              "value": "http://easyquery.example.org/pokemon#Staryu"
+            },
+            "label": "Staryu",
+            "number": 30,
+            "value": "30"
+          },
+          {
+            "datatype": "http://www.w3.org/2001/XMLSchema#integer",
+            "entity": {
+              "datatype": null,
+              "language": null,
+              "type": "iri",
+              "value": "http://easyquery.example.org/pokemon#Omanyte"
+            },
+            "label": "Omanyte",
+            "number": 35,
+            "value": "35"
+          },
+          {
+            "datatype": "http://www.w3.org/2001/XMLSchema#integer",
+            "entity": {
+              "datatype": null,
+              "language": null,
+              "type": "iri",
+              "value": "http://easyquery.example.org/pokemon#Poliwag"
+            },
+            "label": "Poliwag",
+            "number": 40,
+            "value": "40"
+          },
+          {
+            "datatype": "http://www.w3.org/2001/XMLSchema#integer",
+            "entity": {
+              "datatype": null,
+              "language": null,
+              "type": "iri",
+              "value": "http://easyquery.example.org/pokemon#Tentacool"
+            },
+            "label": "Tentacool",
+            "number": 40,
+            "value": "40"
+          },
+          {
+            "datatype": "http://www.w3.org/2001/XMLSchema#integer",
+            "entity": {
+              "datatype": null,
+              "language": null,
+              "type": "iri",
+              "value": "http://easyquery.example.org/pokemon#Squirtle"
+            },
+            "label": "Squirtle",
+            "number": 44,
+            "value": "44"
+          },
+          {
+            "datatype": "http://www.w3.org/2001/XMLSchema#integer",
+            "entity": {
+              "datatype": null,
+              "language": null,
+              "type": "iri",
+              "value": "http://easyquery.example.org/pokemon#Goldeen"
+            },
+            "label": "Goldeen",
+            "number": 45,
+            "value": "45"
+          },
+          {
+            "datatype": "http://www.w3.org/2001/XMLSchema#integer",
+            "entity": {
+              "datatype": null,
+              "language": null,
+              "type": "iri",
+              "value": "http://easyquery.example.org/pokemon#Cloyster"
+            },
+            "label": "Cloyster",
+            "number": 50,
+            "value": "50"
+          },
+          {
+            "datatype": "http://www.w3.org/2001/XMLSchema#integer",
+            "entity": {
+              "datatype": null,
+              "language": null,
+              "type": "iri",
+              "value": "http://easyquery.example.org/pokemon#Psyduck"
+            },
+            "label": "Psyduck",
+            "number": 50,
+            "value": "50"
+          },
+          {
+            "datatype": "http://www.w3.org/2001/XMLSchema#integer",
+            "entity": {
+              "datatype": null,
+              "language": null,
+              "type": "iri",
+              "value": "http://easyquery.example.org/pokemon#Kingler"
+            },
+            "label": "Kingler",
+            "number": 55,
+            "value": "55"
+          },
+          {
+            "datatype": "http://www.w3.org/2001/XMLSchema#integer",
+            "entity": {
+              "datatype": null,
+              "language": null,
+              "type": "iri",
+              "value": "http://easyquery.example.org/pokemon#Seadra"
+            },
+            "label": "Seadra",
+            "number": 55,
+            "value": "55"
+          },
+          {
+            "datatype": "http://www.w3.org/2001/XMLSchema#integer",
+            "entity": {
+              "datatype": null,
+              "language": null,
+              "type": "iri",
+              "value": "http://easyquery.example.org/pokemon#Wartortle"
+            },
+            "label": "Wartortle",
+            "number": 59,
+            "value": "59"
+          },
+          {
+            "datatype": "http://www.w3.org/2001/XMLSchema#integer",
+            "entity": {
+              "datatype": null,
+              "language": null,
+              "type": "iri",
+              "value": "http://easyquery.example.org/pokemon#Kabutops"
+            },
+            "label": "Kabutops",
+            "number": 60,
+            "value": "60"
+          },
+          {
+            "datatype": "http://www.w3.org/2001/XMLSchema#integer",
+            "entity": {
+              "datatype": null,
+              "language": null,
+              "type": "iri",
+              "value": "http://easyquery.example.org/pokemon#Starmie"
+            },
+            "label": "Starmie",
+            "number": 60,
+            "value": "60"
+          },
+          {
+            "datatype": "http://www.w3.org/2001/XMLSchema#integer",
+            "entity": {
+              "datatype": null,
+              "language": null,
+              "type": "iri",
+              "value": "http://easyquery.example.org/pokemon#Poliwhirl"
+            },
+            "label": "Poliwhirl",
+            "number": 65,
+            "value": "65"
+          },
+          {
+            "datatype": "http://www.w3.org/2001/XMLSchema#integer",
+            "entity": {
+              "datatype": null,
+              "language": null,
+              "type": "iri",
+              "value": "http://easyquery.example.org/pokemon#Seel"
+            },
+            "label": "Seel",
+            "number": 65,
+            "value": "65"
+          },
+          {
+            "datatype": "http://www.w3.org/2001/XMLSchema#integer",
+            "entity": {
+              "datatype": null,
+              "language": null,
+              "type": "iri",
+              "value": "http://easyquery.example.org/pokemon#Omastar"
+            },
+            "label": "Omastar",
+            "number": 70,
+            "value": "70"
+          },
+          {
+            "datatype": "http://www.w3.org/2001/XMLSchema#integer",
+            "entity": {
+              "datatype": null,
+              "language": null,
+              "type": "iri",
+              "value": "http://easyquery.example.org/pokemon#Blastoise"
+            },
+            "label": "Blastoise",
+            "number": 79,
+            "value": "79"
+          },
+          {
+            "datatype": "http://www.w3.org/2001/XMLSchema#integer",
+            "entity": {
+              "datatype": null,
+              "language": null,
+              "type": "iri",
+              "value": "http://easyquery.example.org/pokemon#Golduck"
+            },
+            "label": "Golduck",
+            "number": 80,
+            "value": "80"
+          },
+          {
+            "datatype": "http://www.w3.org/2001/XMLSchema#integer",
+            "entity": {
+              "datatype": null,
+              "language": null,
+              "type": "iri",
+              "value": "http://easyquery.example.org/pokemon#Seaking"
+            },
+            "label": "Seaking",
+            "number": 80,
+            "value": "80"
+          },
+          {
+            "datatype": "http://www.w3.org/2001/XMLSchema#integer",
+            "entity": {
+              "datatype": null,
+              "language": null,
+              "type": "iri",
+              "value": "http://easyquery.example.org/pokemon#Tentacruel"
+            },
+            "label": "Tentacruel",
+            "number": 80,
+            "value": "80"
+          },
+          {
+            "datatype": "http://www.w3.org/2001/XMLSchema#integer",
+            "entity": {
+              "datatype": null,
+              "language": null,
+              "type": "iri",
+              "value": "http://easyquery.example.org/pokemon#Dewgong"
+            },
+            "label": "Dewgong",
+            "number": 90,
+            "value": "90"
+          },
+          {
+            "datatype": "http://www.w3.org/2001/XMLSchema#integer",
+            "entity": {
+              "datatype": null,
+              "language": null,
+              "type": "iri",
+              "value": "http://easyquery.example.org/pokemon#Poliwrath"
+            },
+            "label": "Poliwrath",
+            "number": 90,
+            "value": "90"
+          },
+          {
+            "datatype": "http://www.w3.org/2001/XMLSchema#integer",
+            "entity": {
+              "datatype": null,
+              "language": null,
+              "type": "iri",
+              "value": "http://easyquery.example.org/pokemon#Slowpoke"
+            },
+            "label": "Slowpoke",
+            "number": 90,
+            "value": "90"
+          },
+          {
+            "datatype": "http://www.w3.org/2001/XMLSchema#integer",
+            "entity": {
+              "datatype": null,
+              "language": null,
+              "type": "iri",
+              "value": "http://easyquery.example.org/pokemon#Gyarados"
+            },
+            "label": "Gyarados",
+            "number": 95,
+            "value": "95"
+          },
+          {
+            "datatype": "http://www.w3.org/2001/XMLSchema#integer",
+            "entity": {
+              "datatype": null,
+              "language": null,
+              "type": "iri",
+              "value": "http://easyquery.example.org/pokemon#Slowbro"
+            },
+            "label": "Slowbro",
+            "number": 95,
+            "value": "95"
+          },
+          {
+            "datatype": "http://www.w3.org/2001/XMLSchema#integer",
+            "entity": {
+              "datatype": null,
+              "language": null,
+              "type": "iri",
+              "value": "http://easyquery.example.org/pokemon#Lapras"
+            },
+            "label": "Lapras",
+            "number": 130,
+            "value": "130"
+          },
+          {
+            "datatype": "http://www.w3.org/2001/XMLSchema#integer",
+            "entity": {
+              "datatype": null,
+              "language": null,
+              "type": "iri",
+              "value": "http://easyquery.example.org/pokemon#Vaporeon"
+            },
+            "label": "Vaporeon",
+            "number": 130,
+            "value": "130"
+          }
+        ]
+      }
+    },
+    "status": 200
+  },
+  {
+    "body": {
+      "data": {
+        "candidates": [],
+        "hasMore": false,
+        "limit": 20,
+        "offset": 0,
+        "variableName": "?suggestedValue"
+      }
+    },
+    "status": 200
+  },
+  {
+    "body": {
+      "data": {
+        "count": 32,
+        "variableName": "?pokemon"
+      }
+    },
+    "status": 200
+  },
+  {
+    "body": {
+      "data": {
+        "count": 8,
+        "variableName": "?pokemon"
+      }
+    },
+    "status": 200
+  },
+  {
+    "body": {
+      "data": {
+        "candidates": [
+          {
+            "label": "Dewgong",
+            "selectable": true,
+            "term": {
+              "datatype": null,
+              "language": null,
+              "type": "iri",
+              "value": "http://easyquery.example.org/pokemon#Dewgong"
+            }
+          },
+          {
+            "label": "Golduck",
+            "selectable": true,
+            "term": {
+              "datatype": null,
+              "language": null,
+              "type": "iri",
+              "value": "http://easyquery.example.org/pokemon#Golduck"
+            }
+          },
+          {
+            "label": "Gyarados",
+            "selectable": true,
+            "term": {
+              "datatype": null,
+              "language": null,
+              "type": "iri",
+              "value": "http://easyquery.example.org/pokemon#Gyarados"
+            }
+          },
+          {
+            "label": "Poliwrath",
+            "selectable": true,
+            "term": {
+              "datatype": null,
+              "language": null,
+              "type": "iri",
+              "value": "http://easyquery.example.org/pokemon#Poliwrath"
+            }
+          },
+          {
+            "label": "Seaking",
+            "selectable": true,
+            "term": {
+              "datatype": null,
+              "language": null,
+              "type": "iri",
+              "value": "http://easyquery.example.org/pokemon#Seaking"
+            }
+          },
+          {
+            "label": "Slowbro",
+            "selectable": true,
+            "term": {
+              "datatype": null,
+              "language": null,
+              "type": "iri",
+              "value": "http://easyquery.example.org/pokemon#Slowbro"
+            }
+          },
+          {
+            "label": "Slowpoke",
+            "selectable": true,
+            "term": {
+              "datatype": null,
+              "language": null,
+              "type": "iri",
+              "value": "http://easyquery.example.org/pokemon#Slowpoke"
+            }
+          },
+          {
+            "label": "Tentacruel",
+            "selectable": true,
+            "term": {
+              "datatype": null,
+              "language": null,
+              "type": "iri",
+              "value": "http://easyquery.example.org/pokemon#Tentacruel"
+            }
+          }
+        ],
+        "hasMore": false,
+        "limit": 50,
+        "offset": 0,
+        "variableName": "?pokemon"
+      }
+    },
+    "status": 200
+  },
+  {
+    "body": {
+      "data": "PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>\nPREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>\nPREFIX owl: <http://www.w3.org/2002/07/owl#>\nSELECT DISTINCT ?pokemon ?pokemonLabel\nWHERE {\n?pokemon <http://easyquery.example.org/pokemon#hasType> <http://easyquery.example.org/pokemon#WaterType> .\nOPTIONAL {\n?pokemon rdfs:label ?pokemonLabel .\nFILTER (lang(?pokemonLabel) = \"en\")\n}\n?pokemon <http://easyquery.example.org/pokemon#hp> ?literalValue1 .\nFILTER (str(?literalValue1) = \"80..100\") .\nOPTIONAL {\n?pokemon rdfs:label ?pokemonLabel .\nFILTER (lang(?pokemonLabel) = \"en\")\n}\n}\nLIMIT 150\n"
+    },
+    "status": 200
+  }
+]

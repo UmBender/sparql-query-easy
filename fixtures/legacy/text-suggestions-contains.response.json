@@ -1,0 +1,102 @@
+[
+  {
+    "body": {
+      "data": {
+        "candidates": [
+          {
+            "label": null,
+            "selectable": true,
+            "term": {
+              "datatype": "http://www.w3.org/1999/02/22-rdf-syntax-ns#langString",
+              "language": "en",
+              "type": "literal",
+              "value": "Flame Pokémon"
+            }
+          }
+        ],
+        "hasMore": false,
+        "limit": 20,
+        "offset": 0,
+        "variableName": "?suggestedValue"
+      }
+    },
+    "status": 200
+  },
+  {
+    "body": {
+      "data": {
+        "count": 151,
+        "variableName": "?pokemon"
+      }
+    },
+    "status": 200
+  },
+  {
+    "body": {
+      "data": {
+        "count": 4,
+        "variableName": "?pokemon"
+      }
+    },
+    "status": 200
+  },
+  {
+    "body": {
+      "data": {
+        "candidates": [
+          {
+            "label": "Charizard",
+            "selectable": true,
+            "term": {
+              "datatype": null,
+              "language": null,
+              "type": "iri",
+              "value": "http://easyquery.example.org/pokemon#Charizard"
+            }
+          },
+          {
+            "label": "Charmeleon",
+            "selectable": true,
+            "term": {
+              "datatype": null,
+              "language": null,
+              "type": "iri",
+              "value": "http://easyquery.example.org/pokemon#Charmeleon"
+            }
+          },
+          {
+            "label": "Flareon",
+            "selectable": true,
+            "term": {
+              "datatype": null,
+              "language": null,
+              "type": "iri",
+              "value": "http://easyquery.example.org/pokemon#Flareon"
+            }
+          },
+          {
+            "label": "Moltres",
+            "selectable": true,
+            "term": {
+              "datatype": null,
+              "language": null,
+              "type": "iri",
+              "value": "http://easyquery.example.org/pokemon#Moltres"
+            }
+          }
+        ],
+        "hasMore": false,
+        "limit": 50,
+        "offset": 0,
+        "variableName": "?pokemon"
+      }
+    },
+    "status": 200
+  },
+  {
+    "body": {
+      "data": "PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>\nPREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>\nPREFIX owl: <http://www.w3.org/2002/07/owl#>\nSELECT DISTINCT ?pokemon ?pokemonLabel\nWHERE {\n?pokemon <http://easyquery.example.org/pokemon#category> ?literalValue0 .\nFILTER (str(?literalValue0) = \"Flame\") .\nOPTIONAL {\n?pokemon rdfs:label ?pokemonLabel .\nFILTER (lang(?pokemonLabel) = \"en\")\n}\n}\nLIMIT 150\n"
+    },
+    "status": 200
+  }
+]

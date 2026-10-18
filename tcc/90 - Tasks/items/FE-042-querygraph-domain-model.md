@@ -51,6 +51,10 @@ On 2026-10-16 the user chose option A: keep D6b. The migrator is the
 checked-in v1 fixtures. Rejected option B (importer from `cy.json()`) would
 have reopened D6b and forced D-T2b.
 
+## Fixture scenarios (QUAL-009)
+
+Every scenario whose graph the domain builds: the mapped `where`, `variableFilters` and stage requests must equal the captured `.request.json` entries. See `fixtures/legacy/README.md` and [[../../04 - Frontend/Frontend Parity Checklist]].
+
 ## Acceptance criteria
 
 - [ ] Ported unit cases pass unchanged in Vitest.

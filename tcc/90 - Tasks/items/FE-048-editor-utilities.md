@@ -21,6 +21,10 @@ Turtle upload (`/api/local-database`), load/export query in the FE-042
 versioned format only (legacy `query_exported.json` files are not
 supported, user decision 2026-10-16), auto layout, guided demo tour.
 
+## Fixture scenarios (QUAL-009)
+
+`upload-local-graph`. See `fixtures/legacy/README.md` and [[../../04 - Frontend/Frontend Parity Checklist]].
+
 ## Acceptance criteria
 
 - [ ] QUAL-006 rows for these utilities pass.

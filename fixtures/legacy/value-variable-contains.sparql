@@ -1,0 +1,13 @@
+PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
+PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+PREFIX owl: <http://www.w3.org/2002/07/owl#>
+SELECT DISTINCT ?category ?categoryLabel
+WHERE {
+?pokemon <http://easyquery.example.org/pokemon#category> ?category .
+OPTIONAL {
+?category rdfs:label ?categoryLabel .
+FILTER (lang(?categoryLabel) = "en")
+}
+FILTER (isLiteral(?category) && CONTAINS(STR(?category), "Dragon"))
+}
+LIMIT 150

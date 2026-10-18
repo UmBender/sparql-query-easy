@@ -1,0 +1,21 @@
+[
+  {
+    "body": {
+      "data": [
+        {
+          "propertyClass": null,
+          "propertyId": "90",
+          "propertyLabel": "90",
+          "propertyType": "text"
+        }
+      ]
+    },
+    "status": 200
+  },
+  {
+    "body": {
+      "data": "PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>\nPREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>\nPREFIX owl: <http://www.w3.org/2002/07/owl#>\nSELECT DISTINCT ?type ?typeLabel\nWHERE {\n<http://easyquery.example.org/pokemon#Pikachu> <http://easyquery.example.org/pokemon#speed> ?literalValue0 .\nFILTER (str(?literalValue0) = \"100\") .\nOPTIONAL {\n?type rdfs:label ?typeLabel .\nFILTER (lang(?typeLabel) = \"en\")\n}\n<http://easyquery.example.org/pokemon#Pikachu> <http://easyquery.example.org/pokemon#hasType> ?type .\nOPTIONAL {\n?type rdfs:label ?typeLabel .\nFILTER (lang(?typeLabel) = \"en\")\n}\n}\nLIMIT 150\n"
+    },
+    "status": 200
+  }
+]

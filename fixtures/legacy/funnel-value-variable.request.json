@@ -1,0 +1,105 @@
+[
+  {
+    "body": {
+      "endpointUrl": "PokemonGen1",
+      "variableName": "?pokemon",
+      "where": [
+        {
+          "filterType": null,
+          "object": "<http://easyquery.example.org/pokemon#GrassType>",
+          "predicate": "<http://easyquery.example.org/pokemon#hasType>",
+          "subject": "?pokemon"
+        },
+        {
+          "filterType": null,
+          "object": "?hp",
+          "predicate": "<http://easyquery.example.org/pokemon#hp>",
+          "subject": "?pokemon"
+        }
+      ]
+    },
+    "method": "POST",
+    "path": "/api/query/count"
+  },
+  {
+    "body": {
+      "endpointUrl": "PokemonGen1",
+      "variableFilters": [
+        {
+          "filterType": 2,
+          "value": "80",
+          "variableName": "?hp"
+        }
+      ],
+      "variableName": "?pokemon",
+      "where": [
+        {
+          "filterType": null,
+          "object": "<http://easyquery.example.org/pokemon#GrassType>",
+          "predicate": "<http://easyquery.example.org/pokemon#hasType>",
+          "subject": "?pokemon"
+        },
+        {
+          "filterType": null,
+          "object": "?hp",
+          "predicate": "<http://easyquery.example.org/pokemon#hp>",
+          "subject": "?pokemon"
+        }
+      ]
+    },
+    "method": "POST",
+    "path": "/api/query/count"
+  },
+  {
+    "body": {
+      "endpointUrl": "PokemonGen1",
+      "variableName": "?pokemon",
+      "where": [
+        {
+          "filterType": null,
+          "object": "?__funnel0",
+          "predicate": "<http://easyquery.example.org/pokemon#hasType>",
+          "subject": "?pokemon"
+        },
+        {
+          "filterType": null,
+          "object": "?hp",
+          "predicate": "<http://easyquery.example.org/pokemon#hp>",
+          "subject": "?pokemon"
+        }
+      ]
+    },
+    "method": "POST",
+    "path": "/api/query/count"
+  },
+  {
+    "body": {
+      "endpointUrl": "PokemonGen1",
+      "limit": 150,
+      "variableFilters": [
+        {
+          "filterType": 2,
+          "value": "80",
+          "variableName": "?hp"
+        }
+      ],
+      "variableName": "?hp",
+      "where": [
+        {
+          "filterType": null,
+          "object": "<http://easyquery.example.org/pokemon#GrassType>",
+          "predicate": "<http://easyquery.example.org/pokemon#hasType>",
+          "subject": "?pokemon"
+        },
+        {
+          "filterType": null,
+          "object": "?hp",
+          "predicate": "<http://easyquery.example.org/pokemon#hp>",
+          "subject": "?pokemon"
+        }
+      ]
+    },
+    "method": "POST",
+    "path": "/api/query/sparql"
+  }
+]

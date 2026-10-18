@@ -1,0 +1,166 @@
+[
+  {
+    "body": {
+      "data": [
+        {
+          "propertyClass": null,
+          "propertyId": "<http://easyquery.example.org/pokemon#inEvolutionFamily>",
+          "propertyLabel": "in evolution family",
+          "propertyType": "objeto"
+        },
+        {
+          "propertyClass": null,
+          "propertyId": "<http://easyquery.example.org/pokemon#resistantTo>",
+          "propertyLabel": "resistant to",
+          "propertyType": "objeto"
+        },
+        {
+          "propertyClass": null,
+          "propertyId": "<http://easyquery.example.org/pokemon#attack>",
+          "propertyLabel": "Attack",
+          "propertyType": "label"
+        },
+        {
+          "propertyClass": null,
+          "propertyId": "<http://easyquery.example.org/pokemon#evolvesInto>",
+          "propertyLabel": "evolves into",
+          "propertyType": "objeto"
+        },
+        {
+          "propertyClass": null,
+          "propertyId": "<http://easyquery.example.org/pokemon#strongAgainst>",
+          "propertyLabel": "strong against",
+          "propertyType": "objeto"
+        },
+        {
+          "propertyClass": null,
+          "propertyId": "<http://easyquery.example.org/pokemon#nextInPokedex>",
+          "propertyLabel": "next in Pokédex",
+          "propertyType": "objeto"
+        },
+        {
+          "propertyClass": null,
+          "propertyId": "<http://easyquery.example.org/pokemon#evolutionStage>",
+          "propertyLabel": "evolution stage",
+          "propertyType": "label"
+        },
+        {
+          "propertyClass": null,
+          "propertyId": "<http://easyquery.example.org/pokemon#specialAttack>",
+          "propertyLabel": "Sp. Atk",
+          "propertyType": "label"
+        },
+        {
+          "propertyClass": null,
+          "propertyId": "<http://easyquery.example.org/pokemon#hp>",
+          "propertyLabel": "HP",
+          "propertyType": "label"
+        },
+        {
+          "propertyClass": null,
+          "propertyId": "<http://easyquery.example.org/pokemon#speed>",
+          "propertyLabel": "Speed",
+          "propertyType": "label"
+        },
+        {
+          "propertyClass": null,
+          "propertyId": "<http://www.w3.org/1999/02/22-rdf-syntax-ns#type>",
+          "propertyLabel": "",
+          "propertyType": "outro"
+        },
+        {
+          "propertyClass": null,
+          "propertyId": "<http://easyquery.example.org/pokemon#baseStatTotal>",
+          "propertyLabel": "base stat total",
+          "propertyType": "label"
+        },
+        {
+          "propertyClass": null,
+          "propertyId": "<http://easyquery.example.org/pokemon#pokedexNumber>",
+          "propertyLabel": "Pokédex number",
+          "propertyType": "label"
+        },
+        {
+          "propertyClass": null,
+          "propertyId": "<http://easyquery.example.org/pokemon#hasType>",
+          "propertyLabel": "has type",
+          "propertyType": "objeto"
+        },
+        {
+          "propertyClass": null,
+          "propertyId": "<http://easyquery.example.org/pokemon#defense>",
+          "propertyLabel": "Defense",
+          "propertyType": "label"
+        },
+        {
+          "propertyClass": null,
+          "propertyId": "<http://easyquery.example.org/pokemon#weightKilograms>",
+          "propertyLabel": "weight (kg)",
+          "propertyType": "label"
+        },
+        {
+          "propertyClass": null,
+          "propertyId": "<http://easyquery.example.org/pokemon#category>",
+          "propertyLabel": "category",
+          "propertyType": "label"
+        },
+        {
+          "propertyClass": null,
+          "propertyId": "<http://www.w3.org/2000/01/rdf-schema#label>",
+          "propertyLabel": "",
+          "propertyType": "outro"
+        },
+        {
+          "propertyClass": null,
+          "propertyId": "<http://easyquery.example.org/pokemon#previousInPokedex>",
+          "propertyLabel": "previous in Pokédex",
+          "propertyType": "objeto"
+        },
+        {
+          "propertyClass": null,
+          "propertyId": "<http://easyquery.example.org/pokemon#heightMeters>",
+          "propertyLabel": "height (m)",
+          "propertyType": "label"
+        },
+        {
+          "propertyClass": null,
+          "propertyId": "<http://easyquery.example.org/pokemon#specialDefense>",
+          "propertyLabel": "Sp. Def",
+          "propertyType": "label"
+        },
+        {
+          "propertyClass": null,
+          "propertyId": "<http://easyquery.example.org/pokemon#weakTo>",
+          "propertyLabel": "weak to",
+          "propertyType": "objeto"
+        },
+        {
+          "propertyClass": null,
+          "propertyId": "<http://easyquery.example.org/pokemon#primaryType>",
+          "propertyLabel": "primary type",
+          "propertyType": "objeto"
+        }
+      ]
+    },
+    "status": 200
+  },
+  {
+    "body": {
+      "data": [
+        {
+          "propertyClass": null,
+          "propertyId": "90",
+          "propertyLabel": "90",
+          "propertyType": "text"
+        }
+      ]
+    },
+    "status": 200
+  },
+  {
+    "body": {
+      "error": "Invalid SPARQL variable name: "
+    },
+    "status": 400
+  }
+]

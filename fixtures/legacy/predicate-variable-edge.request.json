@@ -1,0 +1,38 @@
+[
+  {
+    "body": {
+      "bindings": [],
+      "endpointUrl": "PokemonGen1",
+      "limit": 50,
+      "offset": 0,
+      "variableName": "?predicate_1",
+      "where": [
+        {
+          "filterType": null,
+          "object": "<http://easyquery.example.org/pokemon#ElectricType>",
+          "predicate": "?predicate_1",
+          "subject": "<http://easyquery.example.org/pokemon#Pikachu>"
+        }
+      ]
+    },
+    "method": "POST",
+    "path": "/api/query/stage"
+  },
+  {
+    "body": {
+      "endpointUrl": "PokemonGen1",
+      "limit": 150,
+      "variableName": "?predicate_1",
+      "where": [
+        {
+          "filterType": null,
+          "object": "<http://easyquery.example.org/pokemon#ElectricType>",
+          "predicate": "?predicate_1",
+          "subject": "<http://easyquery.example.org/pokemon#Pikachu>"
+        }
+      ]
+    },
+    "method": "POST",
+    "path": "/api/query/sparql"
+  }
+]

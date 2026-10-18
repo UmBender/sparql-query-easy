@@ -1,0 +1,70 @@
+[
+  {
+    "body": {
+      "endpointUrl": "PokemonGen1",
+      "variableName": "?pokemon",
+      "where": [
+        {
+          "filterType": null,
+          "object": "?__funnel0",
+          "predicate": "<http://www.w3.org/2000/01/rdf-schema#label>",
+          "subject": "?pokemon"
+        }
+      ]
+    },
+    "method": "POST",
+    "path": "/api/query/count"
+  },
+  {
+    "body": {
+      "endpointUrl": "PokemonGen1",
+      "variableName": "?pokemon",
+      "where": [
+        {
+          "filterType": 0,
+          "object": "Char",
+          "predicate": "<http://www.w3.org/2000/01/rdf-schema#label>",
+          "subject": "?pokemon"
+        }
+      ]
+    },
+    "method": "POST",
+    "path": "/api/query/count"
+  },
+  {
+    "body": {
+      "bindings": [],
+      "endpointUrl": "PokemonGen1",
+      "limit": 50,
+      "offset": 0,
+      "variableName": "?pokemon",
+      "where": [
+        {
+          "filterType": 0,
+          "object": "Char",
+          "predicate": "<http://www.w3.org/2000/01/rdf-schema#label>",
+          "subject": "?pokemon"
+        }
+      ]
+    },
+    "method": "POST",
+    "path": "/api/query/stage"
+  },
+  {
+    "body": {
+      "endpointUrl": "PokemonGen1",
+      "limit": 150,
+      "variableName": "?pokemon",
+      "where": [
+        {
+          "filterType": 0,
+          "object": "Char",
+          "predicate": "<http://www.w3.org/2000/01/rdf-schema#label>",
+          "subject": "?pokemon"
+        }
+      ]
+    },
+    "method": "POST",
+    "path": "/api/query/sparql"
+  }
+]

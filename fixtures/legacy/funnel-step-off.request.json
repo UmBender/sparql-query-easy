@@ -1,0 +1,171 @@
+[
+  {
+    "body": {
+      "endpointUrl": "PokemonGen1",
+      "variableName": "?pokemon",
+      "where": [
+        {
+          "filterType": null,
+          "object": "<http://easyquery.example.org/pokemon#WaterType>",
+          "predicate": "<http://easyquery.example.org/pokemon#hasType>",
+          "subject": "?pokemon"
+        },
+        {
+          "filterType": null,
+          "object": "?__funnel1",
+          "predicate": "<http://easyquery.example.org/pokemon#speed>",
+          "subject": "?pokemon"
+        },
+        {
+          "filterType": null,
+          "object": "?__funnel2",
+          "predicate": "<http://easyquery.example.org/pokemon#attack>",
+          "subject": "?pokemon"
+        }
+      ]
+    },
+    "method": "POST",
+    "path": "/api/query/count"
+  },
+  {
+    "body": {
+      "endpointUrl": "PokemonGen1",
+      "variableName": "?pokemon",
+      "where": [
+        {
+          "filterType": null,
+          "object": "<http://easyquery.example.org/pokemon#WaterType>",
+          "predicate": "<http://easyquery.example.org/pokemon#hasType>",
+          "subject": "?pokemon"
+        },
+        {
+          "filterType": 2,
+          "object": "80",
+          "predicate": "<http://easyquery.example.org/pokemon#speed>",
+          "subject": "?pokemon"
+        },
+        {
+          "filterType": null,
+          "object": "?__funnel2",
+          "predicate": "<http://easyquery.example.org/pokemon#attack>",
+          "subject": "?pokemon"
+        }
+      ]
+    },
+    "method": "POST",
+    "path": "/api/query/count"
+  },
+  {
+    "body": {
+      "endpointUrl": "PokemonGen1",
+      "variableName": "?pokemon",
+      "where": [
+        {
+          "filterType": null,
+          "object": "<http://easyquery.example.org/pokemon#WaterType>",
+          "predicate": "<http://easyquery.example.org/pokemon#hasType>",
+          "subject": "?pokemon"
+        },
+        {
+          "filterType": 2,
+          "object": "80",
+          "predicate": "<http://easyquery.example.org/pokemon#speed>",
+          "subject": "?pokemon"
+        },
+        {
+          "filterType": 4,
+          "object": "MAX",
+          "predicate": "<http://easyquery.example.org/pokemon#attack>",
+          "subject": "?pokemon"
+        }
+      ]
+    },
+    "method": "POST",
+    "path": "/api/query/count"
+  },
+  {
+    "body": {
+      "endpointUrl": "PokemonGen1",
+      "variableName": "?pokemon",
+      "where": [
+        {
+          "filterType": null,
+          "object": "?__funnel0",
+          "predicate": "<http://easyquery.example.org/pokemon#hasType>",
+          "subject": "?pokemon"
+        },
+        {
+          "filterType": null,
+          "object": "?__funnel1",
+          "predicate": "<http://easyquery.example.org/pokemon#speed>",
+          "subject": "?pokemon"
+        },
+        {
+          "filterType": null,
+          "object": "?__funnel2",
+          "predicate": "<http://easyquery.example.org/pokemon#attack>",
+          "subject": "?pokemon"
+        }
+      ]
+    },
+    "method": "POST",
+    "path": "/api/query/count"
+  },
+  {
+    "body": {
+      "endpointUrl": "PokemonGen1",
+      "variableName": "?pokemon",
+      "where": [
+        {
+          "filterType": null,
+          "object": "<http://easyquery.example.org/pokemon#WaterType>",
+          "predicate": "<http://easyquery.example.org/pokemon#hasType>",
+          "subject": "?pokemon"
+        },
+        {
+          "filterType": null,
+          "object": "?__funnel1",
+          "predicate": "<http://easyquery.example.org/pokemon#speed>",
+          "subject": "?pokemon"
+        },
+        {
+          "filterType": 4,
+          "object": "MAX",
+          "predicate": "<http://easyquery.example.org/pokemon#attack>",
+          "subject": "?pokemon"
+        }
+      ]
+    },
+    "method": "POST",
+    "path": "/api/query/count"
+  },
+  {
+    "body": {
+      "endpointUrl": "PokemonGen1",
+      "limit": 150,
+      "variableName": "?pokemon",
+      "where": [
+        {
+          "filterType": null,
+          "object": "<http://easyquery.example.org/pokemon#WaterType>",
+          "predicate": "<http://easyquery.example.org/pokemon#hasType>",
+          "subject": "?pokemon"
+        },
+        {
+          "filterType": 2,
+          "object": "80",
+          "predicate": "<http://easyquery.example.org/pokemon#speed>",
+          "subject": "?pokemon"
+        },
+        {
+          "filterType": 4,
+          "object": "MAX",
+          "predicate": "<http://easyquery.example.org/pokemon#attack>",
+          "subject": "?pokemon"
+        }
+      ]
+    },
+    "method": "POST",
+    "path": "/api/query/sparql"
+  }
+]

@@ -1,0 +1,14 @@
+[
+  {
+    "body": {
+      "error": "where.predicate must be an IRI, property path, or SPARQL variable"
+    },
+    "status": 400
+  },
+  {
+    "body": {
+      "error": "Invalid SPARQL variable name: "
+    },
+    "status": 400
+  }
+]

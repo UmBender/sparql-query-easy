@@ -1,0 +1,89 @@
+[
+  {
+    "body": {
+      "data": {
+        "count": 151,
+        "variableName": "?pokemon"
+      }
+    },
+    "status": 200
+  },
+  {
+    "body": {
+      "data": {
+        "count": 5,
+        "variableName": "?pokemon"
+      }
+    },
+    "status": 200
+  },
+  {
+    "body": {
+      "data": {
+        "candidates": [
+          {
+            "label": "Dragonair",
+            "selectable": true,
+            "term": {
+              "datatype": null,
+              "language": null,
+              "type": "iri",
+              "value": "http://easyquery.example.org/pokemon#Dragonair"
+            }
+          },
+          {
+            "label": "Dragonite",
+            "selectable": true,
+            "term": {
+              "datatype": null,
+              "language": null,
+              "type": "iri",
+              "value": "http://easyquery.example.org/pokemon#Dragonite"
+            }
+          },
+          {
+            "label": "Dratini",
+            "selectable": true,
+            "term": {
+              "datatype": null,
+              "language": null,
+              "type": "iri",
+              "value": "http://easyquery.example.org/pokemon#Dratini"
+            }
+          },
+          {
+            "label": "Horsea",
+            "selectable": true,
+            "term": {
+              "datatype": null,
+              "language": null,
+              "type": "iri",
+              "value": "http://easyquery.example.org/pokemon#Horsea"
+            }
+          },
+          {
+            "label": "Seadra",
+            "selectable": true,
+            "term": {
+              "datatype": null,
+              "language": null,
+              "type": "iri",
+              "value": "http://easyquery.example.org/pokemon#Seadra"
+            }
+          }
+        ],
+        "hasMore": false,
+        "limit": 50,
+        "offset": 0,
+        "variableName": "?pokemon"
+      }
+    },
+    "status": 200
+  },
+  {
+    "body": {
+      "data": "PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>\nPREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>\nPREFIX owl: <http://www.w3.org/2002/07/owl#>\nSELECT DISTINCT ?category ?categoryLabel\nWHERE {\n?pokemon <http://easyquery.example.org/pokemon#category> ?category .\nOPTIONAL {\n?category rdfs:label ?categoryLabel .\nFILTER (lang(?categoryLabel) = \"en\")\n}\nFILTER (isLiteral(?category) && CONTAINS(STR(?category), \"Dragon\"))\n}\nLIMIT 150\n"
+    },
+    "status": 200
+  }
+]

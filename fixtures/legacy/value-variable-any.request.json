@@ -1,0 +1,52 @@
+[
+  {
+    "body": {
+      "bindings": [],
+      "endpointUrl": "PokemonGen1",
+      "limit": 50,
+      "offset": 0,
+      "variableFilters": [
+        {
+          "filterType": null,
+          "value": null,
+          "variableName": "?speed"
+        }
+      ],
+      "variableName": "?speed",
+      "where": [
+        {
+          "filterType": null,
+          "object": "?speed",
+          "predicate": "<http://easyquery.example.org/pokemon#speed>",
+          "subject": "<http://easyquery.example.org/pokemon#Pikachu>"
+        }
+      ]
+    },
+    "method": "POST",
+    "path": "/api/query/stage"
+  },
+  {
+    "body": {
+      "endpointUrl": "PokemonGen1",
+      "limit": 150,
+      "variableFilters": [
+        {
+          "filterType": null,
+          "value": null,
+          "variableName": "?speed"
+        }
+      ],
+      "variableName": "?speed",
+      "where": [
+        {
+          "filterType": null,
+          "object": "?speed",
+          "predicate": "<http://easyquery.example.org/pokemon#speed>",
+          "subject": "<http://easyquery.example.org/pokemon#Pikachu>"
+        }
+      ]
+    },
+    "method": "POST",
+    "path": "/api/query/sparql"
+  }
+]

@@ -22,6 +22,10 @@ FE-015, FE-017, FE-023–FE-025, BUG-003–BUG-006 and
 Numbered reorderable variable chips, bounded stage requests, hover/focus
 preview, possible-graph window, Assume and Apply to graph, View SPARQL.
 
+## Fixture scenarios (QUAL-009)
+
+`fire-speed-at-least-90`, `run-query-two-stage-apply`, `run-query-three-reordered-assume`, `value-variable-any`, `view-sparql-only`. See `fixtures/legacy/README.md` and [[../../04 - Frontend/Frontend Parity Checklist]].
+
 ## Acceptance criteria
 
 - [ ] QUAL-006 rows for exploration pass; the offline e2e scenario of

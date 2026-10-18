@@ -1,0 +1,91 @@
+[
+  {
+    "body": {
+      "endpointUrl": "PokemonGen1",
+      "variableName": "?pokemon",
+      "where": [
+        {
+          "filterType": null,
+          "object": "?category",
+          "predicate": "<http://easyquery.example.org/pokemon#category>",
+          "subject": "?pokemon"
+        }
+      ]
+    },
+    "method": "POST",
+    "path": "/api/query/count"
+  },
+  {
+    "body": {
+      "endpointUrl": "PokemonGen1",
+      "variableFilters": [
+        {
+          "filterType": 1,
+          "value": "Dragon",
+          "variableName": "?category"
+        }
+      ],
+      "variableName": "?pokemon",
+      "where": [
+        {
+          "filterType": null,
+          "object": "?category",
+          "predicate": "<http://easyquery.example.org/pokemon#category>",
+          "subject": "?pokemon"
+        }
+      ]
+    },
+    "method": "POST",
+    "path": "/api/query/count"
+  },
+  {
+    "body": {
+      "bindings": [],
+      "endpointUrl": "PokemonGen1",
+      "limit": 50,
+      "offset": 0,
+      "variableFilters": [
+        {
+          "filterType": 1,
+          "value": "Dragon",
+          "variableName": "?category"
+        }
+      ],
+      "variableName": "?pokemon",
+      "where": [
+        {
+          "filterType": null,
+          "object": "?category",
+          "predicate": "<http://easyquery.example.org/pokemon#category>",
+          "subject": "?pokemon"
+        }
+      ]
+    },
+    "method": "POST",
+    "path": "/api/query/stage"
+  },
+  {
+    "body": {
+      "endpointUrl": "PokemonGen1",
+      "limit": 150,
+      "variableFilters": [
+        {
+          "filterType": 1,
+          "value": "Dragon",
+          "variableName": "?category"
+        }
+      ],
+      "variableName": "?category",
+      "where": [
+        {
+          "filterType": null,
+          "object": "?category",
+          "predicate": "<http://easyquery.example.org/pokemon#category>",
+          "subject": "?pokemon"
+        }
+      ]
+    },
+    "method": "POST",
+    "path": "/api/query/sparql"
+  }
+]

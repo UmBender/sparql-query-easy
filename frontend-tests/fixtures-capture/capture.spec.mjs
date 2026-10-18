@@ -95,7 +95,7 @@ function context(page, recorder) {
           else if (kind === 'value-variable') data = { ...gm.valueVariableNodeData(id), ...gm.valueVariableFilterData(filterType, value ?? '') };
           else if (kind === 'iri') data = gm.iriNodeData(id, label);
           else if (kind === 'literal') data = { id, value, label: qc.filterLabel(filterType, value), type: 'label', filterType: qc.filterTypeOf(filterType) };
-          else if (kind === 'class') data = { id: `${id}#class`, value: id, label, type: 'default' };
+          else if (kind === 'class') data = { id, value: item.classIri, label, type: 'default' };
           else throw new Error(`Unknown node kind ${kind}`);
           return { group: 'nodes', data, position };
         }));
@@ -128,6 +128,92 @@ function context(page, recorder) {
       await recorder.settle();
       return page.locator('#modal-sparql-content').textContent();
     },
+    /** Opens a node's action list (a left click) and runs the action with this label. */
+    async nodeAction(nodeId, actionLabel) {
+      await page.evaluate(id => { cy.getElementById(id).emit('tap'); }, nodeId);
+      await page.locator('#node-action-menu-list button', { hasText: exactly(actionLabel) }).first().click();
+      await recorder.settle();
+    },
+    async edgeAction(edgeId, actionLabel) {
+      await page.evaluate(id => { cy.getElementById(id).emit('tap'); }, edgeId);
+      await page.locator('#edge-action-menu-list button', { hasText: exactly(actionLabel) }).first().click();
+      await recorder.settle();
+    },
+    /** Clicks the results-table row whose label cell is `text` (the Materialize stub keeps the modal hidden). */
+    async clickRow(text) {
+      const clicked = await page.evaluate(value => {
+        const row = [...document.querySelectorAll('#table-results-body tr')].find(item => item.cells[1]?.textContent.trim() === value);
+        row?.click();
+        return Boolean(row);
+      }, text);
+      expect(clicked, `results row ${text}`).toBe(true);
+      await recorder.settle();
+    },
+    async rowLabels() {
+      return page.locator('#table-results-body tr td:nth-child(2)').allTextContents();
+    },
+    /** Types into the (hidden) filter editor and picks a filter type radio ('' exact, 'any', '0'…'6'). */
+    async editor({ value, filterType }) {
+      await page.evaluate(({ value, filterType }) => {
+        const content = document.getElementById('modal-change-value-content');
+        if (filterType !== undefined) {
+          const radio = content.querySelector(`input[name=filter-type][value="${filterType}"]`);
+          radio.checked = true;
+          radio.dispatchEvent(new Event('change', { bubbles: true }));
+        }
+        if (value !== undefined) {
+          const input = document.getElementById('modal-new-value');
+          input.value = value;
+          input.dispatchEvent(new Event('input', { bubbles: true }));
+        }
+      }, { value, filterType });
+      await recorder.settle();
+    },
+    async chooseSuggestion(text) {
+      await page.evaluate(value => [...document.querySelectorAll('#filter-suggestions button.filter-suggestion')]
+        .find(button => button.dataset.value === value).click(), text);
+      await recorder.settle();
+    },
+    async suggestions() {
+      return page.evaluate(() => [...document.querySelectorAll('#filter-suggestions button.filter-suggestion')].map(button => button.dataset.value));
+    },
+    async editorApply() {
+      await page.evaluate(() => document.getElementById('apply-filter-btn').click());
+      await recorder.settle();
+    },
+    async moveEarlier(variable) {
+      await page.getByRole('button', { name: `Move ${variable} earlier` }).click();
+      await recorder.settle();
+    },
+    async openFunnel() {
+      await page.locator('#filter-funnel-btn').click();
+      await recorder.settle();
+    },
+    async funnelRows() {
+      return page.locator('#filter-funnel-steps .funnel-row').evaluateAll(rows => rows.map(row => ({
+        label: row.querySelector('.funnel-toggle span, .funnel-base-label').textContent.trim(),
+        count: row.querySelector('.funnel-count').firstChild.textContent.trim(),
+      })));
+    },
+    async toggleFunnelStep(labelText) {
+      // Materialize draws the checkbox on its label text.
+      await page.locator('#filter-funnel-steps .funnel-toggle span', { hasText: labelText }).click();
+      await recorder.settle();
+    },
+    async badges() {
+      return page.locator('#filter-badge-layer > span').evaluateAll(items => items.map(item => ({ node: item.dataset.nodeId, kind: item.className, text: item.textContent })));
+    },
+    async upload(file) {
+      await page.locator('#upload-triple').setInputFiles(file);
+      await recorder.settle();
+    },
+    /** The main graph as sorted [id, type, label] nodes and [source, nodeId, target] edges. */
+    async graph() {
+      return page.evaluate(() => ({
+        nodes: cy.nodes().map(node => [node.id(), node.data('type'), node.data('label')]).sort(),
+        edges: cy.edges().map(edge => [edge.data('source'), edge.data('nodeId'), edge.data('target')]).sort(),
+      }));
+    },
     /** Calls a legacy page function by name, as an inline handler would. */
     async call(name, ...args) {
       await page.evaluate(({ name, args }) => window[name](...args), { name, args });
@@ -139,6 +225,10 @@ function context(page, recorder) {
 
 function escapeRegExp(text) {
   return text.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+}
+
+function exactly(text) {
+  return new RegExp(`^${escapeRegExp(text)}$`);
 }
 
 for (const scenario of scenarios) {

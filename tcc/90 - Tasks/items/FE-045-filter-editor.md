@@ -23,6 +23,10 @@ Exact, starts with, contains, at least, at most, between, MAX/MIN (not on
 value variables); histogram of real values from `numeric-profile`; cycling
 over kept entities; text suggestions via `stage`; Superforms + Zod validation.
 
+## Fixture scenarios (QUAL-009)
+
+`filter-exact-literal`, `filter-starts-with`, `filter-contains`, `numeric-profile-edit-between`, `filter-max-tie`, `filter-min-tie`, `value-variable-*`, `text-suggestions-*`, `add-value-filter`. See `fixtures/legacy/README.md` and [[../../04 - Frontend/Frontend Parity Checklist]].
+
 ## Acceptance criteria
 
 - [ ] QUAL-006 rows for filters pass; request payloads equal the legacy ones.

@@ -1,0 +1,68 @@
+[
+  {
+    "body": {
+      "data": {
+        "count": 0,
+        "max": null,
+        "min": null,
+        "predicate": "<http://www.w3.org/2000/01/rdf-schema#label>",
+        "subject": "?pokemon",
+        "truncated": false,
+        "values": []
+      }
+    },
+    "status": 200
+  },
+  {
+    "body": {
+      "data": {
+        "candidates": [
+          {
+            "label": null,
+            "selectable": true,
+            "term": {
+              "datatype": "http://www.w3.org/1999/02/22-rdf-syntax-ns#langString",
+              "language": "en",
+              "type": "literal",
+              "value": "Kadabra"
+            }
+          }
+        ],
+        "hasMore": false,
+        "limit": 20,
+        "offset": 0,
+        "variableName": "?name"
+      }
+    },
+    "status": 200
+  },
+  {
+    "body": {
+      "data": {
+        "candidates": [
+          {
+            "label": "Kadabra",
+            "selectable": true,
+            "term": {
+              "datatype": null,
+              "language": null,
+              "type": "iri",
+              "value": "http://easyquery.example.org/pokemon#Kadabra"
+            }
+          }
+        ],
+        "hasMore": false,
+        "limit": 50,
+        "offset": 0,
+        "variableName": "?pokemon"
+      }
+    },
+    "status": 200
+  },
+  {
+    "body": {
+      "data": "PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>\nPREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>\nPREFIX owl: <http://www.w3.org/2002/07/owl#>\nSELECT DISTINCT ?name ?nameLabel\nWHERE {\n?pokemon <http://easyquery.example.org/pokemon#hasType> <http://easyquery.example.org/pokemon#PsychicType> .\nOPTIONAL {\n?name rdfs:label ?nameLabel .\nFILTER (lang(?nameLabel) = \"en\")\n}\n?pokemon <http://www.w3.org/2000/01/rdf-schema#label> ?name .\nOPTIONAL {\n?name rdfs:label ?nameLabel .\nFILTER (lang(?nameLabel) = \"en\")\n}\nFILTER (isLiteral(?name) && str(?name) = \"Kadabra\")\n}\nLIMIT 150\n"
+    },
+    "status": 200
+  }
+]

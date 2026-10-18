@@ -1,0 +1,18 @@
+PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
+PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+PREFIX owl: <http://www.w3.org/2002/07/owl#>
+SELECT DISTINCT ?value_<ts1> ?value_<ts1>Label
+WHERE {
+?pokemon <http://easyquery.example.org/pokemon#hasType> <http://easyquery.example.org/pokemon#FireType> .
+OPTIONAL {
+?value_<ts1> rdfs:label ?value_<ts1>Label .
+FILTER (lang(?value_<ts1>Label) = "en")
+}
+?pokemon <http://easyquery.example.org/pokemon#speed> ?value_<ts1> .
+OPTIONAL {
+?value_<ts1> rdfs:label ?value_<ts1>Label .
+FILTER (lang(?value_<ts1>Label) = "en")
+}
+FILTER (isLiteral(?value_<ts1>) && ?value_<ts1> >= 100)
+}
+LIMIT 150

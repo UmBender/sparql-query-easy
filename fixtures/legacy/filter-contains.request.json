@@ -1,0 +1,70 @@
+[
+  {
+    "body": {
+      "endpointUrl": "PokemonGen1",
+      "variableName": "?pokemon",
+      "where": [
+        {
+          "filterType": null,
+          "object": "?__funnel0",
+          "predicate": "<http://easyquery.example.org/pokemon#category>",
+          "subject": "?pokemon"
+        }
+      ]
+    },
+    "method": "POST",
+    "path": "/api/query/count"
+  },
+  {
+    "body": {
+      "endpointUrl": "PokemonGen1",
+      "variableName": "?pokemon",
+      "where": [
+        {
+          "filterType": 1,
+          "object": "Mouse",
+          "predicate": "<http://easyquery.example.org/pokemon#category>",
+          "subject": "?pokemon"
+        }
+      ]
+    },
+    "method": "POST",
+    "path": "/api/query/count"
+  },
+  {
+    "body": {
+      "bindings": [],
+      "endpointUrl": "PokemonGen1",
+      "limit": 50,
+      "offset": 0,
+      "variableName": "?pokemon",
+      "where": [
+        {
+          "filterType": 1,
+          "object": "Mouse",
+          "predicate": "<http://easyquery.example.org/pokemon#category>",
+          "subject": "?pokemon"
+        }
+      ]
+    },
+    "method": "POST",
+    "path": "/api/query/stage"
+  },
+  {
+    "body": {
+      "endpointUrl": "PokemonGen1",
+      "limit": 150,
+      "variableName": "?pokemon",
+      "where": [
+        {
+          "filterType": 1,
+          "object": "Mouse",
+          "predicate": "<http://easyquery.example.org/pokemon#category>",
+          "subject": "?pokemon"
+        }
+      ]
+    },
+    "method": "POST",
+    "path": "/api/query/sparql"
+  }
+]

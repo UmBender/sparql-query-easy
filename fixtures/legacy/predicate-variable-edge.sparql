@@ -1,0 +1,12 @@
+PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
+PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+PREFIX owl: <http://www.w3.org/2002/07/owl#>
+SELECT DISTINCT ?predicate_1 ?predicate_1Label
+WHERE {
+<http://easyquery.example.org/pokemon#Pikachu> ?predicate_1 <http://easyquery.example.org/pokemon#ElectricType> .
+OPTIONAL {
+?predicate_1 rdfs:label ?predicate_1Label .
+FILTER (lang(?predicate_1Label) = "en")
+}
+}
+LIMIT 150

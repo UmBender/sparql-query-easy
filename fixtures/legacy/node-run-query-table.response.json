@@ -1,0 +1,34 @@
+[
+  {
+    "body": {
+      "data": [
+        {
+          "propertyClass": "<http://easyquery.example.org/pokemon#Pokemon>",
+          "propertyId": "<http://easyquery.example.org/pokemon#Pikachu>",
+          "propertyLabel": "Pikachu",
+          "propertyType": ""
+        }
+      ]
+    },
+    "status": 200
+  },
+  {
+    "body": {
+      "data": [
+        {
+          "propertyClass": null,
+          "propertyId": "<http://easyquery.example.org/pokemon#Raichu>",
+          "propertyLabel": "Raichu",
+          "propertyType": null
+        }
+      ]
+    },
+    "status": 200
+  },
+  {
+    "body": {
+      "error": "Invalid SPARQL variable name: "
+    },
+    "status": 400
+  }
+]

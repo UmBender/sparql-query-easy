@@ -1,13 +1,13 @@
 ---
 id: QUAL-009
 title: Capture at least 15 PokemonGen1 queries covering every node kind, filter and Run Query flow
-status: BACKLOG
+status: DONE
 priority: P1
 type: quality
 depends_on: [QUAL-008, QUAL-005]
 human_gate: false
 created: 2026-10-16
-updated: 2026-10-16
+updated: 2026-10-17
 ---
 # Capture at least 15 PokemonGen1 queries covering every node kind, filter and Run Query flow
 
@@ -51,14 +51,14 @@ node search display); format docs (QUAL-010).
 
 ## Acceptance criteria
 
-- [ ] At least 15 scenarios; the coverage table shows every item above
+- [x] At least 15 scenarios; the coverage table shows every item above
       covered by at least one named scenario.
-- [ ] Each scenario's captured result matches its independent oracle
+- [x] Each scenario's captured result matches its independent oracle
       (multiset comparison; order only where the query has ORDER BY or the
       contract fixes it, such as MAX/MIN ties).
-- [ ] The single QUAL-008 command regenerates the whole corpus and is
+- [x] The single QUAL-008 command regenerates the whole corpus and is
       idempotent.
-- [ ] QUAL-006 checklist rows and FE-042–FE-048 cards link the scenarios they
+- [x] QUAL-006 checklist rows and FE-042–FE-048 cards link the scenarios they
       must reproduce (T4/T5 reference).
 
 ## Validation
@@ -70,3 +70,17 @@ check for the card links.
 ## Execution log
 
 - 2026-10-16: Planned from the T2 brief; no code changed.
+- 2026-10-17: Extended the QUAL-008 harness to 24 scenarios (helpers for
+  node/edge action lists, the hidden filter editor, results rows, the funnel,
+  badges and upload; `frontend-tests/fixtures/legacy-upload.ttl`). Every
+  scenario checks its result against the TTL oracle; README has the scenario
+  and coverage tables. Findings recorded in the README and the parity
+  checklist: staged Run Query rejects MAX/MIN (400), so the tie scenarios use
+  the Run query node action; class Explore values sends prefixed
+  `rdfs:domain` and gets 400; View SPARQL with no variable gets 400; stage
+  order is sorted by name. The oracle for "starts with Char" includes
+  "Charmander family" because the query has no type constraint. Linked the
+  scenarios from QUAL-006 rows and FE-042–FE-048. Validation:
+  `npm run fixtures:legacy` 24 passed, twice, identical output (`diff -rq`);
+  legacy page and suites unchanged (QUAL-008 gates). Completion commit for
+  this task.

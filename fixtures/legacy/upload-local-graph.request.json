@@ -1,0 +1,50 @@
+[
+  {
+    "body": {
+      "multipart": [
+        {
+          "filename": "legacy-upload.ttl",
+          "name": "ttlFile"
+        }
+      ]
+    },
+    "method": "POST",
+    "path": "/api/local-database"
+  },
+  {
+    "body": {
+      "bindings": [],
+      "endpointUrl": "<uploaded-graph>",
+      "limit": 50,
+      "offset": 0,
+      "variableName": "?pokemon",
+      "where": [
+        {
+          "filterType": null,
+          "object": "<http://easyquery.example.org/pokemon#FireType>",
+          "predicate": "<http://easyquery.example.org/pokemon#hasType>",
+          "subject": "?pokemon"
+        }
+      ]
+    },
+    "method": "POST",
+    "path": "/api/query/stage"
+  },
+  {
+    "body": {
+      "endpointUrl": "<uploaded-graph>",
+      "limit": 150,
+      "variableName": "?pokemon",
+      "where": [
+        {
+          "filterType": null,
+          "object": "<http://easyquery.example.org/pokemon#FireType>",
+          "predicate": "<http://easyquery.example.org/pokemon#hasType>",
+          "subject": "?pokemon"
+        }
+      ]
+    },
+    "method": "POST",
+    "path": "/api/query/sparql"
+  }
+]

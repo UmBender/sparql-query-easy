@@ -1,0 +1,46 @@
+[
+  {
+    "body": {
+      "endpointUrl": "PokemonGen1",
+      "limit": 150,
+      "variableName": "?pokemon",
+      "where": [
+        {
+          "filterType": null,
+          "object": "<http://easyquery.example.org/pokemon#Raichu>",
+          "predicate": "<http://easyquery.example.org/pokemon#evolvesInto>",
+          "subject": "?pokemon"
+        }
+      ]
+    },
+    "method": "POST",
+    "path": "/api/query"
+  },
+  {
+    "body": {
+      "endpointUrl": "PokemonGen1",
+      "isLiteral": false,
+      "predicateId": "<http://easyquery.example.org/pokemon#evolvesInto>",
+      "subjectId": "<http://easyquery.example.org/pokemon#Pikachu>"
+    },
+    "method": "POST",
+    "path": "/api/query/relationship-value"
+  },
+  {
+    "body": {
+      "endpointUrl": "PokemonGen1",
+      "limit": 150,
+      "variableName": "",
+      "where": [
+        {
+          "filterType": null,
+          "object": "<http://easyquery.example.org/pokemon#Raichu>",
+          "predicate": "<http://easyquery.example.org/pokemon#evolvesInto>",
+          "subject": "<http://easyquery.example.org/pokemon#Pikachu>"
+        }
+      ]
+    },
+    "method": "POST",
+    "path": "/api/query/sparql"
+  }
+]

@@ -25,6 +25,10 @@ for a fixed-entity subject). The step on/off state belongs to the domain
 this card renders it and sends `count` requests for it (T4, confirmed
 2026-10-16).
 
+## Fixture scenarios (QUAL-009)
+
+`funnel-step-off`, `funnel-value-variable`, `actual-value-check`, and the badge counts in every filtered scenario. See `fixtures/legacy/README.md` and [[../../04 - Frontend/Frontend Parity Checklist]].
+
 ## Acceptance criteria
 
 - [ ] QUAL-006 rows for funnel and badges pass with identical counts.
