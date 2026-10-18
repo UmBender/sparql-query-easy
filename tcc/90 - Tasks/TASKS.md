@@ -91,7 +91,7 @@ Ordered by dependencies, then priority among selection candidates. See [worker r
 | FE-051 | DONE | P1 | documentation | [Add a style skill that makes every UI change follow the tokens and the styleguide](<items/FE-051-style-skill.md>) |
 | FE-042 | DONE | P1 | frontend | [Model the drawn query as a typed QueryGraph with a versioned saved format](<items/FE-042-querygraph-domain-model.md>) |
 | BE-006 | DONE | P2 | backend | [List the selectable endpoints over GET /api/endpoints](<items/BE-006-built-in-endpoints-route.md>) |
-| FE-043 | BACKLOG | P1 | frontend | [Own the QueryGraph in one rune store and call the API through a typed client](<items/FE-043-store-and-typed-api-client.md>) |
+| FE-043 | DONE | P1 | frontend | [Own the QueryGraph in one rune store and call the API through a typed client](<items/FE-043-store-and-typed-api-client.md>) |
 | FE-052 | BACKLOG | P2 | frontend | [Undo and redo query graph edits from the store](<items/FE-052-undo-redo.md>) |
 | FE-044 | BACKLOG | P1 | frontend | [Draw and edit the query graph on a Cytoscape canvas driven by the store](<items/FE-044-graph-canvas.md>) |
 | FE-045 | BACKLOG | P1 | frontend | [Edit value and value-variable filters with histogram and text suggestions](<items/FE-045-filter-editor.md>) |

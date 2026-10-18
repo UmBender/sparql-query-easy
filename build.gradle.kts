@@ -78,6 +78,8 @@ dependencies {
 
 tasks.test {
     useJUnitPlatform()
+    // FE-043: FrontendOpenApiSnapshotTest compares /openapi.json with this snapshot.
+    inputs.file("frontend/src/lib/api/openapi.json").withPropertyName("frontendOpenApiSnapshot")
 }
 
 tasks.named<Copy>("processResources") {

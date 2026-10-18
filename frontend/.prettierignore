@@ -10,3 +10,5 @@ bun.lockb
 src/lib/design/tokens.generated.css
 __screenshots__
 src/lib/domain/fixtures/*.query.json
+src/lib/api/schema.d.ts
+src/lib/api/openapi.json

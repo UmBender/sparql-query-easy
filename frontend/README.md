@@ -33,6 +33,11 @@ graph to the legacy request bodies through the verbatim ports in `legacy/`;
 `request-parity.spec.ts` requires the requests to equal `fixtures/legacy/`;
 `npm run test:coverage` enforces 90% line and branch coverage of the domain.
 
+Store and API (FE-043): `src/lib/stores/query-store.svelte.ts` is the one rune
+store (graph, selection, endpoint, limit, stage order, funnel preview; every
+edit through a domain operation and `commit`). `src/lib/api/` holds the typed
+client, the TanStack Query cache and the OpenAPI snapshot (see its README).
+
 Base components (FE-050) live in `src/lib/components/ui/`: the shadcn-svelte
 primitives (button, input, select, dialog, tooltip, sonner toasts, …) plus
 `icon-button`, `combobox`, `chip` (numbered stage chip), `count-badge`,

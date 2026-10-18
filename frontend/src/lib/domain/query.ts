@@ -535,6 +535,9 @@ export function presentFunnelSteps(plan: FunnelPlan, disabled: Iterable<string>)
 	return new Set([...disabled].filter((key) => present.has(key)));
 }
 
+/** No funnel step switched off. */
+export const NO_DISABLED_STEPS: ReadonlySet<string> = new Set();
+
 /** Funnel step toggle (preview only: the filter stays in the graph and in Run Query). */
 export function toggleFunnelStep(
 	disabled: ReadonlySet<string>,

@@ -1,0 +1,1288 @@
+{
+    "openapi": "3.1.0",
+    "info": {
+        "title": "SPARQL EasyQuery API",
+        "version": "1.0.0",
+        "description": "Build and execute constrained SPARQL queries against uploaded, built-in, or remote RDF graphs. Authentication is intentionally deferred; every documented operation is currently public."
+    },
+    "paths": {
+        "/": {
+            "get": {
+                "operationId": "redirectToFrontend",
+                "tags": [
+                    "Application"
+                ],
+                "summary": "Open the browser frontend",
+                "description": "Redirects to the authoritative packaged frontend at /index2.html.",
+                "responses": {
+                    "302": {
+                        "description": "Redirect to /index2.html."
+                    }
+                }
+            }
+        },
+        "/health": {
+            "get": {
+                "operationId": "getHealth",
+                "tags": [
+                    "Operations"
+                ],
+                "summary": "Check application health",
+                "description": "Returns process health. This endpoint has no external-service side effects.",
+                "responses": {
+                    "200": {
+                        "description": "The application process is healthy.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/HealthResponse"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/endpoints": {
+            "get": {
+                "operationId": "listEndpoints",
+                "tags": [
+                    "Application"
+                ],
+                "summary": "List the selectable endpoints",
+                "description": "Returns the built-in graphs and Wikidata the frontend offers. Each id is accepted as endpointUrl by the query routes; uploaded graphs are not listed.",
+                "responses": {
+                    "200": {
+                        "description": "Selectable endpoints with kind local or remote.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "required": [
+                                        "data"
+                                    ],
+                                    "properties": {
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "$ref": "#/components/schemas/EndpointHttpItem"
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/local-database": {
+            "post": {
+                "operationId": "uploadLocalDatabase",
+                "tags": [
+                    "Local database"
+                ],
+                "summary": "Upload a local Turtle graph",
+                "description": "Parses a required ttlFile part and stores the graph in the process-local sliding cache. The returned opaque identifier is used as endpointUrl by query routes.",
+                "requestBody": {
+                    "description": "Multipart form containing one Turtle file.",
+                    "content": {
+                        "multipart/form-data": {
+                            "schema": {
+                                "$ref": "#/components/schemas/TurtleUploadOpenApiRequest"
+                            }
+                        }
+                    },
+                    "required": true
+                },
+                "responses": {
+                    "200": {
+                        "description": "Opaque identifier for the cached graph.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "required": [
+                                        "data"
+                                    ],
+                                    "properties": {
+                                        "data": {
+                                            "type": "string"
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "ttlFile is missing or the Turtle document is invalid.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorResponse"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/query/relationships": {
+            "post": {
+                "operationId": "getElementRelationships",
+                "tags": [
+                    "Query"
+                ],
+                "summary": "List relationships for an RDF element",
+                "description": "Builds and executes the relationship query for the selected endpoint. limit is retained for request compatibility but is not consumed by this operation.",
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/RelationshipsHttpRequest"
+                            }
+                        }
+                    },
+                    "required": true
+                },
+                "responses": {
+                    "200": {
+                        "description": "Relationships mapped to application property values.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "required": [
+                                        "data"
+                                    ],
+                                    "properties": {
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "$ref": "#/components/schemas/PropertyDtoResponse"
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Malformed JSON, missing/invalid fields, invalid endpoint, or invalid generated query.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorResponse"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "The selected uploaded local graph is unavailable.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorResponse"
+                                }
+                            }
+                        }
+                    },
+                    "502": {
+                        "description": "Remote SPARQL or Wikidata execution failed.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorResponse"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/query/relationship-value": {
+            "post": {
+                "operationId": "getRelationshipValue",
+                "tags": [
+                    "Query"
+                ],
+                "summary": "List values for a subject and predicate",
+                "description": "Builds and executes the relationship-value query for the selected endpoint. subjectId and predicateId are semantically required; limit is accepted but unused.",
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/RelationshipValueHttpRequest"
+                            }
+                        }
+                    },
+                    "required": true
+                },
+                "responses": {
+                    "200": {
+                        "description": "Relationship values mapped to application property values.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "required": [
+                                        "data"
+                                    ],
+                                    "properties": {
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "$ref": "#/components/schemas/PropertyDtoResponse"
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Malformed JSON, missing/invalid fields, invalid endpoint, or invalid generated query.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorResponse"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "The selected uploaded local graph is unavailable.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorResponse"
+                                }
+                            }
+                        }
+                    },
+                    "502": {
+                        "description": "Remote SPARQL or Wikidata execution failed.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorResponse"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/query/search": {
+            "post": {
+                "operationId": "searchNodes",
+                "tags": [
+                    "Query"
+                ],
+                "summary": "Search graph nodes",
+                "description": "Uses Wikidata entity search for the Wikidata endpoint and generated SPARQL for other endpoints. A null, omitted, or empty search returns an empty data array.",
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/SearchHttpRequest"
+                            }
+                        }
+                    },
+                    "required": true
+                },
+                "responses": {
+                    "200": {
+                        "description": "Matching nodes mapped to application property values.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "required": [
+                                        "data"
+                                    ],
+                                    "properties": {
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "$ref": "#/components/schemas/PropertyDtoResponse"
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Malformed JSON, missing/invalid fields, invalid endpoint, or invalid generated query.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorResponse"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "The selected uploaded local graph is unavailable.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorResponse"
+                                }
+                            }
+                        }
+                    },
+                    "502": {
+                        "description": "Remote SPARQL or Wikidata execution failed.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorResponse"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/query": {
+            "post": {
+                "operationId": "executeGeneralQuery",
+                "tags": [
+                    "Query"
+                ],
+                "summary": "Generate and execute a query",
+                "description": "Generates constrained SPARQL from the requested graph patterns and executes it. variableName and where are semantically required; where may be an empty array.",
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/GeneralQueryHttpRequest"
+                            }
+                        }
+                    },
+                    "required": true
+                },
+                "responses": {
+                    "200": {
+                        "description": "Query results mapped to application property values.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "required": [
+                                        "data"
+                                    ],
+                                    "properties": {
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "$ref": "#/components/schemas/PropertyDtoResponse"
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Malformed JSON, missing/invalid fields, invalid endpoint, or invalid generated query.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorResponse"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "The selected uploaded local graph is unavailable.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorResponse"
+                                }
+                            }
+                        }
+                    },
+                    "502": {
+                        "description": "Remote SPARQL or Wikidata execution failed.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorResponse"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/query/stage": {
+            "post": {
+                "operationId": "listStageCandidates",
+                "tags": [
+                    "Query"
+                ],
+                "summary": "List typed candidates for one exploration stage",
+                "description": "Returns one bounded, ordered page of distinct typed RDF terms for variableName under previously committed typed bindings. Labels are display-only. Maximum/Minimum filters and blank-node bindings are rejected.",
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/StageQueryHttpRequest"
+                            }
+                        }
+                    },
+                    "required": true
+                },
+                "responses": {
+                    "200": {
+                        "description": "One page of typed candidates.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "required": [
+                                        "data"
+                                    ],
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/components/schemas/StageCandidatesHttpResponse"
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Malformed JSON, missing/invalid fields, invalid endpoint, or invalid generated query.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorResponse"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "The selected uploaded local graph is unavailable.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorResponse"
+                                }
+                            }
+                        }
+                    },
+                    "502": {
+                        "description": "Remote SPARQL or Wikidata execution failed.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorResponse"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/query/numeric-profile": {
+            "post": {
+                "operationId": "profileNumericRelation",
+                "tags": [
+                    "Query"
+                ],
+                "summary": "Profile the numeric values of one relation",
+                "description": "Returns count, min, max and up to limit distinct entity/value pairs, ordered by value, for subject predicate ?value under the where patterns. Only numeric literals are included. Maximum/Minimum filters are rejected.",
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/NumericProfileHttpRequest"
+                            }
+                        }
+                    },
+                    "required": true
+                },
+                "responses": {
+                    "200": {
+                        "description": "The numeric profile.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "required": [
+                                        "data"
+                                    ],
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/components/schemas/NumericProfileHttpResponse"
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Malformed JSON, missing/invalid fields, invalid endpoint, or invalid generated query.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorResponse"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "The selected uploaded local graph is unavailable.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorResponse"
+                                }
+                            }
+                        }
+                    },
+                    "502": {
+                        "description": "Remote SPARQL or Wikidata execution failed.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorResponse"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/query/count": {
+            "post": {
+                "operationId": "countQueryResults",
+                "tags": [
+                    "Query"
+                ],
+                "summary": "Count the distinct values of one query variable",
+                "description": "Returns the number of distinct values of variableName under the where patterns, without a LIMIT and without the rdf:type requirement of the general query. where needs at least one pattern. Maximum/Minimum keep every value tied at the extreme of the rest of the query.",
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/ResultCountHttpRequest"
+                            }
+                        }
+                    },
+                    "required": true
+                },
+                "responses": {
+                    "200": {
+                        "description": "The distinct count.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "required": [
+                                        "data"
+                                    ],
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/components/schemas/ResultCountHttpResponse"
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Malformed JSON, missing/invalid fields, invalid endpoint, or invalid generated query.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorResponse"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "The selected uploaded local graph is unavailable.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorResponse"
+                                }
+                            }
+                        }
+                    },
+                    "502": {
+                        "description": "Remote SPARQL or Wikidata execution failed.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorResponse"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/query/sparql": {
+            "post": {
+                "operationId": "generateSparql",
+                "tags": [
+                    "Query"
+                ],
+                "summary": "Generate SPARQL without executing it",
+                "description": "Uses the general-query request shape. ignoreWikidata and filterType do not affect this route.",
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/GeneralQueryHttpRequest"
+                            }
+                        }
+                    },
+                    "required": true
+                },
+                "responses": {
+                    "200": {
+                        "description": "Generated SPARQL query text.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "required": [
+                                        "data"
+                                    ],
+                                    "properties": {
+                                        "data": {
+                                            "type": "string"
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Malformed JSON, missing/invalid fields, invalid endpoint, or invalid generated query.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorResponse"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "The selected uploaded local graph is unavailable.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorResponse"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    },
+    "components": {
+        "schemas": {
+            "HealthResponse": {
+                "type": "object",
+                "title": "HealthResponse",
+                "required": [
+                    "status"
+                ],
+                "properties": {
+                    "status": {
+                        "type": "string"
+                    }
+                }
+            },
+            "EndpointHttpItem": {
+                "type": "object",
+                "title": "EndpointHttpItem",
+                "required": [
+                    "id",
+                    "label",
+                    "kind"
+                ],
+                "properties": {
+                    "id": {
+                        "type": "string"
+                    },
+                    "label": {
+                        "type": "string"
+                    },
+                    "kind": {
+                        "type": "string"
+                    }
+                }
+            },
+            "TurtleUploadOpenApiRequest": {
+                "type": "object",
+                "title": "TurtleUploadOpenApiRequest",
+                "required": [
+                    "ttlFile"
+                ],
+                "properties": {
+                    "ttlFile": {
+                        "type": "string",
+                        "description": "UTF-8 Turtle document uploaded as a file.",
+                        "format": "binary"
+                    }
+                }
+            },
+            "ErrorResponse": {
+                "type": "object",
+                "title": "ErrorResponse",
+                "required": [
+                    "error"
+                ],
+                "properties": {
+                    "error": {
+                        "type": "string"
+                    }
+                }
+            },
+            "RelationshipsHttpRequest": {
+                "type": "object",
+                "title": "RelationshipsHttpRequest",
+                "properties": {
+                    "endpointUrl": {
+                        "type": "string",
+                        "default": "https://query.wikidata.org/sparql"
+                    },
+                    "limit": {
+                        "type": "integer",
+                        "default": 20
+                    },
+                    "id": {
+                        "type": "string",
+                        "default": "<http://www.wikidata.org/entity/Q529207>"
+                    }
+                }
+            },
+            "PropertyDtoResponse": {
+                "type": "object",
+                "title": "PropertyDtoResponse",
+                "required": [
+                    "propertyId",
+                    "propertyLabel"
+                ],
+                "properties": {
+                    "propertyId": {
+                        "type": "string"
+                    },
+                    "propertyLabel": {
+                        "type": "string"
+                    },
+                    "propertyType": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    },
+                    "propertyClass": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    }
+                }
+            },
+            "RelationshipValueHttpRequest": {
+                "type": "object",
+                "title": "RelationshipValueHttpRequest",
+                "properties": {
+                    "endpointUrl": {
+                        "type": "string",
+                        "default": "https://query.wikidata.org/sparql"
+                    },
+                    "limit": {
+                        "type": "integer",
+                        "default": 20
+                    },
+                    "subjectId": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    },
+                    "predicateId": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    },
+                    "isLiteral": {
+                        "type": "boolean",
+                        "default": false
+                    }
+                }
+            },
+            "SearchHttpRequest": {
+                "type": "object",
+                "title": "SearchHttpRequest",
+                "properties": {
+                    "endpointUrl": {
+                        "type": "string",
+                        "default": "https://query.wikidata.org/sparql"
+                    },
+                    "limit": {
+                        "type": "integer",
+                        "default": 20
+                    },
+                    "search": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    }
+                }
+            },
+            "WhereHttpRequest": {
+                "type": "object",
+                "title": "WhereHttpRequest",
+                "properties": {
+                    "subject": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    },
+                    "predicate": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    },
+                    "object": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    },
+                    "filterType": {
+                        "type": [
+                            "integer",
+                            "null"
+                        ],
+                        "description": "Literal filter: 0 Starts, 1 Contains, 2 Greater/equal, 3 Lesser/equal, 4 Max, 5 Min, 6 Between (object min..max, both inclusive).",
+                        "enum": [
+                            0,
+                            1,
+                            2,
+                            3,
+                            4,
+                            5,
+                            6
+                        ]
+                    }
+                }
+            },
+            "VariableFilterHttpRequest": {
+                "type": "object",
+                "title": "VariableFilterHttpRequest",
+                "properties": {
+                    "variableName": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "description": "The filtered SPARQL variable, with or without the leading ?."
+                    },
+                    "filterType": {
+                        "type": [
+                            "integer",
+                            "null"
+                        ],
+                        "description": "0 Starts, 1 Contains, 2 Greater/equal, 3 Lesser/equal, 6 Between (value min..max).",
+                        "enum": [
+                            0,
+                            1,
+                            2,
+                            3,
+                            6
+                        ]
+                    },
+                    "value": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    }
+                }
+            },
+            "GeneralQueryHttpRequest": {
+                "type": "object",
+                "title": "GeneralQueryHttpRequest",
+                "properties": {
+                    "endpointUrl": {
+                        "type": "string",
+                        "default": "https://query.wikidata.org/sparql"
+                    },
+                    "limit": {
+                        "type": "integer",
+                        "default": 20
+                    },
+                    "where": {
+                        "type": [
+                            "array",
+                            "null"
+                        ],
+                        "items": {
+                            "$ref": "#/components/schemas/WhereHttpRequest"
+                        }
+                    },
+                    "variableName": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    },
+                    "ignoreWikidata": {
+                        "type": "boolean",
+                        "default": true
+                    },
+                    "variableFilters": {
+                        "type": "array",
+                        "description": "FE-034: variables restricted to literal values, each the object of a where pattern; optional.",
+                        "items": {
+                            "$ref": "#/components/schemas/VariableFilterHttpRequest"
+                        }
+                    }
+                }
+            },
+            "RdfTermHttp": {
+                "type": "object",
+                "title": "RdfTermHttp",
+                "required": [
+                    "type",
+                    "value"
+                ],
+                "properties": {
+                    "type": {
+                        "type": "string",
+                        "enum": [
+                            "iri",
+                            "literal",
+                            "bnode"
+                        ]
+                    },
+                    "value": {
+                        "type": "string",
+                        "description": "IRI without angle brackets, literal lexical form, or blank-node label."
+                    },
+                    "datatype": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    },
+                    "language": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    }
+                }
+            },
+            "StageBindingHttpRequest": {
+                "type": "object",
+                "title": "StageBindingHttpRequest",
+                "properties": {
+                    "variableName": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    },
+                    "term": {
+                        "$ref": "#/components/schemas/RdfTermHttp"
+                    }
+                }
+            },
+            "StageQueryHttpRequest": {
+                "type": "object",
+                "title": "StageQueryHttpRequest",
+                "properties": {
+                    "endpointUrl": {
+                        "type": "string",
+                        "default": "https://query.wikidata.org/sparql"
+                    },
+                    "variableName": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    },
+                    "where": {
+                        "type": [
+                            "array",
+                            "null"
+                        ],
+                        "items": {
+                            "$ref": "#/components/schemas/WhereHttpRequest"
+                        }
+                    },
+                    "bindings": {
+                        "type": "array",
+                        "description": "Committed typed bindings; blank nodes are rejected.",
+                        "items": {
+                            "$ref": "#/components/schemas/StageBindingHttpRequest"
+                        }
+                    },
+                    "limit": {
+                        "type": "integer",
+                        "description": "Page size, 1 to 50.",
+                        "default": 20
+                    },
+                    "offset": {
+                        "type": "integer",
+                        "description": "Page offset, 0 to 10000.",
+                        "default": 0
+                    },
+                    "variableFilters": {
+                        "type": "array",
+                        "description": "FE-034: variables restricted to literal values, each the object of a where pattern; optional.",
+                        "items": {
+                            "$ref": "#/components/schemas/VariableFilterHttpRequest"
+                        }
+                    }
+                }
+            },
+            "StageCandidateHttpResponse": {
+                "type": "object",
+                "title": "StageCandidateHttpResponse",
+                "required": [
+                    "term",
+                    "selectable"
+                ],
+                "properties": {
+                    "term": {
+                        "$ref": "#/components/schemas/RdfTermHttp"
+                    },
+                    "label": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    },
+                    "selectable": {
+                        "type": "boolean"
+                    }
+                }
+            },
+            "StageCandidatesHttpResponse": {
+                "type": "object",
+                "title": "StageCandidatesHttpResponse",
+                "required": [
+                    "variableName",
+                    "offset",
+                    "limit",
+                    "hasMore",
+                    "candidates"
+                ],
+                "properties": {
+                    "variableName": {
+                        "type": "string"
+                    },
+                    "offset": {
+                        "type": "integer"
+                    },
+                    "limit": {
+                        "type": "integer"
+                    },
+                    "hasMore": {
+                        "type": "boolean"
+                    },
+                    "candidates": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/StageCandidateHttpResponse"
+                        }
+                    }
+                }
+            },
+            "NumericProfileHttpRequest": {
+                "type": "object",
+                "title": "NumericProfileHttpRequest",
+                "properties": {
+                    "endpointUrl": {
+                        "type": "string",
+                        "default": "https://query.wikidata.org/sparql"
+                    },
+                    "where": {
+                        "type": "array",
+                        "description": "The query without the profiled relation; may be empty.",
+                        "items": {
+                            "$ref": "#/components/schemas/WhereHttpRequest"
+                        }
+                    },
+                    "subject": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "description": "Subject of the profiled relation: a SPARQL variable or an IRI in angle brackets."
+                    },
+                    "predicate": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "description": "Profiled predicate IRI in angle brackets."
+                    },
+                    "limit": {
+                        "type": "integer",
+                        "description": "Maximum number of values returned, 1 to 1000.",
+                        "default": 500
+                    },
+                    "variableFilters": {
+                        "type": "array",
+                        "description": "FE-034: variables restricted to literal values, each the object of a where pattern; optional.",
+                        "items": {
+                            "$ref": "#/components/schemas/VariableFilterHttpRequest"
+                        }
+                    }
+                }
+            },
+            "NumericProfileValueHttpResponse": {
+                "type": "object",
+                "title": "NumericProfileValueHttpResponse",
+                "required": [
+                    "entity",
+                    "value",
+                    "number"
+                ],
+                "properties": {
+                    "entity": {
+                        "$ref": "#/components/schemas/RdfTermHttp"
+                    },
+                    "label": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    },
+                    "value": {
+                        "type": "string",
+                        "description": "Literal lexical form."
+                    },
+                    "datatype": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    },
+                    "number": {
+                        "type": "number"
+                    }
+                }
+            },
+            "NumericProfileHttpResponse": {
+                "type": "object",
+                "title": "NumericProfileHttpResponse",
+                "required": [
+                    "subject",
+                    "predicate",
+                    "count",
+                    "truncated",
+                    "values"
+                ],
+                "properties": {
+                    "subject": {
+                        "type": "string"
+                    },
+                    "predicate": {
+                        "type": "string"
+                    },
+                    "count": {
+                        "type": "integer",
+                        "description": "Distinct entity/value pairs with a numeric value."
+                    },
+                    "min": {
+                        "type": [
+                            "number",
+                            "null"
+                        ]
+                    },
+                    "max": {
+                        "type": [
+                            "number",
+                            "null"
+                        ]
+                    },
+                    "truncated": {
+                        "type": "boolean",
+                        "description": "True when values holds fewer pairs than count."
+                    },
+                    "values": {
+                        "type": "array",
+                        "description": "Pairs ordered by number.",
+                        "items": {
+                            "$ref": "#/components/schemas/NumericProfileValueHttpResponse"
+                        }
+                    }
+                }
+            },
+            "ResultCountHttpRequest": {
+                "type": "object",
+                "title": "ResultCountHttpRequest",
+                "properties": {
+                    "endpointUrl": {
+                        "type": "string",
+                        "default": "https://query.wikidata.org/sparql"
+                    },
+                    "variableName": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "description": "Counted SPARQL variable, with or without the leading ?."
+                    },
+                    "where": {
+                        "type": [
+                            "array",
+                            "null"
+                        ],
+                        "description": "Graph patterns; at least one. Maximum/Minimum keep every value tied at the extreme of the rest (BE-004).",
+                        "items": {
+                            "$ref": "#/components/schemas/WhereHttpRequest"
+                        }
+                    },
+                    "variableFilters": {
+                        "type": "array",
+                        "description": "FE-034: variables restricted to literal values, each the object of a where pattern; optional.",
+                        "items": {
+                            "$ref": "#/components/schemas/VariableFilterHttpRequest"
+                        }
+                    }
+                }
+            },
+            "ResultCountHttpResponse": {
+                "type": "object",
+                "title": "ResultCountHttpResponse",
+                "required": [
+                    "variableName",
+                    "count"
+                ],
+                "properties": {
+                    "variableName": {
+                        "type": "string"
+                    },
+                    "count": {
+                        "type": "integer",
+                        "description": "Distinct values of variableName under where; no LIMIT applies."
+                    }
+                }
+            }
+        }
+    }
+}

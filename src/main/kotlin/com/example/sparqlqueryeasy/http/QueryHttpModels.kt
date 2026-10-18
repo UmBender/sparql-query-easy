@@ -211,7 +211,7 @@ data class ResultCountHttpRequest(
     val endpointUrl: String = DEFAULT_ENDPOINT_URL,
     @JsonSchema.Description("Counted SPARQL variable, with or without the leading ?.")
     val variableName: String? = null,
-    @JsonSchema.Description("Graph patterns; at least one. Maximum/Minimum filters are rejected.")
+    @JsonSchema.Description("Graph patterns; at least one. Maximum/Minimum keep every value tied at the extreme of the rest (BE-004).")
     val where: List<WhereHttpRequest>? = null,
     @JsonSchema.Description(
         "FE-034: variables restricted to literal values, each the object of a where pattern; optional.",
