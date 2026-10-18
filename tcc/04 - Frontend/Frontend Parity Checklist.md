@@ -50,20 +50,20 @@ check that passes (Playwright files in `frontend/tests/`, Vitest specs in
 | G-10 | Remove node (with its relations) / Remove relation (only that edge, red) | `QUAL-005 Remove deletes only the chosen node …`, `Remove relation deletes only the chosen edge`, `QUAL-005 Remove relation deletes only …` | FE-044 | — | new: `editor.e2e.ts` G-09 G-10 G-11; `operations.spec.ts` |
 | G-11 | Edge action: Convert relation to variable (predicate variable, FE-003) | `edge action menu converts only a relation predicate …` | FE-044 | `predicate-variable-edge` | new: `editor.e2e.ts` G-09 G-10 G-11 |
 | G-12 | Variable relations render green however created | `variable relations render the green label however they were created` | FE-041/FE-044 | — | new: `editor.e2e.ts` G-01 G-12 |
-| G-13 | Toggle Boolean value, Edit value (value fed by a variable) | `QUAL-005 type-specific node actions change only their node …` | FE-045 | — | legacy |
+| G-13 | Toggle Boolean value, Edit value (value fed by a variable) | `QUAL-005 type-specific node actions change only their node …` | FE-045 | — | new: `filters.e2e.ts` G-13; `operations.spec.ts` |
 | G-14 | The node-kind graph sends one filter per relation | `QUAL-005 the node-kind graph sends one filter per relation` | FE-042 | all | new: `operations.spec.ts` QUAL-005 graph; `request-parity.spec.ts` |
 
 ## Filters
 
 | ID | Behavior | Legacy tests | Target | Scenario | Status |
 |---|---|---|---|---|---|
-| F-01 | Editor offers exact, starts with, contains (text); exact, ≥, ≤, between, MAX, MIN (numbers); value variable adds Any value and no MAX/MIN | `the numeric filter editor offers at least, at most and between …`, `an exact numeric match runs without a starts-with filter` | FE-045 | `filter-*` | legacy |
-| F-02 | Add value filter: lists datatype relations, creates a value variable seeded from the profile | `Add value filter lists datatype relations …`, `Add value filter on a relation without numbers …` | FE-045 | `add-value-filter` | legacy |
-| F-03 | Histogram + range slider writes ≥, between, ≤; loading/empty/error/truncated states | `the filter editor histogram follows the range handles …`, `a truncated profile says …`, `… shows loading, empty, error and unprofilable states`, `a slow profile for an earlier editor …`, `… fits a narrow viewport` | FE-045 | `numeric-profile-*` | legacy |
-| F-04 | Cycle over kept entities (5 at a time, play/pause, MIN/MAX ties) | `previous and next cycle over the kept entities …`, `play cycles the kept entities …`, `MIN shows every tied lowest entity …`, `the kept entities say when nothing is kept` | FE-045 | — | legacy |
-| F-05 | Text suggestions while typing (starts with / contains, stand-in variable) | `FE-038 typing in a value variable filter suggests …`, `FE-038 Edit value on a value node suggests …` | FE-045 | `text-suggestions-*` | legacy |
+| F-01 | Editor offers exact, starts with, contains (text); exact, ≥, ≤, between, MAX, MIN (numbers); value variable adds Any value and no MAX/MIN | `the numeric filter editor offers at least, at most and between …`, `an exact numeric match runs without a starts-with filter` | FE-045 | `filter-*` | new: `filters.e2e.ts` F-01 (two cases); `filter-form.spec.ts` |
+| F-02 | Add value filter: lists datatype relations, creates a value variable seeded from the profile | `Add value filter lists datatype relations …`, `Add value filter on a relation without numbers …` | FE-045 | `add-value-filter` | new: `filters.e2e.ts` F-02 |
+| F-03 | Histogram + range slider writes ≥, between, ≤; loading/empty/error/truncated states | `the filter editor histogram follows the range handles …`, `a truncated profile says …`, `… shows loading, empty, error and unprofilable states`, `a slow profile for an earlier editor …`, `… fits a narrow viewport` | FE-045 | `numeric-profile-*` | new: `filters.e2e.ts` F-03 (two cases); `histogram-model.spec.ts` |
+| F-04 | Cycle over kept entities (5 at a time, play/pause, MIN/MAX ties) | `previous and next cycle over the kept entities …`, `play cycles the kept entities …`, `MIN shows every tied lowest entity …`, `the kept entities say when nothing is kept` | FE-045 | — | new: `filters.e2e.ts` F-04; `histogram-model.spec.ts` |
+| F-05 | Text suggestions while typing (starts with / contains, stand-in variable) | `FE-038 typing in a value variable filter suggests …`, `FE-038 Edit value on a value node suggests …` | FE-045 | `text-suggestions-*` | new: `filters.e2e.ts` F-05 (two cases) |
 | F-06 | Value-variable filter sent as `variableFilters`; Assume settles it without its filter | `FE-034 staged Run Query sends the value variable filter …`, `FE-034 Assume settles the value variable at once …` | FE-042/FE-045 | `value-variable-*` | legacy |
-| F-07 | `fetchNumericProfile` request shape | `fetchNumericProfile profiles the relation of a filter node …` | FE-042/FE-045 | `numeric-profile-*` | legacy |
+| F-07 | `fetchNumericProfile` request shape | `fetchNumericProfile profiles the relation of a filter node …` | FE-042/FE-045 | `numeric-profile-*` | new: `filters.e2e.ts` F-03 (request body); `request-parity.spec.ts` |
 
 ## Query exploration (Run Query)
 

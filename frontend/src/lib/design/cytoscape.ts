@@ -218,3 +218,59 @@ export function possibleGraphStylesheet(tokens: Tokens = defaultTokens): StyleRu
 		{ selector: 'edge.label-below', style: { 'text-margin-y': 'data(labelOffset)' } }
 	];
 }
+
+/** Stylesheet of the filter editor's mini result graph (FE-035): entities above their values. */
+export function filterPreviewStylesheet(tokens: Tokens = defaultTokens): StyleRule[] {
+	const { graph } = tokens;
+	return [
+		{
+			selector: 'node[kind = "entity"]',
+			style: {
+				shape: 'ellipse',
+				width: 96,
+				height: 56,
+				'background-color': graph.nodes.entity.fill,
+				label: 'data(label)',
+				'font-size': 15,
+				color: graph.nodes.entity.text,
+				'text-valign': 'center',
+				'text-wrap': 'ellipsis',
+				'text-max-width': 86,
+				'text-outline-color': graph.nodes.entity.fill,
+				'text-outline-width': 2
+			}
+		},
+		{
+			selector: 'node[kind = "value"]',
+			style: {
+				shape: 'round-rectangle',
+				width: 80,
+				height: 36,
+				'background-color': graph.nodes.value.fill,
+				label: 'data(label)',
+				'font-size': 16,
+				'font-weight': 'bold',
+				color: graph.nodes.value.text,
+				'text-valign': 'center',
+				'text-wrap': 'ellipsis',
+				'text-max-width': 76
+			}
+		},
+		{
+			selector: 'edge',
+			style: {
+				width: 3,
+				'line-color': graph.edge.line,
+				'target-arrow-color': graph.edge.line,
+				'target-arrow-shape': 'triangle',
+				'curve-style': 'straight',
+				label: 'data(label)',
+				'font-size': 13,
+				color: graph.edge.label,
+				'text-background-color': graph.edge.labelBackground,
+				'text-background-opacity': 1,
+				'text-background-padding': 2
+			}
+		}
+	];
+}

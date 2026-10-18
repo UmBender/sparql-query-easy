@@ -5,7 +5,7 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
 	import { api } from '#lib/api/client.js';
-	import { BUILT_IN_ENDPOINTS } from '#lib/domain/index.js';
+	import { BUILT_IN_ENDPOINTS, nodeById } from '#lib/domain/index.js';
 	import { QueryStore } from '#lib/stores/query-store.svelte.js';
 	import { EditorController } from './editor-controller.svelte.js';
 	import { CanvasView } from './canvas-view.svelte.js';
@@ -18,6 +18,7 @@
 	import EditorToolbar from './editor-toolbar.svelte';
 	import GraphOverlays from './graph-overlays.svelte';
 	import StatusBar from './status-bar.svelte';
+	import FilterEditor from '#lib/features/filters/filter-editor.svelte';
 
 	const store = new QueryStore();
 	const controller = new EditorController({ store, api });
@@ -90,4 +91,9 @@
 	<StatusBar {store} {health} />
 	<ResultsSheet {controller} />
 	<SparqlDialog {controller} />
+	{#if controller.editorRequest && nodeById(store.graph, controller.editorRequest.nodeId)}
+		{#key controller.editorRequest.token}
+			<FilterEditor {controller} request={controller.editorRequest} />
+		{/key}
+	{/if}
 </div>

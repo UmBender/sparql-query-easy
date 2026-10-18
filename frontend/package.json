@@ -67,6 +67,6 @@
 		"@tanstack/svelte-query": "^6.3.4",
 		"cytoscape": "^3.33.1",
 		"sveltekit-superforms": "^3.0.0",
-		"zod": "^3.25.76"
+		"zod": "^4.6.7"
 	}
 }
