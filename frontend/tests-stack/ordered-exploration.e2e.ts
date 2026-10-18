@@ -36,6 +36,8 @@ test.beforeEach(async ({ page, baseURL }) => {
 		if (pathname === '/api/query/stage') stageRequests.push(JSON.parse(request.postData()!));
 		if (pathname === '/api/query') legacyQueryRequests += 1;
 	});
+	// Returning visitor: the first-visit guided tour (FE-048) would cover the toolbar.
+	await page.addInitScript(() => window.localStorage.setItem('easyquery-tour-seen', 'true'));
 	await page.goto('/');
 	await expect(page.locator('#status-api')).toHaveText('API: online');
 	const upload = await page.request.post('/api/local-database', {
