@@ -1,30 +1,28 @@
 package com.example.sparqlqueryeasy.persistence
 
-import io.zonky.test.db.postgres.embedded.EmbeddedPostgres
 import java.nio.file.Files
 import java.nio.file.Path
 import java.util.concurrent.CountDownLatch
 
 /**
- * Embedded PostgreSQL for the frontend's real-stack Playwright suite (AUTH-003). Arguments: port and a
- * file created once the server accepts connections. Runs until stopped (SIGTERM closes the server). Test
- * infrastructure only: the database is empty at every start and Ktor's Flyway migrations create the tables.
+ * PostgreSQL for the frontend's real-stack Playwright suite (AUTH-003, QUAL-011). Argument: a file that
+ * receives the JDBC URL once the container accepts connections (Docker picks the host port). Runs until
+ * stopped (SIGTERM stops the container). Test infrastructure only: the database is empty at every start
+ * and Ktor's Flyway migrations create the tables.
  */
 fun main(args: Array<String>) {
-    val port = args.getOrNull(0)?.toInt() ?: DEFAULT_STACK_POSTGRES_PORT
-    val ready = Path.of(args.getOrNull(1) ?: "build/stack-postgres.ready")
+    val ready = Path.of(args.getOrNull(0) ?: "build/stack-postgres.ready")
     Files.deleteIfExists(ready)
-    val server = EmbeddedPostgres.builder().setPort(port).start()
+    val server = startPostgresContainer()
     Runtime.getRuntime().addShutdownHook(
         Thread {
             Files.deleteIfExists(ready)
-            server.close()
+            server.stop()
         },
     )
+    val url = server.jdbcUrlFor("postgres")
     Files.createDirectories(ready.toAbsolutePath().parent)
-    Files.writeString(ready, "$port\n")
-    println("EasyQuery stack PostgreSQL on port $port")
+    Files.writeString(ready, "$url\n")
+    println("EasyQuery stack PostgreSQL at $url")
     CountDownLatch(1).await()
 }
-
-private const val DEFAULT_STACK_POSTGRES_PORT = 54329

@@ -1,6 +1,8 @@
 # All local gates of tcc/06 - Development/Operational Map.md (QUAL-007, FE-049).
 # Tests only: no deploy, no secrets. Every suite is offline (QUAL-003); the
-# Ktor-backed suites start the built distribution on a local port.
+# Ktor-backed suites start the built distribution on a local port. PostgreSQL
+# runs as postgres:17-alpine through Testcontainers on the runner's Docker
+# (QUAL-011); each job pre-pulls it so a pull failure is reported on its own.
 name: CI
 
 on:
@@ -36,6 +38,8 @@ jobs:
           path: /tmp/sparql-query-easy-gradle
           key: gradle-${{ runner.os }}-${{ hashFiles('build.gradle.kts', 'settings.gradle.kts', 'gradle.properties', 'gradle/wrapper/gradle-wrapper.properties') }}
           restore-keys: gradle-${{ runner.os }}-
+      - name: Pull the test PostgreSQL image (QUAL-011)
+        run: docker pull postgres:17-alpine
       - run: ./gradlew ktlintCheck detekt test --no-daemon
       - if: failure()
         uses: actions/upload-artifact@v4
@@ -74,6 +78,8 @@ jobs:
       - run: npm run lint
       # Vitest (server with coverage, then browser components), build, Playwright with screenshots and axe.
       - run: npm test
+      - name: Pull the test PostgreSQL image (QUAL-011)
+        run: docker pull postgres:17-alpine
       - run: npm run test:stack
       - if: failure()
         uses: actions/upload-artifact@v4

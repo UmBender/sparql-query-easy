@@ -14,7 +14,7 @@ Ordered by dependencies, then priority among selection candidates. See [worker r
 | AUTH-002 | CANCELLED | P0 | frontend | [Integrate the login and logout frontend flow](<items/AUTH-002-login-frontend-integration.md>) |
 | BE-005 | DONE | P1 | backend | [Add PostgreSQL persistence with Exposed, HikariCP and Flyway migrations at startup](<items/BE-005-postgresql-persistence-foundation.md>) |
 | DEC-012 | DONE | P2 | decision | [Decide whether persistence tests keep embedded PostgreSQL or move to Testcontainers](<items/DEC-012-test-database-engine.md>) |
-| QUAL-011 | READY | P2 | quality | [Run the persistence and real-stack tests on Testcontainers PostgreSQL](<items/QUAL-011-testcontainers-postgres.md>) |
+| QUAL-011 | DONE | P2 | quality | [Run the persistence and real-stack tests on Testcontainers PostgreSQL](<items/QUAL-011-testcontainers-postgres.md>) |
 | BE-007 | BACKLOG | P2 | backend | [Report database connectivity on GET /health without failing the query API](<items/BE-007-health-database-status.md>) |
 | AUTH-003 | DONE | P1 | frontend | [Register, log in and log out in the new frontend](<items/AUTH-003-new-frontend-auth.md>) |
 | BUG-001 | DONE | P0 | bug | [Repair C# local-search capture instrumentation and recapture baselines](<items/BUG-001-csharp-local-search-harness.md>) |

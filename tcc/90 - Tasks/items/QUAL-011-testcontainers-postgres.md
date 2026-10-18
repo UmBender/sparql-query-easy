@@ -1,7 +1,7 @@
 ---
 id: QUAL-011
 title: Run the persistence and real-stack tests on Testcontainers PostgreSQL
-status: READY
+status: DONE
 priority: P2
 type: quality
 depends_on: [DEC-012, BE-005]
@@ -67,16 +67,16 @@ infrastructure, the build and the docs change. Skill: `tcc-test`
 
 ## Acceptance criteria
 
-- [ ] No `io.zonky` reference remains in the build or the sources.
-- [ ] `PostgresDatabaseTest` and `AuthRoutesTest` pass on Testcontainers with
+- [x] No `io.zonky` reference remains in the build or the sources.
+- [x] `PostgresDatabaseTest` and `AuthRoutesTest` pass on Testcontainers with
       the same assertions: migrations V1 and V2 on a fresh database, the
       second start a no-op, unavailable-database behavior, accounts and
       sessions.
-- [ ] `npm --prefix frontend run test:stack` passes (8 tests), and
+- [x] `npm --prefix frontend run test:stack` passes (8 tests), and
       `docker ps -a` shows no leftover test container afterwards.
-- [ ] With Docker stopped, `./gradlew test` fails with a message that names
+- [x] With Docker stopped, `./gradlew test` fails with a message that names
       Docker.
-- [ ] The CI workflow change is ready. Like QUAL-007, the first GitHub run
+- [x] The CI workflow change is ready. Like QUAL-007, the first GitHub run
       waits for a push you authorize.
 
 ## Validation
@@ -85,3 +85,30 @@ Focused: `./gradlew test --tests '*PostgresDatabaseTest' --tests '*AuthRoutesTes
 Closing gate (Operational Map): Kotlin `ktlintCheck detekt test`, plus
 `npm --prefix frontend run test:stack`. The oracle is the unchanged
 assertions in the existing tests.
+
+## Result (2026-10-18)
+
+- `org.testcontainers:testcontainers-postgresql:2.0.5` replaces the zonky
+  artifacts; it works with the local Docker Engine 29.8.2.
+- `TestPostgres.kt` has a shared `startPostgresContainer()`: one
+  `postgres:17-alpine` per test JVM, with a fresh database per
+  `freshDatabase()`. The `unreachable()` API is unchanged. The container is
+  stopped by a shutdown hook and by Ryuk. It fails first with a message
+  naming Docker when Docker is unreachable.
+- Stack handshake decision: Docker picks the host port, and `StackPostgres`
+  writes the JDBC URL into `build/stack-postgres.ready`, which
+  `playwright.stack.config.ts` passes as `EASYQUERY_DB_URL`. Port 54329 is
+  no longer used.
+- CI: each job pulls `postgres:17-alpine` in its own step before the tests.
+- Docs: Operational Map (persistence, accounts, CI and real-stack rows),
+  README verification (Docker requirement), dated notes on BE-005 and AUTH-003.
+- Validation: focused `PostgresDatabaseTest` (4) and `AuthRoutesTest` (13);
+  Kotlin `ktlintCheck detekt test` (204, the FE-049 count); `test:stack`
+  (8 passed, with no `postgres:17-alpine` container and no ready file left
+  afterwards); docs check. No-Docker check: the Docker socket was hidden in a
+  private mount namespace (`unshare -rm`, tmpfs over `/run`), and the two
+  container-backed `PostgresDatabaseTest` cases failed with the Docker
+  message. Setting `DOCKER_HOST` to a bad socket is not enough, because
+  Testcontainers falls back to `/var/run/docker.sock`.
+- Pending: the first GitHub run of the changed workflow waits for an
+  authorized push.

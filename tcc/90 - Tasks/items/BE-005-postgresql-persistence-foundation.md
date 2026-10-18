@@ -64,3 +64,9 @@ rather than reopening it:
   above: DEC-012 chose Testcontainers (2026-10-18); QUAL-011 implements it.
 - The repository pattern with an example table and tests already exists as
   `V2__accounts.sql`, `PostgresAccountStore` and `AuthRoutesTest` (AUTH-001).
+
+## Note (2026-10-18, QUAL-011)
+
+Per DEC-012, the test database moved from embedded PostgreSQL to
+`postgres:17-alpine` through Testcontainers (QUAL-011). The work above stays
+as written; the current test setup is in the Operational Map.

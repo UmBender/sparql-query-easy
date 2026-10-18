@@ -74,7 +74,9 @@ npm --prefix frontend test
 npm --prefix frontend run test:stack
 ```
 
-CI (`.github/workflows/ci.yml`) runs the same gates. The live Wikidata
+The Kotlin tests and `test:stack` start PostgreSQL (`postgres:17-alpine`) in
+Docker through Testcontainers, so they need a running Docker daemon reachable
+by your user. CI (`.github/workflows/ci.yml`) runs the same gates. The live Wikidata
 integration task is opt-in and is not part of normal validation.
 
 ## Documentation

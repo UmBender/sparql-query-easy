@@ -74,8 +74,8 @@ dependencies {
     testImplementation("io.ktor:ktor-client-content-negotiation:$ktorVersion")
     testImplementation("io.ktor:ktor-client-mock:$ktorVersion")
     testImplementation("io.swagger.parser.v3:swagger-parser:2.1.48")
-    testImplementation("io.zonky.test:embedded-postgres:2.2.2")
-    testImplementation(platform("io.zonky.test.postgres:embedded-postgres-binaries-bom:17.10.0"))
+    // QUAL-011 (DEC-012): PostgreSQL for tests runs in Docker through Testcontainers.
+    testImplementation("org.testcontainers:testcontainers-postgresql:2.0.5")
 }
 
 tasks.test {

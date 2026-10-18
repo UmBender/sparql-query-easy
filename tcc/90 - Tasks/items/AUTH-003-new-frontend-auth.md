@@ -62,3 +62,9 @@ password recovery link.
 - Validation: frontend check, lint, `npm test` (162 Vitest server, 4
   component, 78 Playwright), `test:stack` (8, no PostgreSQL left running),
   Kotlin `ktlintCheck detekt test` (206), docs check.
+
+## Note (2026-10-18, QUAL-011)
+
+Per DEC-012, the test database moved from embedded PostgreSQL to
+`postgres:17-alpine` through Testcontainers (QUAL-011). The work above stays
+as written; the current test setup is in the Operational Map.
