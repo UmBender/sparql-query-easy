@@ -66,6 +66,7 @@ class OpenApiRoutesTest {
                 mapOf(
                     "/" to setOf("get"),
                     "/health" to setOf("get"),
+                    "/api/endpoints" to setOf("get"),
                     "/api/local-database" to setOf("post"),
                     "/api/query" to setOf("post"),
                     "/api/query/relationship-value" to setOf("post"),

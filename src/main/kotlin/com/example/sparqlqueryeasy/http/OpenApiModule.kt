@@ -84,6 +84,22 @@ internal fun Route.documentHealth(): Route =
         }
     }
 
+internal fun Route.documentEndpoints(): Route =
+    describe {
+        operationId = "listEndpoints"
+        summary = "List the selectable endpoints"
+        description =
+            "Returns the built-in graphs and Wikidata the frontend offers. Each id is accepted as endpointUrl " +
+            "by the query routes; uploaded graphs are not listed."
+        tag("Application")
+        responses {
+            HttpStatusCode.OK {
+                description = "Selectable endpoints with kind local or remote."
+                schema = jsonSchema<DataResponse<List<EndpointHttpItem>>>()
+            }
+        }
+    }
+
 internal fun Route.documentLocalDatabaseUpload(): Route =
     describe {
         operationId = "uploadLocalDatabase"

@@ -126,6 +126,23 @@ body/content type are **not equivalent**. The user approved retaining Kotlin
 JSON as an intentional difference under
 [[../90 - Tasks/items/DEC-009-health-response-contract]].
 
+### `GET /api/endpoints`
+
+BE-006. Returns `200 OK` with the endpoints the frontend offers, built from
+the constants `EndpointContextResolver` accepts (`SELECTABLE_ENDPOINTS`):
+
+```json
+{ "data": [
+  { "id": "CampeonatoBrasileiro2023", "label": "Campeonato Brasileiro 2023", "kind": "local" },
+  { "id": "PokemonGen1", "label": "Pokémon (generation 1)", "kind": "local" },
+  { "id": "https://query.wikidata.org/sparql", "label": "Wikidata", "kind": "remote" }
+] }
+```
+
+Each `id` is sent as `endpointUrl`. Uploaded graphs (process-local ids)
+are not listed. No error response. Tests: `EndpointsRoutesTest`,
+`OpenApiRoutesTest` (nine operations).
+
 ### `POST /api/local-database`
 
 Accepts `multipart/form-data` with one file field named `ttlFile`. The first

@@ -2,6 +2,7 @@
 
 package com.example.sparqlqueryeasy.http
 
+import com.example.sparqlqueryeasy.application.endpoints.WIKIDATA_ENDPOINT_URL
 import com.example.sparqlqueryeasy.application.query.NumericProfile
 import com.example.sparqlqueryeasy.application.query.NumericProfileRequest
 import com.example.sparqlqueryeasy.application.query.PROFILE_DEFAULT_LIMIT
@@ -40,7 +41,7 @@ import com.example.sparqlqueryeasy.wikidata.query.VariableTerm
 import io.ktor.openapi.JsonSchema
 import kotlinx.serialization.Serializable
 
-internal const val DEFAULT_ENDPOINT_URL = "https://query.wikidata.org/sparql"
+internal const val DEFAULT_ENDPOINT_URL = WIKIDATA_ENDPOINT_URL
 internal const val DEFAULT_LIMIT = 20
 
 @Serializable
@@ -441,3 +442,11 @@ private fun RdfValue.toTermResponse(): RdfTermHttp =
         is Literal -> RdfTermHttp("literal", lexicalForm, datatype?.value, language)
         is BlankNode -> RdfTermHttp("bnode", identifier)
     }
+
+/** One selectable endpoint of GET /api/endpoints (BE-006). */
+@Serializable
+data class EndpointHttpItem(
+    val id: String,
+    val label: String,
+    val kind: String,
+)

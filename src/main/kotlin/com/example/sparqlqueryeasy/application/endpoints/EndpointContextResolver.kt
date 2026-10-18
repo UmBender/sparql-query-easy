@@ -11,7 +11,25 @@ import java.net.URISyntaxException
 const val BRASILEIRAO_ENDPOINT_ID = "CampeonatoBrasileiro2023"
 const val POKEMON_ENDPOINT_ID = "PokemonGen1"
 const val POKEMON_RESOURCE_NAME = "pokemon_gen1.ttl"
+const val WIKIDATA_ENDPOINT_URL = "https://query.wikidata.org/sparql"
 private const val WIKIDATA_ENDPOINT_MARKER = "query.wikidata.org/sparql"
+
+enum class SelectableEndpointKind { LOCAL, REMOTE }
+
+/** An endpoint the frontend offers for selection (BE-006); [id] is sent as endpointUrl. */
+data class SelectableEndpoint(
+    val id: String,
+    val label: String,
+    val kind: SelectableEndpointKind,
+)
+
+/** Built-in graphs and Wikidata, from the same constants the resolver accepts. */
+val SELECTABLE_ENDPOINTS: List<SelectableEndpoint> =
+    listOf(
+        SelectableEndpoint(BRASILEIRAO_ENDPOINT_ID, "Campeonato Brasileiro 2023", SelectableEndpointKind.LOCAL),
+        SelectableEndpoint(POKEMON_ENDPOINT_ID, "Pokémon (generation 1)", SelectableEndpointKind.LOCAL),
+        SelectableEndpoint(WIKIDATA_ENDPOINT_URL, "Wikidata", SelectableEndpointKind.REMOTE),
+    )
 
 /** A Ktor-free source of UTF-8 Turtle text. Implementations close their own underlying resources. */
 fun interface TurtleTextSource {

@@ -12,6 +12,7 @@ import com.example.sparqlqueryeasy.application.endpoints.LocalGraphUnavailableFa
 import com.example.sparqlqueryeasy.application.endpoints.POKEMON_ENDPOINT_ID
 import com.example.sparqlqueryeasy.application.endpoints.POKEMON_RESOURCE_NAME
 import com.example.sparqlqueryeasy.application.endpoints.ParsedBuiltInGraphProvider
+import com.example.sparqlqueryeasy.application.endpoints.SELECTABLE_ENDPOINTS
 import com.example.sparqlqueryeasy.application.localdatabase.InMemoryLocalGraphCache
 import com.example.sparqlqueryeasy.application.localdatabase.LocalDatabaseUploadRequest
 import com.example.sparqlqueryeasy.application.localdatabase.LocalDatabaseUploadResult
@@ -169,6 +170,11 @@ fun Application.configureRouting(dependencies: HttpDependencies = defaultHttpDep
     routing {
         get("/") { call.respondRedirect("/index2.html") }.documentRootRedirect()
         get("/health") { call.respond(healthService.current()) }.documentHealth()
+        get("/api/endpoints") {
+            call.respond(
+                DataResponse(SELECTABLE_ENDPOINTS.map { EndpointHttpItem(it.id, it.label, it.kind.name.lowercase()) }),
+            )
+        }.documentEndpoints()
         localDatabaseRoutes(dependencies.localDatabaseUploadService)
         dependencies.query?.let(::queryRoutes)
         openApiDocumentationRoutes()
