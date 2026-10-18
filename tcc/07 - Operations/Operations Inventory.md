@@ -13,7 +13,9 @@ not independently queried.
 **Confirmed:** `Dockerfile` and `.dockerignore` define a local-only Kotlin
 container build. See [[Local JVM and Container Runtime]]. No image is deployed.
 
-**Confirmed absent from the repository:** Compose file, Kubernetes manifests, Terraform, AWS configuration, reverse-proxy configuration, DNS records, TLS configuration, backup configuration, and Kotlin deployment workflow.
+**Confirmed present (OPS-006):** `compose.yaml` (db, backend, web) and the local Caddy reverse proxy (`deploy/Caddyfile`, HTTP only); see [[Docker Compose Stack]].
+
+**Confirmed absent from the repository:** Kubernetes manifests, Terraform, AWS configuration, DNS records, TLS configuration, backup configuration, and Kotlin deployment workflow.
 
 ```mermaid
 flowchart LR

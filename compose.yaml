@@ -1,0 +1,60 @@
+# OPS-006: PostgreSQL, the Ktor backend and the Caddy web front end on one
+# origin. Local HTTP only (TLS, backups and deployment: OPS-002/004/005).
+# Runbook: tcc/07 - Operations/Docker Compose Stack.md.
+name: easyquery
+
+x-db-password: &db-password ${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD in .env (see .env.example)}
+
+services:
+  db:
+    image: postgres:17-alpine
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-easyquery}
+      POSTGRES_USER: ${POSTGRES_USER:-easyquery}
+      POSTGRES_PASSWORD: *db-password
+    volumes:
+      - db-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U \"$${POSTGRES_USER}\" -d \"$${POSTGRES_DB}\""]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+    restart: unless-stopped
+
+  backend:
+    build: .
+    image: easyquery-backend:local
+    environment:
+      EASYQUERY_ENVIRONMENT: ${EASYQUERY_ENVIRONMENT:-production}
+      EASYQUERY_DB_URL: jdbc:postgresql://db:5432/${POSTGRES_DB:-easyquery}
+      EASYQUERY_DB_USER: ${POSTGRES_USER:-easyquery}
+      EASYQUERY_DB_PASSWORD: *db-password
+      EASYQUERY_EXTREME_RESULT_LIMIT: ${EASYQUERY_EXTREME_RESULT_LIMIT:-100}
+      EASYQUERY_AUTH_ATTEMPTS_PER_MINUTE: ${EASYQUERY_AUTH_ATTEMPTS_PER_MINUTE:-10}
+      # Only Caddy reaches the backend, so X-Forwarded-For names the client.
+      EASYQUERY_TRUST_PROXY: "true"
+    depends_on:
+      db:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "--fail", "--silent", "http://127.0.0.1:8080/health"]
+      interval: 5s
+      timeout: 3s
+      start_period: 60s
+      retries: 20
+    restart: unless-stopped
+
+  web:
+    build:
+      context: .
+      dockerfile: deploy/web.Dockerfile
+    image: easyquery-web:local
+    ports:
+      - "127.0.0.1:${WEB_PORT:-8080}:80"
+    depends_on:
+      backend:
+        condition: service_healthy
+    restart: unless-stopped
+
+volumes:
+  db-data:
