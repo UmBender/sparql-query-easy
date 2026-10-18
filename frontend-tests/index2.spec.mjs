@@ -3536,3 +3536,182 @@ test('FE-038 Edit value on a value node suggests values containing the text thro
   await page.waitForTimeout(600);
   expect(requests).toHaveLength(sent);
 });
+
+// ── QUAL-006: legacy utilities without earlier coverage ───────────────
+// These pin toolbar and page behavior the SvelteKit app must reproduce
+// (tcc/04 - Frontend/Frontend Parity Checklist.md).
+
+test('QUAL-006 the guided tour starts once on page load', async ({ page }) => {
+  await page.addInitScript(() => {
+    window.__tourStarts = 0;
+    Object.defineProperty(window, 'introJs', {
+      configurable: true,
+      get: () => () => ({ setOptions() { return this; }, start() { window.__tourStarts += 1; } }),
+      set() {},
+    });
+  });
+  await page.reload();
+  await expect.poll(() => page.evaluate(() => window.__tourStarts)).toBe(1);
+});
+
+// The jQuery stub's is() is always false, so the toggle-on handler
+// (index2.html, cose on check) is not observable here; the checkbox state is.
+test('QUAL-006 Auto Layout decides whether adding a node runs the cose layout', async ({ page }) => {
+  await disableAutoLayout(page);
+  await page.evaluate(() => {
+    window.__layouts = [];
+    const original = cy.layout.bind(cy);
+    cy.layout = options => { window.__layouts.push(options.name); return original(options); };
+  });
+  await page.evaluate(() => window.addNewVariable());
+  expect(await page.evaluate(() => window.__layouts)).toEqual([]);
+  await page.evaluate(() => { document.getElementById('auto-layout').checked = true; });
+  await page.evaluate(() => window.addNewVariable());
+  await page.evaluate(() => window.addNewValueVariable());
+  expect(await page.evaluate(() => window.__layouts)).toEqual(['cose', 'cose']);
+});
+
+test('QUAL-006 Export Query downloads the graph and Upload Query restores it', async ({ page }) => {
+  await disableAutoLayout(page);
+  await page.evaluate(() => {
+    cy.add([
+      { group: 'nodes', data: { id: '?team', value: '?team', label: '?', type: 'variable' }, position: { x: 100, y: 100 } },
+      { group: 'nodes', data: { id: '<https://example.test/poa>', value: '<https://example.test/poa>', label: 'Porto Alegre', type: 'node' }, position: { x: 300, y: 100 } },
+      { group: 'edges', data: { id: 'city', source: '?team', target: '<https://example.test/poa>', nodeId: '<https://example.test/city>', label: 'city' } },
+    ]);
+  });
+  const downloadPromise = page.waitForEvent('download');
+  await page.evaluate(() => window.saveQuery());
+  const download = await downloadPromise;
+  expect(download.suggestedFilename()).toBe('query_exported.json');
+  const saved = JSON.parse(await (await download.createReadStream()).toArray().then(chunks => Buffer.concat(chunks).toString('utf8')));
+  expect(saved.elements.nodes.map(node => node.data.id).sort()).toEqual(['<https://example.test/poa>', '?team']);
+  expect(saved.elements.edges.map(edge => edge.data.nodeId)).toEqual(['<https://example.test/city>']);
+
+  await page.evaluate(() => newQuery());
+  await expect(page.locator('#status-nodes')).toHaveText('Nodes: 0');
+  await page.locator('#upload-json').setInputFiles({ name: 'query.json', mimeType: 'application/json', buffer: Buffer.from(JSON.stringify(saved)) });
+  await expect.poll(() => page.evaluate(() => cy.nodes().length)).toBe(2);
+  expect(await page.evaluate(() => cy.edges().map(edge => [edge.id(), edge.data('source'), edge.data('target')]))).toEqual([
+    ['city', '?team', '<https://example.test/poa>'],
+  ]);
+
+  await page.locator('#upload-json').setInputFiles({ name: 'bad.json', mimeType: 'application/json', buffer: Buffer.from('{"nodes": []}') });
+  await page.locator('#upload-json').setInputFiles({ name: 'broken.json', mimeType: 'application/json', buffer: Buffer.from('{') });
+  await expect.poll(() => page.evaluate(() => cy.nodes().length)).toBe(2);
+});
+
+test('QUAL-006 New Query clears every node and relation', async ({ page }) => {
+  await disableAutoLayout(page);
+  await page.evaluate(() => {
+    window.addNewVariable();
+    window.addNewValueVariable();
+  });
+  await expect(page.locator('#status-nodes')).toHaveText('Nodes: 2');
+  await page.getByRole('button', { name: 'New Query' }).click();
+  await expect(page.locator('#status-nodes')).toHaveText('Nodes: 0');
+  await expect(page.locator('#status-edges')).toHaveText('Edges: 0');
+});
+
+test('QUAL-006 zoom buttons zoom in by 1.25, out by 0.8 and fit the graph', async ({ page }) => {
+  await disableAutoLayout(page);
+  await page.evaluate(() => window.addNewVariable());
+  await page.getByRole('button', { name: 'Zoom in' }).click();
+  expect(await page.evaluate(() => cy.zoom())).toBeCloseTo(1.25, 5);
+  await page.getByRole('button', { name: 'Zoom out' }).click();
+  expect(await page.evaluate(() => cy.zoom())).toBeCloseTo(1, 5);
+  await page.getByRole('button', { name: 'Fit graph' }).click();
+  expect(await page.evaluate(() => cy.zoom())).toBe(3);
+});
+
+test('QUAL-006 the results table filter hides rows that do not contain the text', async ({ page }) => {
+  await page.evaluate(() => {
+    document.getElementById('table-results-body').innerHTML =
+      '<tr data-index="0" class="query-row"><td>a</td><td>Bulbasaur</td></tr>'
+      + '<tr data-index="1" class="query-row"><td>b</td><td>Charmander</td></tr>';
+  });
+  // The Materialize stub never opens the modal, so the hidden input is set directly.
+  await page.evaluate(() => {
+    const input = document.getElementById('table-search-input');
+    input.value = 'char';
+    input.dispatchEvent(new Event('input'));
+  });
+  expect(await page.locator('#table-results-body tr').evaluateAll(rows => rows.map(row => row.style.display))).toEqual(['none', '']);
+});
+
+// Enter in a toolbar input submits the toolbar form, whose submit button runs
+// the query; elsewhere the document keydown handler runs it.
+test('QUAL-006 Enter runs the query from the toolbar inputs and the page, not from buttons', async ({ page }) => {
+  await disableAutoLayout(page);
+  await page.evaluate(() => {
+    window.__runs = 0;
+    const original = window.runQuery;
+    window.runQuery = () => { window.__runs += 1; return original(); };
+  });
+  await page.locator('#input-max-results').focus();
+  await page.keyboard.press('Enter');
+  expect(await page.evaluate(() => window.__runs)).toBe(1);
+  await page.locator('#status-bar').click();
+  await page.keyboard.press('Enter');
+  expect(await page.evaluate(() => window.__runs)).toBe(2);
+  await page.getByRole('button', { name: 'New Query' }).focus();
+  await page.keyboard.press('Enter');
+  expect(await page.evaluate(() => window.__runs)).toBe(2);
+});
+
+test('QUAL-006 a search result already related to a node is added with the discovered relation', async ({ page }) => {
+  await disableAutoLayout(page);
+  await page.evaluate(() => addNode(cy, '<https://example.test/poa>', 'Porto Alegre'));
+  await page.route('**/api/query', async route => {
+    const body = JSON.parse(route.request().postData());
+    const fromNew = body.where[0].subject === '<https://example.test/team-a>';
+    await route.fulfill({ json: { data: fromNew
+      ? [{ propertyId: '<https://example.test/city>', propertyLabel: 'city', propertyType: 'objetoClasse', propertyClass: null }]
+      : [] } });
+  });
+  await page.locator('#input-busca-elementos').fill('Team');
+  await page.locator('#input-busca-elementos').dispatchEvent('input');
+  await expect.poll(() => page.locator('#input-busca-elementos').getAttribute('data-autocomplete')).toContain('Team A');
+  await page.evaluate(() => window.__autocompleteCallbacks.get('input-busca-elementos')('Team A'));
+  await expect.poll(() => page.evaluate(() => cy.edges().map(edge => [edge.data('source'), edge.data('nodeId'), edge.data('target')]))).toEqual([
+    ['<https://example.test/team-a>', '<https://example.test/city>', '<https://example.test/poa>'],
+  ]);
+  await expect(page.locator('#status-nodes')).toHaveText('Nodes: 2');
+});
+
+test('QUAL-006 Alt+drag from a node to empty space adds a variable node joined by a variable relation', async ({ page }) => {
+  await disableAutoLayout(page);
+  await page.evaluate(() => {
+    cy.add([
+      { group: 'nodes', data: { id: '<https://example.test/a>', value: '<https://example.test/a>', label: 'A', type: 'node' }, position: { x: 150, y: 150 } },
+      { group: 'nodes', data: { id: '<https://example.test/b>', value: '<https://example.test/b>', label: 'B', type: 'node' }, position: { x: 450, y: 150 } },
+    ]);
+  });
+  const box = await page.locator('#cy').boundingBox();
+  const at = async id => page.evaluate(nodeId => cy.getElementById(nodeId).renderedPosition(), id);
+  const a = await at('<https://example.test/a>');
+  const b = await at('<https://example.test/b>');
+
+  await page.keyboard.down('Alt');
+  await page.mouse.move(box.x + a.x, box.y + a.y);
+  await page.mouse.down();
+  await page.mouse.move(box.x + b.x, box.y + b.y, { steps: 8 });
+  await page.mouse.up();
+  await page.mouse.move(box.x + a.x, box.y + a.y);
+  await page.mouse.down();
+  await page.mouse.move(box.x + a.x, box.y + a.y + 220, { steps: 8 });
+  await page.mouse.up();
+  await page.keyboard.up('Alt');
+
+  const graph = await page.evaluate(() => ({
+    nodes: cy.nodes().map(node => node.data('type')).sort(),
+    edges: cy.edges().map(edge => [edge.data('source'), edge.data('target').startsWith('?node_') ? '?new' : edge.data('target'), edge.data('label'), edge.data('type')]),
+    positionA: cy.getElementById('<https://example.test/a>').position(),
+  }));
+  expect(graph.nodes).toEqual(['node', 'node', 'variable']);
+  expect(graph.edges).toEqual([
+    ['<https://example.test/a>', '<https://example.test/b>', '?', 'variable'],
+    ['<https://example.test/a>', '?new', '?', 'variable'],
+  ]);
+  expect(graph.positionA).toEqual({ x: 150, y: 150 });
+});
