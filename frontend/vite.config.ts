@@ -2,6 +2,7 @@ import tailwindcss from '@tailwindcss/vite';
 import { defineConfig } from 'vitest/config';
 import adapter from '@sveltejs/adapter-static';
 import { sveltekit } from '@sveltejs/kit/vite';
+import { playwright } from '@vitest/browser-playwright';
 
 export default defineConfig({
 	plugins: [
@@ -25,6 +26,20 @@ export default defineConfig({
 	test: {
 		expect: { requireAssertions: true },
 		projects: [
+			{
+				// Component tests (*.svelte.spec.ts) run in Firefox, like the Playwright suites.
+				extends: './vite.config.ts',
+				test: {
+					name: 'client',
+					browser: {
+						enabled: true,
+						provider: playwright(),
+						headless: true,
+						instances: [{ browser: 'firefox' }]
+					},
+					include: ['src/**/*.svelte.{test,spec}.{js,ts}']
+				}
+			},
 			{
 				extends: './vite.config.ts',
 				test: {

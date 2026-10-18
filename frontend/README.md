@@ -24,6 +24,14 @@ Design tokens (FE-041): every color, size and layer lives in
 palette on `.dark`), and `cytoscape.ts` builds the graph stylesheets from the
 same values. Raw hex colors outside `src/lib/design/` fail `npm run lint`.
 
+Base components (FE-050) live in `src/lib/components/ui/`: the shadcn-svelte
+primitives (button, input, select, dialog, tooltip, sonner toasts, …) plus
+`icon-button`, `combobox`, `chip` (numbered stage chip), `count-badge`,
+`panel`, `rating-scale` and `field`. `/styleguide` shows every token group
+and component in both themes. Component tests (`*.svelte.spec.ts`) run in
+Firefox through Vitest browser mode; `tests/styleguide.e2e.ts` runs axe on
+`/styleguide` in both themes.
+
 Playwright is pinned to the root suite's version so both share the installed
 browsers. npm 10 fails while resolving new dependencies (`edgesOut` error in
 peer resolution); add or update packages with `npx npm@11 install ...`.

@@ -1,17 +1,8 @@
 import { expect, test } from '@playwright/test';
+import { guardOffline } from './support/offline';
 
 test('the page renders and shows the stubbed backend health', async ({ page, baseURL }) => {
-	// QUAL-003: only same-origin traffic is allowed; anything else is recorded and aborted.
-	const unexpected: string[] = [];
-	await page.route('**/*', (route) => {
-		const url = new URL(route.request().url());
-		if (url.origin !== new URL(baseURL!).origin) {
-			unexpected.push(url.href);
-			return route.abort('blockedbyclient');
-		}
-		if (url.pathname === '/health') return route.fulfill({ json: { status: 'ok' } });
-		return route.continue();
-	});
+	const unexpected = await guardOffline(page, baseURL!);
 
 	await page.goto('/');
 
