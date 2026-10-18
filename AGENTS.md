@@ -76,3 +76,4 @@ Skills live in .agents/skills/<name>/SKILL.md. Read only the selected procedure:
 - Preparatory behavior-preserving extraction: tcc-refactor.
 - Failing tests, regression design or gate selection: tcc-test.
 - Frontend architecture/tooling decisions: tcc-frontend-audit.
+- Any UI or CSS change in frontend/ (tokens, components, styleguide): tcc-style.

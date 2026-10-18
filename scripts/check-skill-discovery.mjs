@@ -3,7 +3,7 @@ import { createInterface } from 'node:readline';
 import { fileURLToPath } from 'node:url';
 
 const root = fileURLToPath(new URL('../', import.meta.url));
-const names = ['plan-task', 'backend', 'frontend', 'fullstack', 'refactor', 'test', 'frontend-audit'];
+const names = ['plan-task', 'backend', 'frontend', 'fullstack', 'refactor', 'test', 'frontend-audit', 'style'];
 const server = spawn('codex', ['app-server', '--stdio'], { cwd: root, stdio: ['pipe', 'pipe', 'ignore'] });
 let finished = false;
 const timer = setTimeout(() => finish('Codex skills/list timed out'), 30000);
@@ -32,7 +32,7 @@ createInterface({ input: server.stdout }).on('line', (line) => {
     const skills = entries.flatMap((entry) => entry.skills ?? []);
     const missing = names.filter((name) => !skills.some((s) => s.name === `tcc-${name}` && s.enabled !== false && s.path?.includes(`.agents/skills/tcc-${name}/SKILL.md`)));
     if (missing.length) return finish(`Not discovered/enabled: ${missing.map((n) => `tcc-${n}`).join(', ')}`);
-    console.log('Codex skills/list: all 7 repository skills discovered and enabled. No thread or model request created.');
+    console.log(`Codex skills/list: all ${names.length} repository skills discovered and enabled. No thread or model request created.`);
     finish();
   }
 });

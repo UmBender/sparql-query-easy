@@ -1,13 +1,13 @@
 ---
 id: FE-051
 title: Add a style skill that makes every UI change follow the tokens and the styleguide
-status: BACKLOG
+status: DONE
 priority: P1
 type: documentation
 depends_on: [FE-050]
 human_gate: false
 created: 2026-10-16
-updated: 2026-10-16
+updated: 2026-10-17
 ---
 # Add a style skill that makes every UI change follow the tokens and the styleguide
 
@@ -48,11 +48,11 @@ names. Windows checkouts need Git symlinks enabled.
 
 ## Acceptance criteria
 
-- [ ] `tcc-style` appears in Claude Code's skill list from the repo root
+- [x] `tcc-style` appears in Claude Code's skill list from the repo root
       and in Codex discovery.
-- [ ] Every checklist item names a token group, component or rule that is
+- [x] Every checklist item names a token group, component or rule that is
       visible on `/styleguide`; no hex value or numeric token is copied.
-- [ ] `node scripts/check-project-docs.mjs` passes; `node scripts/check-skill-discovery.mjs`
+- [x] `node scripts/check-project-docs.mjs` passes; `node scripts/check-skill-discovery.mjs`
       reports all eight skills.
 
 ## Validation
@@ -65,3 +65,13 @@ Documentation gate only: `node scripts/check-project-docs.mjs`,
 
 - 2026-10-16: User answered D-T3a with option C and the name `tcc-style`;
   human gate cleared.
+- 2026-10-17: Wrote `.agents/skills/tcc-style/SKILL.md` (sources, token
+  rules, component table, layout, accessibility, pre-commit checklist; it
+  names token groups and components shown on `/styleguide` and copies no
+  values), the `.claude/skills/tcc-style` symlink, the AGENTS.md skill
+  entry and `style` in `scripts/check-skill-discovery.mjs` (its success
+  message now prints the list length). Validation:
+  `node scripts/check-skill-discovery.mjs` → all 8 skills discovered;
+  `node scripts/check-project-docs.mjs`; `git diff --check`. Claude Code
+  reads project skills from `.claude/skills/`; the symlink resolves to the
+  canonical file. Completion commit for this task.

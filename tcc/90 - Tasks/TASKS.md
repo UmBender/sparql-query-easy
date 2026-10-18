@@ -88,7 +88,7 @@ Ordered by dependencies, then priority among selection candidates. See [worker r
 | QUAL-010 | DONE | P1 | documentation | [Document the legacy drawn-graph request and saved-query formats field by field](<items/QUAL-010-legacy-wire-format-docs.md>) |
 | FE-041 | DONE | P1 | frontend | [Define design tokens, Tailwind and shadcn-svelte theme and the Cytoscape stylesheet from one source](<items/FE-041-design-tokens-and-style-skill.md>) |
 | FE-050 | DONE | P1 | frontend | [Build the token-styled base components and a /styleguide route in both themes](<items/FE-050-base-components-and-styleguide.md>) |
-| FE-051 | BACKLOG | P1 | documentation | [Add a style skill that makes every UI change follow the tokens and the styleguide](<items/FE-051-style-skill.md>) |
+| FE-051 | DONE | P1 | documentation | [Add a style skill that makes every UI change follow the tokens and the styleguide](<items/FE-051-style-skill.md>) |
 | FE-042 | BACKLOG | P1 | frontend | [Model the drawn query as a typed QueryGraph with a versioned saved format](<items/FE-042-querygraph-domain-model.md>) |
 | BE-006 | BACKLOG | P2 | backend | [List the selectable endpoints over GET /api/endpoints](<items/BE-006-built-in-endpoints-route.md>) |
 | FE-043 | BACKLOG | P1 | frontend | [Own the QueryGraph in one rune store and call the API through a typed client](<items/FE-043-store-and-typed-api-client.md>) |
