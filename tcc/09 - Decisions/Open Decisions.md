@@ -15,6 +15,7 @@ The decision index and dated approvals below provide rationale and history.
 | DEC-011 | Approved (2026-10-16) | SvelteKit app in `frontend/` beside `index2.html`, cutover by FE-049. [[../90 - Tasks/items/DEC-011-frontend-stack-decision]]. |
 | DEC-009 | Resolved | Keep Kotlin `200 application/json {"status":"ok"}` as an approved intentional difference from captured C# `200 text/plain Healthy`; do not claim equivalence. |
 | DEC-012 | Approved (2026-10-18) | Persistence and real-stack tests move from embedded PostgreSQL to Testcontainers `postgres:17-alpine` (user choice B); implemented by QUAL-011. [[../90 - Tasks/items/DEC-012-test-database-engine]]. |
+| DEC-013 | Decision required | T7 brief vs AUTH-000: email vs username, roles, `/api/auth/me` vs `/api/auth/session`, Ktor auth plugins vs the current application-owned guard. [[../90 - Tasks/items/DEC-013-t7-auth-brief-differences]]. |
 
 ## Already documented decisions
 
