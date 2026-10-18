@@ -6,21 +6,6 @@
         "description": "Build and execute constrained SPARQL queries against uploaded, built-in, or remote RDF graphs. Query operations are public; account operations use the HttpOnly easyquery_session session cookie."
     },
     "paths": {
-        "/": {
-            "get": {
-                "operationId": "redirectToFrontend",
-                "tags": [
-                    "Application"
-                ],
-                "summary": "Open the browser frontend",
-                "description": "Redirects to the authoritative packaged frontend at /index2.html.",
-                "responses": {
-                    "302": {
-                        "description": "Redirect to /index2.html."
-                    }
-                }
-            }
-        },
         "/health": {
             "get": {
                 "operationId": "getHealth",

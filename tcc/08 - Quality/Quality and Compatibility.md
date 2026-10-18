@@ -37,28 +37,20 @@ runtime checks.
 
 ## Browser coverage
 
-Browser-level frontend workflows are covered offline by Playwright Firefox in
-`frontend-tests/index2.spec.mjs`. It uses the actual static page, test-local
-API responses, and CDN stubs. Coverage includes the persistent node-action
-list's real left-click opening, retargeting, keyboard activation, node-type
-actions, background dismissal, conversion/removal, edge rewiring, and
-viewport positioning; run `npm run test:browser`. Broader visual-regression
-and accessibility auditing remains outside the current suite. See
-[[04 - Frontend/Request Flows]].
-
-Ordered multi-variable exploration has two layers (QUAL-002). The browser
-suite routes `POST /api/query/stage` per test to assert block order, request
-bodies and budgets (one current stage, one delayed preview, next-variable
-binding prefixes), stale-response and abort races, loading/empty/error/Retry,
-Load more, commitment/Back/reorder invalidation, graph/endpoint edits and
-Apply to graph. `npm run test:e2e` (`playwright.e2e.config.mjs`) builds and
-starts the real Ktor distribution, uploads `frontend-tests/fixtures/ordered-
-exploration.ttl`, and drives reordered 3-stage explorations through local
-Jena: predicate, typed-literal and IRI bindings, collapsed duplicates, preview
-by hover and focus, Apply to graph, and the unchanged one-variable table. Both
-suites share the external-traffic guard in `frontend-tests/external-assets.mjs`
-and contact no live endpoint. Backend stage semantics (unbound rows, paging,
-injection, errors) stay in `StageQueryServiceTest` and `StageQueryRoutesTest`.
+The SvelteKit app (`frontend/`) is covered offline by Playwright Firefox
+(`frontend/tests/*.e2e.ts`, mocked API from the OpenAPI-typed
+`src/lib/api/mock-routes.ts`, canvas screenshots and axe), Vitest (domain with
+≥ 90% coverage, request parity with `fixtures/legacy/`, MSW for the client
+and session store) and component tests in Vitest browser mode. The real-stack
+suite (`npm --prefix frontend run test:stack`) drives the built Ktor
+distribution with an embedded PostgreSQL: ordered exploration through local
+Jena (QUAL-002), the captured PokemonGen1 stage answer, the live
+`/openapi.json`, and accounts. Every browser suite fails on unexpected
+external traffic. Each behavior of the retired `index2.html` page is a row of
+[[04 - Frontend/Frontend Parity Checklist]] with its new-app test; the legacy
+suites that pinned them were removed in FE-049 and remain in git history.
+Backend stage semantics stay in `StageQueryServiceTest` and
+`StageQueryRoutesTest`.
 
 ## Coverage gaps
 
@@ -87,5 +79,5 @@ Use graph isomorphism for graphs/blank-node labels, but preserve blank-node iden
 - `src/test/kotlin/com/example/sparqlqueryeasy/http/RetirementSuccessCompatibilityTest.kt`
 - `compatibility/retirement-expected/README.md`
 - `compatibility/wikidata-responses/README.md`
-- `frontend-tests/index2.spec.mjs`
-- `frontend-tests/cdn-stubs.mjs`
+- `frontend/tests/`, `frontend/tests-stack/`
+- `tcc/04 - Frontend/Frontend Parity Checklist.md`

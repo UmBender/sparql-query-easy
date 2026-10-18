@@ -1,4 +1,3 @@
-import org.gradle.api.tasks.Copy
 import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 
 plugins {
@@ -83,32 +82,6 @@ tasks.test {
     useJUnitPlatform()
     // FE-043: FrontendOpenApiSnapshotTest compares /openapi.json with this snapshot.
     inputs.file("frontend/src/lib/api/openapi.json").withPropertyName("frontendOpenApiSnapshot")
-}
-
-tasks.named<Copy>("processResources") {
-    from(layout.projectDirectory.dir("sparql")) {
-        include(
-            "index2.html",
-            "login.html",
-            "grafos.css",
-            "index2.css",
-            "cytoscape.min.js",
-            "cytoscape-cxtmenu.js",
-            "query-calculations.js",
-            "query-stages.js",
-            "graph-actions.js",
-            "graph-model.js",
-            "graph-binding.js",
-            "app-core.js",
-            "stage-order.js",
-            "stage-exploration.js",
-            "filter-funnel.js",
-            "filter-badges.js",
-            "graph-nodes.js",
-            "graph-menus.js",
-        )
-        into("frontend")
-    }
 }
 
 // AUTH-003: frontend/playwright.stack.config.ts starts StackPostgres (test classpath) with plain java.

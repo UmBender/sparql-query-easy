@@ -21,13 +21,14 @@ reviewed compatibility captures remain in this repository.
 - Six C# exception-category captures are intentionally not HTTP-equivalence
   baselines because the in-process harness did not execute ASP.NET middleware.
   Kotlin's explicit JSON `400`/`404`/`502` behavior is the approved contract.
-- Deterministic browser tests cover the authoritative `sparql/index2.html`
-  workflows. Ordinary tests do not contact live Wikidata.
+- The SvelteKit app in `frontend/` is the only frontend (FE-049 retired the
+  legacy `index2.html` page after every parity row passed on the new app).
+  Its offline browser tests and the real-stack suite contact no live service.
 
 The remaining work is production hardening and approved additions rather than
 another core feature port. OpenAPI 3.1 and Swagger UI are generated from the
-Ktor route contract and tested for drift. Authentication is intentionally
-deferred until user testing. Recorded Wikidata route fixtures, production
+Ktor route contract and tested for drift. Accounts (self-registration,
+Argon2id, PostgreSQL sessions) are implemented (AUTH-001/AUTH-003). Recorded Wikidata route fixtures, production
 endpoint/upload policy, TLS/CORS, deployment, monitoring, and
 backup remain open.
 
@@ -38,61 +39,43 @@ hosting target is selected yet; see the
 
 ## Run locally
 
-Requirements: JDK 21. Start the Kotlin/Ktor application on the approved local
-development port `8080`:
+Requirements: JDK 21 and Node.js 22.
 
-```sh
-./gradlew run
-```
-
-Then open `http://localhost:8080/`; Ktor redirects to the packaged frontend.
-Swagger UI is at `http://localhost:8080/swagger`, and the raw generated
-OpenAPI 3.1 JSON is at `http://localhost:8080/openapi.json`.
-
-For a local JVM distribution, run `./gradlew installDist`, then
-`./build/install/sparql-query-easy-kotlin/bin/sparql-query-easy-kotlin`.
-An optional Docker build is available with
-`docker build -t sparql-query-easy:local .`; it uses Java 21, listens on
-port `8080`, and checks `/health`. This is local packaging, not a deployment
-pipeline. See [the runtime notes](tcc/07%20-%20Operations/Local%20JVM%20and%20Container%20Runtime.md).
-
-## Run the legacy page and the new frontend side by side
-
-The SvelteKit app in `frontend/` (DEC-011) is being built next to the
-authoritative `sparql/index2.html`; both run at the same time. Requirements:
-JDK 21 and Node.js 22.
-
-1. In one terminal, start Ktor, which serves the API and the legacy page:
+1. Start the Ktor API on port 8080 (accounts need `EASYQUERY_DB_URL`, see
+   `.env.example`; query routes work without a database):
 
    ```sh
    ./gradlew run
    ```
 
-2. In a second terminal, install the new app once and start its dev server:
+2. Install and start the frontend (npm 11 installs its lockfile):
 
    ```sh
-   npm --prefix frontend ci
-   npm --prefix frontend run dev
+   (cd frontend && npx npm@11 ci && npm run dev)
    ```
 
-3. Open the legacy page at `http://localhost:8080/index2.html` and the new app
-   at `http://localhost:5173/`. The new app shows `{"status":"ok"}` under
-   Backend health: Vite forwards `/api`, `/health` and `/openapi.json` to
-   Ktor on port 8080, so the browser sees one origin and needs no CORS.
+3. Open `http://localhost:5173/`. Vite forwards `/api`, `/health` and
+   `/openapi.json` to Ktor, so the browser sees one origin. Swagger UI is at
+   `http://localhost:8080/swagger`.
+
+The whole stack (PostgreSQL, Ktor, Caddy serving the built app) runs with
+`docker compose up -d --build --wait` after setting `POSTGRES_PASSWORD` in
+`.env`; see the [Compose runbook](tcc/07%20-%20Operations/Docker%20Compose%20Stack.md).
+Ktor alone serves only the API.
 
 ## Verification
 
 ```sh
 GRADLE_USER_HOME=/tmp/sparql-query-easy-gradle \
   ./gradlew ktlintCheck detekt test --no-daemon
-npm run test:browser
 npm --prefix frontend run check
 npm --prefix frontend run lint
 npm --prefix frontend test
+npm --prefix frontend run test:stack
 ```
 
-The live Wikidata integration task is opt-in and is not part of normal
-validation.
+CI (`.github/workflows/ci.yml`) runs the same gates. The live Wikidata
+integration task is opt-in and is not part of normal validation.
 
 ## Documentation
 
@@ -111,8 +94,8 @@ validation.
   routes and default composition.
 - `src/main/kotlin/com/example/sparqlqueryeasy/http/OpenApiModule.kt` —
   generated OpenAPI metadata and documentation routes.
-- `sparql/index2.html` — authoritative static frontend.
-- `frontend/` — SvelteKit frontend under construction (DEC-011, FE-040).
+- `frontend/` — the SvelteKit frontend (DEC-011, authoritative since FE-049).
+- `compose.yaml`, `deploy/` — local Docker Compose stack (OPS-006).
 - `compatibility/expected/index.json` — immutable original C# case index.
 - `compatibility/retirement-expected/index.json` — three additional C# success
   captures retained after C# source removal.

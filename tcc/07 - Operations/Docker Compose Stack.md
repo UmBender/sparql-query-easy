@@ -7,7 +7,7 @@ deployment stay in OPS-002, OPS-004 and OPS-005.
 |---|---|---|
 | `db` | `postgres:17-alpine` | Accounts and sessions; data in the named volume `easyquery_db-data`; `pg_isready` health check |
 | `backend` | `easyquery-backend:local` (root `Dockerfile`, OPS-001) | Ktor on 8080, not published; Flyway migrations at startup (BE-005); waits for a healthy `db` |
-| `web` | `easyquery-web:local` (`deploy/web.Dockerfile`) | Caddy on port 80, published on `127.0.0.1:${WEB_PORT:-8080}`: serves the SvelteKit build (`index.html` fallback) and proxies `/api/*`, `/health`, `/openapi.json`, `/swagger` and the legacy page files (until FE-049) to `backend` (`deploy/Caddyfile`) |
+| `web` | `easyquery-web:local` (`deploy/web.Dockerfile`) | Caddy on port 80, published on `127.0.0.1:${WEB_PORT:-8080}`: serves the SvelteKit build (`index.html` fallback) and proxies `/api/*`, `/health`, `/openapi.json` and `/swagger` to `backend` (`deploy/Caddyfile`) |
 
 Caddy keeps the `Host` header, which the backend's same-origin check on
 account routes compares with `Origin`, and sets `X-Forwarded-For`; the
@@ -48,7 +48,7 @@ restarts (unchanged from OPS-001).
 
 - `up -d --build`: `db` healthy, then `backend` healthy, then `web`.
 - One origin: `/` and `/login` return the SPA; `/health`, `/api/endpoints`,
-  `/openapi.json`, `/swagger`, `/index2.html`, `/app-core.js` and
+  `/openapi.json`, `/swagger` (and, before FE-049, the legacy page files) and
   `POST /api/query/count` (PokemonGen1, 295) answer through Caddy.
 - Accounts: register sets the `HttpOnly`, `Secure` session cookie; the session
   route returns the user; a foreign `Origin` gets `403`.

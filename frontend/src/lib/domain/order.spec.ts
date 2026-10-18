@@ -1,8 +1,8 @@
 /**
  * The graph keeps Cytoscape's element and component order (graph.ts). Random
  * add/remove/move sequences are applied both to the domain graph and to the
- * legacy page's Cytoscape (sparql/cytoscape.min.js, run headless) and the
- * orders must match. FE-049 keeps this oracle by vendoring that file.
+ * legacy page's Cytoscape 3.29.1 (vendored in FE-049 from the retired page as
+ * legacy/vendor/cytoscape-3.29.1.min.js, run headless) and the orders must match.
  */
 import { readFileSync } from 'node:fs';
 import vm from 'node:vm';
@@ -30,7 +30,7 @@ type Cy = {
 	edges(): { map<T>(fn: (element: { id(): string }) => T): T[] };
 };
 
-const legacyFile = new URL('../../../../sparql/cytoscape.min.js', import.meta.url);
+const legacyFile = new URL('./legacy/vendor/cytoscape-3.29.1.min.js', import.meta.url);
 // Same realm as the test: Cytoscape only accepts options built from its realm's Object.
 vm.runInThisContext(readFileSync(legacyFile, 'utf8'));
 const cytoscape = (globalThis as unknown as { cytoscape: (options: object) => Cy }).cytoscape;

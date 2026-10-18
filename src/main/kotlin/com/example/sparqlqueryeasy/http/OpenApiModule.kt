@@ -59,17 +59,6 @@ internal fun hideFromOpenApi(route: Route) {
     route.hide()
 }
 
-internal fun Route.documentRootRedirect(): Route =
-    describe {
-        operationId = "redirectToFrontend"
-        summary = "Open the browser frontend"
-        description = "Redirects to the authoritative packaged frontend at /index2.html."
-        tag("Application")
-        responses {
-            HttpStatusCode.Found { description = "Redirect to /index2.html." }
-        }
-    }
-
 internal fun Route.documentHealth(): Route =
     describe {
         operationId = "getHealth"

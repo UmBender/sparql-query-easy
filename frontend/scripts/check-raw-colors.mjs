@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 // FE-041: colors are defined only in src/lib/design/ (tokens.ts). Any raw hex
-// color elsewhere in src/ fails `npm run lint`. The legacy sparql/ page is not
-// checked. An optional argument checks another directory (used by its test).
+// color elsewhere in src/ fails `npm run lint`. An optional argument checks
+// another directory (used by its test).
 import { readdirSync, readFileSync, statSync } from 'node:fs';
 import { join, relative, resolve } from 'node:path';
 

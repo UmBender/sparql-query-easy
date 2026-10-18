@@ -1,4 +1,4 @@
-# All local gates of tcc/06 - Development/Operational Map.md (QUAL-007).
+# All local gates of tcc/06 - Development/Operational Map.md (QUAL-007, FE-049).
 # Tests only: no deploy, no secrets. Every suite is offline (QUAL-003); the
 # Ktor-backed suites start the built distribution on a local port.
 name: CI
@@ -42,39 +42,6 @@ jobs:
         with:
           name: kotlin-reports
           path: build/reports/
-          retention-days: 7
-
-  legacy:
-    name: Legacy page (query, types, browser, e2e)
-    runs-on: ubuntu-24.04
-    timeout-minutes: 40
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-java@v4
-        with:
-          distribution: temurin
-          java-version: '21'
-      - uses: actions/setup-node@v4
-        with:
-          node-version: '22'
-          cache: npm
-          cache-dependency-path: package-lock.json
-      - uses: actions/cache@v4
-        with:
-          path: /tmp/sparql-query-easy-gradle
-          key: gradle-${{ runner.os }}-${{ hashFiles('build.gradle.kts', 'settings.gradle.kts', 'gradle.properties', 'gradle/wrapper/gradle-wrapper.properties') }}
-          restore-keys: gradle-${{ runner.os }}-
-      - run: npm ci
-      - run: npx playwright install --with-deps firefox
-      - run: npm run test:query
-      - run: npm run check:frontend-types
-      - run: npm run test:browser
-      - run: npm run test:e2e
-      - if: failure()
-        uses: actions/upload-artifact@v4
-        with:
-          name: legacy-playwright
-          path: test-results/
           retention-days: 7
 
   frontend:

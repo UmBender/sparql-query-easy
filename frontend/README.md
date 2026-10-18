@@ -1,7 +1,7 @@
 # SPARQL EasyQuery frontend
 
 SvelteKit 3 (Svelte 5 runes, strict TypeScript, Vite) built as a static SPA
-with adapter-static, next to the legacy `sparql/index2.html` (DEC-011). See the
+with adapter-static (DEC-011), the project's only frontend since FE-049. See the
 root README for running both side by side.
 
 | Command              | Purpose                                                                                               |

@@ -3,7 +3,7 @@ import { isMockStatus, mockRouteFor } from '../../src/lib/api/mock-routes';
 
 /**
  * Deterministic API for the new app's browser tests: the OpenAPI-typed
- * routes of src/lib/api/mock-routes.ts (legacy frontend-tests/server.mjs defaults). Tests override routes with `page.route`
+ * routes of src/lib/api/mock-routes.ts (the retired legacy test server's defaults). Tests override routes with `page.route`
  * after calling this; every request body is recorded.
  */
 export type RecordedRequest = { method: string; path: string; body: unknown };

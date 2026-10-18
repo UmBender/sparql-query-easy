@@ -107,7 +107,8 @@ returns `400` when:
 
 ### `GET /`
 
-Returns `302 Found` redirecting to `/index2.html`.
+Removed in FE-049: Ktor serves the API only and `GET /` returns `404`; the
+SvelteKit app is served by the web service or Vite on the same origin.
 
 There is no application-owned error response for this redirect route.
 

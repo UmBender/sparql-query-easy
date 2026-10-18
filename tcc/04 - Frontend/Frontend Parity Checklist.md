@@ -1,6 +1,7 @@
 # Frontend Parity Checklist
 
-QUAL-006. Every behavior of the legacy page `sparql/index2.html` that the
+QUAL-006. Every behavior of the legacy page `index2.html` (retired in FE-049
+on 2026-10-18, when every row below was `new`) that the
 SvelteKit app (`frontend/`, [[../90 - Tasks/items/DEC-011-frontend-stack-decision]])
 must reproduce before cutover (FE-049). Each row names the legacy tests that
 pin the behavior (titles in `frontend-tests/index2.spec.mjs` unless another
@@ -10,7 +11,8 @@ Behavior parity lives here; request parity is the `fixtures/legacy/` corpus
 
 Status: `legacy` = pinned only in the legacy suite; `new: …` = the new-app
 check that passes (Playwright files in `frontend/tests/`, Vitest specs in
-`frontend/src/`). FE-049 requires every row to be `new`.
+`frontend/src/`). The legacy test titles name the retired suite
+(`frontend-tests/`, in git history before the FE-049 commit).
 
 ## Toolbar, page and utilities
 

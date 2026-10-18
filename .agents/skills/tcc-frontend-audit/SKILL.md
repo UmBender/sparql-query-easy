@@ -18,6 +18,6 @@ contracts at `tcc/09 - Decisions/Current Contracts.md` when needed.
 8. Recommend a first reversible slice with success criteria and rollback; make follow-up cards in the existing backlog.
 9. Do not migrate production code as part of analysis. Finish with evidence, recommendation, tasks and scoped local commit.
 
-Current entry points: `sparql/index2.html`, `build.gradle.kts`, `frontend-tests/index2.spec.mjs`, `frontend-tests/server.mjs`, and `http/HttpModule.kt`.
+Current entry points: `frontend/` (README, `package.json`, `vite.config.ts`), `tcc/04 - Frontend/Frontend Architecture.md`, `deploy/Caddyfile`, and `http/HttpModule.kt`.
 
 Consult the operational map and current contracts only as needed. Use the audit as the decision source; avoid duplicating it across the vault.

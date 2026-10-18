@@ -1,6 +1,6 @@
 /**
  * Deterministic API responses typed from the OpenAPI snapshot (QUAL-007):
- * the legacy frontend-tests/server.mjs defaults. Vitest serves them through
+ * the defaults of the retired legacy test server. Vitest serves them through
  * MSW (`mswHandlers`); the Playwright suites serve the same routes with
  * `page.route` (tests/support/mock-api.ts). A response that drifts from
  * schema.d.ts fails `npm run check`.

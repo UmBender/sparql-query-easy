@@ -4,7 +4,7 @@
 
 **Confirmed:** The supported Kotlin artifact is the Gradle Application plugin's
 `installDist` distribution. It contains the launcher, dependency JARs,
-`application.conf`, the static frontend copied from `sparql/`, and the
+`application.conf` (the API only since FE-049; the frontend is the web service), and the
 byte-identical built-in Turtle resource. Java 21 is required. Ktor's
 `EngineMain` reads `application.conf` and listens on HTTP port `8080`.
 `GET /health` returns `200 {"status":"ok"}`; it is a process check, not a
@@ -36,7 +36,6 @@ In another terminal:
 
 ```sh
 curl --fail http://127.0.0.1:8080/health
-curl --fail http://127.0.0.1:8080/index2.html
 curl --fail http://127.0.0.1:8080/openapi.json
 ```
 
@@ -49,8 +48,8 @@ docker run --rm --name sparql-query-easy-local -p 127.0.0.1:8080:8080 sparql-que
 docker inspect --format '{{.State.Health.Status}}' sparql-query-easy-local
 ```
 
-The root page redirects to `/index2.html`; the frontend calls the same Ktor
-origin. `GET /swagger` and `GET /openapi.json` are intentionally public under
+Ktor serves no page since FE-049 (`GET /` is 404); run the frontend with
+Vite or the Compose stack, which put it on the API's origin. `GET /swagger` and `GET /openapi.json` are intentionally public under
 the current approved contract. Uploaded graph handles and cache contents are
 process-local and do not survive restart; no volume or durable data contract
 is defined.

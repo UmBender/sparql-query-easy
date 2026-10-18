@@ -5,7 +5,6 @@ COPY gradlew build.gradle.kts settings.gradle.kts gradle.properties ./
 COPY gradle/ gradle/
 COPY config/ config/
 COPY src/main/ src/main/
-COPY sparql/ sparql/
 RUN ./gradlew installDist --no-daemon
 
 FROM eclipse-temurin:21-jre-jammy

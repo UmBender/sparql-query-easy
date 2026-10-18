@@ -1,4 +1,9 @@
-# Frontend Architecture
+# Legacy Page Architecture (retired)
+
+> History. This described `sparql/index2.html`, the frontend until FE-049
+> retired it on 2026-10-18 (files in git history before that commit). The
+> current frontend is [[Frontend Architecture]]; the retired page's behavior
+> is specified by [[Frontend Parity Checklist]] and `fixtures/legacy/`.
 
 ## Pages and assets
 

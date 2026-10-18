@@ -4,7 +4,7 @@
 
 ```mermaid
 flowchart LR
-  Browser[Static frontend\nindex2.html] -->|relative /api requests| Ktor[Ktor HTTP module]
+  Browser[SvelteKit SPA\nfrontend/] -->|relative /api requests| Ktor[Ktor HTTP module]
   Ktor --> Services[Application services]
   Services --> Context[Endpoint context resolver]
   Context --> Local[Jena local graph execution]

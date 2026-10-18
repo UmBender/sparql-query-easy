@@ -12,3 +12,4 @@ __screenshots__
 src/lib/domain/fixtures/*.query.json
 src/lib/api/schema.d.ts
 src/lib/api/openapi.json
+src/lib/domain/legacy/vendor/

@@ -6,8 +6,7 @@ description: Make any UI or CSS change in the SvelteKit frontend (frontend/) fol
 
 Use for every visual change in `frontend/`: a new screen, component, color,
 spacing, icon or graph style. Follow repository AGENTS.md and the selected
-task; use `tcc-frontend` for behavior. The legacy `sparql/` page keeps its own
-styles and is out of scope.
+task; use `tcc-frontend` for behavior.
 
 ## Sources
 

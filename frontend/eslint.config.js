@@ -10,6 +10,8 @@ const gitignorePath = path.resolve(import.meta.dirname, '.gitignore');
 
 export default defineConfig(
 	includeIgnoreFile(gitignorePath),
+	// Cytoscape build of the retired legacy page, kept as the order oracle (FE-049).
+	{ ignores: ['src/lib/domain/legacy/vendor/'] },
 	js.configs.recommended,
 	ts.configs.recommended,
 	svelte.configs.recommended,

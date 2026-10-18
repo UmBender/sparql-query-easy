@@ -1,8 +1,8 @@
 # Legacy frontend fixtures
 
 Characterization goldens (QUAL-008, QUAL-009): what the legacy page
-`sparql/index2.html` sends to and receives from the real Ktor backend on the
-built-in `PokemonGen1` dataset. The SvelteKit app (FE-042–FE-048) must send
+(`index2.html`, retired in FE-049) sent to and received from the real Ktor
+backend on the built-in `PokemonGen1` dataset. The SvelteKit app (FE-042–FE-048) must send
 the same requests for the same graph. They are not a specification of what is
 right: never edit them to silence a failure; investigate the page and the
 oracle instead.
@@ -10,16 +10,12 @@ oracle instead.
 ## Provenance
 
 - Dataset: `src/main/resources/pokemon_gen1.ttl` (endpoint id `PokemonGen1`).
-- Command: `npm run fixtures:legacy` (all scenarios, stale files deleted
-  first) or `npm run fixtures:legacy -- --grep <name>` (one scenario). It
-  builds the Ktor distribution, starts it on 127.0.0.1:18091 and drives the
-  page in Firefox through `playwright.fixtures.config.mjs`; no external
-  endpoint is contacted.
-- Scenarios: `frontend-tests/fixtures-capture/scenarios.mjs`; each checks its
-  result against an independent oracle read from the Turtle file
-  (`pokemon-oracle.mjs`).
-- First captured 2026-10-17 from the commit that adds QUAL-008. Regenerate
-  after any legacy page or backend change and review the diff.
+- Captured 2026-10-17 by the harness `frontend-tests/fixtures-capture/`
+  (`npm run fixtures:legacy`: built Ktor on 127.0.0.1:18091, the page driven
+  in Firefox, each scenario checked against an independent oracle read from
+  the Turtle file). FE-049 removed the page and the harness with it (both in
+  git history before the FE-049 commit), so the corpus is now frozen: it can
+  no longer be regenerated, only read.
 
 ## Files per scenario
 
@@ -87,7 +83,7 @@ uploaded-graph ids).
 | Histogram (`numeric-profile`) | `numeric-profile-edit-between`, `add-value-filter` |
 | Text suggestions (`stage`) | `text-suggestions-starts-with`, `text-suggestions-contains` |
 | Funnel counts (`count`), a step switched off | `funnel-step-off`, `funnel-value-variable`; badges in every filtered scenario |
-| Turtle upload then a query | `upload-local-graph` (`frontend-tests/fixtures/legacy-upload.ttl`) |
+| Turtle upload then a query | `upload-local-graph` (the harness's `legacy-upload.ttl`, in git history) |
 
 ## Legacy behaviors these fixtures record
 

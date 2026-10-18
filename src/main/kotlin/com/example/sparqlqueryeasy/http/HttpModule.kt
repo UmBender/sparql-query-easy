@@ -61,7 +61,6 @@ import io.ktor.serialization.kotlinx.json.json
 import io.ktor.server.application.Application
 import io.ktor.server.application.ApplicationStopped
 import io.ktor.server.application.install
-import io.ktor.server.http.content.staticResources
 import io.ktor.server.plugins.BadRequestException
 import io.ktor.server.plugins.ContentTransformationException
 import io.ktor.server.plugins.contentnegotiation.ContentNegotiation
@@ -69,7 +68,6 @@ import io.ktor.server.plugins.statuspages.StatusPages
 import io.ktor.server.request.receive
 import io.ktor.server.request.receiveMultipart
 import io.ktor.server.response.respond
-import io.ktor.server.response.respondRedirect
 import io.ktor.server.routing.Route
 import io.ktor.server.routing.RoutingContext
 import io.ktor.server.routing.get
@@ -179,7 +177,8 @@ fun Application.configureRouting(dependencies: HttpDependencies = defaultHttpDep
     environment.monitor.subscribe(ApplicationStopped) { dependencies.close() }
     val healthService = HealthService()
     routing {
-        get("/") { call.respondRedirect("/index2.html") }.documentRootRedirect()
+        // FE-049: the API only. The SvelteKit app is served by the web service (deploy/Caddyfile)
+        // or the Vite dev server, which proxy these routes on the same origin.
         get("/health") { call.respond(healthService.current()) }.documentHealth()
         get("/api/endpoints") {
             call.respond(
@@ -190,7 +189,6 @@ fun Application.configureRouting(dependencies: HttpDependencies = defaultHttpDep
         dependencies.query?.let(::queryRoutes)
         dependencies.auth?.let { authRoutes(it) }
         openApiDocumentationRoutes()
-        hideFromOpenApi(staticResources("/", "frontend"))
     }
 }
 

@@ -7,7 +7,7 @@ notes remain evidence; they do not reopen resolved decisions.
 | Area | Active contract and evidence |
 |---|---|
 | Runtime | Kotlin/Ktor; local port 8080, frontend/API same origin, no CORS. DEC-003: production on the university server with Docker Compose (`db` PostgreSQL, `backend`, `web` Caddy serving the SPA and proxying the API); domain/TLS/deploy facts open (OPS-002/004/005). `application.conf`; [[Open Decisions]]; OPS-001, OPS-006. |
-| Frontend | `sparql/index2.html` authoritative until FE-049; retain numeric filterType 0. DEC-011: the replacement SvelteKit app is built in `frontend/` (stack in [[../90 - Tasks/items/DEC-011-frontend-stack-decision]]); legacy behavior and done FE cards are its specification. [[../04 - Frontend/Frontend Architecture]]; `frontend-tests/index2.spec.mjs`. |
+| Frontend | The SvelteKit app in `frontend/` is the only frontend (DEC-011; FE-049 retired `index2.html`, `login.html` and the legacy suites on 2026-10-18). Ktor serves the API only; the web service (Caddy) or Vite serves the app on the same origin. Retain numeric filterType 0 on the wire. The retired page's behavior stays specified by [[../04 - Frontend/Frontend Parity Checklist]] and `fixtures/legacy/`. [[../04 - Frontend/Frontend Architecture]]; `frontend/tests/`. |
 | Errors | Explicit JSON 400 invalid input, 404 local graph unavailable, 502 upstream failure; C# exception captures are not HTTP-equivalent. [[../03 - Backend/API v1]]; `http/HttpModule.kt` (under Kotlin package root). |
 | Health | DEC-009 approves 200 JSON `{"status":"ok"}`; recorded C# plaintext remains non-equivalent. [[../90 - Tasks/items/DEC-009-health-response-contract]]. |
 | OpenAPI | OAPI-000: code-generated 3.1 at /openapi.json and /swagger, public in all environments for now. [[OpenAPI and Swagger Contract]]. |
@@ -27,5 +27,5 @@ notes remain evidence; they do not reopen resolved decisions.
 - `src/main/kotlin/com/example/sparqlqueryeasy/http/HttpModule.kt`
 - `src/test/kotlin/com/example/sparqlqueryeasy/http/CaptureDrivenCompatibilityTest.kt`
 - `compatibility/cases/capture-status.tsv`
-- `sparql/index2.html`
+- `frontend/`
 - `AGENTS.md`

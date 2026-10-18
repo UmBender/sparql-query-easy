@@ -10,7 +10,6 @@ test-results
 Sparql.QueryEasy
 compatibility
 files
-frontend-tests
 tcc
 src/test
 src/integrationTest

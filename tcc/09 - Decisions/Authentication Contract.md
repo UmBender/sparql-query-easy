@@ -31,7 +31,7 @@ security defaults below were proposed with them and are reversible.
 
 | Public | Requires a session |
 |---|---|
-| `sparql/index2.html` and the new SPA; `/api/local-database`; `/api/query/**`; `/health`; `/swagger`; `/openapi.json`; `POST /api/auth/register`; `POST /api/auth/login`; `GET /api/auth/session` (returns the user or 401) | `POST /api/auth/logout`; `/api/study/**` (proposed queries, submissions, questionnaires) |
+| The SPA (the legacy `index2.html` was retired in FE-049); `/api/local-database`; `/api/query/**`; `/health`; `/swagger`; `/openapi.json`; `POST /api/auth/register`; `POST /api/auth/login`; `GET /api/auth/session` (returns the user or 401) | `POST /api/auth/logout`; `/api/study/**` (proposed queries, submissions, questionnaires) |
 
 AUTH-001 implemented these paths; details (username rules, cookie
 attributes, `403`/`415`/`429`/`503` answers, proxy-aware rate limit) are in

@@ -1,6 +1,6 @@
 import { defineConfig } from '@playwright/test';
 
-// New-app suite only; the legacy suite keeps testDir frontend-tests at the repository root.
+// Offline browser suite with the mocked API; tests-stack/ runs against the real backend.
 export default defineConfig({
 	testDir: 'tests',
 	testMatch: '**/*.e2e.ts',

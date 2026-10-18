@@ -161,7 +161,10 @@ test('F-01 an exact numeric match sends no filterType; a text value offers exact
 	expect((api.bodies('/api/query/sparql')[0] as { where: unknown[] }).where).toEqual([
 		{ subject: '?p', predicate: '<https://example.test/speed>', object: '42', filterType: null }
 	]);
+	// Close the dialog only once it is open; an early Escape is lost and the overlay stays.
+	await expect(page.locator('#sparql-content')).toBeVisible();
 	await page.keyboard.press('Escape');
+	await expect(page.locator('#sparql-content')).toBeHidden();
 
 	await addGraph(page, [
 		{ kind: 'variable', id: '?q', x: 200, y: 380 },

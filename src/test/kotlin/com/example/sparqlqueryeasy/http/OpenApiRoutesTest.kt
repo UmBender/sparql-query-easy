@@ -64,7 +64,6 @@ class OpenApiRoutesTest {
             assertFalse("security" in document, "Authentication is deliberately deferred in the current public contract")
             assertEquals(
                 mapOf(
-                    "/" to setOf("get"),
                     "/health" to setOf("get"),
                     "/api/endpoints" to setOf("get"),
                     "/api/local-database" to setOf("post"),

@@ -17,6 +17,6 @@ contracts at `tcc/09 - Decisions/Current Contracts.md` when needed.
 7. Run the union of required area gates once on the final state. Packaging changes require the distribution gate too.
 8. Update the canonical contract and task conclusion, then make one coherent local commit for the accepted slice.
 
-Use `http/HttpModule.kt` and `sparql/index2.html` as entry points. Existing `/api/query` projects one variable; new staged-query behavior is governed by DEC-008/API-002 and is not preapproved by this skill.
+Use `http/HttpModule.kt` and `frontend/src/lib/api/client.ts` (with the OpenAPI snapshot) as entry points. Existing `/api/query` projects one variable; new staged-query behavior is governed by DEC-008/API-002 and is not preapproved by this skill.
 
 Preserve old capture tests. Separate product decisions from routine implementation choices and report a concrete blocker if a required contract is still unresolved.
