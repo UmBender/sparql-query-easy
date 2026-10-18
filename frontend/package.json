@@ -10,11 +10,12 @@
 		"prepare": "svelte-kit sync || echo ''",
 		"check": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json",
 		"check:watch": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json --watch",
-		"lint": "prettier --check . && eslint .",
+		"lint": "prettier --check . && eslint . && node scripts/check-raw-colors.mjs",
 		"format": "prettier --write .",
 		"test:unit": "vitest",
 		"test": "npm run test:unit -- --run && npm run test:e2e",
-		"test:e2e": "playwright test"
+		"test:e2e": "playwright test",
+		"tokens": "UPDATE_TOKENS=1 vitest run src/lib/design/css.spec.ts"
 	},
 	"devDependencies": {
 		"@eslint/js": "^10.0.1",

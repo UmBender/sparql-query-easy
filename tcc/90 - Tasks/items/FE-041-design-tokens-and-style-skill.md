@@ -1,13 +1,13 @@
 ---
 id: FE-041
 title: Define design tokens, Tailwind and shadcn-svelte theme and the Cytoscape stylesheet from one source
-status: BACKLOG
+status: DONE
 priority: P1
 type: frontend
 depends_on: [FE-040]
 human_gate: false
 created: 2026-10-16
-updated: 2026-10-16
+updated: 2026-10-17
 ---
 # Define design tokens, Tailwind and shadcn-svelte theme and the Cytoscape stylesheet from one source
 
@@ -42,11 +42,11 @@ Excluded: feature screens; installing Tailwind/shadcn-svelte and the
 
 ## Acceptance criteria
 
-- [ ] A unit test changes one token and observes the change in both the
+- [x] A unit test changes one token and observes the change in both the
       generated CSS variables and the generated Cytoscape stylesheet.
-- [ ] Light and dark token sets define the same keys (test).
-- [ ] Node-kind colors match the legacy page (screenshot or value comparison).
-- [ ] The hex-color check fails on a planted `#ff0000` in a component and
+- [x] Light and dark token sets define the same keys (test).
+- [x] Node-kind colors match the legacy page (screenshot or value comparison).
+- [x] The hex-color check fails on a planted `#ff0000` in a component and
       passes on the clean tree.
 
 ## Validation
@@ -60,3 +60,19 @@ legacy `npm run test:browser`; docs check.
   `tokens.ts` path, hover/selected/edge-label styles, hex-color check) and
   they were merged into scope. Components and `/styleguide` moved to FE-050,
   the style skill to FE-051 (location decided there, D-T3a).
+- 2026-10-17: Added `frontend/src/lib/design/`: `tokens.ts` (light/dark
+  semantic palettes with shadcn aliases, node kinds with the legacy values,
+  edge, selection, rejection, possible-graph states, type, spacing, radii,
+  shadows, z-index), `css.ts` (CSS variables; `tokens.generated.css` is
+  written by `npm run tokens` and a unit test fails when it drifts),
+  `theme.css` (Tailwind `@theme inline` mapping, no values) and
+  `cytoscape.ts` (main and possible-graph stylesheets keyed by
+  `data(kind)` and state classes). `layout.css` now only imports the theme;
+  the shadcn default oklch values were removed. `scripts/check-raw-colors.mjs`
+  is part of `npm run lint`. Tests: same keys in both palettes; one changed
+  token reaches the CSS and both stylesheets; node colors, value-variable
+  border and shapes equal the legacy `graph-model.js` functions (live import,
+  to be replaced at FE-049); a planted `#ff0000` fails the check and the tree
+  passes. Validation: `npm --prefix frontend run check`, `lint`, `test`
+  (10 Vitest, 1 Playwright) pass. Legacy files unchanged. Completion commit
+  for this task.
