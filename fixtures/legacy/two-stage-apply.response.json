@@ -1,0 +1,84 @@
+[
+  {
+    "body": {
+      "data": {
+        "candidates": [
+          {
+            "label": "Charizard",
+            "selectable": true,
+            "term": {
+              "datatype": null,
+              "language": null,
+              "type": "iri",
+              "value": "http://easyquery.example.org/pokemon#Charizard"
+            }
+          },
+          {
+            "label": "Charmander",
+            "selectable": true,
+            "term": {
+              "datatype": null,
+              "language": null,
+              "type": "iri",
+              "value": "http://easyquery.example.org/pokemon#Charmander"
+            }
+          },
+          {
+            "label": "Charmeleon",
+            "selectable": true,
+            "term": {
+              "datatype": null,
+              "language": null,
+              "type": "iri",
+              "value": "http://easyquery.example.org/pokemon#Charmeleon"
+            }
+          }
+        ],
+        "hasMore": false,
+        "limit": 50,
+        "offset": 0,
+        "variableName": "?pokemon"
+      }
+    },
+    "status": 200
+  },
+  {
+    "body": {
+      "data": {
+        "candidates": [
+          {
+            "label": "Fire",
+            "selectable": true,
+            "term": {
+              "datatype": null,
+              "language": null,
+              "type": "iri",
+              "value": "http://easyquery.example.org/pokemon#FireType"
+            }
+          },
+          {
+            "label": "Flying",
+            "selectable": true,
+            "term": {
+              "datatype": null,
+              "language": null,
+              "type": "iri",
+              "value": "http://easyquery.example.org/pokemon#FlyingType"
+            }
+          }
+        ],
+        "hasMore": false,
+        "limit": 50,
+        "offset": 0,
+        "variableName": "?type"
+      }
+    },
+    "status": 200
+  },
+  {
+    "body": {
+      "error": "Invalid SPARQL variable name: "
+    },
+    "status": 400
+  }
+]

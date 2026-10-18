@@ -1,0 +1,109 @@
+[
+  {
+    "body": {
+      "data": {
+        "count": 12,
+        "variableName": "?pokemon"
+      }
+    },
+    "status": 200
+  },
+  {
+    "body": {
+      "data": {
+        "count": 7,
+        "variableName": "?pokemon"
+      }
+    },
+    "status": 200
+  },
+  {
+    "body": {
+      "data": {
+        "candidates": [
+          {
+            "label": "Arcanine",
+            "selectable": true,
+            "term": {
+              "datatype": null,
+              "language": null,
+              "type": "iri",
+              "value": "http://easyquery.example.org/pokemon#Arcanine"
+            }
+          },
+          {
+            "label": "Charizard",
+            "selectable": true,
+            "term": {
+              "datatype": null,
+              "language": null,
+              "type": "iri",
+              "value": "http://easyquery.example.org/pokemon#Charizard"
+            }
+          },
+          {
+            "label": "Magmar",
+            "selectable": true,
+            "term": {
+              "datatype": null,
+              "language": null,
+              "type": "iri",
+              "value": "http://easyquery.example.org/pokemon#Magmar"
+            }
+          },
+          {
+            "label": "Moltres",
+            "selectable": true,
+            "term": {
+              "datatype": null,
+              "language": null,
+              "type": "iri",
+              "value": "http://easyquery.example.org/pokemon#Moltres"
+            }
+          },
+          {
+            "label": "Ninetales",
+            "selectable": true,
+            "term": {
+              "datatype": null,
+              "language": null,
+              "type": "iri",
+              "value": "http://easyquery.example.org/pokemon#Ninetales"
+            }
+          },
+          {
+            "label": "Ponyta",
+            "selectable": true,
+            "term": {
+              "datatype": null,
+              "language": null,
+              "type": "iri",
+              "value": "http://easyquery.example.org/pokemon#Ponyta"
+            }
+          },
+          {
+            "label": "Rapidash",
+            "selectable": true,
+            "term": {
+              "datatype": null,
+              "language": null,
+              "type": "iri",
+              "value": "http://easyquery.example.org/pokemon#Rapidash"
+            }
+          }
+        ],
+        "hasMore": false,
+        "limit": 50,
+        "offset": 0,
+        "variableName": "?pokemon"
+      }
+    },
+    "status": 200
+  },
+  {
+    "body": {
+      "data": "PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>\nPREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>\nPREFIX owl: <http://www.w3.org/2002/07/owl#>\nSELECT DISTINCT ?speed ?speedLabel\nWHERE {\n?pokemon <http://easyquery.example.org/pokemon#hasType> <http://easyquery.example.org/pokemon#FireType> .\nOPTIONAL {\n?speed rdfs:label ?speedLabel .\nFILTER (lang(?speedLabel) = \"en\")\n}\n?pokemon <http://easyquery.example.org/pokemon#speed> ?speed .\nOPTIONAL {\n?speed rdfs:label ?speedLabel .\nFILTER (lang(?speedLabel) = \"en\")\n}\nFILTER (isLiteral(?speed) && ?speed >= 90)\n}\nLIMIT 150\n"
+    },
+    "status": 200
+  }
+]

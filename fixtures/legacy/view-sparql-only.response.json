@@ -1,0 +1,26 @@
+[
+  {
+    "body": {
+      "data": {
+        "count": 32,
+        "variableName": "?pokemon"
+      }
+    },
+    "status": 200
+  },
+  {
+    "body": {
+      "data": {
+        "count": 7,
+        "variableName": "?pokemon"
+      }
+    },
+    "status": 200
+  },
+  {
+    "body": {
+      "data": "PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>\nPREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>\nPREFIX owl: <http://www.w3.org/2002/07/owl#>\nSELECT DISTINCT ?pokemon ?pokemonLabel\nWHERE {\n?pokemon <http://easyquery.example.org/pokemon#hasType> <http://easyquery.example.org/pokemon#WaterType> .\nOPTIONAL {\n?pokemon rdfs:label ?pokemonLabel .\nFILTER (lang(?pokemonLabel) = \"en\")\n}\n?pokemon <http://easyquery.example.org/pokemon#speed> ?literalValue1 .\nFILTER (str(?literalValue1) = \"50\") .\nOPTIONAL {\n?pokemon rdfs:label ?pokemonLabel .\nFILTER (lang(?pokemonLabel) = \"en\")\n}\n}\nLIMIT 150\n"
+    },
+    "status": 200
+  }
+]

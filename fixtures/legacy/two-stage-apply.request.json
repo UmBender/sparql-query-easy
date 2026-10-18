@@ -1,0 +1,85 @@
+[
+  {
+    "body": {
+      "bindings": [],
+      "endpointUrl": "PokemonGen1",
+      "limit": 50,
+      "offset": 0,
+      "variableName": "?pokemon",
+      "where": [
+        {
+          "filterType": null,
+          "object": "<http://easyquery.example.org/pokemon#CharmanderFamily>",
+          "predicate": "<http://easyquery.example.org/pokemon#inEvolutionFamily>",
+          "subject": "?pokemon"
+        },
+        {
+          "filterType": null,
+          "object": "?type",
+          "predicate": "<http://easyquery.example.org/pokemon#hasType>",
+          "subject": "?pokemon"
+        }
+      ]
+    },
+    "method": "POST",
+    "path": "/api/query/stage"
+  },
+  {
+    "body": {
+      "bindings": [
+        {
+          "term": {
+            "datatype": null,
+            "language": null,
+            "type": "iri",
+            "value": "http://easyquery.example.org/pokemon#Charizard"
+          },
+          "variableName": "?pokemon"
+        }
+      ],
+      "endpointUrl": "PokemonGen1",
+      "limit": 50,
+      "offset": 0,
+      "variableName": "?type",
+      "where": [
+        {
+          "filterType": null,
+          "object": "<http://easyquery.example.org/pokemon#CharmanderFamily>",
+          "predicate": "<http://easyquery.example.org/pokemon#inEvolutionFamily>",
+          "subject": "?pokemon"
+        },
+        {
+          "filterType": null,
+          "object": "?type",
+          "predicate": "<http://easyquery.example.org/pokemon#hasType>",
+          "subject": "?pokemon"
+        }
+      ]
+    },
+    "method": "POST",
+    "path": "/api/query/stage"
+  },
+  {
+    "body": {
+      "endpointUrl": "PokemonGen1",
+      "limit": 150,
+      "variableName": "",
+      "where": [
+        {
+          "filterType": null,
+          "object": "<http://easyquery.example.org/pokemon#CharmanderFamily>",
+          "predicate": "<http://easyquery.example.org/pokemon#inEvolutionFamily>",
+          "subject": "<http://easyquery.example.org/pokemon#Charizard>"
+        },
+        {
+          "filterType": null,
+          "object": "<http://easyquery.example.org/pokemon#FlyingType>",
+          "predicate": "<http://easyquery.example.org/pokemon#hasType>",
+          "subject": "<http://easyquery.example.org/pokemon#Charizard>"
+        }
+      ]
+    },
+    "method": "POST",
+    "path": "/api/query/sparql"
+  }
+]

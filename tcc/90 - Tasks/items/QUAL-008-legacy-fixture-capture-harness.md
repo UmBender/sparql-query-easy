@@ -1,13 +1,13 @@
 ---
 id: QUAL-008
 title: Capture legacy request, response and SPARQL fixtures on PokemonGen1 with one command
-status: BACKLOG
+status: DONE
 priority: P1
 type: quality
 depends_on: [QUAL-002, DATA-002]
 human_gate: true
 created: 2026-10-16
-updated: 2026-10-16
+updated: 2026-10-17
 ---
 # Capture legacy request, response and SPARQL fixtures on PokemonGen1 with one command
 
@@ -73,7 +73,7 @@ responses and are not reused as fixtures.
 - The full scenario corpus (QUAL-009) and format docs (QUAL-010).
 - Running the capture inside `npm run test:browser`.
 
-## Pending decision D-T2a: test hooks in the legacy page
+## Decision D-T2a: test hooks in the legacy page (resolved: A)
 
 DEC-011 condition 2 says "the legacy page is not modified for the new app";
 the T2 brief allows adding test hooks (`data-testid`, a window handle to
@@ -92,18 +92,18 @@ Cytoscape in test mode).
 
 ## Acceptance criteria
 
-- [ ] `npm run fixtures:legacy` (or the command chosen) regenerates all
+- [x] `npm run fixtures:legacy` (or the command chosen) regenerates all
       fixtures from a clean `fixtures/legacy/` with Ktor started by the
       command itself; no external request is made (QUAL-003 rule).
-- [ ] Running it twice in a row leaves `git diff --exit-code fixtures/legacy`
+- [x] Running it twice in a row leaves `git diff --exit-code fixtures/legacy`
       clean, or only the documented normalized fields differ.
-- [ ] `fire-speed-at-least-90` returns exactly `pk:Charizard`, `pk:Ninetales`,
+- [x] `fire-speed-at-least-90` returns exactly `pk:Charizard`, `pk:Ninetales`,
       `pk:Arcanine`, `pk:Ponyta`, `pk:Rapidash`, `pk:Magmar`, `pk:Moltres`
       (independent oracle read from `pokemon_gen1.ttl`; 90 is inclusive),
       compared as a set.
-- [ ] Each seed scenario has request, response and `.sparql` files; the
+- [x] Each seed scenario has request, response and `.sparql` files; the
       two-stage one records the stage requests and the query after Apply.
-- [ ] Existing gates stay green: `npm run test:browser`, `npm run test:e2e`.
+- [x] Existing gates stay green: `npm run test:browser`, `npm run test:e2e`.
 
 ## Validation
 
@@ -115,3 +115,19 @@ idempotence check above; docs check for the Operational Map change.
 ## Execution log
 
 - 2026-10-16: Planned from the T2 brief; no code changed.
+- 2026-10-17: D-T2a taken as the recommended option A under the user's
+  full-migration goal: no legacy page edits; the harness uses the global
+  `cy` and existing ids. Added `playwright.fixtures.config.mjs` (Ktor on
+  18091), `frontend-tests/fixtures-capture/` (`capture.spec.mjs`,
+  `scenarios.mjs`, independent TTL reader `pokemon-oracle.mjs`,
+  `normalize.mjs`), `scripts/capture-legacy-fixtures.mjs` behind
+  `npm run fixtures:legacy`, and `fixtures/legacy/` with the three seed
+  scenarios and a README. The harness waits for a quiet period after each
+  action, counted from the call, so debounced badge counts land in a fixed
+  order. Finding: after Apply removes every variable, View SPARQL sends
+  `variableName: ""` and gets 400; the scenario records it as an expected
+  error. Validation: `npm run fixtures:legacy` 3 passed, twice in a row with
+  identical output (`diff -r` clean); `fire-speed-at-least-90` equals the
+  oracle's seven Pokémon; `npm run test:e2e` 4 passed; legacy page and
+  browser suite unchanged since the QUAL-006 gate (131 passed, 1 known
+  intermittent). Completion commit for this task.

@@ -13,6 +13,7 @@ when the task crosses that responsibility. This is the canonical command map.
 | Graph UI and its owner | `sparql/index2.html` (markup, DOMContentLoaded bootstrap: `cy` init) and classic scripts `app-core.js` (state, API, `runQuery`), `stage-order.js`, `stage-exploration.js`, `graph-nodes.js`, `graph-menus.js` (menus, connection, Alt+drag); pure modules `query-calculations.js`, `query-stages.js`, `graph-actions.js`, `graph-model.js`, `graph-binding.js` (headless-Cytoscape unit tests) |
 | New SvelteKit frontend (DEC-011) | `frontend/`: `vite.config.ts` (adapter-static SPA fallback, dev proxy to 8080), `src/lib/{domain,stores,api,components,features}`, `src/routes`, unit tests `src/**/*.spec.ts`, offline Playwright `tests/*.e2e.ts`; see `frontend/README.md` |
 | Browser oracles | `frontend-tests/index2.spec.mjs`, `server.mjs`, `cdn-stubs.mjs`, `external-assets.mjs`; end-to-end `frontend-tests/e2e/` with `fixtures/` |
+| Legacy wire fixtures (QUAL-008) | `fixtures/legacy/` (README: provenance, scenarios), capture harness `frontend-tests/fixtures-capture/` (`scenarios.mjs`, independent `pokemon-oracle.mjs`, `normalize.mjs`), `playwright.fixtures.config.mjs` (Ktor on 18091), `scripts/capture-legacy-fixtures.mjs` |
 | Kotlin tests/captures | `src/test/kotlin/`, `compatibility/expected/`, `compatibility/retirement-expected/` |
 | Persistence (BE-005) | `persistence/PostgresDatabase.kt` (Hikari, Flyway, Exposed), `application/persistence/`, migrations `src/main/resources/db/migration/`; tests use embedded PostgreSQL 17 (`io.zonky.test`, binaries from a Maven artifact: no Docker or network) via `src/test/kotlin/.../persistence/TestPostgres.kt` |
 | Packaging | `build.gradle.kts` processResources explicit frontend includes; `Dockerfile` |
@@ -37,6 +38,7 @@ These are configured versions, not claims about a fresh successful build.
 | New frontend gate (FE-040) | `npm --prefix frontend run check && npm --prefix frontend run lint && npm --prefix frontend test` (Vitest, then build and offline Playwright smoke) |
 | New frontend dev server | `npm --prefix frontend run dev` (port 5173, proxies `/api`, `/health`, `/openapi.json` to Ktor on 8080) |
 | Ordered exploration end to end (builds and starts Ktor on port 18090; offline) | `npm run test:e2e` |
+| Regenerate legacy fixtures (builds and starts Ktor on port 18091; offline) | `npm run fixtures:legacy` (one scenario: `npm run fixtures:legacy -- --grep <name>`); idempotence: run twice, `git diff --exit-code fixtures/legacy` |
 | Distribution | `GRADLE_USER_HOME=/tmp/sparql-query-easy-gradle ./gradlew installDist --no-daemon` |
 | Run | `./gradlew run` or `./build/install/sparql-query-easy-kotlin/bin/sparql-query-easy-kotlin` |
 | Docs/skills | `node scripts/check-project-docs.mjs`; `git diff --check` |

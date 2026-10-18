@@ -5,6 +5,7 @@
   "scripts": {
     "test:browser": "playwright test",
     "test:e2e": "playwright test --config playwright.e2e.config.mjs",
+    "fixtures:legacy": "node scripts/capture-legacy-fixtures.mjs",
     "test:query": "node --test frontend-tests/query-calculations.unit.mjs frontend-tests/query-stages.unit.mjs frontend-tests/graph-actions.unit.mjs frontend-tests/graph-model.unit.mjs frontend-tests/graph-binding.unit.mjs",
     "check:frontend-types": "tsc --project tsconfig.frontend.json"
   },
