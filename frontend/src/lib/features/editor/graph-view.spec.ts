@@ -1,0 +1,69 @@
+import { describe, expect, it } from 'vitest';
+import { addElements, emptyGraph } from '#lib/domain/index.js';
+import { viewElements } from './graph-view.js';
+
+const graph = addElements(emptyGraph, [
+	{ kind: 'entity', id: '<a>', value: '<a>', label: 'Pikachu', position: { x: 1, y: 2 } },
+	{ kind: 'variable', id: '?n', name: '?n', label: '3 results', many: true },
+	{
+		kind: 'value',
+		id: 'v',
+		term: { type: 'literal', value: 'x' },
+		filter: null,
+		label: 'A very long literal value'
+	},
+	{
+		kind: 'value',
+		id: 'old',
+		term: { type: 'literal', value: 'x' },
+		filter: null,
+		label: '(1) Named',
+		legacyFilter: true
+	},
+	{
+		kind: 'valueVariable',
+		id: '?v',
+		name: '?v',
+		label: '? ≥ 9',
+		filter: { code: 2, value: '9' }
+	},
+	{ kind: 'class', id: 'c', value: '<C>', label: 'Class' },
+	{ id: 'e1', source: '<a>', target: '?n', predicate: '<p>', label: 'p' },
+	{ id: 'e2', source: '<a>', target: 'v', predicate: '?p', label: '?' },
+	{ id: 'e3', source: '<a>', target: 'c', predicate: null, label: '?' }
+]);
+
+describe('graph view', () => {
+	it('derives every element, kind, label and class from the graph alone', () => {
+		const view = viewElements(graph, {
+			selected: ['<a>', 'e1'],
+			rejected: new Set(['?v']),
+			emphasis: new Set(['?n', 'e2'])
+		});
+		expect(
+			view.map((element) => [
+				element.data.id,
+				element.data.kind,
+				element.data.label,
+				element.classes
+			])
+		).toEqual([
+			['<a>', 'entity', 'Pikachu', 'selected'],
+			['?n', 'many', '3 results', 'emphasis'],
+			['v', 'value', 'A very long literal value', 'label-below'],
+			['old', 'legacyFilter', 'Named', ''],
+			['?v', 'valueVariable', '? ≥ 9', 'rejected'],
+			['c', 'class', 'Class', ''],
+			['e1', 'fixed', 'p', 'selected'],
+			['e2', 'variable', '?', 'emphasis'],
+			['e3', 'variable', '?', '']
+		]);
+		expect(view[0].position).toEqual({ x: 1, y: 2 });
+		expect(view[1].position).toBeUndefined();
+		expect(view[6].data).toMatchObject({ source: '<a>', target: '?n' });
+	});
+
+	it('is a function of the graph: the same graph gives the same view', () => {
+		expect(viewElements(graph)).toEqual(viewElements(structuredClone(graph)));
+	});
+});

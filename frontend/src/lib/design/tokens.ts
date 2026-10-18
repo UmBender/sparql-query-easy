@@ -86,7 +86,8 @@ export type Tokens = {
 	light: Palette;
 	dark: Palette;
 	graph: GraphTokens;
-	font: { sans: string; mono: string };
+	/** `canvas` is the graph label font: Cytoscape accepts no quotes in font-family. */
+	font: { sans: string; mono: string; canvas: string };
 	/** Type scale in rem. */
 	text: { xs: string; sm: string; base: string; lg: string; xl: string; '2xl': string };
 	/** Spacing scale in rem (Tailwind's base unit). */
@@ -249,7 +250,8 @@ export const tokens: Tokens = {
 	},
 	font: {
 		sans: "'Inter Variable', system-ui, sans-serif",
-		mono: "ui-monospace, 'SFMono-Regular', Menlo, monospace"
+		mono: "ui-monospace, 'SFMono-Regular', Menlo, monospace",
+		canvas: 'Inter Variable, system-ui, sans-serif'
 	},
 	text: {
 		xs: '0.75rem',

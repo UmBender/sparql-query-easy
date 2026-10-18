@@ -4,6 +4,12 @@ import { defineConfig } from '@playwright/test';
 export default defineConfig({
 	testDir: 'tests',
 	testMatch: '**/*.e2e.ts',
-	webServer: { command: 'npm run build && npm run preview', port: 4173 },
+	// One browser at a time, like the legacy suite: parallel Firefox instances time out here.
+	workers: 1,
+	fullyParallel: false,
+	webServer: {
+		command: 'npx vite build --mode e2e --minify false && npm run preview',
+		port: 4173
+	},
 	use: { baseURL: 'http://localhost:4173', browserName: 'firefox', headless: true }
 });

@@ -38,6 +38,14 @@ store (graph, selection, endpoint, limit, stage order, funnel preview; every
 edit through a domain operation and `commit`). `src/lib/api/` holds the typed
 client, the TanStack Query cache and the OpenAPI snapshot (see its README).
 
+Editor (FE-044): `src/lib/features/editor/`. `query-editor.svelte` is the page;
+`graph-canvas.svelte` renders `viewElements(store.graph)` (`graph-view.ts`,
+pure) into Cytoscape and turns gestures into store or controller actions;
+`editor-controller.svelte.ts` holds the action lists, connections, results
+table, View SPARQL and search. e2e builds (`vite build --mode e2e`) expose
+`window.__easyquery` (`store`, `controller`, `view`, `viewElements`) for
+the Playwright tests, like the legacy page's global `cy`.
+
 Base components (FE-050) live in `src/lib/components/ui/`: the shadcn-svelte
 primitives (button, input, select, dialog, tooltip, sonner toasts, …) plus
 `icon-button`, `combobox`, `chip` (numbered stage chip), `count-badge`,

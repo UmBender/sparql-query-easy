@@ -34,7 +34,7 @@ export function graphStylesheet(tokens: Tokens = defaultTokens): StyleRule[] {
 			selector: 'node',
 			style: {
 				label: 'data(label)',
-				'font-family': tokens.font.sans,
+				'font-family': tokens.font.canvas,
 				'font-size': graph.labelFontSize,
 				'text-valign': 'center',
 				'text-halign': 'center',
@@ -57,7 +57,7 @@ export function graphStylesheet(tokens: Tokens = defaultTokens): StyleRule[] {
 				'target-arrow-color': graph.edge.line,
 				'target-arrow-shape': 'triangle',
 				label: 'data(label)',
-				'font-family': tokens.font.sans,
+				'font-family': tokens.font.canvas,
 				'font-size': graph.edgeLabelFontSize,
 				color: graph.edge.label,
 				'text-background-color': graph.edge.labelBackground,

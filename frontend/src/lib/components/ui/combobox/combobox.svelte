@@ -19,6 +19,7 @@
 		placeholder,
 		status,
 		onselect,
+		oninput,
 		class: className,
 		inputClass
 	}: {
@@ -30,6 +31,8 @@
 		/** Shown in the list when there are no items (loading, empty, error). */
 		status?: string;
 		onselect: (item: ComboboxItem) => void;
+		/** Called with the text after each keystroke. */
+		oninput?: (text: string) => void;
 		class?: string;
 		inputClass?: string;
 	} = $props();
@@ -80,6 +83,7 @@
 		oninput={() => {
 			open = true;
 			active = -1;
+			oninput?.(text);
 		}}
 		onkeydown={keydown}
 		onblur={() => setTimeout(() => (open = false), 150)}

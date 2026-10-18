@@ -39,8 +39,11 @@ export default defineConfig(
 		rules: { '@typescript-eslint/ban-ts-comment': 'off' }
 	},
 	{
-		// Generated shadcn-svelte button: its href is any URL the caller passes.
-		files: ['src/lib/components/ui/button/button.svelte'],
+		// The shadcn-svelte button takes any URL; the toolbar links to an external demo video.
+		files: [
+			'src/lib/components/ui/button/button.svelte',
+			'src/lib/features/editor/editor-toolbar.svelte'
+		],
 		rules: { 'svelte/no-navigation-without-resolve': 'off' }
 	}
 );
