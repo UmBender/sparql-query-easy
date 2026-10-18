@@ -41,20 +41,33 @@ hosting target is selected yet; see the
 
 Requirements: JDK 21 and Node.js 22.
 
-1. Start the Ktor API on port 8080 (accounts need `EASYQUERY_DB_URL`, see
-   `.env.example`; query routes work without a database):
+1. Optional, for accounts: start only PostgreSQL (Docker, OPS-007). Copy
+   `.env.example` to `.env`, set `POSTGRES_PASSWORD`, and set the
+   `EASYQUERY_DB_URL/USER/PASSWORD` values that `.env.example` lists for this
+   database. Then run:
+
+   ```sh
+   docker compose -f compose.yaml -f compose.dev.yaml up -d --wait db
+   ```
+
+   It listens on `127.0.0.1:${DB_PORT:-5432}`. Stop it with
+   `docker compose -f compose.yaml -f compose.dev.yaml stop db`. For reset and
+   details, see the [Compose runbook](tcc/07%20-%20Operations/Docker%20Compose%20Stack.md#development-database-ops-007).
+
+2. Start the Ktor API on port 8080. Flyway migrates the database at startup.
+   Query routes work without a database:
 
    ```sh
    ./gradlew run
    ```
 
-2. Install and start the frontend (npm 11 installs its lockfile):
+3. Install and start the frontend (npm 11 installs its lockfile):
 
    ```sh
    (cd frontend && npx npm@11 ci && npm run dev)
    ```
 
-3. Open `http://localhost:5173/`. Vite forwards `/api`, `/health` and
+4. Open `http://localhost:5173/`. Vite forwards `/api`, `/health` and
    `/openapi.json` to Ktor, so the browser sees one origin. Swagger UI is at
    `http://localhost:8080/swagger`.
 

@@ -58,8 +58,8 @@ The T6 brief was compared with this card, and its done work is unchanged.
 These are T6 criteria the card did not cover, proposed as follow-up cards
 rather than reopening it:
 
-- Health route reports DB connectivity: BE-007.
-- Local dev PostgreSQL-only setup reachable from `./gradlew run`: OPS-007.
+- Health route reports DB connectivity: BE-007 (done 2026-10-18).
+- Local dev PostgreSQL-only setup reachable from `./gradlew run`: OPS-007 (done 2026-10-18).
 - Integration tests against Testcontainers contradict the embedded choice
   above: DEC-012 chose Testcontainers (2026-10-18); QUAL-011 implements it.
 - The repository pattern with an example table and tests already exists as

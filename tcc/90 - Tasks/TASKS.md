@@ -105,7 +105,7 @@ Ordered by dependencies, then priority among selection candidates. See [worker r
 | STUDY-001 | BACKLOG | P1 | fullstack | [Let a logged-in user solve proposed queries and submit answers once](<items/STUDY-001-proposed-queries-and-submission.md>) |
 | STUDY-002 | BACKLOG | P1 | fullstack | [Show two questionnaires to logged-in users and store their answers](<items/STUDY-002-questionnaires.md>) |
 | OPS-006 | DONE | P1 | operations | [Run db, backend and web together with Docker Compose](<items/OPS-006-docker-compose-stack.md>) |
-| OPS-007 | BACKLOG | P2 | operations | [Start only PostgreSQL for local development and reach it from ./gradlew run](<items/OPS-007-local-dev-database.md>) |
+| OPS-007 | DONE | P2 | operations | [Start only PostgreSQL for local development and reach it from ./gradlew run](<items/OPS-007-local-dev-database.md>) |
 | FE-049 | DONE | P1 | frontend | [Make the SvelteKit app the authoritative frontend and retire index2.html](<items/FE-049-legacy-cutover.md>) |
 | BE-004 | DONE | P1 | fullstack | [Make MAX and MIN keep every entity with the extreme value, capped by a configurable limit](<items/BE-004-max-min-all-ties.md>) |
 | INV-001 | DONE | P1 | investigation | [Investigate Ktor HTTP-client and runtime resource lifecycle](<items/INV-001-runtime-resource-lifecycle.md>) |

@@ -1,0 +1,9 @@
+# OPS-007: local development override. It publishes the db service of
+# compose.yaml on 127.0.0.1 only, so a backend started with `./gradlew run`
+# reaches it. Same image, settings and volume; compose.yaml stays unchanged.
+#   docker compose -f compose.yaml -f compose.dev.yaml up -d --wait db
+# Runbook: tcc/07 - Operations/Docker Compose Stack.md.
+services:
+  db:
+    ports:
+      - "127.0.0.1:${DB_PORT:-5432}:5432"

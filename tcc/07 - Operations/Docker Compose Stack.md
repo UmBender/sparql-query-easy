@@ -41,6 +41,34 @@ From the repository root:
 | Reset (deletes accounts and sessions) | `docker compose down -v` |
 | Database shell | `docker compose exec db psql -U easyquery easyquery` |
 
+## Development database (OPS-007)
+
+For `./gradlew run` (or the Vite dev server against it), start only `db`,
+published on `127.0.0.1:${DB_PORT:-5432}` by the `compose.dev.yaml`
+override. The service, image and volume are the ones above. `compose.yaml`
+alone still publishes no database port.
+
+In `.env`, set `POSTGRES_PASSWORD`, then point the app at the database
+(`.env.example` lists the lines):
+`EASYQUERY_DB_URL=jdbc:postgresql://127.0.0.1:5432/easyquery` (change the
+port to match `DB_PORT` and the database name to `POSTGRES_DB`),
+`EASYQUERY_DB_USER` = `POSTGRES_USER`, `EASYQUERY_DB_PASSWORD` =
+`POSTGRES_PASSWORD`. The compose `backend` service sets its own
+`EASYQUERY_DB_*` values, so these lines don't affect the full stack.
+
+| Task | Command |
+|---|---|
+| Start only PostgreSQL | `docker compose -f compose.yaml -f compose.dev.yaml up -d --wait db` |
+| Run the API against it | `./gradlew run` (Flyway applies V1 and V2 on an empty volume; `/health` reports `"database":"ready"`) |
+| Stop, keep data | `docker compose -f compose.yaml -f compose.dev.yaml stop db` |
+| Reset (deletes accounts and sessions) | `docker compose -f compose.yaml -f compose.dev.yaml down -v` |
+| Database shell | `docker compose exec db psql -U easyquery easyquery` |
+
+The dev database and the full stack share the `easyquery_db-data` volume,
+so accounts created in one are visible in the other, and a reset removes
+both. Running the full stack with the override also publishes the database
+port; use `compose.yaml` alone for that.
+
 Uploaded Turtle graphs live in the backend's memory and are lost when it
 restarts (unchanged from OPS-001).
 
@@ -57,5 +85,5 @@ restarts (unchanged from OPS-001).
 
 ## Source files
 
-`compose.yaml`, `deploy/web.Dockerfile`, `deploy/Caddyfile`, `Dockerfile`,
+`compose.yaml`, `compose.dev.yaml` (OPS-007), `deploy/web.Dockerfile`, `deploy/Caddyfile`, `Dockerfile`,
 `.env.example`, `.dockerignore`.

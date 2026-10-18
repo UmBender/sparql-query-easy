@@ -16,7 +16,7 @@ when the task crosses that responsibility. This is the canonical command map.
 | Persistence (BE-005) | `persistence/PostgresDatabase.kt` (Hikari, Flyway, Exposed), `application/persistence/`, migrations `src/main/resources/db/migration/`; tests start one `postgres:17-alpine` container per test JVM through Testcontainers (DEC-012, QUAL-011; needs a reachable Docker daemon, fails naming Docker otherwise) via `src/test/kotlin/.../persistence/TestPostgres.kt` |
 | CI (QUAL-007) | `.github/workflows/ci.yml`: jobs `kotlin` and `frontend` run the closing gates below on push to main and pull requests, each pre-pulling `postgres:17-alpine` in its own step; no deploy, no secrets |
 | Accounts and sessions (AUTH-001) | `application/auth/` (`AuthService`, `AccountStore` port, `AttemptLimiter`), `security/Argon2PasswordHasher.kt` (BouncyCastle), `persistence/PostgresAccountStore.kt`, `http/AuthRoutes.kt` (cookie, Origin/JSON checks, `withSession` for protected routes), migration `V2__accounts.sql`; tests `AuthRoutesTest` (Testcontainers PostgreSQL), `AuthServiceTest` |
-| Compose stack (OPS-006) | `compose.yaml` (db, backend, web), `deploy/web.Dockerfile` (SPA build + Caddy), `deploy/Caddyfile`; runbook [[../07 - Operations/Docker Compose Stack]] |
+| Compose stack (OPS-006) | `compose.yaml` (db, backend, web), `compose.dev.yaml` (OPS-007: publishes only `db` on 127.0.0.1 for `./gradlew run`), `deploy/web.Dockerfile` (SPA build + Caddy), `deploy/Caddyfile`; runbook [[../07 - Operations/Docker Compose Stack]] |
 | Packaging | `build.gradle.kts` processResources explicit frontend includes; `Dockerfile` |
 | Work selection and cards | [[../90 - Tasks/TASKS]], [[../90 - Tasks/WORKER_PROMPT]], [[../90 - Tasks/FORMAT]] |
 
