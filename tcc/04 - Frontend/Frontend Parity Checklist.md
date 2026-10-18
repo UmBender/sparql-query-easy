@@ -32,7 +32,7 @@ check that passes (Playwright files in `frontend/tests/`, Vitest specs in
 | P-14 | Status bar node/edge counts | asserted in many tests (`#status-nodes`) | FE-044 | — | new: `editor.e2e.ts` P-06 P-07 P-14 |
 | P-15 | Enter runs the query (toolbar inputs and page; not buttons or panels) | `QUAL-006 Enter runs the query from the toolbar inputs and the page, not from buttons` | FE-046 | — | new: `exploration.e2e.ts` P-15 |
 | P-16 | Results table filter box | `QUAL-006 the results table filter hides rows that do not contain the text` | FE-044 | — | new: `editor.e2e.ts` P-16 |
-| P-17 | Unexpected external traffic is rejected (QUAL-003) | `unexpected external browser traffic is rejected` | QUAL-007 | — | legacy |
+| P-17 | Unexpected external traffic is rejected (QUAL-003) | `unexpected external browser traffic is rejected` | QUAL-007 | — | new: `smoke.e2e.ts` P-17 (every new-app e2e also asserts no external request) |
 
 ## Graph editing
 

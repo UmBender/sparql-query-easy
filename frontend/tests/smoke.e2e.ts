@@ -15,3 +15,10 @@ test('the editor renders and reports the stubbed backend health', async ({ page,
 	);
 	expect(unexpected, 'Unexpected external browser requests').toEqual([]);
 });
+
+test('P-17 unexpected external browser traffic is rejected', async ({ page, baseURL }) => {
+	const unexpected = await guardOffline(page, baseURL!);
+	await page.goto('/');
+	await page.evaluate(() => fetch('https://unexpected.example.test/asset.js').catch(() => {}));
+	expect(unexpected).toEqual(['https://unexpected.example.test/asset.js']);
+});
