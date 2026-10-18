@@ -56,11 +56,10 @@ describe('design tokens', () => {
 	});
 
 	it('node-kind colors equal the legacy page values', async () => {
-		// FE-049 replaces this live comparison when the legacy page is removed.
-		const legacyPath = new URL('../../../../sparql/graph-model.js', import.meta.url).href;
-		const legacy = await import(/* @vite-ignore */ legacyPath);
+		// The verbatim port of sparql/graph-model.js (FE-042), checked by its own oracle suite.
+		const legacy = await import('#lib/domain/legacy/graph-model.js');
 		const { nodes } = tokens.graph;
-		const color = (data: object) => String(legacy.nodeColor(data)).toLowerCase();
+		const color = (data: object) => legacy.nodeColor(data).toLowerCase();
 		expect(nodes.entity.fill).toBe(color({ type: 'node' }));
 		expect(nodes.variable.fill).toBe(color({ type: 'variable' }));
 		expect(nodes.value.fill).toBe(color({ type: 'label' }));

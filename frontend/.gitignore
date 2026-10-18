@@ -26,3 +26,4 @@ test-results
 # Vitest browser mode failure artifacts
 .vitest-attachments
 __screenshots__
+coverage

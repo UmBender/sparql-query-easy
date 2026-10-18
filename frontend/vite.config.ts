@@ -25,6 +25,14 @@ export default defineConfig({
 	},
 	test: {
 		expect: { requireAssertions: true },
+		// FE-042: the framework-free domain keeps at least 90% line and branch coverage.
+		coverage: {
+			provider: 'v8',
+			include: ['src/lib/domain/**/*.ts'],
+			exclude: ['src/lib/domain/**/*.spec.ts', 'src/lib/domain/legacy/oracle-assert.ts'],
+			reporter: ['text-summary', 'text'],
+			thresholds: { lines: 90, branches: 90 }
+		},
 		projects: [
 			{
 				// Component tests (*.svelte.spec.ts) run in Firefox, like the Playwright suites.

@@ -7,14 +7,16 @@ import { join, relative, resolve } from 'node:path';
 
 const root = new URL('..', import.meta.url).pathname;
 const src = resolve(root, process.argv[2] ?? 'src');
-const allowed = join(root, 'src/lib/design');
+// src/lib/domain/legacy/ holds verbatim ports of the legacy modules (FE-042);
+// their color values are oracle data for tests, not UI styles.
+const allowed = [join(root, 'src/lib/design'), join(root, 'src/lib/domain/legacy')];
 const HEX = /(?<![\w&/-])#(?:[0-9a-fA-F]{8}|[0-9a-fA-F]{6}|[0-9a-fA-F]{3,4})\b/g;
 
 function* files(dir) {
 	for (const name of readdirSync(dir)) {
 		const path = join(dir, name);
 		if (statSync(path).isDirectory()) {
-			if (path !== allowed) yield* files(path);
+			if (!allowed.includes(path)) yield* files(path);
 		} else if (/\.(svelte|ts|js|css|html)$/.test(name)) yield path;
 	}
 }

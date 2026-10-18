@@ -24,6 +24,15 @@ Design tokens (FE-041): every color, size and layer lives in
 palette on `.dark`), and `cytoscape.ts` builds the graph stylesheets from the
 same values. Raw hex colors outside `src/lib/design/` fail `npm run lint`.
 
+Domain (FE-042): `src/lib/domain/` is the framework-free query model. `graph.ts`
+holds the typed, immutable `QueryGraph` (node kinds, typed RDF terms) and keeps
+Cytoscape's element order (`order.spec.ts` compares it with headless
+Cytoscape); `operations.ts` reproduces each legacy edit; `query.ts` maps the
+graph to the legacy request bodies through the verbatim ports in `legacy/`;
+`saved-format.ts` is the versioned file format (`formatVersion: 1`, Zod).
+`request-parity.spec.ts` requires the requests to equal `fixtures/legacy/`;
+`npm run test:coverage` enforces 90% line and branch coverage of the domain.
+
 Base components (FE-050) live in `src/lib/components/ui/`: the shadcn-svelte
 primitives (button, input, select, dialog, tooltip, sonner toasts, …) plus
 `icon-button`, `combobox`, `chip` (numbered stage chip), `count-badge`,

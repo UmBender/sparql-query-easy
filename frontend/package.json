@@ -13,9 +13,10 @@
 		"lint": "prettier --check . && eslint . && node scripts/check-raw-colors.mjs",
 		"format": "prettier --write .",
 		"test:unit": "vitest",
-		"test": "npm run test:unit -- --run && npm run test:e2e",
+		"test": "npm run test:coverage && vitest run --project client && npm run test:e2e",
 		"test:e2e": "playwright test",
-		"tokens": "UPDATE_TOKENS=1 vitest run src/lib/design/css.spec.ts"
+		"tokens": "UPDATE_TOKENS=1 vitest run src/lib/design/css.spec.ts",
+		"test:coverage": "vitest run --project server --coverage"
 	},
 	"devDependencies": {
 		"@axe-core/playwright": "^4.10.2",
@@ -32,6 +33,7 @@
 		"@types/node": "^22",
 		"@vitest/browser": "^4.1.12",
 		"@vitest/browser-playwright": "^4.1.12",
+		"@vitest/coverage-v8": "^4.1.12",
 		"bits-ui": "^2.19.5",
 		"cn": "^0.5.0",
 		"eslint": "^10.4.1",

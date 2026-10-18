@@ -1,13 +1,13 @@
 ---
 id: FE-042
 title: Model the drawn query as a typed QueryGraph with a versioned saved format
-status: BACKLOG
+status: DONE
 priority: P1
 type: frontend
 depends_on: [FE-040, QUAL-006, QUAL-009, QUAL-010]
 human_gate: false
 created: 2026-10-16
-updated: 2026-10-16
+updated: 2026-10-17
 ---
 # Model the drawn query as a typed QueryGraph with a versioned saved format
 
@@ -59,19 +59,19 @@ Every scenario whose graph the domain builds: the mapped `where`, `variableFilte
 
 ## Acceptance criteria
 
-- [ ] Ported unit cases pass unchanged in Vitest.
-- [ ] Every domain operation has unit tests; Vitest coverage of
+- [x] Ported unit cases pass unchanged in Vitest.
+- [x] Every domain operation has unit tests; Vitest coverage of
       `frontend/src/lib/domain` is at least 90% (lines and branches),
       enforced as a threshold in the Vitest config.
-- [ ] No module under `frontend/src/lib/domain` imports `svelte`,
+- [x] No module under `frontend/src/lib/domain` imports `svelte`,
       `cytoscape` or `@tanstack/*` (checked by a lint rule or test).
-- [ ] For the QUAL-005 graphs the payload equals the legacy payload.
-- [ ] For every `fixtures/legacy/<name>` scenario whose graph the domain can
+- [x] For the QUAL-005 graphs the payload equals the legacy payload.
+- [x] For every `fixtures/legacy/<name>` scenario whose graph the domain can
       build, the mapped request is JSON-equal to `<name>.request.json`
       (filters and unordered lists compared as multisets).
-- [ ] The QueryGraph and the versioned format cover every field listed in the
+- [x] The QueryGraph and the versioned format cover every field listed in the
       QUAL-010 request documentation, or this card records why one is dropped.
-- [ ] Every checked-in v1 saved-query fixture loads and round-trips
+- [x] Every checked-in v1 saved-query fixture loads and round-trips
       losslessly; a file without `formatVersion` or with an unknown version
       fails with a typed error.
 
@@ -81,3 +81,40 @@ Every scenario whose graph the domain builds: the mapped `where`, `variableFilte
   and field-coverage criteria) and the T4 amendment (named types, extra
   operations, 90% coverage, no-UI-import check) after user confirmation;
   recorded D-T4a = A. No code changed.
+- 2026-10-17: Implemented `frontend/src/lib/domain/`. `legacy/` holds verbatim
+  TypeScript ports of `graph-model.js`, `graph-actions.js`,
+  `query-calculations.js` and `query-stages.js`; their unit suites run
+  unchanged in Vitest (Node strict assert plus a counted Vitest assertion,
+  node:test timers on Vitest fake timers): 62 cases, expected values kept.
+  `graph.ts` is the typed immutable `QueryGraph` (entity, class, variable,
+  value with a typed RDF term, value variable; relations with predicates) that
+  keeps Cytoscape's element pool and edge-list order, because request order,
+  the View SPARQL variable and funnel step order derive from it;
+  `order.spec.ts` checks six random 60-step edit sequences against the
+  legacy page's headless Cytoscape. `operations.ts` ports every edit
+  (add, connect, Alt+drag, convert node/relation, remove, toggle Boolean,
+  value and value-variable filters, Add value filter, results-table choice,
+  bind variable and predicate edges, Apply/Assume); the nine graph-binding
+  cases are ported onto the typed graph. `query.ts` maps the graph to every
+  request (View SPARQL, node Run query, staged Run Query, stage pages,
+  numeric profile, text suggestions, count/funnel with labels, badges, actual
+  values, relationships, relationship value, search probes) and the stage
+  order. `validate.ts` returns typed errors; `saved-format.ts` is the
+  versioned format (`formatVersion: 1`, Zod, migrator chain, typed errors for
+  a missing or unknown version, canonical key order) with two checked-in v1
+  fixtures. `endpoint.ts` types the endpoint. Parity:
+  `request-parity.spec.ts` rebuilds all 24 QUAL-009 scenarios with domain
+  operations and requires their requests to be in the captured
+  `.request.json` (multiset `where`/`variableFilters`), with a guard
+  test that a changed request is rejected; the QUAL-005 node-kind graph gives
+  the legacy filters, actions, conversions and removals. Field coverage: every
+  field in [[../../04 - Frontend/Legacy Wire Format]] maps to a QueryGraph
+  field; dropped on purpose: legacy edge `filterType` (only in imported
+  `cy.json()` files, D6b) and Cytoscape view state. Intended differences:
+  class Explore values sends the full `rdfs:domain` IRI (the legacy prefixed
+  name gets 400), search probes skip edge ids. A boundary test forbids svelte,
+  cytoscape and @tanstack imports. Coverage (`npm run test:coverage`, 90%
+  threshold): lines 99.1%, branches 90.6%. Validation: check, lint,
+  `npm --prefix frontend test` (125 Vitest server, 4 component, 5
+  Playwright); root `npm run test:query` unchanged. Completion commit for
+  this task.

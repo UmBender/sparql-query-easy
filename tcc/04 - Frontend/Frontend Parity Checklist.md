@@ -17,7 +17,7 @@ exists and passes. FE-049 requires every row to be `new`.
 |---|---|---|---|---|---|
 | P-01 | API warm-up `GET /health` on load | `SPARQL preview and query execution use …` (server log); FE-040 smoke | FE-044 | — | legacy |
 | P-02 | Search nodes: 400 ms debounce, `POST /api/query/search`, choosing a result adds an IRI node | `autocomplete callback adds the selected search result …` | FE-044 | — (search is outside the corpus) | legacy |
-| P-03 | A chosen search result already related to graph nodes is added with the discovered relation (probe `POST /api/query`, `?predicate`, limit 1, both directions) | `QUAL-006 a search result already related to a node is added …` | FE-044 | — | legacy |
+| P-03 | A chosen search result already related to graph nodes is added with the discovered relation (probe `POST /api/query`, `?predicate`, limit 1, both directions; the legacy page also probed edge ids, the new app probes nodes only) | `QUAL-006 a search result already related to a node is added …` | FE-044 | — | legacy |
 | P-04 | Limit field (default 150) feeds every request `limit` | `the first stage requests typed candidates …`, `QUAL-005 the node-kind graph sends one filter per relation` | FE-043/FE-044 | all | legacy |
 | P-05 | Endpoint field (default `CampeonatoBrasileiro2023`); an edit closes exploration and refreshes funnel/badges | `an endpoint change during exploration closes the panel …`, `the badge ignores a stale count after an endpoint edit` | FE-044 | — | legacy |
 | P-06 | New Query clears the canvas | `QUAL-006 New Query clears every node and relation` | FE-044 | — | legacy |

@@ -9,3 +9,4 @@ bun.lockb
 /static/
 src/lib/design/tokens.generated.css
 __screenshots__
+src/lib/domain/fixtures/*.query.json

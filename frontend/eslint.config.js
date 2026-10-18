@@ -34,6 +34,11 @@ export default defineConfig(
 		}
 	},
 	{
+		// Verbatim ports of the legacy unit suites (FE-042): untyped oracle data on purpose.
+		files: ['src/lib/domain/legacy/*.spec.ts'],
+		rules: { '@typescript-eslint/ban-ts-comment': 'off' }
+	},
+	{
 		// Generated shadcn-svelte button: its href is any URL the caller passes.
 		files: ['src/lib/components/ui/button/button.svelte'],
 		rules: { 'svelte/no-navigation-without-resolve': 'off' }
