@@ -49,14 +49,3 @@ blocked until these are known:
 name, and who issues its TLS certificate (Let's Encrypt or the university)?
 How can a deploy reach it (SSH, VPN, nothing from GitHub)? Where can off-host
 database backups be stored?
-
-## DEC-013 — T7 brief vs the approved authentication contract
-
-The T7 brief differs from AUTH-000/AUTH-001 in four points. Nothing changes
-until the user decides.
-
-**Question:** C1 keep `username` or switch to email + display name? C2 add
-roles (participant/admin) now or with T9? C3 keep `GET /api/auth/session` or
-rename/alias it to `/api/auth/me`? C4 accept the application-owned session
-guard or refactor onto Ktor's auth/sessions plugins? (Recommended: keep,
-later, keep, accept.)

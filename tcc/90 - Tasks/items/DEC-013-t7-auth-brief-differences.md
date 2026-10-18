@@ -1,7 +1,7 @@
 ---
 id: DEC-013
 title: Decide whether the T7 brief changes the approved authentication contract
-status: BLOCKED
+status: DONE
 priority: P1
 type: decision
 depends_on: [AUTH-000, AUTH-001, AUTH-003]
@@ -60,11 +60,19 @@ Nothing changes until then. The gaps that don't conflict are in AUTH-004.
 
 ## Acceptance criteria
 
-- [ ] The user picks an option for C1–C4. Record the choices in
+- [x] The user picks an option for C1–C4. Record the choices in
       Open Decisions and in the Authentication Contract.
-- [ ] Each B/C choice gets its own implementation card that depends on this
-      one. AUTH-001 and AUTH-003 stay DONE as written.
+- [x] Each B/C choice gets its own implementation card that depends on this
+      one (none was chosen, so no card). AUTH-001 and AUTH-003 stay DONE as written.
 
 ## Decision
 
-Pending.
+- 2026-10-18: The user chose ("C1 A, C2 later, C3 A, C4 A"):
+  - C1 A: keep `username`; no email collected.
+  - C2 later: no roles now. Roles are planned with T9 (STUDY-002), when it is
+    known who may read or export research data.
+  - C3 A: keep `GET /api/auth/session`.
+  - C4 A: the application-owned session guard (`AuthRoutes.kt` `withSession`)
+    is an approved deviation from the target architecture's
+    "Ktor Authentication" wording.
+  No implementation card follows. AUTH-004 is unaffected.
