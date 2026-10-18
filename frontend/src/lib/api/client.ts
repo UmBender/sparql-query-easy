@@ -24,6 +24,8 @@ export type NumericProfile = Schemas['NumericProfileHttpResponse'];
 export type ResultCount = Schemas['ResultCountHttpResponse'];
 export type EndpointItem = Schemas['EndpointHttpItem'];
 export type Health = Schemas['HealthResponse'];
+export type SessionUser = Schemas['SessionUserHttpResponse'];
+export type Credentials = { username: string; password: string };
 
 export type QueryBody = {
 	endpointUrl: string;
@@ -44,12 +46,23 @@ export type SearchBody = { endpointUrl: string; search: string; limit: number };
 
 /**
  * `bad-request` 400, `not-found` 404 (unknown uploaded graph), `upstream` 502
- * (endpoint failure), `server` any other status, `network` no response,
+ * (endpoint failure); for the account routes (AUTH-001) `unauthorized` 401,
+ * `conflict` 409, `rate-limited` 429, `unavailable` 503; `server` any other status, `network` no response,
  * `aborted` cancelled by the caller, `unexpected` a 200 whose body is not the
  * documented shape.
  */
 export type ApiErrorKind =
-	'bad-request' | 'not-found' | 'upstream' | 'server' | 'network' | 'aborted' | 'unexpected';
+	| 'bad-request'
+	| 'not-found'
+	| 'upstream'
+	| 'unauthorized'
+	| 'conflict'
+	| 'rate-limited'
+	| 'unavailable'
+	| 'server'
+	| 'network'
+	| 'aborted'
+	| 'unexpected';
 
 export class ApiError extends Error {
 	readonly kind: ApiErrorKind;
@@ -73,6 +86,10 @@ function kindOf(status: number): ApiErrorKind {
 	if (status === 400) return 'bad-request';
 	if (status === 404) return 'not-found';
 	if (status === 502) return 'upstream';
+	if (status === 401) return 'unauthorized';
+	if (status === 409) return 'conflict';
+	if (status === 429) return 'rate-limited';
+	if (status === 503) return 'unavailable';
 	return 'server';
 }
 
@@ -142,6 +159,8 @@ export function createApiClient({
 			valid
 		);
 	const isArray = (data: unknown) => Array.isArray(data);
+	const isUser = (data: unknown) =>
+		!!data && typeof (data as { username?: unknown }).username === 'string';
 
 	return {
 		/** GET /health (not an envelope). */
@@ -227,7 +246,45 @@ export function createApiClient({
 				'SPARQL generation failed',
 				options,
 				(data) => typeof data === 'string'
-			)
+			),
+		/** GET /api/auth/session; rejects with `unauthorized` when nobody is logged in. */
+		session: (options: Options = {}) =>
+			call<SessionUser>(
+				'/api/auth/session',
+				{ signal: options.signal },
+				'Session check failed',
+				isUser
+			),
+		/** POST /api/auth/register; the session cookie is set by the response. */
+		register: (body: Credentials, options?: Options) =>
+			post<SessionUser>('/api/auth/register', body, 'Registration failed', options, isUser),
+		login: (body: Credentials, options?: Options) =>
+			post<SessionUser>('/api/auth/login', body, 'Login failed', options, isUser),
+		/** POST /api/auth/logout (204, no body). */
+		async logout(options: Options = {}): Promise<void> {
+			let response: Response;
+			try {
+				response = await fetcher(`${baseUrl}/api/auth/logout`, {
+					method: 'POST',
+					headers: { 'content-type': 'application/json' },
+					body: '{}',
+					signal: options.signal
+				});
+			} catch (error) {
+				throw new ApiError(
+					'network',
+					error instanceof Error ? error.message : String(error)
+				);
+			}
+			if (!response.ok) {
+				const body = (await response.json().catch(() => null)) as { error?: string } | null;
+				throw new ApiError(
+					kindOf(response.status),
+					body?.error || `Logout failed (${response.status}).`,
+					response.status
+				);
+			}
+		}
 	};
 }
 

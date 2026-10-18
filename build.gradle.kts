@@ -111,6 +111,18 @@ tasks.named<Copy>("processResources") {
     }
 }
 
+// AUTH-003: frontend/playwright.stack.config.ts starts StackPostgres (test classpath) with plain java.
+tasks.register("writeStackPostgresClasspath") {
+    description = "Writes the test runtime classpath used to start the real-stack PostgreSQL"
+    group = "verification"
+    val runtime = sourceSets["test"].runtimeClasspath
+    val output = layout.buildDirectory.file("stack-postgres.classpath")
+    dependsOn("testClasses")
+    inputs.files(runtime)
+    outputs.file(output)
+    doLast { output.get().asFile.writeText(runtime.asPath) }
+}
+
 configurations["integrationTestImplementation"].extendsFrom(configurations["testImplementation"])
 
 tasks.register<Test>("integrationTest") {

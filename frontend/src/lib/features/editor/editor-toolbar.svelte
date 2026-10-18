@@ -31,12 +31,14 @@
 		endpoints,
 		fileActions,
 		runActions,
+		account,
 		onsubmit
 	}: {
 		controller: EditorController;
 		endpoints: { id: string; label: string }[];
 		fileActions?: Snippet;
 		runActions?: Snippet;
+		account?: Snippet;
 		/** Enter in a toolbar field submits the form, which runs the query (legacy). */
 		onsubmit?: () => void;
 	} = $props();
@@ -162,6 +164,7 @@
 		>
 			{#if mode.current === 'dark'}<SunIcon />{:else}<MoonIcon />{/if}
 		</IconButton>
+		{@render account?.()}
 	</nav>
 </header>
 

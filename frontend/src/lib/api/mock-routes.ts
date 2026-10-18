@@ -10,10 +10,14 @@ import type { paths } from './schema.js';
 
 type Method = 'get' | 'post';
 type Operation<P extends keyof paths, M extends Method> = paths[P][M];
-/** The JSON body of the 200 response. */
+/** The JSON body of the 200 (or 201) response. */
 type Ok<O> = O extends { responses: { 200: { content: { 'application/json': infer B } } } }
 	? B
-	: never;
+	: O extends { responses: { 201: { content: { 'application/json': infer C } } } }
+		? C
+		: never;
+/** A non-200 answer: an `ErrorResponse`, or no body (204). */
+export type MockStatus = { status: number; json?: { error: string } };
 /** The JSON request body; null for GET and multipart routes. */
 type In<O> = O extends { requestBody: { content: { 'application/json': infer B } } } ? B : null;
 
@@ -26,7 +30,7 @@ export type MockRoute = {
 function route<P extends keyof paths, M extends Method>(
 	method: M,
 	path: P,
-	respond: (body: In<Operation<P, M>>) => Ok<Operation<P, M>>
+	respond: (body: In<Operation<P, M>>) => Ok<Operation<P, M>> | MockStatus
 ): MockRoute {
 	return { method, path, respond: respond as (body: unknown) => unknown };
 }
@@ -99,8 +103,22 @@ export const mockRoutes: MockRoute[] = [
 	})),
 	route('post', '/api/query/sparql', () => ({
 		data: 'SELECT DISTINCT ?item WHERE { ?item ?p ?o } LIMIT 20'
-	}))
+	})),
+	// AUTH-001: anonymous by default; register and login accept anyone.
+	route('get', '/api/auth/session', () => ({ status: 401, json: { error: 'Login required' } })),
+	route('post', '/api/auth/register', (body) => ({ data: { username: body.username ?? '' } })),
+	route('post', '/api/auth/login', (body) => ({ data: { username: body.username ?? '' } })),
+	route('post', '/api/auth/logout', () => ({ status: 204 }))
 ];
+
+export function isMockStatus(response: unknown): response is MockStatus {
+	return (
+		!!response &&
+		typeof response === 'object' &&
+		'status' in response &&
+		typeof (response as MockStatus).status === 'number'
+	);
+}
 
 export function mockRouteFor(path: string): MockRoute | undefined {
 	return mockRoutes.find((item) => item.path === path);
@@ -111,7 +129,11 @@ export function mswHandlers(base = '') {
 	return mockRoutes.map((item) =>
 		http[item.method](base + item.path, async ({ request }) => {
 			const json = request.headers.get('content-type')?.includes('application/json');
-			return HttpResponse.json(item.respond(json ? await request.json() : null) as never);
+			const response = item.respond(json ? await request.json() : null);
+			if (!isMockStatus(response)) return HttpResponse.json(response as never);
+			return response.json
+				? HttpResponse.json(response.json, { status: response.status })
+				: new HttpResponse(null, { status: response.status });
 		})
 	);
 }

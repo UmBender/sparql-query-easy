@@ -34,6 +34,7 @@
 	import FilterBadgeLayer from '#lib/features/funnel/filter-badges.svelte';
 	import FileActions from '#lib/features/utilities/file-actions.svelte';
 	import GuidedTour from '#lib/features/utilities/guided-tour.svelte';
+	import AccountMenu from '#lib/features/auth/account-menu.svelte';
 
 	const store = new QueryStore();
 	const controller = new EditorController({ store, api });
@@ -179,6 +180,11 @@
 		{#snippet fileActions()}
 			<FileActions
 				{controller}
+				class="text-brand-foreground hover:bg-brand-foreground/15 hover:text-brand-foreground"
+			/>
+		{/snippet}
+		{#snippet account()}
+			<AccountMenu
 				class="text-brand-foreground hover:bg-brand-foreground/15 hover:text-brand-foreground"
 			/>
 		{/snippet}

@@ -1,5 +1,5 @@
 import type { Page, Route } from '@playwright/test';
-import { mockRouteFor } from '../../src/lib/api/mock-routes';
+import { isMockStatus, mockRouteFor } from '../../src/lib/api/mock-routes';
 
 /**
  * Deterministic API for the new app's browser tests: the OpenAPI-typed
@@ -10,7 +10,7 @@ export type RecordedRequest = { method: string; path: string; body: unknown };
 
 export type Override = (
 	body: Record<string, unknown> | null
-) => unknown | { status: number; json: unknown };
+) => unknown | { status: number; json?: unknown };
 export type MockApi = {
 	requests: RecordedRequest[];
 	/** Replaces the response of one path; requests are still recorded. */
@@ -38,15 +38,10 @@ export async function mockApi(page: Page): Promise<MockApi> {
 			const response = override
 				? await override(body as Record<string, unknown> | null)
 				: defaultResponse(url.pathname, body as Record<string, unknown> | null);
-			if (
-				response &&
-				typeof response === 'object' &&
-				'status' in response &&
-				'json' in response
-			) {
-				const { status, json } = response as { status: number; json: unknown };
-				return route.fulfill({ status, json });
-			}
+			if (isMockStatus(response))
+				return response.json
+					? route.fulfill({ status: response.status, json: response.json })
+					: route.fulfill({ status: response.status });
 			return route.fulfill({ json: response });
 		}
 	);

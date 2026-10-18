@@ -55,6 +55,13 @@ and component in both themes. Component tests (`*.svelte.spec.ts`) run in
 Firefox through Vitest browser mode; `tests/styleguide.e2e.ts` runs axe on
 `/styleguide` in both themes.
 
+Accounts (AUTH-003): `src/lib/features/auth/` holds the session store
+(`authSession`, from `GET /api/auth/session`; nothing in browser storage),
+the Superforms/Zod login and registration form and the toolbar's account
+control; the page is `/login`. The editor works without an account. The Vite
+proxy keeps the `Host` header so Ktor's same-origin check on account routes
+passes in development and `vite preview`.
+
 Test layers (QUAL-007): `src/lib/api/mock-routes.ts` holds the API mock
 responses typed from `schema.d.ts`; Vitest serves them through MSW
 (`mswHandlers`), the Playwright suites through `page.route`

@@ -18,12 +18,13 @@ export default defineConfig({
 		})
 	],
 	// Same origin in development: the browser calls Vite, which forwards these paths to Ktor
-	// (API_TARGET overrides it; `vite preview` uses the same proxy).
+	// (API_TARGET overrides it; `vite preview` uses the same proxy). The Host header is kept
+	// (changeOrigin: false) so Ktor's same-origin check on account routes sees the page's host.
 	server: {
 		proxy: Object.fromEntries(
 			['/api', '/health', '/openapi.json'].map((path) => [
 				path,
-				process.env.API_TARGET ?? 'http://localhost:8080'
+				{ target: process.env.API_TARGET ?? 'http://localhost:8080', changeOrigin: false }
 			])
 		)
 	},

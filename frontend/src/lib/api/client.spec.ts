@@ -189,7 +189,10 @@ describe('typed API client', () => {
 				HttpResponse.json({ error: 'Invalid Turtle' }, { status: 400 })
 			)
 		);
-		await expect(client.health()).rejects.toMatchObject({ kind: 'server', status: 503 });
+		// AUTH-001 statuses have their own kinds; any other failure is `server`.
+		await expect(client.health()).rejects.toMatchObject({ kind: 'unavailable', status: 503 });
+		server.use(http.get(`${BASE}/health`, () => new HttpResponse(null, { status: 500 })));
+		await expect(client.health()).rejects.toMatchObject({ kind: 'server', status: 500 });
 		await expect(client.upload(new Blob(['x']), 'x.ttl')).rejects.toMatchObject({
 			kind: 'bad-request',
 			message: 'Invalid Turtle'
