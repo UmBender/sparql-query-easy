@@ -29,7 +29,7 @@ describe('OpenAPI-typed mock routes', () => {
 
 	it('answer every client call through MSW', async () => {
 		const context = { endpointUrl: 'PokemonGen1' };
-		expect(await client.health()).toEqual({ status: 'ok' });
+		expect(await client.health()).toEqual({ status: 'ok', database: 'not-configured' });
 		expect((await client.endpoints()).map((item) => item.id)).toContain('PokemonGen1');
 		expect(await client.upload(new Blob(['<a> <b> <c> .']), 'data.ttl')).toBe(
 			UPLOADED_GRAPH_ID

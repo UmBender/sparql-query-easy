@@ -35,6 +35,12 @@ class OpenApiRoutesTest {
             assertEquals(setOf("200"), health.requiredObject("responses").keys)
             val healthSchema = document.responseSchema(health, "200", "application/json")
             assertEquals("string", document.resolve(healthSchema.property("status")).typeName())
+            // BE-007: the database state, never connection details.
+            assertEquals(
+                listOf("ready", "not-configured", "unavailable"),
+                document.resolve(healthSchema.property("database")).requiredArray("enum").strings(),
+            )
+            assertEquals(setOf("status", "database"), healthSchema.requiredObject("properties").keys)
         }
 
     @Test

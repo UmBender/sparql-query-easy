@@ -13,10 +13,10 @@
                     "Operations"
                 ],
                 "summary": "Check application health",
-                "description": "Returns process health. This endpoint has no external-service side effects.",
+                "description": "Returns process health and the last known database state (ready, not-configured or unavailable). It answers 200 whatever the database state and never waits for a connection attempt. Its only side effect: at most one background database check or reconnection every 5 seconds.",
                 "responses": {
                     "200": {
-                        "description": "The application process is healthy.",
+                        "description": "The application process is healthy; `database` reports the database state.",
                         "content": {
                             "application/json": {
                                 "schema": {
@@ -996,11 +996,20 @@
                 "type": "object",
                 "title": "HealthResponse",
                 "required": [
-                    "status"
+                    "status",
+                    "database"
                 ],
                 "properties": {
                     "status": {
                         "type": "string"
+                    },
+                    "database": {
+                        "type": "string",
+                        "enum": [
+                            "ready",
+                            "not-configured",
+                            "unavailable"
+                        ]
                     }
                 }
             },

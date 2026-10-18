@@ -63,11 +63,14 @@ internal fun Route.documentHealth(): Route =
     describe {
         operationId = "getHealth"
         summary = "Check application health"
-        description = "Returns process health. This endpoint has no external-service side effects."
+        description =
+            "Returns process health and the last known database state (ready, not-configured or unavailable). " +
+            "It answers 200 whatever the database state and never waits for a connection attempt. Its only " +
+            "side effect: at most one background database check or reconnection every 5 seconds."
         tag("Operations")
         responses {
             HttpStatusCode.OK {
-                description = "The application process is healthy."
+                description = "The application process is healthy; `database` reports the database state."
                 schema = jsonSchema<HealthResponse>()
             }
         }

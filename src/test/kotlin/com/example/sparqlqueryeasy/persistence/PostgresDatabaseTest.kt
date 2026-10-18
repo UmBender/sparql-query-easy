@@ -73,6 +73,53 @@ class PostgresDatabaseTest {
         }
     }
 
+    @Test
+    fun `a health poll never waits for a retry and reports its result on the next poll`() {
+        var now = 0L
+        var reachable = false
+        val pending = mutableListOf<Runnable>()
+        val database = TestPostgres.freshDatabase()
+        val connector =
+            DatabaseConnector(database, retryIntervalMillis = 10, nowMillis = { now }, background = { pending += it }) {
+                check(reachable) { "connection refused" }
+                PostgresDatabase.connect(it)
+            }
+        connector.connect().shouldBeInstanceOf<PersistenceStatus.Unavailable>()
+
+        reachable = true
+        connector.poll().shouldBeInstanceOf<PersistenceStatus.Unavailable>()
+        pending.size shouldBe 0
+        now = 10
+        connector.poll().shouldBeInstanceOf<PersistenceStatus.Unavailable>()
+        connector.poll().shouldBeInstanceOf<PersistenceStatus.Unavailable>()
+        pending.size shouldBe 1
+
+        pending.single().run()
+        connector.use { it.poll() shouldBe PersistenceStatus.Ready }
+    }
+
+    @Test
+    fun `a ready database lost after startup turns unavailable on a poll and ready again when it returns`() {
+        var now = 0L
+        val settings = TestPostgres.freshDatabase()
+        val connector =
+            DatabaseConnector(settings, retryIntervalMillis = 10, nowMillis = { now }, background = Runnable::run)
+        connector.connect() shouldBe PersistenceStatus.Ready
+
+        connector.use {
+            TestPostgres.drop(settings)
+            it.poll() shouldBe PersistenceStatus.Ready
+            now = 10
+            it.poll() shouldBe PersistenceStatus.Ready
+            it.poll().shouldBeInstanceOf<PersistenceStatus.Unavailable>()
+
+            TestPostgres.recreate(settings)
+            now = 20
+            it.poll().shouldBeInstanceOf<PersistenceStatus.Unavailable>()
+            it.poll() shouldBe PersistenceStatus.Ready
+        }
+    }
+
     private fun appliedVersions(settings: DatabaseSettings): List<String> =
         DriverManager.getConnection(settings.url, settings.user, settings.password).use { connection ->
             connection.createStatement().use { statement ->

@@ -117,8 +117,19 @@ There is no application-owned error response for this redirect route.
 Returns `200 OK` with `Content-Type: application/json`:
 
 ```json
-{ "status": "ok" }
+{ "status": "ok", "database": "ready" }
 ```
+
+`database` (BE-007, additive) is `ready` (migrated and reachable),
+`not-configured` (no `EASYQUERY_DB_URL`) or `unavailable` (configured but not
+reached). The answer stays `200` and `status` stays `ok` whatever the database
+state: query routes work without a database, and Docker/compose healthchecks
+only test HTTP success. The route returns the connector's last known state
+without waiting. When a database is configured, a poll starts at most one
+background check per 5 s retry interval: a reconnection (with migrations)
+while there is no pool, otherwise a connection check of the pool, so a
+database lost after startup turns `unavailable` and returns to `ready`. The
+next poll shows the result. No host, URL or error text is exposed.
 
 There is no application-owned error response for this route.
 The actual C# host returned `200 text/plain Healthy` in

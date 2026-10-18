@@ -50,6 +50,18 @@ object TestPostgres {
         return DatabaseSettings(server.jdbcUrlFor(name), TEST_POSTGRES_USER, TEST_POSTGRES_PASSWORD)
     }
 
+    /** Drops [settings]' database, closing its open connections, so a pool on it loses the database. */
+    fun drop(settings: DatabaseSettings) = admin("DROP DATABASE ${settings.databaseName()} WITH (FORCE)")
+
+    /** Creates [settings]' database again, empty, after [drop]. */
+    fun recreate(settings: DatabaseSettings) = admin("CREATE DATABASE ${settings.databaseName()}")
+
+    private fun admin(sql: String) {
+        server.createConnection("").use { connection -> connection.createStatement().use { it.execute(sql) } }
+    }
+
+    private fun DatabaseSettings.databaseName(): String = url.substringAfterLast('/')
+
     /** Settings pointing at a closed local port, for unavailable-database cases. */
     fun unreachable(): DatabaseSettings =
         DatabaseSettings(

@@ -1,7 +1,7 @@
 ---
 id: BE-007
 title: Report database connectivity on GET /health without failing the query API
-status: BACKLOG
+status: DONE
 priority: P2
 type: backend
 depends_on: [BE-005, DEC-009]
@@ -57,16 +57,46 @@ Expected examples:
 
 ## Acceptance criteria
 
-- [ ] Route tests for the three states assert 200 and the exact body. The
+- [x] Route tests for the three states assert 200 and the exact body. The
       unavailable case uses an unreachable URL.
-- [ ] Polling `/health` while the database is down does not reconnect more
+- [x] Polling `/health` while the database is down does not reconnect more
       than once every 5 s (asserted through the connector's clock or counter).
-- [ ] The OpenAPI validation test, `FrontendOpenApiSnapshotTest` and
+- [x] The OpenAPI validation test, `FrontendOpenApiSnapshotTest` and
       `api-contract.spec.ts` pass with the refreshed snapshot.
-- [ ] The existing query-route and compatibility tests are unchanged and green.
+- [x] The existing query-route and compatibility tests are unchanged and green.
 
 ## Validation
 
 Focused: `./gradlew test --tests '*Health*'` (proposed filter; use the
 actual test class). Closing gate: Kotlin `ktlintCheck detekt test`, plus the
 frontend `npm test` because the API snapshot changes (Operational Map).
+
+## Result (2026-10-18)
+
+- `HealthResponse` gains `database` (`DatabaseHealth` enum: `ready`,
+  `not-configured`, `unavailable`). The answer stays `200` with
+  `status: "ok"`, and no host, URL or error text is exposed.
+- `DatabaseConnector.poll()` returns the last known status without waiting.
+  A connection attempt can take the 5 s connect timeout, which equals the
+  Dockerfile HEALTHCHECK `--timeout=5s`, so a blocking retry could have marked
+  the container unhealthy. When the 5 s interval is due, one check runs on a
+  background virtual thread: a reconnection (with migrations) while there is
+  no pool, else `isValid` on a pooled connection. A database lost after
+  startup therefore turns `unavailable` and later returns to `ready`. The
+  next poll shows the result. `require()` and `connect()` keep their
+  behavior.
+- `HttpDependencies.health` defaults to `not-configured`; the production
+  wiring uses `HealthService(database::poll)`.
+- Tests: `HealthRoutesTest` (the three exact bodies; polling while the
+  database is down retries once per interval) and `PostgresDatabaseTest`
+  (a poll never waits; a dropped database turns unavailable, and recreating
+  it turns ready). `OpenApiRoutesTest` asserts the enum. `ApplicationTest`
+  and the `HTTP-HEALTH-001` assertion in `RetirementSuccessCompatibilityTest`
+  now check `status: "ok"` and the two keys. Through `module()` the database
+  value depends on the local `.env`. The C# capture is unchanged.
+- Snapshot `frontend/src/lib/api/openapi.json` and `schema.d.ts` were
+  refreshed, and the frontend health mocks now carry `database`.
+- Docs: API v1, Current Contracts (Health row), Local JVM and Container
+  Runtime.
+- Validation: Kotlin `ktlintCheck detekt test` (210); frontend check, lint,
+  `npm test` (162 server, 4 component, 79 Playwright); `test:stack` (8).

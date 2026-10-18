@@ -7,8 +7,11 @@
 `application.conf` (the API only since FE-049; the frontend is the web service), and the
 byte-identical built-in Turtle resource. Java 21 is required. Ktor's
 `EngineMain` reads `application.conf` and listens on HTTP port `8080`.
-`GET /health` returns `200 {"status":"ok"}`; it is a process check, not a
-readiness claim about external SPARQL endpoints or Wikidata.
+`GET /health` returns `200 {"status":"ok","database":"…"}`; it is a process
+check, not a readiness claim about external SPARQL endpoints or Wikidata. The
+`database` field (BE-007) reports `ready`, `not-configured` or `unavailable`
+without changing the 200, so the HEALTHCHECK stays green while PostgreSQL is
+down.
 The captured original ASP.NET host returns `200 text/plain Healthy` instead;
 the user approved retaining Kotlin `application/json` as an intentional
 difference under [[../90 - Tasks/items/DEC-009-health-response-contract]].

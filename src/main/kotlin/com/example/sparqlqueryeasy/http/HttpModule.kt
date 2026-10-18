@@ -104,6 +104,7 @@ data class HttpDependencies(
     val query: QueryHttpDependencies? = null,
     val auth: AuthHttpDependencies? = null,
     private val ownedResources: List<AutoCloseable> = emptyList(),
+    val health: HealthService = HealthService(),
 ) : AutoCloseable {
     override fun close() {
         ownedResources.forEach(AutoCloseable::close)
@@ -147,6 +148,7 @@ fun defaultHttpDependencies(settings: AppSettings = AppSettings.load()): HttpDep
             trustProxy = settings.auth.trustProxy,
         ),
         ownedResources = listOf(httpClient, database),
+        health = HealthService(database::poll),
     )
 }
 
@@ -175,11 +177,10 @@ fun Application.configureErrorHandling() {
 
 fun Application.configureRouting(dependencies: HttpDependencies = defaultHttpDependencies()) {
     environment.monitor.subscribe(ApplicationStopped) { dependencies.close() }
-    val healthService = HealthService()
     routing {
         // FE-049: the API only. The SvelteKit app is served by the web service (deploy/Caddyfile)
         // or the Vite dev server, which proxy these routes on the same origin.
-        get("/health") { call.respond(healthService.current()) }.documentHealth()
+        get("/health") { call.respond(dependencies.health.current()) }.documentHealth()
         get("/api/endpoints") {
             call.respond(
                 DataResponse(SELECTABLE_ENDPOINTS.map { EndpointHttpItem(it.id, it.label, it.kind.name.lowercase()) }),

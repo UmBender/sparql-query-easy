@@ -83,9 +83,12 @@ class RetirementSuccessCompatibilityTest {
             response.status.value shouldBe expected.getValue("status").jsonPrimitive.content.toInt()
             expected.getValue("contentType").jsonPrimitive.content shouldBe "text/plain"
             expected.getValue("bodyText").jsonPrimitive.content shouldBe "Healthy"
-            // DEC-009 approves this intentional difference, not C# response equivalence.
+            // DEC-009 approves this intentional difference, not C# response equivalence. BE-007 adds the
+            // database field, whose value depends on the local .env (HealthRoutesTest asserts each state).
             ContentType.parse(response.headers[HttpHeaders.ContentType]!!).withoutParameters() shouldBe ContentType.Application.Json
-            response.bodyAsText() shouldBe """{"status":"ok"}"""
+            val body = Json.parseToJsonElement(response.bodyAsText()).jsonObject
+            body.keys shouldBe setOf("status", "database")
+            body.getValue("status").jsonPrimitive.content shouldBe "ok"
         }
 
     @Test

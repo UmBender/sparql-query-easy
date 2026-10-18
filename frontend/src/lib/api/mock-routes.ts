@@ -38,7 +38,7 @@ function route<P extends keyof paths, M extends Method>(
 export const UPLOADED_GRAPH_ID = '00000000-0000-0000-0000-000000000001';
 
 export const mockRoutes: MockRoute[] = [
-	route('get', '/health', () => ({ status: 'ok' })),
+	route('get', '/health', () => ({ status: 'ok', database: 'not-configured' })),
 	route('get', '/api/endpoints', () => ({
 		data: [
 			{ id: 'CampeonatoBrasileiro2023', label: 'Campeonato Brasileiro 2023', kind: 'local' },

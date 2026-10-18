@@ -106,7 +106,9 @@ describe('typed API client', () => {
 
 	it('covers every route the app calls', async () => {
 		server.use(
-			http.get(`${BASE}/health`, () => HttpResponse.json({ status: 'ok' })),
+			http.get(`${BASE}/health`, () =>
+				HttpResponse.json({ status: 'ok', database: 'ready' })
+			),
 			http.get(`${BASE}/api/endpoints`, () =>
 				HttpResponse.json({
 					data: [{ id: 'PokemonGen1', label: 'Pokémon', kind: 'local' }]
@@ -146,7 +148,7 @@ describe('typed API client', () => {
 				HttpResponse.json({ data: 'SELECT * WHERE {}' })
 			)
 		);
-		expect(await client.health()).toEqual({ status: 'ok' });
+		expect(await client.health()).toEqual({ status: 'ok', database: 'ready' });
 		expect(await client.endpoints()).toHaveLength(1);
 		expect(await client.upload(new Blob(['@prefix x: <x:> .']), 'g.ttl')).toBe(
 			'uploaded:g.ttl:@prefix x: <x:> .'
