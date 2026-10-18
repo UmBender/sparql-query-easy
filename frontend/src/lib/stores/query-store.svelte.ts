@@ -69,7 +69,15 @@ export type FunnelStepView = {
 	extreme: boolean;
 };
 
-export type QueryStoreOptions = { now?: () => number; endpoint?: Endpoint; limit?: number };
+export type QueryStoreOptions = {
+	now?: () => number;
+	endpoint?: Endpoint;
+	limit?: number;
+	historyLimit?: number;
+};
+
+/** Undo depth (FE-052): older edits are dropped beyond this many. */
+export const HISTORY_LIMIT = 100;
 
 export class QueryStore {
 	graph = $state.raw<QueryGraph>(emptyGraph);
@@ -82,13 +90,25 @@ export class QueryStore {
 	funnelDisabled = $state.raw<ReadonlySet<string>>(NO_DISABLED_STEPS);
 	funnelVariable = $state<string | null>(null);
 	autoLayout = $state(true);
+	/** FE-052: graphs before each edit (oldest first) and after each undo. */
+	past = $state.raw<readonly QueryGraph[]>([]);
+	future = $state.raw<readonly QueryGraph[]>([]);
+	canUndo = $derived(this.past.length > 0);
+	canRedo = $derived(this.future.length > 0);
+	readonly #historyLimit: number;
 
 	readonly #now: () => number;
 	#predicateSequence = 1;
 	#lastStamp = 0;
 
-	constructor({ now = Date.now, endpoint, limit }: QueryStoreOptions = {}) {
+	constructor({
+		now = Date.now,
+		endpoint,
+		limit,
+		historyLimit = HISTORY_LIMIT
+	}: QueryStoreOptions = {}) {
 		this.#now = now;
+		this.#historyLimit = historyLimit;
 		if (endpoint) this.endpoint = endpoint;
 		if (limit) this.limit = limit;
 		this.#refreshOrder();
@@ -150,11 +170,17 @@ export class QueryStore {
 	}
 
 	/**
-	 * The single entry point for graph edits (FE-052 records history here).
+	 * The single entry point for graph edits (and the undo history, FE-052).
 	 * `retarget` moves the selection from a replaced node to its replacement.
 	 */
 	commit(graph: QueryGraph, retarget?: { from: string; to: string }): void {
 		if (graph === this.graph) return;
+		this.past = [...this.past, this.graph].slice(-this.#historyLimit);
+		this.future = [];
+		this.#apply(graph, retarget);
+	}
+
+	#apply(graph: QueryGraph, retarget?: { from: string; to: string }): void {
 		if (retarget && this.selection?.id === retarget.from)
 			this.selection = { kind: 'node', id: retarget.to };
 		this.graph = graph;
@@ -165,9 +191,35 @@ export class QueryStore {
 			this.funnelDisabled = presentFunnelSteps(this.funnel.plan, this.funnelDisabled);
 	}
 
+	// ── Undo and redo (FE-052) ────────────────────────────────────
+	undo(): boolean {
+		const previous = this.past.at(-1);
+		if (!previous) return false;
+		this.past = this.past.slice(0, -1);
+		this.future = [this.graph, ...this.future];
+		this.#apply(previous);
+		return true;
+	}
+
+	redo(): boolean {
+		const [next, ...rest] = this.future;
+		if (!next) return false;
+		this.future = rest;
+		this.past = [...this.past, this.graph].slice(-this.#historyLimit);
+		this.#apply(next);
+		return true;
+	}
+
+	clearHistory() {
+		this.past = [];
+		this.future = [];
+	}
+
 	// ── Graph edits ───────────────────────────────────────────────
+	/** New Query: an empty graph and no history. */
 	clear() {
 		this.commit(clearGraph());
+		this.clearHistory();
 	}
 	addVariable(position?: Position): string {
 		const result = addVariable(this.graph, this.#stamp(), position);
@@ -282,7 +334,9 @@ export class QueryStore {
 		this.selection = selection;
 	}
 	setEndpoint(endpoint: Endpoint | string) {
-		this.endpoint = typeof endpoint === 'string' ? endpointFromText(endpoint) : endpoint;
+		const next = typeof endpoint === 'string' ? endpointFromText(endpoint) : endpoint;
+		if (JSON.stringify(next) !== JSON.stringify(this.endpoint)) this.clearHistory();
+		this.endpoint = next;
 		this.#refreshOrder();
 	}
 	setLimit(value: number) {
@@ -319,6 +373,7 @@ export class QueryStore {
 		this.selection = null;
 		this.funnelDisabled = NO_DISABLED_STEPS;
 		this.commit(document.graph);
+		this.clearHistory();
 		const available = this.orderState.registry.map((entry) => entry.name);
 		const kept = document.order.filter((name) => available.includes(name));
 		this.setOrder([...kept, ...this.order.filter((name) => !kept.includes(name))]);
