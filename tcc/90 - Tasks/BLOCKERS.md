@@ -49,12 +49,3 @@ blocked until these are known:
 name, and who issues its TLS certificate (Let's Encrypt or the university)?
 How can a deploy reach it (SSH, VPN, nothing from GitHub)? Where can off-host
 database backups be stored?
-
-## DEC-012 — Test database engine
-
-The T6 brief asks for Testcontainers; BE-005 chose embedded PostgreSQL 17
-(no Docker, offline). Nothing changes until the user decides.
-
-**Question:** Keep embedded PostgreSQL (recommended), switch every
-persistence test to Testcontainers, or keep embedded and add one opt-in
-Testcontainers smoke outside the normal gate?

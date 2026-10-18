@@ -61,6 +61,6 @@ rather than reopening it:
 - Health route reports DB connectivity: BE-007.
 - Local dev PostgreSQL-only setup reachable from `./gradlew run`: OPS-007.
 - Integration tests against Testcontainers contradict the embedded choice
-  above: DEC-012 (decision, user's answer pending).
+  above: DEC-012 chose Testcontainers (2026-10-18); QUAL-011 implements it.
 - The repository pattern with an example table and tests already exists as
   `V2__accounts.sql`, `PostgresAccountStore` and `AuthRoutesTest` (AUTH-001).

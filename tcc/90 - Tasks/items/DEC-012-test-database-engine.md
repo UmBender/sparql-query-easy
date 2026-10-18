@@ -1,7 +1,7 @@
 ---
 id: DEC-012
 title: Decide whether persistence tests keep embedded PostgreSQL or move to Testcontainers
-status: BLOCKED
+status: DONE
 priority: P2
 type: decision
 depends_on: [BE-005]
@@ -52,6 +52,13 @@ moving every test.
 
 ## Acceptance criteria
 
-- [ ] The user picks A or B (or the opt-in variant). Record the choice in
+- [x] The user picks A or B (or the opt-in variant). Record the choice in
       Open Decisions and the Operational Map.
-- [ ] On B: create one implementation card that depends on this one.
+- [x] On B: create one implementation card that depends on this one.
+
+## Decision
+
+- 2026-10-18: The user chose **B, Testcontainers** ("Use TestContainers"),
+  not the recommended A. Implementation: QUAL-011. Until QUAL-011 is done,
+  the Operational Map still describes embedded PostgreSQL, because that is
+  what the code runs. QUAL-011 updates it.

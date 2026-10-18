@@ -14,7 +14,7 @@ The decision index and dated approvals below provide rationale and history.
 | DEC-007 | Approved | Generate OpenAPI 3.1 from Ktor code; publish public `/swagger` and `/openapi.json` endpoints in every environment; defer authentication. |
 | DEC-011 | Approved (2026-10-16) | SvelteKit app in `frontend/` beside `index2.html`, cutover by FE-049. [[../90 - Tasks/items/DEC-011-frontend-stack-decision]]. |
 | DEC-009 | Resolved | Keep Kotlin `200 application/json {"status":"ok"}` as an approved intentional difference from captured C# `200 text/plain Healthy`; do not claim equivalence. |
-| DEC-012 | Decision required (2026-10-18) | Persistence tests: keep embedded PostgreSQL (BE-005, recommended) or move to Testcontainers as the T6 brief asks. [[../90 - Tasks/items/DEC-012-test-database-engine]]. |
+| DEC-012 | Approved (2026-10-18) | Persistence and real-stack tests move from embedded PostgreSQL to Testcontainers `postgres:17-alpine` (user choice B); implemented by QUAL-011. [[../90 - Tasks/items/DEC-012-test-database-engine]]. |
 
 ## Already documented decisions
 
