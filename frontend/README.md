@@ -4,15 +4,16 @@ SvelteKit 3 (Svelte 5 runes, strict TypeScript, Vite) built as a static SPA
 with adapter-static, next to the legacy `sparql/index2.html` (DEC-011). See the
 root README for running both side by side.
 
-| Command          | Purpose                                                                         |
-| ---------------- | ------------------------------------------------------------------------------- |
-| `npm ci`         | Install from `package-lock.json`                                                |
-| `npm run dev`    | Dev server on 5173; proxies `/api`, `/health`, `/openapi.json` to Ktor on 8080  |
-| `npm run build`  | Static SPA in `build/` (`index.html` fallback)                                  |
-| `npm run check`  | svelte-check                                                                    |
-| `npm run lint`   | Prettier check, ESLint and the raw-color check (`scripts/check-raw-colors.mjs`) |
-| `npm run tokens` | Rewrite `src/lib/design/tokens.generated.css` after editing `tokens.ts`         |
-| `npm test`       | Vitest (`src/**/*.spec.ts`), then Playwright (`tests/*.e2e.ts`, offline)        |
+| Command              | Purpose                                                                                               |
+| -------------------- | ----------------------------------------------------------------------------------------------------- |
+| `npx npm@11 ci`      | Install from `package-lock.json` (npm 10 reads it as out of sync)                                     |
+| `npm run dev`        | Dev server on 5173; proxies `/api`, `/health`, `/openapi.json` to Ktor on 8080                        |
+| `npm run build`      | Static SPA in `build/` (`index.html` fallback)                                                        |
+| `npm run check`      | svelte-check                                                                                          |
+| `npm run lint`       | Prettier check, ESLint and the raw-color check (`scripts/check-raw-colors.mjs`)                       |
+| `npm run tokens`     | Rewrite `src/lib/design/tokens.generated.css` after editing `tokens.ts`                               |
+| `npm test`           | Vitest (`src/**/*.spec.ts`), then Playwright (`tests/*.e2e.ts`, offline)                              |
+| `npm run test:stack` | Playwright `tests-stack/` against the built Ktor (PokemonGen1, uploaded Turtle, live `/openapi.json`) |
 
 Layout: `src/lib/domain` (pure TypeScript), `src/lib/stores`, `src/lib/api`,
 `src/lib/components` (`ui/` for shadcn-svelte), `src/lib/features/<feature>`,
@@ -54,7 +55,15 @@ and component in both themes. Component tests (`*.svelte.spec.ts`) run in
 Firefox through Vitest browser mode; `tests/styleguide.e2e.ts` runs axe on
 `/styleguide` in both themes.
 
+Test layers (QUAL-007): `src/lib/api/mock-routes.ts` holds the API mock
+responses typed from `schema.d.ts`; Vitest serves them through MSW
+(`mswHandlers`), the Playwright suites through `page.route`
+(`tests/support/mock-api.ts`). `tests/visual.e2e.ts` compares canvas
+screenshots (labels and overlays hidden, so font rendering does not matter)
+and runs axe on the editor in both themes. `.github/workflows/ci.yml` runs
+check, lint, `npm test` and `test:stack` with the Kotlin and legacy gates.
+
 Playwright is pinned to the root suite's version so both share the installed
 browsers. npm 10 fails while resolving new dependencies (`edgesOut` error in
 peer resolution); add or update packages with `npx npm@11 install ...`.
-`npm ci` works with either version.
+Install with `npx npm@11 ci` too: npm 10 reports this lockfile as out of sync.

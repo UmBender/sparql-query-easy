@@ -2,8 +2,8 @@ import { defineConfig } from '@playwright/test';
 
 export default defineConfig({
   testDir: 'frontend-tests',
-  // The end-to-end suite needs the Ktor server: npm run test:e2e.
-  testIgnore: ['e2e/**'],
+  // These suites need the Ktor server: npm run test:e2e and npm run fixtures:legacy.
+  testIgnore: ['e2e/**', 'fixtures-capture/**'],
   fullyParallel: false,
   use: {
     browserName: 'firefox',

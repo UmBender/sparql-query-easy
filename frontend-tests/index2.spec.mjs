@@ -2841,8 +2841,21 @@ test('QUAL-005 the node-kind graph sends one filter per relation', async ({ page
   expect(await allFilters(page)).toEqual(sortJson([...KIND_GRAPH_FILTERS, MEW_FILTER]));
 });
 
+// Building the graph schedules debounced funnel/badge counts; wait until no request arrives for 600 ms.
+async function settleRequests(page) {
+  let last = -1;
+  await expect.poll(async () => {
+    const count = server.requests.length;
+    const quiet = count === last;
+    last = count;
+    if (!quiet) await page.waitForTimeout(600);
+    return quiet;
+  }, { timeout: 15_000, intervals: [0] }).toBe(true);
+}
+
 test('QUAL-005 each node kind offers exactly its actions and selecting it sends no request', async ({ page }) => {
   const ids = await addNodeKindGraph(page, { valueVariable: true });
+  await settleRequests(page);
   for (const row of NODE_KINDS) {
     await test.step(row.kind, async () => {
       await dismissMenus(page);

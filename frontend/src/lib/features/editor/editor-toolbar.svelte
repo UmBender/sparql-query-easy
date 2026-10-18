@@ -105,6 +105,7 @@
 </script>
 
 <header class="bg-brand text-brand-foreground">
+	<h1 class="sr-only">SPARQL EasyQuery query editor</h1>
 	<nav
 		aria-label="Main navigation"
 		class="mx-auto flex max-w-screen-2xl flex-wrap items-center gap-1 px-4 py-2"
@@ -165,6 +166,7 @@
 </header>
 
 <form
+	aria-label="Query controls"
 	class="border-b bg-surface"
 	onsubmit={(event) => {
 		event.preventDefault();

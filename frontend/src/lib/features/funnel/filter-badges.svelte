@@ -15,6 +15,7 @@
 
 <div
 	id="filter-badge-layer"
+	role="group"
 	aria-label="Filter results"
 	class="pointer-events-none absolute inset-0 z-(--z-overlay)"
 >
