@@ -17,10 +17,14 @@ export default defineConfig({
 			adapter: adapter({ fallback: 'index.html' })
 		})
 	],
-	// Same origin in development: the browser calls Vite, which forwards these paths to Ktor.
+	// Same origin in development: the browser calls Vite, which forwards these paths to Ktor
+	// (API_TARGET overrides it; `vite preview` uses the same proxy).
 	server: {
 		proxy: Object.fromEntries(
-			['/api', '/health', '/openapi.json'].map((path) => [path, 'http://localhost:8080'])
+			['/api', '/health', '/openapi.json'].map((path) => [
+				path,
+				process.env.API_TARGET ?? 'http://localhost:8080'
+			])
 		)
 	},
 	test: {

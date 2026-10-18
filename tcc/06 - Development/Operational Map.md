@@ -37,6 +37,7 @@ These are configured versions, not claims about a fresh successful build.
 | Browser closing gate | `npm run test:browser` |
 | New frontend gate (FE-040) | `npm --prefix frontend run check && npm --prefix frontend run lint && npm --prefix frontend test` (Vitest, then build and offline Playwright smoke) |
 | New frontend API types (FE-043) | After a route/schema change: `UPDATE_FRONTEND_OPENAPI=1 GRADLE_USER_HOME=/tmp/sparql-query-easy-gradle ./gradlew test --tests 'com.example.sparqlqueryeasy.http.FrontendOpenApiSnapshotTest' --no-daemon`, then `npm --prefix frontend run api:types` |
+| New frontend on the real stack (FE-046) | `npm --prefix frontend run test:stack` (builds Ktor and starts it on 18096, serves the e2e build through `vite preview` with `API_TARGET`; offline) |
 | New frontend dev server | `npm --prefix frontend run dev` (port 5173, proxies `/api`, `/health`, `/openapi.json` to Ktor on 8080) |
 | Ordered exploration end to end (builds and starts Ktor on port 18090; offline) | `npm run test:e2e` |
 | Regenerate legacy fixtures (builds and starts Ktor on port 18091; offline) | `npm run fixtures:legacy` (one scenario: `npm run fixtures:legacy -- --grep <name>`); idempotence: run twice, `git diff --exit-code fixtures/legacy` |

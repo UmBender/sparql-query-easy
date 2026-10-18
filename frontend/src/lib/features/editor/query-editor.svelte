@@ -19,10 +19,59 @@
 	import GraphOverlays from './graph-overlays.svelte';
 	import StatusBar from './status-bar.svelte';
 	import FilterEditor from '#lib/features/filters/filter-editor.svelte';
+	import { runQueryDecision } from '#lib/domain/index.js';
+	import { Exploration } from '#lib/features/exploration/exploration.svelte.js';
+	import { Emphasis } from '#lib/features/exploration/emphasis.svelte.js';
+	import ExplorationLayer from '#lib/features/exploration/exploration-layer.svelte';
+	import RunControls from '#lib/features/exploration/run-controls.svelte';
 
 	const store = new QueryStore();
 	const controller = new EditorController({ store, api });
 	const view = new CanvasView();
+	const exploration = new Exploration({ store, api, toast: controller.toast });
+	const emphasis = new Emphasis(store);
+	controller.onBackground.push(() => closeExploration());
+
+	let returnFocus: HTMLElement | null = null;
+
+	/** Run Query (`runQuery`): staged exploration, or the reason it cannot run. */
+	let seenSignature = store.signatureVersion;
+
+	function runQuery() {
+		// Edits made just before (Assume) are part of this run, not a reason to close it.
+		seenSignature = store.signatureVersion;
+		const decision = runQueryDecision(store.graph, store.order, store.context);
+		if (decision.kind === 'error') {
+			exploration.stop();
+			controller.toast(decision.message, 'error');
+		} else if (decision.kind === 'staged') {
+			if (!exploration.open) returnFocus = document.activeElement as HTMLElement | null;
+			exploration.start(decision.order, decision.where, decision.variableFilters);
+		} else {
+			controller.runLegacyQuery(decision.request);
+		}
+	}
+
+	function closeExploration() {
+		const restore = document
+			.getElementById('two-variable-panel')
+			?.contains(document.activeElement);
+		exploration.stop();
+		if (restore && returnFocus?.isConnected) returnFocus.focus();
+	}
+
+	// Graph and endpoint edits close the panel; a new stage order restarts it.
+	$effect(() => {
+		const version = store.signatureVersion;
+		if (version !== seenSignature) {
+			seenSignature = version;
+			exploration.invalidate(true);
+		}
+	});
+	$effect(() => {
+		void store.order;
+		exploration.invalidate(false);
+	});
 
 	let endpoints = $state<{ id: string; label: string }[]>(
 		BUILT_IN_ENDPOINTS.map((item) => ({ id: item.id, label: item.label }))
@@ -45,7 +94,8 @@
 				store,
 				controller,
 				view,
-				viewElements
+				viewElements,
+				exploration
 			};
 		}
 	});
@@ -53,28 +103,55 @@
 
 <svelte:window
 	onkeydown={(event) => {
+		const active = document.activeElement as HTMLElement | null;
+		const inPanel = !!active?.closest('#two-variable-panel, #filter-funnel-panel');
 		if (event.key === 'Escape' && controller.connection) {
 			controller.cancelConnection();
+			return;
 		}
+		if (event.key === 'Escape' && exploration.open && !active?.closest('[role="dialog"]')) {
+			closeExploration();
+			return;
+		}
+		if (inPanel || active?.closest('[role="dialog"], #results-sheet')) return;
+		// Enter outside fields and buttons runs the query (fields submit the toolbar form).
+		if (
+			event.key === 'Enter' &&
+			!active?.closest('input, textarea, button, select, a, [contenteditable="true"]')
+		)
+			runQuery();
 	}}
 />
 
 <div class="flex h-dvh flex-col">
-	<EditorToolbar {controller} {endpoints} />
+	<EditorToolbar {controller} {endpoints} onsubmit={runQuery}>
+		{#snippet runActions()}
+			<RunControls {store} {emphasis} />
+		{/snippet}
+	</EditorToolbar>
 	<main class="relative min-h-0 flex-1 overflow-hidden" id="cy-wrapper">
 		<GraphCanvas
 			{controller}
 			{view}
+			onhover={(id, kind) => emphasis.hover(id, kind)}
 			viewState={{
 				selected: [
 					...(store.selection ? [store.selection.id] : []),
 					...(controller.connection ? [controller.connection.sourceId] : [])
-				]
+				],
+				emphasis: emphasis.elementIds
 			}}
 		/>
 		<ConnectionPreview {controller} {view} />
 		<ActionMenu {controller} {view} />
 		<GraphOverlays {view} />
+		<ExplorationLayer
+			{exploration}
+			onclose={closeExploration}
+			onassume={(remaining) => {
+				if (remaining.length) runQuery();
+			}}
+		/>
 		{#if controller.busy > 0}
 			<div
 				id="loading-overlay"

@@ -76,3 +76,8 @@ export function viewElements(graph: QueryGraph, state: ViewState = {}): ViewElem
 		};
 	});
 }
+
+/** An id set for `ViewState` (kept out of rune modules, whose lint wants reactive sets). */
+export function idSet(ids: Iterable<string>): ReadonlySet<string> {
+	return new Set(ids);
+}

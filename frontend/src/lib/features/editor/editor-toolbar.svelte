@@ -30,12 +30,15 @@
 		controller,
 		endpoints,
 		fileActions,
-		runActions
+		runActions,
+		onsubmit
 	}: {
 		controller: EditorController;
 		endpoints: { id: string; label: string }[];
 		fileActions?: Snippet;
 		runActions?: Snippet;
+		/** Enter in a toolbar field submits the form, which runs the query (legacy). */
+		onsubmit?: () => void;
 	} = $props();
 
 	const store = $derived(controller.store);
@@ -164,6 +167,7 @@
 	class="border-b bg-surface"
 	onsubmit={(event) => {
 		event.preventDefault();
+		onsubmit?.();
 	}}
 >
 	<div class="mx-auto flex max-w-screen-2xl flex-wrap items-end gap-3 px-4 py-2">

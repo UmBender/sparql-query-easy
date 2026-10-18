@@ -395,6 +395,18 @@ export class EditorController {
 		);
 	}
 
+	/** Run Query when no stage order applies (a legacy variable test matched): the results table. */
+	async runLegacyQuery(request: Parameters<ApiClient['query']>[0]) {
+		await this.#showQuery(request, (item) => ({
+			kind: 'replace-node',
+			variableName: request.variableName,
+			nodeId: item.propertyId,
+			nodeLabel: item.propertyLabel,
+			propertyType: item.propertyType,
+			propertyClass: item.propertyClass
+		}));
+	}
+
 	/** Explore values of a class (`explore-default`), with the full rdfs:domain IRI. */
 	async exploreValues(node: QueryNode) {
 		const request = exploreValuesRequest(node, this.store.context, this.#now());

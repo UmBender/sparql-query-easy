@@ -91,7 +91,7 @@ export async function addGraph(page: Page, items: Spec[]) {
 								}
 							: spec.kind === 'class'
 								? { ...base, kind: 'class', value: spec.value ?? spec.id }
-								: { ...base, kind: 'entity', value: spec.id };
+								: { ...base, kind: 'entity', value: spec.value ?? spec.id };
 			graph.elements.push(node);
 			graph.incident[spec.id] = graph.incident[spec.id] ?? [];
 		}

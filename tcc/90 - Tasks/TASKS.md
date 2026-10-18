@@ -95,7 +95,7 @@ Ordered by dependencies, then priority among selection candidates. See [worker r
 | FE-052 | DONE | P2 | frontend | [Undo and redo query graph edits from the store](<items/FE-052-undo-redo.md>) |
 | FE-044 | DONE | P1 | frontend | [Draw and edit the query graph on a Cytoscape canvas driven by the store](<items/FE-044-graph-canvas.md>) |
 | FE-045 | DONE | P1 | frontend | [Edit value and value-variable filters with histogram and text suggestions](<items/FE-045-filter-editor.md>) |
-| FE-046 | BACKLOG | P1 | frontend | [Run the query as ordered stages, choose values and apply them to the graph](<items/FE-046-run-query-exploration.md>) |
+| FE-046 | DONE | P1 | frontend | [Run the query as ordered stages, choose values and apply them to the graph](<items/FE-046-run-query-exploration.md>) |
 | FE-047 | BACKLOG | P1 | frontend | [Show the filter funnel with switchable steps and kept/total badges](<items/FE-047-filter-funnel-and-badges.md>) |
 | FE-048 | BACKLOG | P1 | frontend | [Upload triples, load and export queries, auto layout and the guided tour](<items/FE-048-editor-utilities.md>) |
 | QUAL-007 | BACKLOG | P1 | quality | [Add the new frontend test layers and a GitHub Actions CI for all gates](<items/QUAL-007-new-frontend-tests-and-ci.md>) |

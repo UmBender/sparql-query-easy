@@ -528,7 +528,11 @@ test('F-05 Edit value on a value node suggests values containing the text throug
 	await choose(page, 'Contains');
 	await valueInput(page).fill('Flame');
 	await expect(page.locator('#filter-suggestions')).toContainText('No value contains “Flame”.');
-	expect(api.bodies('/api/query/stage').at(-1)).toMatchObject({
+	// The request for the settled text (an earlier keystroke may have been sent and aborted).
+	const flame = (
+		api.bodies('/api/query/stage') as { variableFilters?: { value: string }[] }[]
+	).find((body) => body.variableFilters?.some((filter) => filter.value === 'Flame'));
+	expect(flame).toMatchObject({
 		variableName: '?suggestedValue',
 		where: [
 			{
