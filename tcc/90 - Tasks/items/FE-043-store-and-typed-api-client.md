@@ -40,6 +40,8 @@ T4, part 2. Skill: `tcc-frontend`.
 
 ## Fixture scenarios (QUAL-009)
 
+Field-level request shapes: [[../../04 - Frontend/Legacy Wire Format]] (QUAL-010).
+
 Client and wrapper tests reuse captured responses (`*.response.json`) as MSW bodies. See `fixtures/legacy/README.md` and [[../../04 - Frontend/Frontend Parity Checklist]].
 
 ## Acceptance criteria

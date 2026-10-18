@@ -1,13 +1,13 @@
 ---
 id: QUAL-010
 title: Document the legacy drawn-graph request and saved-query formats field by field
-status: BACKLOG
+status: DONE
 priority: P1
 type: documentation
 depends_on: [QUAL-009, COM-001]
 human_gate: true
 created: 2026-10-16
-updated: 2026-10-16
+updated: 2026-10-17
 ---
 # Document the legacy drawn-graph request and saved-query formats field by field
 
@@ -44,7 +44,7 @@ the QUAL-009 fixtures. Skill: `tcc-test` (documentation with fixture oracle).
 Changing any API or legacy behavior; designing the new versioned format
 (FE-042); a legacy importer (removed by the user on 2026-10-16, D6b).
 
-## Pending decision D-T2b: saved-query fixtures "for format compatibility"
+## Decision D-T2b: saved-query fixtures "for format compatibility" (resolved: B)
 
 The T2 brief asks to collect legacy exported files as fixtures for format
 compatibility and document the format field by field. On 2026-10-16 (D6b)
@@ -65,10 +65,10 @@ and FE-048 support only the new versioned format.
 
 ## Acceptance criteria
 
-- [ ] Every request field in `fixtures/legacy/*.request.json` is documented
+- [x] Every request field in `fixtures/legacy/*.request.json` is documented
       with type, meaning and a fixture link; the field check passes.
-- [ ] Saved-query part delivered as D-T2b decides.
-- [ ] FE-042 and FE-043 link the documentation (T4 reference).
+- [x] Saved-query part delivered as D-T2b decides.
+- [x] FE-042 and FE-043 link the documentation (T4 reference).
 
 ## Validation
 
@@ -77,3 +77,14 @@ The field check; `node scripts/check-project-docs.mjs`; `git diff --check`.
 ## Execution log
 
 - 2026-10-16: Planned from the T2 brief; no code changed.
+- 2026-10-17: D-T2b taken as the recommended option B under the user's
+  full-migration goal. Wrote [[../../04 - Frontend/Legacy Wire Format]]
+  (graph-to-request mapping, filter codes, lost information, one field table
+  per route, the Export Query file), linked from Request Flows, FE-042 and
+  FE-043. Added `scripts/check-legacy-fixture-fields.mjs`, run by
+  `npm run fixtures:legacy`; it passes on the corpus and fails when a row is
+  removed (checked with `isLiteral`). The capture writes
+  `<name>.export.json` for four scenarios. Validation: field check;
+  `npm run fixtures:legacy -- --grep …` for the four export scenarios (no
+  other fixture changed); docs check; `git diff --check`. Completion commit
+  for this task.

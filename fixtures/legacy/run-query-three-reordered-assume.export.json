@@ -1,0 +1,126 @@
+{
+  "elements": {
+    "edges": [
+      {
+        "classes": "",
+        "data": {
+          "id": "evolves",
+          "label": "evolves into",
+          "nodeId": "<http://easyquery.example.org/pokemon#evolvesInto>",
+          "source": "<http://easyquery.example.org/pokemon#Charmeleon>",
+          "target": "<http://easyquery.example.org/pokemon#Charizard>"
+        },
+        "grabbable": true,
+        "group": "edges",
+        "locked": false,
+        "pannable": true,
+        "position": {
+          "x": 0,
+          "y": 0
+        },
+        "removed": false,
+        "selectable": true,
+        "selected": false
+      },
+      {
+        "classes": "",
+        "data": {
+          "id": "type",
+          "label": "has type",
+          "nodeId": "<http://easyquery.example.org/pokemon#hasType>",
+          "source": "<http://easyquery.example.org/pokemon#Charizard>",
+          "target": "<http://easyquery.example.org/pokemon#FireType>"
+        },
+        "grabbable": true,
+        "group": "edges",
+        "locked": false,
+        "pannable": true,
+        "position": {
+          "x": 0,
+          "y": 0
+        },
+        "removed": false,
+        "selectable": true,
+        "selected": false
+      }
+    ],
+    "nodes": [
+      {
+        "classes": "",
+        "data": {
+          "id": "<http://easyquery.example.org/pokemon#Charmeleon>",
+          "label": "Charmeleon",
+          "type": "node",
+          "value": "<http://easyquery.example.org/pokemon#Charmeleon>"
+        },
+        "grabbable": true,
+        "group": "nodes",
+        "locked": false,
+        "pannable": false,
+        "position": {
+          "x": 150,
+          "y": 150
+        },
+        "removed": false,
+        "selectable": true,
+        "selected": false
+      },
+      {
+        "classes": "",
+        "data": {
+          "id": "<http://easyquery.example.org/pokemon#Charizard>",
+          "label": "Charizard",
+          "type": "node",
+          "value": "<http://easyquery.example.org/pokemon#Charizard>"
+        },
+        "grabbable": true,
+        "group": "nodes",
+        "locked": false,
+        "pannable": false,
+        "position": {
+          "x": 410,
+          "y": 150
+        },
+        "removed": false,
+        "selectable": true,
+        "selected": false
+      },
+      {
+        "classes": "",
+        "data": {
+          "id": "<http://easyquery.example.org/pokemon#FireType>",
+          "label": "Fire",
+          "type": "node",
+          "value": "<http://easyquery.example.org/pokemon#FireType>"
+        },
+        "grabbable": true,
+        "group": "nodes",
+        "locked": false,
+        "pannable": false,
+        "position": {
+          "x": 670,
+          "y": 150
+        },
+        "removed": false,
+        "selectable": true,
+        "selected": false
+      }
+    ]
+  },
+  "topLevelKeys": [
+    "boxSelectionEnabled",
+    "data",
+    "elements",
+    "maxZoom",
+    "minZoom",
+    "pan",
+    "panningEnabled",
+    "renderer",
+    "style",
+    "userPanningEnabled",
+    "userZoomingEnabled",
+    "wheelSensitivity",
+    "zoom",
+    "zoomingEnabled"
+  ]
+}

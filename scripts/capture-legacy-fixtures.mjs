@@ -13,7 +13,7 @@ const args = process.argv.slice(2);
 
 if (!args.length) {
   for (const name of readdirSync(dir)) {
-    if (/\.(request|response)\.json$|\.sparql$/.test(name)) rmSync(join(dir, name));
+    if (/\.(request|response|export)\.json$|\.sparql$/.test(name)) rmSync(join(dir, name));
   }
 }
 const result = spawnSync('npx', ['playwright', 'test', '--config', 'playwright.fixtures.config.mjs', ...args], { cwd: root, stdio: 'inherit' });

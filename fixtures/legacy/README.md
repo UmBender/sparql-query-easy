@@ -28,6 +28,13 @@ oracle instead.
 - `<name>.response.json`: the matching `{status, body}`, rows in received
   order; compare unordered rows as multisets.
 - `<name>.sparql`: the text View SPARQL showed at the end of the scenario.
+- `<name>.export.json` (four scenarios): the Export Query file's elements and
+  its other top-level keys, as characterization only (QUAL-010, D-T2b = B;
+  the new app does not import them).
+
+Every request field is documented in `tcc/04 - Frontend/Legacy Wire Format.md`;
+`node scripts/check-legacy-fixture-fields.mjs` (run by the capture command)
+fails on an undocumented one.
 
 Background requests (filter badges, funnel counts) are recorded too: the
 harness waits until the page is quiet after each action, so their order is

@@ -53,6 +53,8 @@ have reopened D6b and forced D-T2b.
 
 ## Fixture scenarios (QUAL-009)
 
+Field-level request shapes: [[../../04 - Frontend/Legacy Wire Format]] (QUAL-010).
+
 Every scenario whose graph the domain builds: the mapped `where`, `variableFilters` and stage requests must equal the captured `.request.json` entries. See `fixtures/legacy/README.md` and [[../../04 - Frontend/Frontend Parity Checklist]].
 
 ## Acceptance criteria

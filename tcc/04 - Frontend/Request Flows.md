@@ -15,6 +15,9 @@ sequenceDiagram
   F->>F: Update graph, modal, autocomplete, or toast
 ```
 
+Field-level request bodies and the Export Query file: [[Legacy Wire Format]]
+(QUAL-010), backed by `fixtures/legacy/`.
+
 ## Request-flow matrix
 
 | Frontend trigger/function | Request and payload mapping | Response consumption | Failure presentation | Contract and automated coverage |

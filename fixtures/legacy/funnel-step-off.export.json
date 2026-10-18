@@ -1,0 +1,169 @@
+{
+  "elements": {
+    "edges": [
+      {
+        "classes": "",
+        "data": {
+          "id": "type",
+          "label": "has type",
+          "nodeId": "<http://easyquery.example.org/pokemon#hasType>",
+          "source": "?pokemon",
+          "target": "<http://easyquery.example.org/pokemon#WaterType>"
+        },
+        "grabbable": true,
+        "group": "edges",
+        "locked": false,
+        "pannable": true,
+        "position": {
+          "x": 0,
+          "y": 0
+        },
+        "removed": false,
+        "selectable": true,
+        "selected": false
+      },
+      {
+        "classes": "",
+        "data": {
+          "id": "speed",
+          "label": "speed",
+          "nodeId": "<http://easyquery.example.org/pokemon#speed>",
+          "source": "?pokemon",
+          "target": "speed-value"
+        },
+        "grabbable": true,
+        "group": "edges",
+        "locked": false,
+        "pannable": true,
+        "position": {
+          "x": 0,
+          "y": 0
+        },
+        "removed": false,
+        "selectable": true,
+        "selected": false
+      },
+      {
+        "classes": "",
+        "data": {
+          "id": "attack",
+          "label": "attack",
+          "nodeId": "<http://easyquery.example.org/pokemon#attack>",
+          "source": "?pokemon",
+          "target": "attack-value"
+        },
+        "grabbable": true,
+        "group": "edges",
+        "locked": false,
+        "pannable": true,
+        "position": {
+          "x": 0,
+          "y": 0
+        },
+        "removed": false,
+        "selectable": true,
+        "selected": false
+      }
+    ],
+    "nodes": [
+      {
+        "classes": "",
+        "data": {
+          "id": "?pokemon",
+          "label": "?",
+          "type": "variable",
+          "value": "?pokemon"
+        },
+        "grabbable": true,
+        "group": "nodes",
+        "locked": false,
+        "pannable": false,
+        "position": {
+          "x": 150,
+          "y": 150
+        },
+        "removed": false,
+        "selectable": true,
+        "selected": false
+      },
+      {
+        "classes": "",
+        "data": {
+          "id": "<http://easyquery.example.org/pokemon#WaterType>",
+          "label": "Water",
+          "type": "node",
+          "value": "<http://easyquery.example.org/pokemon#WaterType>"
+        },
+        "grabbable": true,
+        "group": "nodes",
+        "locked": false,
+        "pannable": false,
+        "position": {
+          "x": 410,
+          "y": 150
+        },
+        "removed": false,
+        "selectable": true,
+        "selected": false
+      },
+      {
+        "classes": "",
+        "data": {
+          "filterType": 2,
+          "id": "speed-value",
+          "label": "≥ 80",
+          "type": "label",
+          "value": "80"
+        },
+        "grabbable": true,
+        "group": "nodes",
+        "locked": false,
+        "pannable": false,
+        "position": {
+          "x": 670,
+          "y": 150
+        },
+        "removed": false,
+        "selectable": true,
+        "selected": false
+      },
+      {
+        "classes": "",
+        "data": {
+          "filterType": 4,
+          "id": "attack-value",
+          "label": "MAX",
+          "type": "label",
+          "value": "MAX"
+        },
+        "grabbable": true,
+        "group": "nodes",
+        "locked": false,
+        "pannable": false,
+        "position": {
+          "x": 930,
+          "y": 150
+        },
+        "removed": false,
+        "selectable": true,
+        "selected": false
+      }
+    ]
+  },
+  "topLevelKeys": [
+    "boxSelectionEnabled",
+    "data",
+    "elements",
+    "maxZoom",
+    "minZoom",
+    "pan",
+    "panningEnabled",
+    "renderer",
+    "style",
+    "userPanningEnabled",
+    "userZoomingEnabled",
+    "wheelSensitivity",
+    "zoom",
+    "zoomingEnabled"
+  ]
+}

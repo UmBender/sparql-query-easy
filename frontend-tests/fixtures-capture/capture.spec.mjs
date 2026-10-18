@@ -249,6 +249,16 @@ for (const scenario of scenarios) {
 
     const ctx = context(page, recorder);
     const notes = (await scenario.run(ctx)) ?? {};
+    // D-T2b = B: a few Export Query files, as characterization of what a saved
+    // legacy query held; the new app does not import them (D6b).
+    let exported = null;
+    if (scenario.export) {
+      const download = page.waitForEvent('download');
+      await page.locator('nav a[title="Export current query as JSON"]').click();
+      const chunks = await (await (await download).createReadStream()).toArray();
+      const saved = JSON.parse(Buffer.concat(chunks).toString('utf8'));
+      exported = { topLevelKeys: Object.keys(saved).sort(), elements: saved.elements };
+    }
     const sparql = await ctx.viewSparql();
 
     const normalize = createNormalizer();
@@ -259,6 +269,7 @@ for (const scenario of scenarios) {
     writeFileSync(new URL(`${scenario.name}.request.json`, OUT), stableJson(exchanges.map(({ request }) => request)));
     writeFileSync(new URL(`${scenario.name}.response.json`, OUT), stableJson(exchanges.map(({ response }) => response)));
     writeFileSync(new URL(`${scenario.name}.sparql`, OUT), `${normalize.text(sparql.trim())}\n`);
+    if (exported) writeFileSync(new URL(`${scenario.name}.export.json`, OUT), stableJson(normalize.value(exported)));
 
     // A scenario lists the error statuses it characterizes as { path: status }.
     const statuses = exchanges.map(({ request, response }) => [request.path, response?.status ?? null]);

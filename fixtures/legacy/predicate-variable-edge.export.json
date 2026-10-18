@@ -1,0 +1,86 @@
+{
+  "elements": {
+    "edges": [
+      {
+        "classes": "",
+        "data": {
+          "id": "relation",
+          "label": "?",
+          "nodeId": "?predicate_1",
+          "source": "<http://easyquery.example.org/pokemon#Pikachu>",
+          "target": "<http://easyquery.example.org/pokemon#ElectricType>",
+          "type": "variable"
+        },
+        "grabbable": true,
+        "group": "edges",
+        "locked": false,
+        "pannable": true,
+        "position": {
+          "x": 0,
+          "y": 0
+        },
+        "removed": false,
+        "selectable": true,
+        "selected": false
+      }
+    ],
+    "nodes": [
+      {
+        "classes": "",
+        "data": {
+          "id": "<http://easyquery.example.org/pokemon#Pikachu>",
+          "label": "Pikachu",
+          "type": "node",
+          "value": "<http://easyquery.example.org/pokemon#Pikachu>"
+        },
+        "grabbable": true,
+        "group": "nodes",
+        "locked": false,
+        "pannable": false,
+        "position": {
+          "x": 150,
+          "y": 150
+        },
+        "removed": false,
+        "selectable": true,
+        "selected": false
+      },
+      {
+        "classes": "",
+        "data": {
+          "id": "<http://easyquery.example.org/pokemon#ElectricType>",
+          "label": "Electric",
+          "type": "node",
+          "value": "<http://easyquery.example.org/pokemon#ElectricType>"
+        },
+        "grabbable": true,
+        "group": "nodes",
+        "locked": false,
+        "pannable": false,
+        "position": {
+          "x": 410,
+          "y": 150
+        },
+        "removed": false,
+        "selectable": true,
+        "selected": false
+      }
+    ]
+  },
+  "topLevelKeys": [
+    "boxSelectionEnabled",
+    "data",
+    "elements",
+    "maxZoom",
+    "minZoom",
+    "pan",
+    "panningEnabled",
+    "renderer",
+    "style",
+    "userPanningEnabled",
+    "userZoomingEnabled",
+    "wheelSensitivity",
+    "zoom",
+    "zoomingEnabled"
+  ]
+}

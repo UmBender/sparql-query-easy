@@ -1,0 +1,128 @@
+{
+  "elements": {
+    "edges": [
+      {
+        "classes": "",
+        "data": {
+          "id": "type",
+          "label": "has type",
+          "nodeId": "<http://easyquery.example.org/pokemon#hasType>",
+          "source": "?pokemon",
+          "target": "<http://easyquery.example.org/pokemon#FireType>"
+        },
+        "grabbable": true,
+        "group": "edges",
+        "locked": false,
+        "pannable": true,
+        "position": {
+          "x": 0,
+          "y": 0
+        },
+        "removed": false,
+        "selectable": true,
+        "selected": false
+      },
+      {
+        "classes": "",
+        "data": {
+          "id": "speed",
+          "label": "speed",
+          "nodeId": "<http://easyquery.example.org/pokemon#speed>",
+          "source": "?pokemon",
+          "target": "?speed"
+        },
+        "grabbable": true,
+        "group": "edges",
+        "locked": false,
+        "pannable": true,
+        "position": {
+          "x": 0,
+          "y": 0
+        },
+        "removed": false,
+        "selectable": true,
+        "selected": false
+      }
+    ],
+    "nodes": [
+      {
+        "classes": "",
+        "data": {
+          "id": "?pokemon",
+          "label": "?",
+          "type": "variable",
+          "value": "?pokemon"
+        },
+        "grabbable": true,
+        "group": "nodes",
+        "locked": false,
+        "pannable": false,
+        "position": {
+          "x": 150,
+          "y": 150
+        },
+        "removed": false,
+        "selectable": true,
+        "selected": false
+      },
+      {
+        "classes": "",
+        "data": {
+          "id": "<http://easyquery.example.org/pokemon#FireType>",
+          "label": "Fire",
+          "type": "node",
+          "value": "<http://easyquery.example.org/pokemon#FireType>"
+        },
+        "grabbable": true,
+        "group": "nodes",
+        "locked": false,
+        "pannable": false,
+        "position": {
+          "x": 410,
+          "y": 150
+        },
+        "removed": false,
+        "selectable": true,
+        "selected": false
+      },
+      {
+        "classes": "",
+        "data": {
+          "filterType": 2,
+          "filterValue": "90",
+          "id": "?speed",
+          "label": "? ≥ 90",
+          "type": "value-variable",
+          "value": "?speed"
+        },
+        "grabbable": true,
+        "group": "nodes",
+        "locked": false,
+        "pannable": false,
+        "position": {
+          "x": 670,
+          "y": 150
+        },
+        "removed": false,
+        "selectable": true,
+        "selected": false
+      }
+    ]
+  },
+  "topLevelKeys": [
+    "boxSelectionEnabled",
+    "data",
+    "elements",
+    "maxZoom",
+    "minZoom",
+    "pan",
+    "panningEnabled",
+    "renderer",
+    "style",
+    "userPanningEnabled",
+    "userZoomingEnabled",
+    "wheelSensitivity",
+    "zoom",
+    "zoomingEnabled"
+  ]
+}

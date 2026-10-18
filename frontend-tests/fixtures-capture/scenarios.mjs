@@ -39,6 +39,7 @@ function sameSet(expect, actual, expected) {
 export const scenarios = [
   {
     name: 'fire-speed-at-least-90',
+    export: true,
     covers: ['entity', 'variable', 'value variable with filter', 'at least (2)', 'Run Query 1 stage + value variable', 'funnel counts (badge)'],
     description: 'Fire-type Pokémon with speed of at least 90 (value variable filter), staged Run Query.',
     async run(ctx) {
@@ -456,6 +457,7 @@ export const scenarios = [
   },
   {
     name: 'predicate-variable-edge',
+    export: true,
     covers: ['entity', 'predicate variable edge (FE-003)', 'Convert relation to variable', 'Run Query 1 stage (predicate)'],
     description: 'Convert the Pikachu → Electric relation to a predicate variable and run it.',
     async run(ctx) {
@@ -475,6 +477,7 @@ export const scenarios = [
   },
   {
     name: 'run-query-three-reordered-assume',
+    export: true,
     covers: ['Run Query 3 variables reordered', 'Assume', 'next query after Assume', 'choose and apply to graph'],
     description: 'Order ?type, ?next, ?pokemon; Assume ?type = Fire, then choose Charizard and Charmeleon and Apply.',
     expectedErrors: { '/api/query/sparql': 400 },
@@ -508,6 +511,7 @@ export const scenarios = [
   },
   {
     name: 'funnel-step-off',
+    export: true,
     covers: ['funnel counts (count)', 'funnel step switched off', 'MAX after the other steps'],
     description: 'Water type, speed ≥ 80 and MAX attack as funnel steps; untick the speed step.',
     async run(ctx) {
