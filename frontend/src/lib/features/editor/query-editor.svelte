@@ -24,12 +24,55 @@
 	import { Emphasis } from '#lib/features/exploration/emphasis.svelte.js';
 	import ExplorationLayer from '#lib/features/exploration/exploration-layer.svelte';
 	import RunControls from '#lib/features/exploration/run-controls.svelte';
+	import FilterIcon from '@lucide/svelte/icons/list-filter';
+	import { Button } from '#lib/components/ui/button/index.js';
+	import { createAppQueryClient, createCachedApi } from '#lib/api/queries.js';
+	import { CountCache } from '#lib/features/funnel/count-cache.js';
+	import { Funnel } from '#lib/features/funnel/funnel.svelte.js';
+	import { FilterBadges } from '#lib/features/funnel/badges.svelte.js';
+	import FunnelPanel from '#lib/features/funnel/funnel-panel.svelte';
+	import FilterBadgeLayer from '#lib/features/funnel/filter-badges.svelte';
 
 	const store = new QueryStore();
 	const controller = new EditorController({ store, api });
 	const view = new CanvasView();
 	const exploration = new Exploration({ store, api, toast: controller.toast });
 	const emphasis = new Emphasis(store);
+	const queryClient = createAppQueryClient();
+	const cached = createCachedApi(api, queryClient);
+	const counts = new CountCache(api, queryClient);
+	const funnel = new Funnel(store, counts);
+	const badges = new FilterBadges(store, counts, (request) => cached.actualValues(request));
+	let funnelReturn: HTMLElement | null = null;
+
+	function toggleFunnel() {
+		if (funnel.open) closeFunnel();
+		else {
+			funnelReturn = document.activeElement as HTMLElement | null;
+			funnel.show();
+		}
+	}
+	function closeFunnel() {
+		const restore = document
+			.getElementById('filter-funnel-panel')
+			?.contains(document.activeElement);
+		funnel.hide();
+		if (restore)
+			(funnelReturn?.isConnected
+				? funnelReturn
+				: document.getElementById('filter-funnel-btn')
+			)?.focus();
+	}
+
+	// Graph, endpoint and funnel-variable edits refresh the funnel (350 ms) and the badges (400 ms).
+	$effect(() => {
+		void store.graph;
+		void store.context.endpointUrl;
+		void store.funnelVariable;
+		funnel.schedule();
+		badges.schedule();
+	});
+	$effect(() => () => badges.dispose());
 	controller.onBackground.push(() => closeExploration());
 
 	let returnFocus: HTMLElement | null = null;
@@ -95,7 +138,9 @@
 				controller,
 				view,
 				viewElements,
-				exploration
+				exploration,
+				funnel,
+				badges
 			};
 		}
 	});
@@ -107,6 +152,10 @@
 		const inPanel = !!active?.closest('#two-variable-panel, #filter-funnel-panel');
 		if (event.key === 'Escape' && controller.connection) {
 			controller.cancelConnection();
+			return;
+		}
+		if (event.key === 'Escape' && active?.closest('#filter-funnel-panel')) {
+			closeFunnel();
 			return;
 		}
 		if (event.key === 'Escape' && exploration.open && !active?.closest('[role="dialog"]')) {
@@ -126,7 +175,18 @@
 <div class="flex h-dvh flex-col">
 	<EditorToolbar {controller} {endpoints} onsubmit={runQuery}>
 		{#snippet runActions()}
-			<RunControls {store} {emphasis} />
+			<RunControls {store} {emphasis}>
+				<Button
+					id="filter-funnel-btn"
+					variant="secondary"
+					aria-expanded={funnel.open}
+					aria-controls="filter-funnel-panel"
+					title="Show how each filter narrows the result"
+					onclick={toggleFunnel}
+				>
+					<FilterIcon aria-hidden="true" />Filter funnel
+				</Button>
+			</RunControls>
 		{/snippet}
 	</EditorToolbar>
 	<main class="relative min-h-0 flex-1 overflow-hidden" id="cy-wrapper">
@@ -139,12 +199,17 @@
 					...(store.selection ? [store.selection.id] : []),
 					...(controller.connection ? [controller.connection.sourceId] : [])
 				],
-				emphasis: emphasis.elementIds
+				emphasis: emphasis.elementIds,
+				rejected: badges.rejected
 			}}
 		/>
 		<ConnectionPreview {controller} {view} />
 		<ActionMenu {controller} {view} />
 		<GraphOverlays {view} />
+		<FilterBadgeLayer {badges} {view} />
+		{#if funnel.open}
+			<FunnelPanel {funnel} onclose={closeFunnel} />
+		{/if}
 		<ExplorationLayer
 			{exploration}
 			onclose={closeExploration}

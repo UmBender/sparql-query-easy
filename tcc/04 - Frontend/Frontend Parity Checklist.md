@@ -81,11 +81,11 @@ check that passes (Playwright files in `frontend/tests/`, Vitest specs in
 
 | ID | Behavior | Legacy tests | Target | Scenario | Status |
 |---|---|---|---|---|---|
-| B-01 | Funnel counts after each cumulative filter; MAX/MIN last; step toggles are preview only | `the filter funnel counts the remaining results …`, `a MAX step is counted after the other filters …`, `unticking a funnel step previews later counts only …` | FE-047 | `funnel-*` | legacy |
-| B-02 | Funnel errors/retry, empty query, debounced refresh, abort superseded, keyboard and Escape, cap and narrow viewport | `the filter funnel shows count errors with a retry`, `… explains an empty query …`, `a superseded funnel refresh is aborted …`, `… is keyboard reachable …`, `… caps counted steps and fits a narrow viewport` | FE-047 | — | legacy |
-| B-03 | Kept/total badge over filtered nodes; never changes query data; stale and error handling | `a numeric filter node shows a live kept/total badge …`, `the badge ignores a stale count …`, `the badge follows its node and reports a count error` | FE-047 | `funnel-*` | legacy |
-| B-04 | Fixed-entity subject: actual value chip and ✓/✗ | `after Assume the filtered node shows the actual value …`, `after Apply several actual values are joined …`, `a failed or empty value lookup …` | FE-047 | `actual-value-check` | legacy |
-| B-05 | Value-variable filters are funnel steps on the entity variable | `FE-039 value-variable filters are funnel steps …` | FE-047 | `funnel-value-variable` | legacy |
+| B-01 | Funnel counts after each cumulative filter; MAX/MIN last; step toggles are preview only | `the filter funnel counts the remaining results …`, `a MAX step is counted after the other filters …`, `unticking a funnel step previews later counts only …` | FE-047 | `funnel-*` | new: `funnel.e2e.ts` B-01 (three cases) |
+| B-02 | Funnel errors/retry, empty query, debounced refresh, abort superseded, keyboard and Escape, cap and narrow viewport | `the filter funnel shows count errors with a retry`, `… explains an empty query …`, `a superseded funnel refresh is aborted …`, `… is keyboard reachable …`, `… caps counted steps and fits a narrow viewport` | FE-047 | — | new: `funnel.e2e.ts` B-02 (two cases) |
+| B-03 | Kept/total badge over filtered nodes; never changes query data; stale and error handling | `a numeric filter node shows a live kept/total badge …`, `the badge ignores a stale count …`, `the badge follows its node and reports a count error` | FE-047 | `funnel-*` | new: `funnel.e2e.ts` B-03 |
+| B-04 | Fixed-entity subject: actual value chip and ✓/✗ | `after Assume the filtered node shows the actual value …`, `after Apply several actual values are joined …`, `a failed or empty value lookup …` | FE-047 | `actual-value-check` | new: `funnel.e2e.ts` B-04 |
+| B-05 | Value-variable filters are funnel steps on the entity variable | `FE-039 value-variable filters are funnel steps …` | FE-047 | `funnel-value-variable` | new: `funnel.e2e.ts` B-05 |
 
 ## Pure-module oracles
 

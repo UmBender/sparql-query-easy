@@ -34,6 +34,15 @@ export class CanvasView {
 		};
 	}
 
+	/** Rendered bounding box of a node (no labels), relative to the canvas. */
+	nodeBounds(id: string): { x1: number; x2: number; y1: number; y2: number } | null {
+		void this.version;
+		const node = this.cy?.getElementById(id);
+		if (!node || node.empty() || !node.isNode()) return null;
+		const box = node.renderedBoundingBox({ includeLabels: false, includeOverlays: false });
+		return { x1: box.x1, x2: box.x2, y1: box.y1, y2: box.y2 };
+	}
+
 	/** Rendered midpoint of an edge, relative to the canvas. */
 	edgeMidpoint(id: string): { x: number; y: number; width: number; height: number } | null {
 		void this.version;

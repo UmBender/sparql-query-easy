@@ -1,13 +1,13 @@
 ---
 id: FE-047
 title: Show the filter funnel with switchable steps and kept/total badges
-status: BACKLOG
+status: DONE
 priority: P1
 type: frontend
 depends_on: [FE-045, FE-046]
 human_gate: false
 created: 2026-10-16
-updated: 2026-10-16
+updated: 2026-10-18
 ---
 # Show the filter funnel with switchable steps and kept/total badges
 
@@ -31,4 +31,23 @@ this card renders it and sends `count` requests for it (T4, confirmed
 
 ## Acceptance criteria
 
-- [ ] QUAL-006 rows for funnel and badges pass with identical counts.
+- [x] QUAL-006 rows for funnel and badges pass with identical counts.
+
+## Execution log
+
+- 2026-10-18: `frontend/src/lib/features/funnel/`: `Funnel` (counts one
+  request at a time, generation and abort for superseded refreshes, 350 ms
+  refresh after edits, rows/status/result texts of the legacy panel),
+  `FilterBadges` (port of filter-badges.js: kept/total counts on the funnel's
+  steps for the query as it runs, actual-value chip and ✓/✗ for fixed
+  subjects, 400 ms debounce, stale lookups dropped, `rejected` canvas class),
+  `CountCache` (counts stored in the TanStack cache, explicit fetch/share/abort
+  like legacy `trackResultCount`/`loadResultCount`), `funnel-panel.svelte`
+  and `filter-badges.svelte`. Toolbar Filter funnel button
+  (`aria-expanded`), Escape inside the panel returns focus. `Panel` gained
+  `closeId` (legacy ids `filter-funnel-close`, `two-variable-panel-close`).
+  Step on/off state and labels come from the store/domain (FE-042/FE-043).
+  Tests: `tests/funnel.e2e.ts` (8) port the B-01–B-05 legacy cases with the
+  same counts, texts and request bodies. Validation: check, lint,
+  `npm --prefix frontend test` (153 Vitest server, 4 component, 62
+  Playwright). Completion commit for this task.

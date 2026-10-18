@@ -98,6 +98,7 @@
 	id="two-variable-panel"
 	title="Explore query variables"
 	closeLabel="Close query variable exploration"
+	closeId="two-variable-panel-close"
 	{onclose}
 	class="pointer-events-auto max-h-[55%] w-full shrink-0 overflow-y-auto lg:max-h-full lg:w-[min(26rem,100%)]"
 	aria-describedby="two-variable-panel-description"

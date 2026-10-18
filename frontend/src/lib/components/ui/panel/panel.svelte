@@ -14,6 +14,7 @@
 		id,
 		onclose,
 		closeLabel = 'Close',
+		closeId,
 		class: className,
 		children,
 		...restProps
@@ -22,6 +23,7 @@
 		id: string;
 		onclose?: () => void;
 		closeLabel?: string;
+		closeId?: string;
 		children?: Snippet;
 	} = $props();
 </script>
@@ -39,7 +41,13 @@
 	<header class="flex items-center justify-between gap-2">
 		<h2 id="{id}-title" class="text-base font-semibold">{title}</h2>
 		{#if onclose}
-			<IconButton label={closeLabel} size="icon-sm" onclick={onclose} data-panel-close>
+			<IconButton
+				id={closeId}
+				label={closeLabel}
+				size="icon-sm"
+				onclick={onclose}
+				data-panel-close
+			>
 				<XIcon />
 			</IconButton>
 		{/if}
