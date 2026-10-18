@@ -32,6 +32,8 @@
 	import { FilterBadges } from '#lib/features/funnel/badges.svelte.js';
 	import FunnelPanel from '#lib/features/funnel/funnel-panel.svelte';
 	import FilterBadgeLayer from '#lib/features/funnel/filter-badges.svelte';
+	import FileActions from '#lib/features/utilities/file-actions.svelte';
+	import GuidedTour from '#lib/features/utilities/guided-tour.svelte';
 
 	const store = new QueryStore();
 	const controller = new EditorController({ store, api });
@@ -174,6 +176,12 @@
 
 <div class="flex h-dvh flex-col">
 	<EditorToolbar {controller} {endpoints} onsubmit={runQuery}>
+		{#snippet fileActions()}
+			<FileActions
+				{controller}
+				class="text-brand-foreground hover:bg-brand-foreground/15 hover:text-brand-foreground"
+			/>
+		{/snippet}
 		{#snippet runActions()}
 			<RunControls {store} {emphasis}>
 				<Button
@@ -233,6 +241,7 @@
 	<StatusBar {store} {health} />
 	<ResultsSheet {controller} />
 	<SparqlDialog {controller} />
+	<GuidedTour />
 	{#if controller.editorRequest && nodeById(store.graph, controller.editorRequest.nodeId)}
 		{#key controller.editorRequest.token}
 			<FilterEditor {controller} request={controller.editorRequest} />

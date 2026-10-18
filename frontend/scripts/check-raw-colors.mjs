@@ -10,7 +10,7 @@ const src = resolve(root, process.argv[2] ?? 'src');
 // src/lib/domain/legacy/ holds verbatim ports of the legacy modules (FE-042);
 // their color values are oracle data for tests, not UI styles.
 const allowed = [join(root, 'src/lib/design'), join(root, 'src/lib/domain/legacy')];
-const HEX = /(?<![\w&/-])#(?:[0-9a-fA-F]{8}|[0-9a-fA-F]{6}|[0-9a-fA-F]{3,4})\b/g;
+const HEX = /(?<![\w&/-])#(?:[0-9a-fA-F]{8}|[0-9a-fA-F]{6}|[0-9a-fA-F]{3,4})(?![\w-])/g;
 
 function* files(dir) {
 	for (const name of readdirSync(dir)) {

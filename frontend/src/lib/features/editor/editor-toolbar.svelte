@@ -131,6 +131,7 @@
 		<Button
 			variant="ghost"
 			class="text-brand-foreground hover:bg-brand-foreground/15 hover:text-brand-foreground"
+			id="demo-link"
 			href="https://youtu.be/6vh7bccR-Ow"
 			target="_blank"
 			rel="noopener noreferrer"
@@ -233,7 +234,7 @@
 		>
 			<RefreshCwIcon />New Query
 		</Button>
-		<Button variant="secondary" onclick={() => store.addVariable()}
+		<Button id="add-variable-btn" variant="secondary" onclick={() => store.addVariable()}
 			><PlusIcon />Add Variable</Button
 		>
 		<Button

@@ -4,7 +4,10 @@ import { expect, type Page } from '@playwright/test';
 export const handle = `window.__easyquery`;
 
 /** Waits for the editor, turns Auto Layout off and resets the viewport. */
-export async function openEditor(page: Page) {
+export async function openEditor(page: Page, { tour = false }: { tour?: boolean } = {}) {
+	// The guided tour shows on a first visit; most tests start as returning visitors.
+	if (!tour)
+		await page.addInitScript(() => window.localStorage.setItem('easyquery-tour-seen', 'true'));
 	await page.goto('/');
 	await expect(page.locator('#status-api')).toHaveText('API: online');
 	await page.evaluate(() => {

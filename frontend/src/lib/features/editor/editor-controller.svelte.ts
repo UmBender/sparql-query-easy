@@ -30,6 +30,7 @@ import {
 } from '#lib/domain/legacy/graph-actions.js';
 import { isAbort, type ApiClient, type PropertyItem } from '#lib/api/client.js';
 import type { QueryStore } from '#lib/stores/query-store.svelte.js';
+import { markSeen, NODE_HINT_KEY, seen } from '#lib/features/utilities/seen.js';
 
 export type ToastKind = 'success' | 'error' | undefined;
 export type Toast = (message: string, kind?: ToastKind) => void;
@@ -612,5 +613,10 @@ export class EditorController {
 			});
 		}
 		if (!hits.length) this.store.addEntity(item.propertyId, item.propertyLabel);
+		// One-time hint after the first node (legacy `showIntroAlert('newNode', …)`).
+		if (!seen(NODE_HINT_KEY)) {
+			markSeen(NODE_HINT_KEY);
+			this.toast('Click a node to open its action list.');
+		}
 	}
 }
