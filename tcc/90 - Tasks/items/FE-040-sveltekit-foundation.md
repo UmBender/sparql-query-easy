@@ -1,13 +1,13 @@
 ---
 id: FE-040
 title: Scaffold the SvelteKit app in frontend/ beside the legacy page
-status: BACKLOG
+status: DONE
 priority: P1
 type: frontend
 depends_on: [DEC-011]
 human_gate: false
 created: 2026-10-16
-updated: 2026-10-16
+updated: 2026-10-17
 ---
 # Scaffold the SvelteKit app in frontend/ beside the legacy page
 
@@ -44,16 +44,16 @@ serving (OPS-006), real e2e/visual/a11y layers (QUAL-007), any change to
 
 ## Acceptance criteria
 
-- [ ] From a clean clone, `npm --prefix frontend ci` followed by `build`,
+- [x] From a clean clone, `npm --prefix frontend ci` followed by `build`,
       `check`, `lint` and `test` all pass (Vitest and Playwright examples);
       `build` emits a static SPA.
-- [ ] The folder layout above exists and `svelte-check` reports no errors.
-- [ ] Tailwind utility classes render on the placeholder page; no tokens or
+- [x] The folder layout above exists and `svelte-check` reports no errors.
+- [x] Tailwind utility classes render on the placeholder page; no tokens or
       custom theme are defined yet.
-- [ ] With Ktor running, the dev page shows `{"status":"ok"}` through the proxy (no CORS).
-- [ ] The README side-by-side section is followed verbatim and both
+- [x] With Ktor running, the dev page shows `{"status":"ok"}` through the proxy (no CORS).
+- [x] The README side-by-side section is followed verbatim and both
       frontends load at the same time.
-- [ ] Legacy gates unchanged: `npm run test:browser` still passes.
+- [x] Legacy gates unchanged: `npm run test:browser` still passes.
 
 ## Validation
 
@@ -65,3 +65,18 @@ New-app commands above (proposed until this card adds them); legacy
 - 2026-10-16: User confirmed the T1 brief additions (lint script, folder
   layout, Playwright smoke test, Tailwind/shadcn-svelte install, README
   section) and they were merged into scope; FE-041 narrowed to match.
+- 2026-10-17: Scaffolded with `sv@1.1.1` (SvelteKit 3, Svelte 5,
+  TypeScript, Vite 8, Prettier, ESLint, Vitest, Playwright, Tailwind 4,
+  adapter-static with `index.html` fallback) and `shadcn-svelte@1.7.0 init`
+  (default preset, neutral base colour, `#lib` aliases). SvelteKit 3 uses
+  `#lib/...` subpath imports with a `.js` extension instead of `$lib`.
+  Playwright is pinned to 1.63.0 to share the root suite's browsers. npm 10
+  fails while resolving new dependencies (`edgesOut`); dependencies are added
+  with `npx npm@11 install`, and `npm ci` works with npm 10. Validation:
+  `check`, `lint`, `test` (2 Vitest cases and the offline Playwright smoke)
+  and `npm --prefix frontend ci` pass; a live run with Ktor on 8080 and Vite
+  on 5173 showed `{"status":"ok"}` through the proxy while `index2.html`
+  loaded. Legacy `npm run test:browser`: 122 passed, 1 intermittent
+  failure in the unchanged `QUAL-005 each node kind offers exactly its
+  actions` test (failed 1 of 3 repeats; background requests counted after
+  the baseline), not caused by this card.

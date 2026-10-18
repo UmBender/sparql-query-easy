@@ -11,6 +11,7 @@ when the task crosses that responsibility. This is the canonical command map.
 | RDF domain/ports/Jena | `src/main/kotlin/com/example/sparqlqueryeasy/{domain/model,rdf,rdf/jena}/` |
 | SPARQL/remote and Wikidata search | `src/main/kotlin/com/example/sparqlqueryeasy/wikidata/{query,client,entitysearch}/` |
 | Graph UI and its owner | `sparql/index2.html` (markup, DOMContentLoaded bootstrap: `cy` init) and classic scripts `app-core.js` (state, API, `runQuery`), `stage-order.js`, `stage-exploration.js`, `graph-nodes.js`, `graph-menus.js` (menus, connection, Alt+drag); pure modules `query-calculations.js`, `query-stages.js`, `graph-actions.js`, `graph-model.js`, `graph-binding.js` (headless-Cytoscape unit tests) |
+| New SvelteKit frontend (DEC-011) | `frontend/`: `vite.config.ts` (adapter-static SPA fallback, dev proxy to 8080), `src/lib/{domain,stores,api,components,features}`, `src/routes`, unit tests `src/**/*.spec.ts`, offline Playwright `tests/*.e2e.ts`; see `frontend/README.md` |
 | Browser oracles | `frontend-tests/index2.spec.mjs`, `server.mjs`, `cdn-stubs.mjs`, `external-assets.mjs`; end-to-end `frontend-tests/e2e/` with `fixtures/` |
 | Kotlin tests/captures | `src/test/kotlin/`, `compatibility/expected/`, `compatibility/retirement-expected/` |
 | Persistence (BE-005) | `persistence/PostgresDatabase.kt` (Hikari, Flyway, Exposed), `application/persistence/`, migrations `src/main/resources/db/migration/`; tests use embedded PostgreSQL 17 (`io.zonky.test`, binaries from a Maven artifact: no Docker or network) via `src/test/kotlin/.../persistence/TestPostgres.kt` |
@@ -33,6 +34,8 @@ These are configured versions, not claims about a fresh successful build.
 | Pure query calculations | `npm run test:query` |
 | Checked JavaScript boundary | `npm run check:frontend-types` |
 | Browser closing gate | `npm run test:browser` |
+| New frontend gate (FE-040) | `npm --prefix frontend run check && npm --prefix frontend run lint && npm --prefix frontend test` (Vitest, then build and offline Playwright smoke) |
+| New frontend dev server | `npm --prefix frontend run dev` (port 5173, proxies `/api`, `/health`, `/openapi.json` to Ktor on 8080) |
 | Ordered exploration end to end (builds and starts Ktor on port 18090; offline) | `npm run test:e2e` |
 | Distribution | `GRADLE_USER_HOME=/tmp/sparql-query-easy-gradle ./gradlew installDist --no-daemon` |
 | Run | `./gradlew run` or `./build/install/sparql-query-easy-kotlin/bin/sparql-query-easy-kotlin` |
@@ -47,6 +50,10 @@ These are configured versions, not claims about a fresh successful build.
 - Kotlin: focused checks while editing; ktlintCheck, detekt and test before commit.
 - Frontend: focused browser case while editing; complete browser suite before
   commit, plus pure query tests and the type checker when query code changes.
+- New frontend (`frontend/`): the new frontend gate; the legacy browser gate
+  too when shared root files change. Add dependencies with
+  `npx npm@11 install` (npm 10 fails in peer resolution); commit
+  `frontend/package-lock.json`.
 - HTTP/fullstack: union of Kotlin/browser gates; OpenAPI and capture tests are
   already included in Gradle test. Do not weaken their assertions. Changes to
   staged exploration or `POST /api/query/stage` also run `npm run test:e2e`.

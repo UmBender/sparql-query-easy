@@ -81,7 +81,7 @@ Ordered by dependencies, then priority among selection candidates. See [worker r
 | FE-037 | DONE | P1 | frontend | [Add a value variable from the toolbar, like Add Variable](<items/FE-037-add-value-variable-button.md>) |
 | FE-038 | DONE | P1 | frontend | [Suggest matching text values while typing a filter, like Search nodes](<items/FE-038-filter-text-suggestions.md>) |
 | FE-039 | DONE | P1 | frontend | [Count value-variable filters as funnel steps and show each step on its badge](<items/FE-039-filter-stack-value-variables.md>) |
-| FE-040 | BACKLOG | P1 | frontend | [Scaffold the SvelteKit app in frontend/ beside the legacy page](<items/FE-040-sveltekit-foundation.md>) |
+| FE-040 | DONE | P1 | frontend | [Scaffold the SvelteKit app in frontend/ beside the legacy page](<items/FE-040-sveltekit-foundation.md>) |
 | QUAL-006 | BACKLOG | P1 | quality | [Map every legacy frontend behavior to a parity check for the new app](<items/QUAL-006-legacy-parity-checklist.md>) |
 | QUAL-008 | BACKLOG | P1 | quality | [Capture legacy request, response and SPARQL fixtures on PokemonGen1 with one command](<items/QUAL-008-legacy-fixture-capture-harness.md>) |
 | QUAL-009 | BACKLOG | P1 | quality | [Capture at least 15 PokemonGen1 queries covering every node kind, filter and Run Query flow](<items/QUAL-009-legacy-characterization-corpus.md>) |

@@ -56,12 +56,39 @@ An optional Docker build is available with
 port `8080`, and checks `/health`. This is local packaging, not a deployment
 pipeline. See [the runtime notes](tcc/07%20-%20Operations/Local%20JVM%20and%20Container%20Runtime.md).
 
+## Run the legacy page and the new frontend side by side
+
+The SvelteKit app in `frontend/` (DEC-011) is being built next to the
+authoritative `sparql/index2.html`; both run at the same time. Requirements:
+JDK 21 and Node.js 22.
+
+1. In one terminal, start Ktor, which serves the API and the legacy page:
+
+   ```sh
+   ./gradlew run
+   ```
+
+2. In a second terminal, install the new app once and start its dev server:
+
+   ```sh
+   npm --prefix frontend ci
+   npm --prefix frontend run dev
+   ```
+
+3. Open the legacy page at `http://localhost:8080/index2.html` and the new app
+   at `http://localhost:5173/`. The new app shows `{"status":"ok"}` under
+   Backend health: Vite forwards `/api`, `/health` and `/openapi.json` to
+   Ktor on port 8080, so the browser sees one origin and needs no CORS.
+
 ## Verification
 
 ```sh
 GRADLE_USER_HOME=/tmp/sparql-query-easy-gradle \
   ./gradlew ktlintCheck detekt test --no-daemon
 npm run test:browser
+npm --prefix frontend run check
+npm --prefix frontend run lint
+npm --prefix frontend test
 ```
 
 The live Wikidata integration task is opt-in and is not part of normal
@@ -85,6 +112,7 @@ validation.
 - `src/main/kotlin/com/example/sparqlqueryeasy/http/OpenApiModule.kt` —
   generated OpenAPI metadata and documentation routes.
 - `sparql/index2.html` — authoritative static frontend.
+- `frontend/` — SvelteKit frontend under construction (DEC-011, FE-040).
 - `compatibility/expected/index.json` — immutable original C# case index.
 - `compatibility/retirement-expected/index.json` — three additional C# success
   captures retained after C# source removal.

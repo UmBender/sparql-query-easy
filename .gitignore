@@ -374,5 +374,9 @@ FodyWeavers.xsd
 # Thesis reference PDFs are kept locally outside Git (REPO-001)
 tcc/PDF/*.[Pp][Dd][Ff]
 
+# SvelteKit frontend output (FE-040); frontend/.gitignore covers the rest
+frontend/build/
+frontend/.svelte-kit/
+
 # Local settings (BE-004); `.env.example` documents them
 .env

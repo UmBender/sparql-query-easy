@@ -16,3 +16,7 @@ src/test
 src/integrationTest
 *.pdf
 .env
+frontend/node_modules
+frontend/build
+frontend/.svelte-kit
+frontend/test-results
