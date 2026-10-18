@@ -17,6 +17,7 @@ when the task crosses that responsibility. This is the canonical command map.
 | Kotlin tests/captures | `src/test/kotlin/`, `compatibility/expected/`, `compatibility/retirement-expected/` |
 | Persistence (BE-005) | `persistence/PostgresDatabase.kt` (Hikari, Flyway, Exposed), `application/persistence/`, migrations `src/main/resources/db/migration/`; tests use embedded PostgreSQL 17 (`io.zonky.test`, binaries from a Maven artifact: no Docker or network) via `src/test/kotlin/.../persistence/TestPostgres.kt` |
 | CI (QUAL-007) | `.github/workflows/ci.yml`: jobs `kotlin`, `legacy`, `frontend` run the closing gates below on push to main and pull requests; no deploy, no secrets |
+| Accounts and sessions (AUTH-001) | `application/auth/` (`AuthService`, `AccountStore` port, `AttemptLimiter`), `security/Argon2PasswordHasher.kt` (BouncyCastle), `persistence/PostgresAccountStore.kt`, `http/AuthRoutes.kt` (cookie, Origin/JSON checks, `withSession` for protected routes), migration `V2__accounts.sql`; tests `AuthRoutesTest` (embedded PostgreSQL), `AuthServiceTest` |
 | Packaging | `build.gradle.kts` processResources explicit frontend includes; `Dockerfile` |
 | Work selection and cards | [[../90 - Tasks/TASKS]], [[../90 - Tasks/WORKER_PROMPT]], [[../90 - Tasks/FORMAT]] |
 

@@ -87,4 +87,46 @@ class AppSettingsTest {
         AppSettings.from(mapOf("EASYQUERY_ENVIRONMENT" to "production", url, *credentials)).environment shouldBe
             RuntimeEnvironment.PRODUCTION
     }
+
+    @Test
+    fun `auth settings default to the OWASP Argon2id minimum, 10 attempts a minute and no proxy trust`() {
+        val settings = AppSettings.from(emptyMap())
+
+        settings.auth shouldBe AuthSettings(Argon2Settings(19_456, 2, 1), 10, trustProxy = false)
+        settings.secureCookies shouldBe false
+    }
+
+    @Test
+    fun `auth settings are read from the environment and production cookies are Secure`() {
+        val settings =
+            AppSettings.from(
+                mapOf(
+                    "EASYQUERY_ARGON2_MEMORY_KIB" to "65536",
+                    "EASYQUERY_ARGON2_ITERATIONS" to "3",
+                    "EASYQUERY_ARGON2_PARALLELISM" to "2",
+                    "EASYQUERY_AUTH_ATTEMPTS_PER_MINUTE" to "5",
+                    "EASYQUERY_TRUST_PROXY" to "TRUE",
+                    "EASYQUERY_ENVIRONMENT" to "production",
+                    "EASYQUERY_DB_URL" to "jdbc:postgresql://db:5432/easyquery",
+                    "EASYQUERY_DB_USER" to "easyquery",
+                    "EASYQUERY_DB_PASSWORD" to "secret",
+                ),
+            )
+
+        settings.auth shouldBe AuthSettings(Argon2Settings(65_536, 3, 2), 5, trustProxy = true)
+        settings.secureCookies shouldBe true
+    }
+
+    @Test
+    fun `invalid auth settings fail with a message naming the setting`() {
+        assertFailsWith<IllegalArgumentException> {
+            AppSettings.from(mapOf("EASYQUERY_ARGON2_MEMORY_KIB" to "512"))
+        }.message shouldBe "EASYQUERY_ARGON2_MEMORY_KIB must be a whole number from 1024 to 1048576, got \"512\""
+        assertFailsWith<IllegalArgumentException> {
+            AppSettings.from(mapOf("EASYQUERY_AUTH_ATTEMPTS_PER_MINUTE" to "0"))
+        }.message shouldBe "EASYQUERY_AUTH_ATTEMPTS_PER_MINUTE must be a whole number from 1 to 1000, got \"0\""
+        assertFailsWith<IllegalArgumentException> {
+            AppSettings.from(mapOf("EASYQUERY_TRUST_PROXY" to "yes"))
+        }.message shouldBe "EASYQUERY_TRUST_PROXY must be true or false, got \"yes\""
+    }
 }

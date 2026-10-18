@@ -10,7 +10,7 @@ Ordered by dependencies, then priority among selection candidates. See [worker r
 | DEC-003 | DONE | P0 | decision | [Host production with Docker Compose on the university server](<items/DEC-003-production-hosting-target.md>) |
 | DEC-011 | DONE | P0 | decision | [Build a SvelteKit frontend in frontend/ beside index2.html, then cut over](<items/DEC-011-frontend-stack-decision.md>) |
 | AUTH-000 | DONE | P0 | decision | [Decide the authentication and authorization contract](<items/AUTH-000-authentication-contract-decision.md>) |
-| AUTH-001 | READY | P0 | security | [Implement the approved Ktor authentication backend](<items/AUTH-001-ktor-session-authentication.md>) |
+| AUTH-001 | DONE | P0 | security | [Implement the approved Ktor authentication backend](<items/AUTH-001-ktor-session-authentication.md>) |
 | AUTH-002 | CANCELLED | P0 | frontend | [Integrate the login and logout frontend flow](<items/AUTH-002-login-frontend-integration.md>) |
 | BE-005 | DONE | P1 | backend | [Add PostgreSQL persistence with Exposed, HikariCP and Flyway migrations at startup](<items/BE-005-postgresql-persistence-foundation.md>) |
 | AUTH-003 | BACKLOG | P1 | frontend | [Register, log in and log out in the new frontend](<items/AUTH-003-new-frontend-auth.md>) |

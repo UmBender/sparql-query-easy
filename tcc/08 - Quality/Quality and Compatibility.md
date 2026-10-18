@@ -24,7 +24,9 @@ the default shared CIO HTTP client from leaking across application shutdown.
 3. **Drift/semantic assertions** compare the exact route-method inventory and
    inspect multipart `ttlFile`, request defaults, numeric filter values,
    nullable response fields, status responses, operation metadata, and the
-   deliberate absence of security requirements.
+   deliberate absence of an OpenAPI security scheme (account routes document
+   the session cookie; `AuthRoutesTest` covers the AUTH-001 boundary on
+   embedded PostgreSQL).
 
 Other valid approaches for future expansion are snapshot comparison (useful
 for reviewed public contract releases but noisy for harmless ordering),

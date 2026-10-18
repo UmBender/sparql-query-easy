@@ -12,12 +12,12 @@ Kotlin serialization emits `null` fields explicitly.
 
 **Confirmed:** Ktor generates an OpenAPI 3.1 document from runtime route
 metadata. The raw JSON is public at `GET /openapi.json` and Swagger UI is
-public at `GET /swagger` in every environment. Neither endpoint nor any
-application operation has an OpenAPI security requirement yet because
-authentication is explicitly deferred until user testing. No production
-server hostname is embedded in the document.
+public at `GET /swagger` in every environment. Query operations are public;
+the account operations (AUTH-001) use the `easyquery_session` cookie and say
+so in their descriptions (no OpenAPI security scheme is declared). No
+production server hostname is embedded in the document.
 
-The OpenAPI inventory covers the nine operations below exactly once. Static
+The OpenAPI inventory covers the operations below exactly once. Static
 frontend resources are intentionally excluded. Route metadata is maintained
 in `OpenApiModule.kt`; `OpenApiRoutesTest` validates the document with Swagger
 Parser and detects route/schema drift.
@@ -461,6 +461,41 @@ at least one pattern; variable names starting with `__count` are rejected with
 every tied value (not capped by `EASYQUERY_EXTREME_RESULT_LIMIT`, which only
 limits returned rows). Other errors as for `/api/query/stage`
 (`404` unknown local graph, `502` upstream failure).
+
+## Accounts and sessions (AUTH-001)
+
+Contract: [[../09 - Decisions/Authentication Contract]]. Accounts live in
+PostgreSQL (`V2__accounts.sql`: `app_user`, `user_session`); without a
+configured or reachable database every account route answers
+`503 {"error":"Accounts are temporarily unavailable"}` (query routes are
+unaffected).
+
+| Route | Body | Success | Errors |
+|---|---|---|---|
+| `POST /api/auth/register` | `{"username","password"}` | `201 {"data":{"username":"Ada"}}` + session cookie | `400` invalid input, `409` username taken |
+| `POST /api/auth/login` | `{"username","password"}` | `200 {"data":{"username":"Ada"}}` + new session cookie | `400` missing fields, `401 {"error":"Invalid username or password"}` (same for an unknown user) |
+| `POST /api/auth/logout` | `{}` | `204`, cookie cleared (`Max-Age=0`) | `401` without a session |
+| `GET /api/auth/session` | — | `200 {"data":{"username":"Ada"}}` | `401 {"error":"Login required"}` |
+
+- Usernames: 3–32 letters, digits, `.`, `_`, `-`; unique regardless of case;
+  the registered spelling is returned. Passwords: 8–128 characters, hashed
+  with Argon2id (PHC string, per-password salt; cost from
+  `EASYQUERY_ARGON2_*`).
+- Session: 32 random bytes (base64url) in `easyquery_session`, `HttpOnly`,
+  `SameSite=Lax`, `Path=/`, `Max-Age=604800` (7 days, absolute), `Secure`
+  when `EASYQUERY_ENVIRONMENT=production`. Only its SHA-256 digest is stored.
+  Login and registration always issue a new id and delete a session sent
+  with them; logout deletes the row.
+- CSRF: the three POST routes reject an `Origin` that names another host
+  (`403 {"error":"Cross-origin request rejected"}`) and a non-JSON body
+  (`415`). Requests without `Origin` (non-browser clients) are accepted.
+- Brute force: register and login share a fixed one-minute window per client
+  address (`EASYQUERY_AUTH_ATTEMPTS_PER_MINUTE`, default 10), then
+  `429 {"error":"Too many attempts; try again in a minute"}`. With
+  `EASYQUERY_TRUST_PROXY=true` the address is the first `X-Forwarded-For`
+  entry (set it only behind the bundled proxy).
+- Every path under `/api/study/` requires a session (`401` otherwise); until
+  STUDY-001/002 add routes, a logged-in request gets `404`.
 
 ## Endpoint selection
 

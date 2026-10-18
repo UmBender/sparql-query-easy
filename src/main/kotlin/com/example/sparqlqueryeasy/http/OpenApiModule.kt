@@ -28,7 +28,7 @@ private val openApiInfo =
         version = API_VERSION,
         description =
             "Build and execute constrained SPARQL queries against uploaded, built-in, or remote RDF graphs. " +
-                "Authentication is intentionally deferred; every documented operation is currently public.",
+                "Query operations are public; account operations use the HttpOnly $SESSION_COOKIE session cookie.",
     )
 
 @Serializable
@@ -293,5 +293,124 @@ private fun io.ktor.openapi.Responses.Builder.commonQueryErrors(includeUpstreamF
             description = "Remote SPARQL or Wikidata execution failed."
             schema = jsonSchema<ErrorResponse>()
         }
+    }
+}
+
+private const val AUTH_CSRF_NOTE =
+    "Same origin only: a mismatching Origin is rejected with 403 and a non-JSON body with 415."
+
+internal fun Route.documentRegister(): Route =
+    describe {
+        operationId = "registerUser"
+        summary = "Create an account and log in"
+        description =
+            "Self-registration with a username (3 to 32 letters, digits, '.', '_' or '-'; unique regardless of case) " +
+            "and a password of 8 to 128 characters. Starts a session: sets the HttpOnly, SameSite=Lax " +
+            "$SESSION_COOKIE cookie. $AUTH_CSRF_NOTE Attempts are limited per client address."
+        tag("Accounts")
+        requestBody {
+            required = true
+            ContentType.Application.Json { schema = jsonSchema<AuthCredentialsHttpRequest>() }
+        }
+        responses {
+            HttpStatusCode.Created {
+                description = "The account exists and the session cookie is set."
+                schema = jsonSchema<DataResponse<SessionUserHttpResponse>>()
+            }
+            HttpStatusCode.BadRequest {
+                description = "Invalid username or password format, or malformed JSON."
+                schema = jsonSchema<ErrorResponse>()
+            }
+            HttpStatusCode.Conflict {
+                description = "The username is taken."
+                schema = jsonSchema<ErrorResponse>()
+            }
+            authErrors()
+        }
+    }
+
+internal fun Route.documentLogin(): Route =
+    describe {
+        operationId = "loginUser"
+        summary = "Log in"
+        description =
+            "Starts a new session (a session cookie sent with the request is discarded). A failed login does not " +
+            "reveal whether the username exists. $AUTH_CSRF_NOTE Attempts are limited per client address."
+        tag("Accounts")
+        requestBody {
+            required = true
+            ContentType.Application.Json { schema = jsonSchema<AuthCredentialsHttpRequest>() }
+        }
+        responses {
+            HttpStatusCode.OK {
+                description = "Logged in; the session cookie is set."
+                schema = jsonSchema<DataResponse<SessionUserHttpResponse>>()
+            }
+            HttpStatusCode.BadRequest {
+                description = "Username or password missing, or malformed JSON."
+                schema = jsonSchema<ErrorResponse>()
+            }
+            HttpStatusCode.Unauthorized {
+                description = "Invalid username or password."
+                schema = jsonSchema<ErrorResponse>()
+            }
+            authErrors()
+        }
+    }
+
+internal fun Route.documentLogout(): Route =
+    describe {
+        operationId = "logoutUser"
+        summary = "Log out"
+        description = "Requires a session. Deletes it and clears the cookie. $AUTH_CSRF_NOTE"
+        tag("Accounts")
+        responses {
+            HttpStatusCode.NoContent { description = "The session is deleted." }
+            HttpStatusCode.Unauthorized {
+                description = "No valid session."
+                schema = jsonSchema<ErrorResponse>()
+            }
+            authErrors()
+        }
+    }
+
+internal fun Route.documentSession(): Route =
+    describe {
+        operationId = "getSession"
+        summary = "Read the current session"
+        description = "Returns the logged-in user, or 401 without a valid, unexpired session."
+        tag("Accounts")
+        responses {
+            HttpStatusCode.OK {
+                description = "The logged-in user."
+                schema = jsonSchema<DataResponse<SessionUserHttpResponse>>()
+            }
+            HttpStatusCode.Unauthorized {
+                description = "No valid session."
+                schema = jsonSchema<ErrorResponse>()
+            }
+            HttpStatusCode.ServiceUnavailable {
+                description = "The account database is not configured or unreachable."
+                schema = jsonSchema<ErrorResponse>()
+            }
+        }
+    }
+
+private fun io.ktor.openapi.Responses.Builder.authErrors() {
+    HttpStatusCode.Forbidden {
+        description = "The Origin header names another site."
+        schema = jsonSchema<ErrorResponse>()
+    }
+    HttpStatusCode.UnsupportedMediaType {
+        description = "The body is not application/json."
+        schema = jsonSchema<ErrorResponse>()
+    }
+    HttpStatusCode.TooManyRequests {
+        description = "Too many login or registration attempts from this address in the last minute."
+        schema = jsonSchema<ErrorResponse>()
+    }
+    HttpStatusCode.ServiceUnavailable {
+        description = "The account database is not configured or unreachable."
+        schema = jsonSchema<ErrorResponse>()
     }
 }

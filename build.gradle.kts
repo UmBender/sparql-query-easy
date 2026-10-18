@@ -64,6 +64,9 @@ dependencies {
     implementation("org.flywaydb:flyway-database-postgresql:13.9.0")
     implementation("org.jetbrains.exposed:exposed-core:1.5.0")
     implementation("org.jetbrains.exposed:exposed-jdbc:1.5.0")
+    implementation("org.jetbrains.exposed:exposed-java-time:1.5.0")
+    // AUTH-001: Argon2id password hashing (pure Java).
+    implementation("org.bouncycastle:bcprov-jdk18on:1.81")
 
     testImplementation("org.junit.jupiter:junit-jupiter:5.13.4")
     testImplementation(kotlin("test"))

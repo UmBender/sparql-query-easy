@@ -3,6 +3,8 @@
 package com.example.sparqlqueryeasy.http
 
 import com.example.sparqlqueryeasy.application.HealthService
+import com.example.sparqlqueryeasy.application.auth.AttemptLimiter
+import com.example.sparqlqueryeasy.application.auth.AuthService
 import com.example.sparqlqueryeasy.application.endpoints.ClasspathTurtleTextSource
 import com.example.sparqlqueryeasy.application.endpoints.EndpointContextResolution
 import com.example.sparqlqueryeasy.application.endpoints.EndpointContextResolver
@@ -41,10 +43,12 @@ import com.example.sparqlqueryeasy.application.search.SearchService
 import com.example.sparqlqueryeasy.config.AppSettings
 import com.example.sparqlqueryeasy.domain.model.SparqlQueryExecutionFailure
 import com.example.sparqlqueryeasy.persistence.DatabaseConnector
+import com.example.sparqlqueryeasy.persistence.PostgresAccountStore
 import com.example.sparqlqueryeasy.persistence.reportDatabaseStartup
 import com.example.sparqlqueryeasy.rdf.jena.JenaGraphEndpointExecution
 import com.example.sparqlqueryeasy.rdf.jena.JenaSparqlSyntaxValidator
 import com.example.sparqlqueryeasy.rdf.jena.JenaTurtleParser
+import com.example.sparqlqueryeasy.security.Argon2PasswordHasher
 import com.example.sparqlqueryeasy.wikidata.client.RemoteSparqlEndpointExecution
 import com.example.sparqlqueryeasy.wikidata.entitysearch.KtorWikidataEntitySearchClient
 import com.example.sparqlqueryeasy.wikidata.query.CSharpCompatibleWikidataQueryGenerator
@@ -100,6 +104,7 @@ data class QueryHttpDependencies(
 data class HttpDependencies(
     val localDatabaseUploadService: LocalDatabaseUploadService,
     val query: QueryHttpDependencies? = null,
+    val auth: AuthHttpDependencies? = null,
     private val ownedResources: List<AutoCloseable> = emptyList(),
 ) : AutoCloseable {
     override fun close() {
@@ -136,6 +141,12 @@ fun defaultHttpDependencies(settings: AppSettings = AppSettings.load()): HttpDep
             StageQueryService(generator, JenaSparqlSyntaxValidator()),
             NumericProfileService(generator, JenaSparqlSyntaxValidator()),
             ResultCountService(generator, JenaSparqlSyntaxValidator()),
+        ),
+        AuthHttpDependencies(
+            AuthService(PostgresAccountStore(database), Argon2PasswordHasher(settings.auth.argon2)),
+            AttemptLimiter(settings.auth.authAttemptsPerMinute),
+            secureCookies = settings.secureCookies,
+            trustProxy = settings.auth.trustProxy,
         ),
         ownedResources = listOf(httpClient, database),
     )
@@ -177,6 +188,7 @@ fun Application.configureRouting(dependencies: HttpDependencies = defaultHttpDep
         }.documentEndpoints()
         localDatabaseRoutes(dependencies.localDatabaseUploadService)
         dependencies.query?.let(::queryRoutes)
+        dependencies.auth?.let { authRoutes(it) }
         openApiDocumentationRoutes()
         hideFromOpenApi(staticResources("/", "frontend"))
     }

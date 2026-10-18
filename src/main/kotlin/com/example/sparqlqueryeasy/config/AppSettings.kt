@@ -25,15 +25,50 @@ data class DatabaseSettings(
     }
 }
 
+/** Argon2id cost (AUTH-001); the defaults are the OWASP minimum (19 MiB, 2 passes, 1 lane). */
+data class Argon2Settings(
+    val memoryKib: Int = DEFAULT_MEMORY_KIB,
+    val iterations: Int = DEFAULT_ITERATIONS,
+    val parallelism: Int = DEFAULT_PARALLELISM,
+) {
+    companion object {
+        const val DEFAULT_MEMORY_KIB = 19_456
+        const val DEFAULT_ITERATIONS = 2
+        const val DEFAULT_PARALLELISM = 1
+        val MEMORY_KIB_RANGE = 1_024..1_048_576
+        val ITERATIONS_RANGE = 1..10
+        val PARALLELISM_RANGE = 1..16
+    }
+}
+
 /**
- * Application settings (BE-004, BE-005). Each value comes from the process environment, else from a
+ * Accounts and sessions (AUTH-001). [authAttemptsPerMinute] limits login and registration per client
+ * address; [trustProxy] takes that address from `X-Forwarded-For` (only behind the bundled proxy).
+ */
+data class AuthSettings(
+    val argon2: Argon2Settings = Argon2Settings(),
+    val authAttemptsPerMinute: Int = DEFAULT_AUTH_ATTEMPTS_PER_MINUTE,
+    val trustProxy: Boolean = false,
+) {
+    companion object {
+        const val DEFAULT_AUTH_ATTEMPTS_PER_MINUTE = 10
+        val AUTH_ATTEMPTS_RANGE = 1..1_000
+    }
+}
+
+/**
+ * Application settings (BE-004, BE-005, AUTH-001). Each value comes from the process environment, else from a
  * `.env` file in the working directory, else its default. Invalid values fail startup.
  */
 data class AppSettings(
     val extremeResultLimit: Int = DEFAULT_EXTREME_RESULT_LIMIT,
     val environment: RuntimeEnvironment = RuntimeEnvironment.DEVELOPMENT,
     val database: DatabaseSettings? = null,
+    val auth: AuthSettings = AuthSettings(),
 ) {
+    /** Session cookies are `Secure` in production (served over HTTPS behind the proxy). */
+    val secureCookies: Boolean get() = environment == RuntimeEnvironment.PRODUCTION
+
     companion object {
         const val EXTREME_RESULT_LIMIT = "EASYQUERY_EXTREME_RESULT_LIMIT"
         const val ENVIRONMENT = "EASYQUERY_ENVIRONMENT"
@@ -41,6 +76,11 @@ data class AppSettings(
         const val DB_USER = "EASYQUERY_DB_USER"
         const val DB_PASSWORD = "EASYQUERY_DB_PASSWORD"
         const val DB_POOL_SIZE = "EASYQUERY_DB_POOL_SIZE"
+        const val ARGON2_MEMORY_KIB = "EASYQUERY_ARGON2_MEMORY_KIB"
+        const val ARGON2_ITERATIONS = "EASYQUERY_ARGON2_ITERATIONS"
+        const val ARGON2_PARALLELISM = "EASYQUERY_ARGON2_PARALLELISM"
+        const val AUTH_ATTEMPTS_PER_MINUTE = "EASYQUERY_AUTH_ATTEMPTS_PER_MINUTE"
+        const val TRUST_PROXY = "EASYQUERY_TRUST_PROXY"
 
         fun load(
             environment: Map<String, String> = System.getenv(),
@@ -54,7 +94,46 @@ data class AppSettings(
             require(database != null || environment != RuntimeEnvironment.PRODUCTION) {
                 "$DB_URL is required when $ENVIRONMENT=production"
             }
-            return AppSettings(extremeResultLimit(value(EXTREME_RESULT_LIMIT)), environment, database)
+            return AppSettings(extremeResultLimit(value(EXTREME_RESULT_LIMIT)), environment, database, auth(::value))
+        }
+
+        private fun auth(value: (String) -> String): AuthSettings {
+            val defaults = Argon2Settings()
+            val argon2 =
+                Argon2Settings(
+                    wholeNumber(value, ARGON2_MEMORY_KIB, defaults.memoryKib, Argon2Settings.MEMORY_KIB_RANGE),
+                    wholeNumber(value, ARGON2_ITERATIONS, defaults.iterations, Argon2Settings.ITERATIONS_RANGE),
+                    wholeNumber(value, ARGON2_PARALLELISM, defaults.parallelism, Argon2Settings.PARALLELISM_RANGE),
+                )
+            val attempts =
+                wholeNumber(
+                    value,
+                    AUTH_ATTEMPTS_PER_MINUTE,
+                    AuthSettings.DEFAULT_AUTH_ATTEMPTS_PER_MINUTE,
+                    AuthSettings.AUTH_ATTEMPTS_RANGE,
+                )
+            val trustProxy =
+                when (val raw = value(TRUST_PROXY).lowercase()) {
+                    "", "false" -> false
+                    "true" -> true
+                    else -> throw IllegalArgumentException("$TRUST_PROXY must be true or false, got \"$raw\"")
+                }
+            return AuthSettings(argon2, attempts, trustProxy)
+        }
+
+        private fun wholeNumber(
+            value: (String) -> String,
+            key: String,
+            default: Int,
+            range: IntRange,
+        ): Int {
+            val raw = value(key)
+            if (raw.isEmpty()) return default
+            val number = raw.toIntOrNull()
+            require(number != null && number in range) {
+                "$key must be a whole number from ${range.first} to ${range.last}, got \"$raw\""
+            }
+            return number
         }
 
         private fun extremeResultLimit(raw: String): Int {

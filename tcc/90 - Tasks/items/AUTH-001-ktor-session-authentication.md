@@ -1,13 +1,13 @@
 ---
 id: AUTH-001
 title: Implement the approved Ktor authentication backend
-status: READY
+status: DONE
 priority: P0
 type: security
 depends_on: [AUTH-000, BE-005]
 human_gate: false
 created: 2026-09-21
-updated: 2026-10-16
+updated: 2026-10-18
 ---
 # Implement the approved Ktor authentication backend
 
@@ -50,16 +50,16 @@ hard-coded credentials or silent changes to existing API payloads.
 
 ## Acceptance criteria
 
-- [ ] No secret or plaintext production password is committed.
-- [ ] Login/logout/session behavior and status/JSON/redirect contracts match
+- [x] No secret or plaintext production password is committed.
+- [x] Login/logout/session behavior and status/JSON/redirect contracts match
       `AUTH-000` exactly.
-- [ ] Every protected route rejects an unauthenticated request and succeeds
+- [x] Every protected route rejects an unauthenticated request and succeeds
       with a valid session; every public route remains public.
-- [ ] Session fixation, expiry, tampering, logout invalidation, CSRF, and
+- [x] Session fixation, expiry, tampering, logout invalidation, CSRF, and
       repeated invalid-login behavior have deterministic tests.
-- [ ] Existing compatibility and route tests remain green or are extended only
+- [x] Existing compatibility and route tests remain green or are extended only
       for the explicitly approved auth boundary.
-- [ ] Configuration and API/security documentation are updated.
+- [x] Configuration and API/security documentation are updated.
 
 ## Verification commands
 
@@ -90,3 +90,28 @@ boundary or break same-origin frontend calls.
   query routes, `/api/study/**` protected, Argon2id, sessions in PostgreSQL).
   Added dependency on BE-005 for user and session storage. Frontend work moved
   to AUTH-003 in the new app.
+- 2026-10-18: Implemented. `application/auth/`: `AuthService` (register,
+  login, logout, current user; username 3–32 `[A-Za-z0-9._-]`, unique by
+  lower-case key; password 8–128; a new 32-byte token at every login or
+  registration, the presented one deleted; 7-day absolute expiry; unknown
+  users verified against a placeholder hash), `AccountStore` port,
+  `AttemptLimiter` (fixed one-minute window per address). Infrastructure:
+  `Argon2PasswordHasher` (BouncyCastle `bcprov-jdk18on` 1.81, PHC strings,
+  cost from settings), `PostgresAccountStore` (Exposed + `exposed-java-time`),
+  `V2__accounts.sql` (only token SHA-256 digests stored). HTTP:
+  `AuthRoutes.kt` (`/api/auth/{register,login,logout,session}`,
+  `easyquery_session` cookie HttpOnly/SameSite=Lax/Secure in production,
+  Origin and JSON checks → 403/415, 429, 503 when the database is missing,
+  `withSession` guard for logout and every `/api/study/` path). Settings:
+  `EASYQUERY_ARGON2_{MEMORY_KIB,ITERATIONS,PARALLELISM}`,
+  `EASYQUERY_AUTH_ATTEMPTS_PER_MINUTE`, `EASYQUERY_TRUST_PROXY` (validated).
+  No Ktor auth/session plugin was needed: the cookie and the guard are a few
+  application-owned functions. OpenAPI snapshot and frontend types refreshed.
+  Tests: `AuthServiceTest`, `AttemptLimiterTest`, `Argon2PasswordHasherTest`,
+  `AuthRoutesTest` (13 cases: cookie attributes, Secure in production,
+  conflict/invalid input, identical login failures, fixation, missing/
+  tampered/expired sessions, logout, CSRF, rate limit incl. X-Forwarded-For,
+  `/api/study/` guard, public routes, no database), `AppSettingsTest`.
+  Validation: `ktlintCheck detekt test` (206 tests, 40 classes), frontend
+  check and API specs, `test:stack` on the built distribution (6), docs check. MIGRATION.md not appended (ordinary
+  feature, AGENTS.md).

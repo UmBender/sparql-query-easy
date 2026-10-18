@@ -33,8 +33,9 @@ security defaults below were proposed with them and are reversible.
 |---|---|
 | `sparql/index2.html` and the new SPA; `/api/local-database`; `/api/query/**`; `/health`; `/swagger`; `/openapi.json`; `POST /api/auth/register`; `POST /api/auth/login`; `GET /api/auth/session` (returns the user or 401) | `POST /api/auth/logout`; `/api/study/**` (proposed queries, submissions, questionnaires) |
 
-Route paths are the proposed shape; AUTH-001 fixes them in OpenAPI and
-[[../03 - Backend/API v1]].
+AUTH-001 implemented these paths; details (username rules, cookie
+attributes, `403`/`415`/`429`/`503` answers, proxy-aware rate limit) are in
+OpenAPI and [[../03 - Backend/API v1]] under "Accounts and sessions".
 
 ## Source files
 

@@ -76,6 +76,11 @@ class OpenApiRoutesTest {
                     "/api/query/stage" to setOf("post"),
                     "/api/query/numeric-profile" to setOf("post"),
                     "/api/query/count" to setOf("post"),
+                    // AUTH-001
+                    "/api/auth/register" to setOf("post"),
+                    "/api/auth/login" to setOf("post"),
+                    "/api/auth/logout" to setOf("post"),
+                    "/api/auth/session" to setOf("get"),
                 ),
                 document.operationInventory(),
             )

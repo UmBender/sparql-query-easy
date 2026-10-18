@@ -21,7 +21,7 @@ commit `0f20091` for an explicitly approved recapture.
 - **Confirmed:** OpenAPI 3.1 is assembled from Ktor route metadata at runtime.
   It requires no separate generation command or checked-in generated file.
   Both documentation endpoints are intentionally public in every environment
-  until `AUTH-000` defines authentication.
+  (Authentication Contract); account routes use the session cookie (AUTH-001).
 - **Confirmed:** Kotlin's classpath now owns the byte-identical built-in
   Turtle resource; the Gradle build no longer reads from `Sparql.QueryEasy/`.
 - **Unknown:** No approved production Kotlin configuration, secrets model, or environment-variable matrix exists. See [[../07 - Operations/Local JVM and Container Runtime]].

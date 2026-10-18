@@ -3,7 +3,7 @@
     "info": {
         "title": "SPARQL EasyQuery API",
         "version": "1.0.0",
-        "description": "Build and execute constrained SPARQL queries against uploaded, built-in, or remote RDF graphs. Authentication is intentionally deferred; every documented operation is currently public."
+        "description": "Build and execute constrained SPARQL queries against uploaded, built-in, or remote RDF graphs. Query operations are public; account operations use the HttpOnly easyquery_session session cookie."
     },
     "paths": {
         "/": {
@@ -688,6 +688,321 @@
                     }
                 }
             }
+        },
+        "/api/auth/register": {
+            "post": {
+                "operationId": "registerUser",
+                "tags": [
+                    "Accounts"
+                ],
+                "summary": "Create an account and log in",
+                "description": "Self-registration with a username (3 to 32 letters, digits, '.', '_' or '-'; unique regardless of case) and a password of 8 to 128 characters. Starts a session: sets the HttpOnly, SameSite=Lax easyquery_session cookie. Same origin only: a mismatching Origin is rejected with 403 and a non-JSON body with 415. Attempts are limited per client address.",
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/AuthCredentialsHttpRequest"
+                            }
+                        }
+                    },
+                    "required": true
+                },
+                "responses": {
+                    "201": {
+                        "description": "The account exists and the session cookie is set.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "required": [
+                                        "data"
+                                    ],
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/components/schemas/SessionUserHttpResponse"
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid username or password format, or malformed JSON.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorResponse"
+                                }
+                            }
+                        }
+                    },
+                    "409": {
+                        "description": "The username is taken.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorResponse"
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "description": "The Origin header names another site.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorResponse"
+                                }
+                            }
+                        }
+                    },
+                    "415": {
+                        "description": "The body is not application/json.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorResponse"
+                                }
+                            }
+                        }
+                    },
+                    "429": {
+                        "description": "Too many login or registration attempts from this address in the last minute.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorResponse"
+                                }
+                            }
+                        }
+                    },
+                    "503": {
+                        "description": "The account database is not configured or unreachable.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorResponse"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/auth/login": {
+            "post": {
+                "operationId": "loginUser",
+                "tags": [
+                    "Accounts"
+                ],
+                "summary": "Log in",
+                "description": "Starts a new session (a session cookie sent with the request is discarded). A failed login does not reveal whether the username exists. Same origin only: a mismatching Origin is rejected with 403 and a non-JSON body with 415. Attempts are limited per client address.",
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/AuthCredentialsHttpRequest"
+                            }
+                        }
+                    },
+                    "required": true
+                },
+                "responses": {
+                    "200": {
+                        "description": "Logged in; the session cookie is set.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "required": [
+                                        "data"
+                                    ],
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/components/schemas/SessionUserHttpResponse"
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Username or password missing, or malformed JSON.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorResponse"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Invalid username or password.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorResponse"
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "description": "The Origin header names another site.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorResponse"
+                                }
+                            }
+                        }
+                    },
+                    "415": {
+                        "description": "The body is not application/json.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorResponse"
+                                }
+                            }
+                        }
+                    },
+                    "429": {
+                        "description": "Too many login or registration attempts from this address in the last minute.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorResponse"
+                                }
+                            }
+                        }
+                    },
+                    "503": {
+                        "description": "The account database is not configured or unreachable.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorResponse"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/auth/logout": {
+            "post": {
+                "operationId": "logoutUser",
+                "tags": [
+                    "Accounts"
+                ],
+                "summary": "Log out",
+                "description": "Requires a session. Deletes it and clears the cookie. Same origin only: a mismatching Origin is rejected with 403 and a non-JSON body with 415.",
+                "responses": {
+                    "204": {
+                        "description": "The session is deleted."
+                    },
+                    "401": {
+                        "description": "No valid session.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorResponse"
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "description": "The Origin header names another site.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorResponse"
+                                }
+                            }
+                        }
+                    },
+                    "415": {
+                        "description": "The body is not application/json.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorResponse"
+                                }
+                            }
+                        }
+                    },
+                    "429": {
+                        "description": "Too many login or registration attempts from this address in the last minute.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorResponse"
+                                }
+                            }
+                        }
+                    },
+                    "503": {
+                        "description": "The account database is not configured or unreachable.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorResponse"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/auth/session": {
+            "get": {
+                "operationId": "getSession",
+                "tags": [
+                    "Accounts"
+                ],
+                "summary": "Read the current session",
+                "description": "Returns the logged-in user, or 401 without a valid, unexpired session.",
+                "responses": {
+                    "200": {
+                        "description": "The logged-in user.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "required": [
+                                        "data"
+                                    ],
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/components/schemas/SessionUserHttpResponse"
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "No valid session.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorResponse"
+                                }
+                            }
+                        }
+                    },
+                    "503": {
+                        "description": "The account database is not configured or unreachable.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorResponse"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
         }
     },
     "components": {
@@ -1280,6 +1595,36 @@
                     "count": {
                         "type": "integer",
                         "description": "Distinct values of variableName under where; no LIMIT applies."
+                    }
+                }
+            },
+            "AuthCredentialsHttpRequest": {
+                "type": "object",
+                "title": "AuthCredentialsHttpRequest",
+                "properties": {
+                    "username": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    },
+                    "password": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    }
+                }
+            },
+            "SessionUserHttpResponse": {
+                "type": "object",
+                "title": "SessionUserHttpResponse",
+                "required": [
+                    "username"
+                ],
+                "properties": {
+                    "username": {
+                        "type": "string"
                     }
                 }
             }
