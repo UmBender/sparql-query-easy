@@ -26,14 +26,14 @@ export default defineConfig({
 		{
 			// AUTH-003, QUAL-011: an empty PostgreSQL container (StackPostgres, test classpath) for the
 			// accounts; it writes its JDBC URL to the ready file. SIGTERM to the process group lets its
-			// shutdown hook stop the container.
+			// shutdown hook stop the container. AUTH-005: `stack-admin` registers as an admin.
 			command: [
 				'cd ..',
 				'GRADLE_USER_HOME=/tmp/sparql-query-easy-gradle ./gradlew installDist writeStackPostgresClasspath --no-daemon -q',
 				'rm -f build/stack-postgres.ready',
 				`{ java -cp "$(cat build/stack-postgres.classpath)" com.example.sparqlqueryeasy.persistence.StackPostgresKt build/stack-postgres.ready & }`,
 				'while [ ! -f build/stack-postgres.ready ]; do sleep 0.5; done',
-				`EASYQUERY_DB_URL="$(cat build/stack-postgres.ready)" EASYQUERY_DB_USER=postgres EASYQUERY_DB_PASSWORD=postgres ./build/install/sparql-query-easy-kotlin/bin/sparql-query-easy-kotlin -P:ktor.deployment.host=127.0.0.1 -P:ktor.deployment.port=${API}`
+				`EASYQUERY_DB_URL="$(cat build/stack-postgres.ready)" EASYQUERY_DB_USER=postgres EASYQUERY_DB_PASSWORD=postgres EASYQUERY_ADMIN_USERNAMES=stack-admin ./build/install/sparql-query-easy-kotlin/bin/sparql-query-easy-kotlin -P:ktor.deployment.host=127.0.0.1 -P:ktor.deployment.port=${API}`
 			].join(' && '),
 			url: `${target}/health`,
 			reuseExistingServer: false,

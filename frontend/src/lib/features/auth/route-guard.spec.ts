@@ -7,8 +7,11 @@ const checking = { status: 'checking', loggedIn: false } as const;
 const loggedIn = { status: 'ready', loggedIn: true } as const;
 
 describe('isProtected', () => {
-	it('protects the study pages and nothing else', () => {
+	it('protects the study and admin pages and nothing else', () => {
 		expect(isProtected('/study')).toBe(true);
+		expect(isProtected('/admin')).toBe(true);
+		expect(isProtected('/admin/tasks')).toBe(true);
+		expect(isProtected('/administrator')).toBe(false);
 		expect(isProtected('/study/3')).toBe(true);
 		expect(isProtected('/studying')).toBe(false);
 		expect(isProtected('/')).toBe(false);
@@ -35,6 +38,19 @@ describe('guardDecision', () => {
 
 	it('shows a protected page to a logged-in user', () => {
 		expect(guardDecision('/study', '', loggedIn)).toEqual({ kind: 'show' });
+	});
+
+	it('shows an admin page only to an admin and sends a participant to the editor', () => {
+		expect(guardDecision('/admin/tasks', '', { ...loggedIn, admin: true })).toEqual({
+			kind: 'show'
+		});
+		expect(guardDecision('/admin', '', loggedIn)).toEqual({ kind: 'redirect', to: '/' });
+		expect(guardDecision('/study', '', { ...loggedIn, admin: true })).toEqual({ kind: 'show' });
+		expect(guardDecision('/admin', '', anonymous)).toEqual({
+			kind: 'redirect',
+			to: loginPath('/admin')
+		});
+		expect(guardDecision('/admin', '', checking)).toEqual({ kind: 'wait' });
 	});
 
 	it('sends an anonymous visitor to login with the page to come back to', () => {

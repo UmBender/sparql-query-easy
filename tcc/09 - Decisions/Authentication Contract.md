@@ -29,9 +29,9 @@ security defaults below were proposed with them and are reversible.
 
 ## Route matrix
 
-| Public | Requires a session |
-|---|---|
-| The SPA (the legacy `index2.html` was retired in FE-049); `/api/local-database`; `/api/query/**`; `/health`; `/swagger`; `/openapi.json`; `POST /api/auth/register`; `POST /api/auth/login`; `GET /api/auth/session` (returns the user or 401) | `POST /api/auth/logout`; `/api/study/**` (proposed queries, submissions, questionnaires) |
+| Public | Requires a session | Requires the admin role |
+|---|---|---|
+| The SPA (the legacy `index2.html` was retired in FE-049); `/api/local-database`; `/api/query/**`; `/health`; `/swagger`; `/openapi.json`; `POST /api/auth/register`; `POST /api/auth/login`; `GET /api/auth/session` (returns the user and role, or 401) | `POST /api/auth/logout`; `/api/study/**` (proposed queries, submissions, questionnaires); the `/study` pages | `/api/admin/**` (401 without a session, 403 for a participant); the `/admin` pages (a participant is sent to `/`) |
 
 ## T7 brief review (DEC-013, 2026-10-18)
 
@@ -42,9 +42,10 @@ behavior, approved deviation from the target-architecture wording). There are
 no roles; roles are planned with T9 (STUDY-002).
 
 DEC-014 (2026-10-19) moves roles forward: `participant` (default) and
-`admin`, the first admin from the configured `ADMIN_USERNAMES` list, never
-from self-registration. `/api/admin/**` will answer 401 without a session and
-403 for a participant (AUTH-005, planned).
+`admin`. AUTH-005 implements them: an account is admin exactly when its
+username is in `EASYQUERY_ADMIN_USERNAMES`, never through self-registration
+or a route; a restart with a changed list promotes or demotes. The toolbar
+shows an Admin link to admins only.
 
 AUTH-001 implemented these paths; details (username rules, cookie
 attributes, `403`/`415`/`429`/`503` answers, proxy-aware rate limit) are in

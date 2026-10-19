@@ -33,6 +33,8 @@ services:
       EASYQUERY_AUTH_ATTEMPTS_PER_MINUTE: ${EASYQUERY_AUTH_ATTEMPTS_PER_MINUTE:-10}
       # Only Caddy reaches the backend, so X-Forwarded-For names the client.
       EASYQUERY_TRUST_PROXY: "true"
+      # AUTH-005: comma-separated usernames with the admin role; empty means no admin.
+      EASYQUERY_ADMIN_USERNAMES: ${EASYQUERY_ADMIN_USERNAMES:-}
     depends_on:
       db:
         condition: service_healthy

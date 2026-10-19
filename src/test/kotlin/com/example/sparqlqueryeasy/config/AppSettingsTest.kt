@@ -106,6 +106,7 @@ class AppSettingsTest {
                     "EASYQUERY_ARGON2_PARALLELISM" to "2",
                     "EASYQUERY_AUTH_ATTEMPTS_PER_MINUTE" to "5",
                     "EASYQUERY_TRUST_PROXY" to "TRUE",
+                    "EASYQUERY_ADMIN_USERNAMES" to " grace , ada.l,, ",
                     "EASYQUERY_ENVIRONMENT" to "production",
                     "EASYQUERY_DB_URL" to "jdbc:postgresql://db:5432/easyquery",
                     "EASYQUERY_DB_USER" to "easyquery",
@@ -113,7 +114,7 @@ class AppSettingsTest {
                 ),
             )
 
-        settings.auth shouldBe AuthSettings(Argon2Settings(65_536, 3, 2), 5, trustProxy = true)
+        settings.auth shouldBe AuthSettings(Argon2Settings(65_536, 3, 2), 5, trustProxy = true, setOf("grace", "ada.l"))
         settings.secureCookies shouldBe true
     }
 
@@ -128,5 +129,8 @@ class AppSettingsTest {
         assertFailsWith<IllegalArgumentException> {
             AppSettings.from(mapOf("EASYQUERY_TRUST_PROXY" to "yes"))
         }.message shouldBe "EASYQUERY_TRUST_PROXY must be true or false, got \"yes\""
+        assertFailsWith<IllegalArgumentException> {
+            AppSettings.from(mapOf("EASYQUERY_ADMIN_USERNAMES" to "grace,ada lovelace"))
+        }.message shouldBe "EASYQUERY_ADMIN_USERNAMES must list valid usernames, got \"ada lovelace\""
     }
 }

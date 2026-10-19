@@ -15,12 +15,14 @@
 
 	let { children }: LayoutProps = $props();
 
-	// AUTH-004: protected pages wait for the session and send anonymous visitors to login.
+	// AUTH-004: protected pages wait for the session and send anonymous visitors to login;
+	// AUTH-005: admin pages send a participant back to the editor.
 	const root = resolve('/');
 	const decision = $derived(
 		guardDecision(`/${page.url.pathname.slice(root.length)}`, page.url.search, {
 			status: authSession.status,
-			loggedIn: authSession.user !== null
+			loggedIn: authSession.user !== null,
+			admin: authSession.user?.role === 'admin'
 		})
 	);
 	$effect(() => {

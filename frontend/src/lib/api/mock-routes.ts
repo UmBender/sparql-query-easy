@@ -106,8 +106,12 @@ export const mockRoutes: MockRoute[] = [
 	})),
 	// AUTH-001: anonymous by default; register and login accept anyone.
 	route('get', '/api/auth/session', () => ({ status: 401, json: { error: 'Login required' } })),
-	route('post', '/api/auth/register', (body) => ({ data: { username: body.username ?? '' } })),
-	route('post', '/api/auth/login', (body) => ({ data: { username: body.username ?? '' } })),
+	route('post', '/api/auth/register', (body) => ({
+		data: { username: body.username ?? '', role: 'participant' }
+	})),
+	route('post', '/api/auth/login', (body) => ({
+		data: { username: body.username ?? '', role: 'participant' }
+	})),
 	route('post', '/api/auth/logout', () => ({ status: 204 }))
 ];
 

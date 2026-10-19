@@ -474,20 +474,21 @@ every tied value (not capped by `EASYQUERY_EXTREME_RESULT_LIMIT`, which only
 limits returned rows). Other errors as for `/api/query/stage`
 (`404` unknown local graph, `502` upstream failure).
 
-## Accounts and sessions (AUTH-001)
+## Accounts and sessions (AUTH-001, AUTH-005)
 
 Contract: [[../09 - Decisions/Authentication Contract]]. Accounts live in
-PostgreSQL (`V2__accounts.sql`: `app_user`, `user_session`); without a
+PostgreSQL (`V2__accounts.sql`: `app_user`, `user_session`;
+`V3__user_roles.sql`: `app_user.role`); without a
 configured or reachable database every account route answers
 `503 {"error":"Accounts are temporarily unavailable"}` (query routes are
 unaffected).
 
 | Route | Body | Success | Errors |
 |---|---|---|---|
-| `POST /api/auth/register` | `{"username","password"}` | `201 {"data":{"username":"Ada"}}` + session cookie | `400` invalid input, `409` username taken |
-| `POST /api/auth/login` | `{"username","password"}` | `200 {"data":{"username":"Ada"}}` + new session cookie | `400` missing fields, `401 {"error":"Invalid username or password"}` (same for an unknown user) |
+| `POST /api/auth/register` | `{"username","password"}` | `201 {"data":{"username":"Ada","role":"participant"}}` + session cookie | `400` invalid input, `409` username taken |
+| `POST /api/auth/login` | `{"username","password"}` | `200 {"data":{"username":"Ada","role":"participant"}}` + new session cookie | `400` missing fields, `401 {"error":"Invalid username or password"}` (same for an unknown user) |
 | `POST /api/auth/logout` | `{}` | `204`, cookie cleared (`Max-Age=0`) | `401` without a session |
-| `GET /api/auth/session` | — | `200 {"data":{"username":"Ada"}}` | `401 {"error":"Login required"}` |
+| `GET /api/auth/session` | — | `200 {"data":{"username":"Ada","role":"participant"}}` | `401 {"error":"Login required"}` |
 
 - Usernames: 3–32 letters, digits, `.`, `_`, `-`; unique regardless of case;
   the registered spelling is returned. Passwords: 8–128 characters, hashed
@@ -508,6 +509,15 @@ unaffected).
   entry (set it only behind the bundled proxy).
 - Every path under `/api/study/` requires a session (`401` otherwise); until
   STUDY-001/002 add routes, a logged-in request gets `404`.
+- Roles (AUTH-005): `role` is `participant` or `admin`. An account is `admin`
+  exactly when its username (case-insensitive) is in
+  `EASYQUERY_ADMIN_USERNAMES` (comma-separated; a malformed name fails
+  startup). Stored roles are brought in line with the list on the first
+  account request after startup, so a restart with a changed list promotes
+  or demotes existing accounts.
+- Every path under `/api/admin/` requires the admin role: `401 {"error":"Login
+  required"}` without a session, `403 {"error":"Admin role required"}` for a
+  participant; until STUDY-006/007 add routes, an admin gets `404`.
 
 ## Endpoint selection
 

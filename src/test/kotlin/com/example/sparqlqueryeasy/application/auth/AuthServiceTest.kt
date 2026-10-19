@@ -81,6 +81,24 @@ class AuthServiceTest {
         }
 
     @Test
+    fun `the admin list decides the role, case-insensitively, and roles are synced once per process`() {
+        runBlocking {
+            val admins = AuthService(store, FakeHasher, clock, adminUsernames = setOf("Grace"))
+            admins.register("grace", "correct horse").shouldBeInstanceOf<RegistrationResult.Registered>().user.role shouldBe
+                Role.ADMIN
+            admins.register("Ada", "correct horse").shouldBeInstanceOf<RegistrationResult.Registered>().user.role shouldBe
+                Role.PARTICIPANT
+            admins.login("Ada", "correct horse")
+            store.syncedAdminKeys shouldBe listOf(setOf("grace"))
+
+            val restarted = AuthService(store, FakeHasher, clock, adminUsernames = setOf("ada"))
+            restarted.login("Ada", "correct horse").shouldBeInstanceOf<LoginResult.LoggedIn>().user.role shouldBe Role.ADMIN
+            restarted.login("grace", "correct horse").shouldBeInstanceOf<LoginResult.LoggedIn>().user.role shouldBe
+                Role.PARTICIPANT
+        }
+    }
+
+    @Test
     fun `only the token digest is stored`() {
         val token = SessionToken("abc")
         AuthService.digest(token) shouldBe "ba7816bf8f01cfea414140de5dae2223b00361a396177a9cb410ff61f20015ad"

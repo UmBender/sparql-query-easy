@@ -142,7 +142,11 @@ fun defaultHttpDependencies(settings: AppSettings = AppSettings.load()): HttpDep
             ResultCountService(generator, JenaSparqlSyntaxValidator()),
         ),
         AuthHttpDependencies(
-            AuthService(PostgresAccountStore(database), Argon2PasswordHasher(settings.auth.argon2)),
+            AuthService(
+                PostgresAccountStore(database),
+                Argon2PasswordHasher(settings.auth.argon2),
+                adminUsernames = settings.auth.adminUsernames,
+            ),
             AttemptLimiter(settings.auth.authAttemptsPerMinute),
             secureCookies = settings.secureCookies,
             trustProxy = settings.auth.trustProxy,
@@ -188,7 +192,10 @@ fun Application.configureRouting(dependencies: HttpDependencies = defaultHttpDep
         }.documentEndpoints()
         localDatabaseRoutes(dependencies.localDatabaseUploadService)
         dependencies.query?.let(::queryRoutes)
-        dependencies.auth?.let { authRoutes(it) }
+        dependencies.auth?.let {
+            authRoutes(it)
+            adminRoutes(it)
+        }
         openApiDocumentationRoutes()
     }
 }

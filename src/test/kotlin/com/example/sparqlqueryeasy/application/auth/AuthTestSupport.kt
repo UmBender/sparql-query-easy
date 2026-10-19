@@ -35,16 +35,27 @@ class InMemoryAccountStore : AccountStore {
 
     val sessionCount: Int get() = sessions.size
 
+    /** Every [syncAdminRoles] call, to check when the service syncs. */
+    val syncedAdminKeys = mutableListOf<Set<String>>()
+
     override suspend fun createUser(
         username: String,
         usernameKey: String,
         passwordHash: String,
+        role: Role,
         now: Instant,
     ): User? {
         if (usernameKey in users) return null
-        val user = User(users.size + 1L, username)
+        val user = User(users.size + 1L, username, role)
         users[usernameKey] = StoredCredentials(user, passwordHash)
         return user
+    }
+
+    override suspend fun syncAdminRoles(adminKeys: Set<String>) {
+        syncedAdminKeys += adminKeys
+        users.replaceAll { key, stored ->
+            stored.copy(user = stored.user.copy(role = if (key in adminKeys) Role.ADMIN else Role.PARTICIPANT))
+        }
     }
 
     override suspend fun findCredentials(usernameKey: String) = users[usernameKey]

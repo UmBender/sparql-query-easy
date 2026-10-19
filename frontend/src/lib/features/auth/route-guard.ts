@@ -2,19 +2,28 @@
  * Which pages need a session and where an anonymous visitor goes instead
  * (AUTH-004). Paths are app paths (`url.pathname` with the base path removed).
  * The query editor, the login page and the styleguide stay public
- * (Authentication Contract); the study pages (STUDY-001) need a session.
+ * (Authentication Contract); the study pages (STUDY-001) need a session and
+ * the admin pages (AUTH-005) the admin role: a logged-in participant goes back
+ * to the editor.
  */
 import type { AuthStatus } from './auth-session.svelte.js';
 
-export const PROTECTED_PREFIXES: readonly string[] = ['/study'];
+export const PROTECTED_PREFIXES: readonly string[] = ['/study', '/admin'];
+export const ADMIN_PREFIXES: readonly string[] = ['/admin'];
 
 export type GuardDecision =
-	{ kind: 'show' } | { kind: 'wait' } | { kind: 'redirect'; to: LoginPath };
+	{ kind: 'show' } | { kind: 'wait' } | { kind: 'redirect'; to: LoginPath | '/' };
+
+function under(prefixes: readonly string[], pathname: string): boolean {
+	return prefixes.some((prefix) => pathname === prefix || pathname.startsWith(`${prefix}/`));
+}
 
 export function isProtected(pathname: string): boolean {
-	return PROTECTED_PREFIXES.some(
-		(prefix) => pathname === prefix || pathname.startsWith(`${prefix}/`)
-	);
+	return under(PROTECTED_PREFIXES, pathname);
+}
+
+export function isAdminOnly(pathname: string): boolean {
+	return under(ADMIN_PREFIXES, pathname);
 }
 
 export type LoginPath = `/login?${string}`;
@@ -27,13 +36,16 @@ export function loginPath(target: string): LoginPath {
 /**
  * Show a public page at once; keep a protected page hidden until the session
  * is known, then show it to a logged-in user or send everyone else to login.
+ * An admin page is shown only to an admin.
  */
 export function guardDecision(
 	pathname: string,
 	search: string,
-	session: { status: AuthStatus; loggedIn: boolean }
+	session: { status: AuthStatus; loggedIn: boolean; admin?: boolean }
 ): GuardDecision {
 	if (!isProtected(pathname)) return { kind: 'show' };
+	if (session.loggedIn && isAdminOnly(pathname) && !session.admin)
+		return { kind: 'redirect', to: '/' };
 	if (session.loggedIn) return { kind: 'show' };
 	if (session.status === 'checking') return { kind: 'wait' };
 	return { kind: 'redirect', to: loginPath(`${pathname}${search}`) };

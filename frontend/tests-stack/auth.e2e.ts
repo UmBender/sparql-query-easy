@@ -2,7 +2,8 @@
  * AUTH-003 on the real stack: register, session restore after a reload,
  * logout, a wrong password and login against Ktor (AUTH-001) with the
  * Testcontainers PostgreSQL of playwright.stack.config.ts. AUTH-004: a protected
- * page sends an anonymous visitor to login and back.
+ * page sends an anonymous visitor to login and back. AUTH-005: the configured
+ * `stack-admin` reaches the admin page; a participant does not.
  */
 import { expect, test } from '@playwright/test';
 
@@ -110,4 +111,29 @@ test('a protected page needs a session and returns there after login', async ({
 	await expect(page).toHaveURL(/\/login\?next=%2Fstudy$/);
 	await page.goto('/study');
 	await expect(page).toHaveURL(/\/login\?next=%2Fstudy$/);
+});
+
+test('the configured admin reaches the admin page and a participant is sent to the editor', async ({
+	page
+}) => {
+	async function register(username: string) {
+		await page.goto('/login');
+		await page.getByRole('button', { name: 'Create an account' }).click();
+		await page.getByLabel('Username').fill(username);
+		await page.getByLabel('Password', { exact: true }).fill('correct horse');
+		await page.getByLabel('Repeat the password').fill('correct horse');
+		await page.getByRole('button', { name: 'Create account' }).click();
+		await expect(page.getByTestId('account-name')).toHaveText(username);
+	}
+
+	await register(`grace-${Date.now()}`);
+	await expect(page.getByRole('link', { name: 'Admin' })).toHaveCount(0);
+	await page.goto('/admin');
+	await expect(page.locator('#cy')).toBeVisible();
+	expect(new URL(page.url()).pathname).toBe('/');
+	await page.getByRole('button', { name: 'Log out' }).click();
+
+	await register('stack-admin');
+	await page.getByRole('link', { name: 'Admin' }).click();
+	await expect(page.getByRole('heading', { name: 'Admin' })).toBeVisible();
 });

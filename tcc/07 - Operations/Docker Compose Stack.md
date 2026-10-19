@@ -13,6 +13,8 @@ Caddy keeps the `Host` header, which the backend's same-origin check on
 account routes compares with `Origin`, and sets `X-Forwarded-For`; the
 backend runs with `EASYQUERY_TRUST_PROXY=true`, so the login rate limit
 applies per client. Nothing but `web` is reachable from the host.
+`EASYQUERY_ADMIN_USERNAMES` (comma-separated, default empty) names the
+accounts with the admin role (AUTH-005); set it in the server's `.env`.
 
 ## Configuration
 

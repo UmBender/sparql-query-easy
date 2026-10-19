@@ -1,12 +1,14 @@
 <!--
 	The toolbar's account control (AUTH-003): "Log in" for anonymous users, the
-	username and Log out once logged in. The editor works either way.
+	username and Log out once logged in, and an Admin link for admins (AUTH-005).
+	The editor works either way.
 -->
 <script lang="ts">
 	import { onMount } from 'svelte';
 	import { resolve } from '$app/paths';
 	import LogInIcon from '@lucide/svelte/icons/log-in';
 	import LogOutIcon from '@lucide/svelte/icons/log-out';
+	import ShieldIcon from '@lucide/svelte/icons/shield';
 	import UserIcon from '@lucide/svelte/icons/circle-user';
 	import { toast } from 'svelte-sonner';
 	import { Button } from '#lib/components/ui/button/index.js';
@@ -29,6 +31,11 @@
 </script>
 
 {#if session.user}
+	{#if session.user.role === 'admin'}
+		<Button variant="ghost" class={className} href={resolve('/admin')}
+			><ShieldIcon />Admin</Button
+		>
+	{/if}
 	<span class="flex items-center gap-1 px-2 text-sm" data-testid="account-name">
 		<UserIcon class="size-4" aria-hidden="true" />{session.user.username}
 	</span>

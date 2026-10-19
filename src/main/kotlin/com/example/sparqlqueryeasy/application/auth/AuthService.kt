@@ -7,8 +7,21 @@ import java.time.Duration
 import java.time.Instant
 import java.util.Base64
 
+/** Account roles (AUTH-005, DEC-014). [wire] is the stored and serialized spelling. */
+enum class Role {
+    PARTICIPANT,
+    ADMIN,
+    ;
+
+    val wire: String get() = name.lowercase()
+
+    companion object {
+        fun fromWire(value: String): Role = entries.single { it.wire == value }
+    }
+}
+
 /** An application-owned account (AUTH-001). [username] keeps the spelling given at registration. */
-data class User(val id: Long, val username: String)
+data class User(val id: Long, val username: String, val role: Role = Role.PARTICIPANT)
 
 /** The opaque session token sent to the browser; only its SHA-256 digest is stored. */
 @JvmInline
@@ -29,8 +42,12 @@ interface AccountStore {
         username: String,
         usernameKey: String,
         passwordHash: String,
+        role: Role,
         now: Instant,
     ): User?
+
+    /** Makes exactly the accounts whose username key is in [adminKeys] admins; every other account a participant. */
+    suspend fun syncAdminRoles(adminKeys: Set<String>)
 
     suspend fun findCredentials(usernameKey: String): StoredCredentials?
 
@@ -81,6 +98,8 @@ sealed interface LoginResult {
 /**
  * Self-registration, login, logout and the current session (Authentication Contract). Login and
  * registration always start a new session; a session presented with them is deleted (no fixation).
+ * [adminUsernames] is the only source of the admin role (AUTH-005): the stored roles are brought in line with it
+ * on the first use of the database by this process, so a restart with a changed list promotes or demotes.
  */
 class AuthService(
     private val store: AccountStore,
@@ -88,9 +107,15 @@ class AuthService(
     private val clock: Clock = Clock.systemUTC(),
     private val sessionLifetime: Duration = SESSION_LIFETIME,
     private val random: SecureRandom = SecureRandom(),
+    adminUsernames: Set<String> = emptySet(),
 ) {
     /** Verified against unknown usernames so a failed login costs the same either way. */
     private val unknownUserHash: String by lazy { hasher.hash("unknown-user-placeholder") }
+
+    private val adminKeys: Set<String> = adminUsernames.map(::usernameKey).toSet()
+
+    @Volatile
+    private var rolesSynced = false
 
     suspend fun register(
         username: String?,
@@ -100,7 +125,10 @@ class AuthService(
         val name = username?.trim().orEmpty()
         val invalid = validateUsername(name) ?: validatePassword(password)
         if (invalid != null || password == null) return RegistrationResult.Invalid(invalid.orEmpty())
-        val user = store.createUser(name, usernameKey(name), hasher.hash(password), clock.instant())
+        syncRoles()
+        val key = usernameKey(name)
+        val role = if (key in adminKeys) Role.ADMIN else Role.PARTICIPANT
+        val user = store.createUser(name, key, hasher.hash(password), role, clock.instant())
         return if (user == null) {
             RegistrationResult.UsernameTaken
         } else {
@@ -115,6 +143,7 @@ class AuthService(
     ): LoginResult {
         val name = username?.trim().orEmpty()
         if (name.isEmpty() || password.isNullOrEmpty()) return LoginResult.Invalid("Username and password are required")
+        syncRoles()
         // Longer passwords cannot exist; they are refused without spending a hash on them.
         val stored = store.findCredentials(usernameKey(name)).takeIf { password.length <= MAX_PASSWORD_LENGTH }
         val matches =
@@ -129,7 +158,17 @@ class AuthService(
 
     suspend fun logout(token: SessionToken) = store.deleteSession(digest(token))
 
-    suspend fun currentUser(token: SessionToken): User? = store.findSessionUser(digest(token), clock.instant())
+    suspend fun currentUser(token: SessionToken): User? {
+        syncRoles()
+        return store.findSessionUser(digest(token), clock.instant())
+    }
+
+    /** Idempotent, so two first requests racing here are harmless. Retried while the database is unavailable. */
+    private suspend fun syncRoles() {
+        if (rolesSynced) return
+        store.syncAdminRoles(adminKeys)
+        rolesSynced = true
+    }
 
     private suspend fun startSession(
         user: User,

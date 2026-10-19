@@ -28,7 +28,9 @@ import kotlinx.serialization.Serializable
 data class AuthCredentialsHttpRequest(val username: String? = null, val password: String? = null)
 
 @Serializable
-data class SessionUserHttpResponse(val username: String)
+data class SessionUserHttpResponse(val username: String, val role: String) {
+    constructor(user: User) : this(user.username, user.role.wire)
+}
 
 /** Accounts and sessions over HTTP (AUTH-001, Authentication Contract). */
 data class AuthHttpDependencies(
@@ -52,7 +54,7 @@ internal fun Route.authRoutes(auth: AuthHttpDependencies) {
                         setSessionCookie(auth, result.token)
                         call.respond(
                             HttpStatusCode.Created,
-                            DataResponse(SessionUserHttpResponse(result.user.username)),
+                            DataResponse(SessionUserHttpResponse(result.user)),
                         )
                     }
                     RegistrationResult.UsernameTaken ->
@@ -68,7 +70,7 @@ internal fun Route.authRoutes(auth: AuthHttpDependencies) {
                 when (val result = auth.service.login(request.username, request.password, sessionToken())) {
                     is LoginResult.LoggedIn -> {
                         setSessionCookie(auth, result.token)
-                        call.respond(DataResponse(SessionUserHttpResponse(result.user.username)))
+                        call.respond(DataResponse(SessionUserHttpResponse(result.user)))
                     }
                     LoginResult.InvalidCredentials ->
                         call.respond(HttpStatusCode.Unauthorized, ErrorResponse("Invalid username or password"))
@@ -87,7 +89,7 @@ internal fun Route.authRoutes(auth: AuthHttpDependencies) {
         }.documentLogout()
         get("session") {
             accountsAvailable {
-                withSession(auth) { user, _ -> call.respond(DataResponse(SessionUserHttpResponse(user.username))) }
+                withSession(auth) { user, _ -> call.respond(DataResponse(SessionUserHttpResponse(user))) }
             }
         }.documentSession()
     }
@@ -134,7 +136,7 @@ private suspend fun RoutingContext.authRoute(
     }
 }
 
-private suspend fun RoutingContext.accountsAvailable(block: suspend RoutingContext.() -> Unit) {
+internal suspend fun RoutingContext.accountsAvailable(block: suspend RoutingContext.() -> Unit) {
     try {
         block()
     } catch (_: PersistenceUnavailableException) {

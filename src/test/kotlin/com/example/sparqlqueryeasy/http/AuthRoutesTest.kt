@@ -45,12 +45,13 @@ class AuthRoutesTest {
         attempts: Int = 100,
         secureCookies: Boolean = false,
         trustProxy: Boolean = false,
+        admins: Set<String> = emptySet(),
     ) {
         val connector = DatabaseConnector(database).also { it.connect() }
         val base = defaultHttpDependencies(AppSettings())
         val auth =
             AuthHttpDependencies(
-                AuthService(PostgresAccountStore(connector), Argon2PasswordHasher(cheapArgon2), clock),
+                AuthService(PostgresAccountStore(connector), Argon2PasswordHasher(cheapArgon2), clock, adminUsernames = admins),
                 AttemptLimiter(attempts, clock = clock),
                 secureCookies,
                 trustProxy,
@@ -98,13 +99,13 @@ class AuthRoutesTest {
             val response = client.register()
 
             response.status shouldBe HttpStatusCode.Created
-            response.bodyAsText() shouldBe """{"data":{"username":"Ada"}}"""
+            response.bodyAsText() shouldBe """{"data":{"username":"Ada","role":"participant"}}"""
             val cookie = response.sessionCookie()
             cookie.split("; ").map { it.substringBefore('=') } shouldContainAll listOf("Max-Age", "Path", "HttpOnly", "SameSite")
             cookie shouldContain "Max-Age=604800"
             cookie shouldContain "SameSite=Lax"
             cookie shouldNotContain "Secure"
-            client.get("/api/auth/session").bodyAsText() shouldBe """{"data":{"username":"Ada"}}"""
+            client.get("/api/auth/session").bodyAsText() shouldBe """{"data":{"username":"Ada","role":"participant"}}"""
         }
 
     @Test
@@ -137,7 +138,7 @@ class AuthRoutesTest {
 
             val ok = client.login("ada")
             ok.status shouldBe HttpStatusCode.OK
-            ok.bodyAsText() shouldBe """{"data":{"username":"Ada"}}"""
+            ok.bodyAsText() shouldBe """{"data":{"username":"Ada","role":"participant"}}"""
             val wrong = client.login("Ada", "wrong password")
             val unknown = client.login("Nobody", "wrong password")
             wrong.status shouldBe HttpStatusCode.Unauthorized
@@ -264,6 +265,50 @@ class AuthRoutesTest {
             val browser = browser()
             browser.register()
             browser.get("/api/study/proposed-queries").status shouldBe HttpStatusCode.NotFound
+        }
+
+    @Test
+    fun `listed usernames register and log in as admin and everyone else is a participant`() =
+        testApplication {
+            app(admins = setOf("grace"))
+            val admin = browser()
+            admin.register("Grace").bodyAsText() shouldBe """{"data":{"username":"Grace","role":"admin"}}"""
+            admin.get("/api/auth/session").bodyAsText() shouldBe """{"data":{"username":"Grace","role":"admin"}}"""
+            admin.login("GRACE").bodyAsText() shouldBe """{"data":{"username":"Grace","role":"admin"}}"""
+            browser().register("Ada").bodyAsText() shouldBe """{"data":{"username":"Ada","role":"participant"}}"""
+        }
+
+    @Test
+    fun `a restart with a changed admin list promotes and demotes existing accounts`() {
+        val database = TestPostgres.freshDatabase()
+        testApplication {
+            app(database, admins = setOf("Grace"))
+            browser().register("Grace")
+            browser().register("Ada")
+        }
+        testApplication {
+            app(database, admins = setOf("Ada"))
+            browser().login("Grace").bodyAsText() shouldContain """"role":"participant""""
+            browser().login("Ada").bodyAsText() shouldContain """"role":"admin""""
+        }
+    }
+
+    @Test
+    fun `every path under api admin requires the admin role`() =
+        testApplication {
+            app(admins = setOf("Grace"))
+            val anonymous = client.get("/api/admin/tasks")
+            anonymous.status shouldBe HttpStatusCode.Unauthorized
+            anonymous.bodyAsText() shouldBe """{"error":"Login required"}"""
+
+            val participant = browser().also { it.register("Ada") }
+            val forbidden = participant.get("/api/admin/tasks")
+            forbidden.status shouldBe HttpStatusCode.Forbidden
+            forbidden.bodyAsText() shouldBe """{"error":"Admin role required"}"""
+            participant.json("/api/admin/tasks").status shouldBe HttpStatusCode.Forbidden
+
+            val admin = browser().also { it.register("Grace") }
+            admin.get("/api/admin/tasks").status shouldBe HttpStatusCode.NotFound
         }
 
     @Test

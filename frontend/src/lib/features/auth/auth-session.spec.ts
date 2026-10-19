@@ -19,7 +19,7 @@ const bodies: unknown[] = [];
 const server = setupServer(
 	http.get(`${BASE}/api/auth/session`, () =>
 		current
-			? HttpResponse.json({ data: { username: current } })
+			? HttpResponse.json({ data: { username: current, role: 'participant' } })
 			: HttpResponse.json({ error: 'Login required' }, { status: 401 })
 	),
 	http.post(`${BASE}/api/auth/register`, async ({ request }) => {
@@ -29,7 +29,10 @@ const server = setupServer(
 			return HttpResponse.json({ error: 'This username is already taken' }, { status: 409 });
 		accounts.set(body.username.toLowerCase(), body);
 		current = body.username;
-		return HttpResponse.json({ data: { username: body.username } }, { status: 201 });
+		return HttpResponse.json(
+			{ data: { username: body.username, role: 'participant' } },
+			{ status: 201 }
+		);
 	}),
 	http.post(`${BASE}/api/auth/login`, async ({ request }) => {
 		const body = (await request.json()) as { username: string; password: string };
@@ -38,7 +41,7 @@ const server = setupServer(
 		if (!account || account.password !== body.password)
 			return HttpResponse.json({ error: 'Invalid username or password' }, { status: 401 });
 		current = account.username;
-		return HttpResponse.json({ data: { username: account.username } });
+		return HttpResponse.json({ data: { username: account.username, role: 'participant' } });
 	}),
 	http.post(`${BASE}/api/query/count`, () => {
 		counts++;
@@ -72,7 +75,7 @@ describe('AuthSession', () => {
 		expect(await auth.register({ username: 'Ada', password: 'correct horse' })).toEqual({
 			ok: true
 		});
-		expect(auth.user).toEqual({ username: 'Ada' });
+		expect(auth.user).toEqual({ username: 'Ada', role: 'participant' });
 		expect(bodies).toEqual([{ username: 'Ada', password: 'correct horse' }]);
 	});
 
@@ -99,7 +102,7 @@ describe('AuthSession', () => {
 		expect(await auth.login({ username: 'ada', password: 'correct horse' })).toEqual({
 			ok: true
 		});
-		expect(auth.user).toEqual({ username: 'Ada' });
+		expect(auth.user).toEqual({ username: 'Ada', role: 'participant' });
 
 		expect(await auth.logout()).toEqual({ ok: true });
 		expect(auth.user).toBeNull();
@@ -116,7 +119,7 @@ describe('AuthSession', () => {
 
 	it('treats logging out an expired session as logged out', async () => {
 		const auth = session();
-		auth.user = { username: 'Ada' };
+		auth.user = { username: 'Ada', role: 'participant' };
 		expect(await auth.logout()).toEqual({ ok: true });
 		expect(auth.user).toBeNull();
 	});
@@ -186,7 +189,7 @@ describe('cached server data and the logged-in user (AUTH-004)', () => {
 		await cached.count(request);
 		expect(counts).toBe(2);
 
-		auth.user = { username: 'Ada' };
+		auth.user = { username: 'Ada', role: 'participant' };
 		expect(await auth.logout()).toEqual({ ok: true });
 		await cached.count(request);
 		expect(counts).toBe(3);

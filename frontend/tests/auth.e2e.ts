@@ -48,7 +48,7 @@ test('login validates both fields, shows a wrong password and then logs in', asy
 	api.override('/api/auth/login', (body) =>
 		++attempts === 1
 			? { status: 401, json: { error: 'Invalid username or password' } }
-			: { data: { username: String(body?.username) } }
+			: { data: { username: String(body?.username), role: 'participant' } }
 	);
 	await page.goto('/login');
 	await loginForm(page).getByRole('button', { name: 'Log in' }).click();
@@ -78,7 +78,10 @@ test('registration checks the rules and the repeated password, reports a taken u
 	api.override('/api/auth/register', (body) =>
 		++attempts === 1
 			? { status: 409, json: { error: 'This username is already taken' } }
-			: { status: 201, json: { data: { username: String(body?.username) } } }
+			: {
+					status: 201,
+					json: { data: { username: String(body?.username), role: 'participant' } }
+				}
 	);
 	await page.goto('/login');
 	await page.getByRole('button', { name: 'Create an account' }).click();
@@ -120,7 +123,7 @@ test('a returning visitor is restored from the session and can log out', async (
 	let loggedIn = true;
 	api.override('/api/auth/session', () =>
 		loggedIn
-			? { data: { username: 'Ada' } }
+			? { data: { username: 'Ada', role: 'participant' } }
 			: { status: 401, json: { error: 'Login required' } }
 	);
 	api.override('/api/auth/logout', () => {
@@ -158,12 +161,12 @@ test('a protected page sends an anonymous visitor to login and back after loggin
 	let loggedIn = false;
 	api.override('/api/auth/session', () =>
 		loggedIn
-			? { data: { username: 'Ada' } }
+			? { data: { username: 'Ada', role: 'participant' } }
 			: { status: 401, json: { error: 'Login required' } }
 	);
 	api.override('/api/auth/login', (body) => {
 		loggedIn = true;
-		return { data: { username: String(body?.username) } };
+		return { data: { username: String(body?.username), role: 'participant' } };
 	});
 	await page.goto('/study');
 	await expect(page).toHaveURL(/\/login\?next=%2Fstudy$/);
@@ -181,8 +184,27 @@ test('a protected page sends an anonymous visitor to login and back after loggin
 	await expect(page).toHaveURL(/\/study$/);
 });
 
+test('only an admin sees the Admin link and the admin page; a participant goes back to the editor', async ({
+	page
+}) => {
+	let role = 'participant';
+	api.override('/api/auth/session', () => ({ data: { username: 'Ada', role } }));
+	await page.goto('/admin');
+	await expect(page.locator('#cy')).toBeVisible();
+	expect(new URL(page.url()).pathname).toBe('/');
+	await expect(page.getByRole('link', { name: 'Admin' })).toHaveCount(0);
+
+	role = 'admin';
+	await page.reload();
+	await page.getByRole('link', { name: 'Admin' }).click();
+	await expect(page).toHaveURL(/\/admin$/);
+	await expect(page.getByRole('heading', { name: 'Admin' })).toBeVisible();
+});
+
 test('a login link pointing to another site returns to the editor instead', async ({ page }) => {
-	api.override('/api/auth/login', (body) => ({ data: { username: String(body?.username) } }));
+	api.override('/api/auth/login', (body) => ({
+		data: { username: String(body?.username), role: 'participant' }
+	}));
 	await page.goto('/login?next=%2F%2Fevil.example%2Fstudy');
 	await page.getByLabel('Username').fill('Ada');
 	await page.getByLabel('Password').fill('correct horse');
@@ -204,7 +226,7 @@ test('logout empties the query cache and leaves a protected page for login', asy
 	let loggedIn = true;
 	api.override('/api/auth/session', () =>
 		loggedIn
-			? { data: { username: 'Ada' } }
+			? { data: { username: 'Ada', role: 'participant' } }
 			: { status: 401, json: { error: 'Login required' } }
 	);
 	api.override('/api/auth/logout', () => {

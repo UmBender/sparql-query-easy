@@ -44,15 +44,18 @@ data class Argon2Settings(
 /**
  * Accounts and sessions (AUTH-001). [authAttemptsPerMinute] limits login and registration per client
  * address; [trustProxy] takes that address from `X-Forwarded-For` (only behind the bundled proxy).
+ * [adminUsernames] are the accounts with the admin role (AUTH-005); everyone else is a participant.
  */
 data class AuthSettings(
     val argon2: Argon2Settings = Argon2Settings(),
     val authAttemptsPerMinute: Int = DEFAULT_AUTH_ATTEMPTS_PER_MINUTE,
     val trustProxy: Boolean = false,
+    val adminUsernames: Set<String> = emptySet(),
 ) {
     companion object {
         const val DEFAULT_AUTH_ATTEMPTS_PER_MINUTE = 10
         val AUTH_ATTEMPTS_RANGE = 1..1_000
+        val USERNAME = Regex("[A-Za-z0-9._-]{3,32}")
     }
 }
 
@@ -81,6 +84,7 @@ data class AppSettings(
         const val ARGON2_PARALLELISM = "EASYQUERY_ARGON2_PARALLELISM"
         const val AUTH_ATTEMPTS_PER_MINUTE = "EASYQUERY_AUTH_ATTEMPTS_PER_MINUTE"
         const val TRUST_PROXY = "EASYQUERY_TRUST_PROXY"
+        const val ADMIN_USERNAMES = "EASYQUERY_ADMIN_USERNAMES"
 
         fun load(
             environment: Map<String, String> = System.getenv(),
@@ -118,7 +122,16 @@ data class AppSettings(
                     "true" -> true
                     else -> throw IllegalArgumentException("$TRUST_PROXY must be true or false, got \"$raw\"")
                 }
-            return AuthSettings(argon2, attempts, trustProxy)
+            return AuthSettings(argon2, attempts, trustProxy, adminUsernames(value(ADMIN_USERNAMES)))
+        }
+
+        /** Comma-separated usernames; a malformed name fails startup instead of silently granting nobody. */
+        private fun adminUsernames(raw: String): Set<String> {
+            val names = raw.split(',').map(String::trim).filter(String::isNotEmpty)
+            names.firstOrNull { !AuthSettings.USERNAME.matches(it) }?.let {
+                throw IllegalArgumentException("$ADMIN_USERNAMES must list valid usernames, got \"$it\"")
+            }
+            return names.toSet()
         }
 
         private fun wholeNumber(

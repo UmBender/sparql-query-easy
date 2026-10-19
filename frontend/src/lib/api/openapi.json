@@ -1614,10 +1614,14 @@
                 "type": "object",
                 "title": "SessionUserHttpResponse",
                 "required": [
-                    "username"
+                    "username",
+                    "role"
                 ],
                 "properties": {
                     "username": {
+                        "type": "string"
+                    },
+                    "role": {
                         "type": "string"
                     }
                 }
