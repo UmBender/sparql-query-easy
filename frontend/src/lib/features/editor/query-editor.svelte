@@ -26,7 +26,8 @@
 	import RunControls from '#lib/features/exploration/run-controls.svelte';
 	import FilterIcon from '@lucide/svelte/icons/list-filter';
 	import { Button } from '#lib/components/ui/button/index.js';
-	import { createAppQueryClient, createCachedApi } from '#lib/api/queries.js';
+	import { useQueryClient } from '@tanstack/svelte-query';
+	import { createCachedApi } from '#lib/api/queries.js';
 	import { CountCache } from '#lib/features/funnel/count-cache.js';
 	import { Funnel } from '#lib/features/funnel/funnel.svelte.js';
 	import { FilterBadges } from '#lib/features/funnel/badges.svelte.js';
@@ -41,7 +42,7 @@
 	const view = new CanvasView();
 	const exploration = new Exploration({ store, api, toast: controller.toast });
 	const emphasis = new Emphasis(store);
-	const queryClient = createAppQueryClient();
+	const queryClient = useQueryClient();
 	const cached = createCachedApi(api, queryClient);
 	const counts = new CountCache(api, queryClient);
 	const funnel = new Funnel(store, counts);
@@ -143,7 +144,8 @@
 				viewElements,
 				exploration,
 				funnel,
-				badges
+				badges,
+				queryClient
 			};
 		}
 	});

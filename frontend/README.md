@@ -62,6 +62,15 @@ control; the page is `/login`. The editor works without an account. The Vite
 proxy keeps the `Host` header so Ktor's same-origin check on account routes
 passes in development and `vite preview`.
 
+Protected pages (AUTH-004): `route-guard.ts` lists them (`/study`). The root
+layout hides such a page until the session is known and sends an anonymous
+visitor to `/login?next=<page>`; after login, `next` is followed only when it
+is a path of this app. The app has one TanStack Query cache
+(`appQueryClient`, provided by the root layout); it is cleared when the
+logged-in user goes away (logout, an expired session, another user logging
+in). The login form's component test (`auth-form.svelte.spec.ts`) replaces
+SvelteKit's `$app/*` modules and turns on Superforms' Storybook mode.
+
 Test layers (QUAL-007): `src/lib/api/mock-routes.ts` holds the API mock
 responses typed from `schema.d.ts`; Vitest serves them through MSW
 (`mswHandlers`), the Playwright suites through `page.route`

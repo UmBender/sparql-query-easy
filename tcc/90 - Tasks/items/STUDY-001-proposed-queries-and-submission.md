@@ -4,7 +4,7 @@ title: Let a logged-in user solve proposed queries and submit answers once
 status: BACKLOG
 priority: P1
 type: fullstack
-depends_on: [AUTH-001, AUTH-003, BE-005, FE-046]
+depends_on: [AUTH-001, AUTH-003, AUTH-004, BE-005, FE-046]
 human_gate: false
 created: 2026-10-16
 updated: 2026-10-16
@@ -41,3 +41,10 @@ undecided: default hidden.
 - [ ] Submission and correctness tests on PokemonGen1 (Kotlin + e2e).
 - [ ] After final submission every proposed-query route and screen refuses access.
 - [ ] Anonymous requests to `/api/study/**` return 401.
+
+## Note (2026-10-18, AUTH-004)
+
+`/study` exists as an empty page behind the root layout's guard
+(`frontend/src/lib/features/auth/route-guard.ts`): anonymous visitors go to
+`/login?next=/study` and come back after login. Fill that page here; further
+protected paths go in `PROTECTED_PREFIXES`.

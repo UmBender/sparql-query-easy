@@ -17,7 +17,7 @@ The retired page is described in [[Legacy Page Architecture (retired)]].
 | API | `src/lib/api/` | Typed client from the OpenAPI snapshot (`schema.d.ts`), TanStack Query cache, typed mock routes for tests (FE-043, QUAL-007) |
 | Components | `src/lib/components/ui/` | shadcn-svelte primitives and project components; `/styleguide` (FE-050) |
 | Features | `src/lib/features/` | `editor` (page shell, Cytoscape canvas as a pure view, action menus, results, View SPARQL), `filters`, `exploration` (staged Run Query, possible graph), `funnel` (funnel panel, badges), `utilities` (upload, load/export, tour), `auth` (session store, login form, account control) |
-| Routes | `src/routes/` | `/` (query editor), `/login` (AUTH-003), `/styleguide` |
+| Routes | `src/routes/` | `/` (query editor), `/login` (AUTH-003), `/study` (session required; empty until STUDY-001, AUTH-004), `/styleguide` |
 
 ## State and interaction
 
@@ -34,7 +34,10 @@ The client calls the routes of [[../03 - Backend/API v1]] with relative URLs.
 Request bodies come from the domain's mapping, which equals the captured
 legacy requests (`request-parity.spec.ts`). Accounts use the HttpOnly session
 cookie; the page only learns the user from `GET /api/auth/session`
-([[../09 - Decisions/Authentication Contract]]).
+([[../09 - Decisions/Authentication Contract]]). The root layout guards the
+protected pages listed in `auth/route-guard.ts` (anonymous visitors go to
+`/login?next=…`) and provides the app's single TanStack Query cache, which
+is cleared when the logged-in user goes away (AUTH-004).
 
 ## Tests
 

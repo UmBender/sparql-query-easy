@@ -1,7 +1,8 @@
 /**
  * AUTH-003 on the real stack: register, session restore after a reload,
  * logout, a wrong password and login against Ktor (AUTH-001) with the
- * embedded PostgreSQL of playwright.stack.config.ts.
+ * Testcontainers PostgreSQL of playwright.stack.config.ts. AUTH-004: a protected
+ * page sends an anonymous visitor to login and back.
  */
 import { expect, test } from '@playwright/test';
 
@@ -80,4 +81,33 @@ test('a taken username is reported by the server', async ({ page, request }) => 
 	await page.getByLabel('Repeat the password').fill('another horse');
 	await page.getByRole('button', { name: 'Create account' }).click();
 	await expect(page.getByRole('alert')).toHaveText('This username is already taken');
+});
+
+test('a protected page needs a session and returns there after login', async ({
+	page,
+	request
+}) => {
+	const username = `study-${Date.now()}`;
+	const created = await request.post('/api/auth/register', {
+		data: { username, password: 'correct horse' }
+	});
+	expect(created.status()).toBe(201);
+
+	await page.goto('/study');
+	await expect(page).toHaveURL(/\/login\?next=%2Fstudy$/);
+	await page.getByLabel('Username').fill(username);
+	await page.getByLabel('Password').fill('correct horse');
+	await page
+		.getByRole('form', { name: 'Log in' })
+		.getByRole('button', { name: 'Log in' })
+		.click();
+	await expect(page).toHaveURL(/\/study$/);
+	await expect(page.getByRole('heading', { name: 'Proposed queries' })).toBeVisible();
+
+	await page.reload();
+	await expect(page.getByRole('heading', { name: 'Proposed queries' })).toBeVisible();
+	await page.getByRole('button', { name: 'Log out' }).click();
+	await expect(page).toHaveURL(/\/login\?next=%2Fstudy$/);
+	await page.goto('/study');
+	await expect(page).toHaveURL(/\/login\?next=%2Fstudy$/);
 });

@@ -2,8 +2,11 @@
  * Who is logged in (AUTH-003). `refresh` asks `GET /api/auth/session`; login,
  * registration and logout update the user from the answers. The cookie is
  * HttpOnly, so this state is the page's only view of the session; nothing
- * is kept in browser storage.
+ * is kept in browser storage. When the logged-in user goes away (logout, an
+ * expired session, another user logging in) `onUserGone` runs, so the app can
+ * drop cached server data of that user (AUTH-004).
  */
+import { appQueryClient } from '#lib/api/queries.js';
 import {
 	api,
 	ApiError,
@@ -31,17 +34,26 @@ export class AuthSession {
 	user = $state.raw<SessionUser | null>(null);
 	status = $state<AuthStatus>('checking');
 	#api: AuthApi;
+	#onUserGone: () => void;
 
-	constructor(authApi: AuthApi) {
+	constructor(authApi: AuthApi, onUserGone: () => void = () => {}) {
 		this.#api = authApi;
+		this.#onUserGone = onUserGone;
+	}
+
+	#setUser(user: SessionUser | null) {
+		const previous = this.user;
+		this.user = user;
+		if (previous && previous.username.toLowerCase() !== user?.username.toLowerCase())
+			this.#onUserGone();
 	}
 
 	async refresh(): Promise<void> {
 		try {
-			this.user = await this.#api.session();
+			this.#setUser(await this.#api.session());
 			this.status = 'ready';
 		} catch (error) {
-			this.user = null;
+			this.#setUser(null);
 			this.status =
 				error instanceof ApiError && error.kind === 'unauthorized'
 					? 'ready'
@@ -65,13 +77,13 @@ export class AuthSession {
 			if (!(error instanceof ApiError && error.kind === 'unauthorized'))
 				return { ok: false, error: failure(error) };
 		}
-		this.user = null;
+		this.#setUser(null);
 		return { ok: true };
 	}
 
 	async #start(request: () => Promise<SessionUser>): Promise<AuthOutcome> {
 		try {
-			this.user = await request();
+			this.#setUser(await request());
 			this.status = 'ready';
 			return { ok: true };
 		} catch (error) {
@@ -80,5 +92,5 @@ export class AuthSession {
 	}
 }
 
-/** The app's session, shared by the editor's toolbar and the login page. */
-export const authSession = new AuthSession(api);
+/** The app's session, shared by the root layout's guard, the editor's toolbar and the login page. */
+export const authSession = new AuthSession(api, () => appQueryClient.clear());

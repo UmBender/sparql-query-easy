@@ -26,6 +26,9 @@ export function createAppQueryClient(): QueryClient {
 	});
 }
 
+/** The app's one cache (AUTH-004), provided by the root layout and cleared when the user logs out. */
+export const appQueryClient = createAppQueryClient();
+
 /** A stable key for a JSON request body: sorted object keys. */
 export function payloadKey(body: unknown): string {
 	const sort = (value: unknown): unknown => {

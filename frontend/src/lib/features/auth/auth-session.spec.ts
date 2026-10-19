@@ -4,14 +4,16 @@
  */
 import { http, HttpResponse } from 'msw';
 import { setupServer } from 'msw/node';
-import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it } from 'vitest';
+import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 import { createApiClient } from '#lib/api/client.js';
+import { createAppQueryClient, createCachedApi } from '#lib/api/queries.js';
 import { AuthSession } from './auth-session.svelte.js';
 import { loginSchema, registerSchema } from './auth-form.js';
 
 const BASE = 'http://api.test';
 const accounts = new Map<string, { username: string; password: string }>();
 let current: string | null = null;
+let counts = 0;
 const bodies: unknown[] = [];
 
 const server = setupServer(
@@ -38,6 +40,10 @@ const server = setupServer(
 		current = account.username;
 		return HttpResponse.json({ data: { username: account.username } });
 	}),
+	http.post(`${BASE}/api/query/count`, () => {
+		counts++;
+		return HttpResponse.json({ data: { variableName: '?p', count: 12 } });
+	}),
 	http.post(`${BASE}/api/auth/logout`, () => {
 		if (!current) return HttpResponse.json({ error: 'Login required' }, { status: 401 });
 		current = null;
@@ -51,6 +57,7 @@ beforeEach(() => {
 	accounts.clear();
 	current = null;
 	bodies.length = 0;
+	counts = 0;
 });
 
 const session = () => new AuthSession(createApiClient({ baseUrl: BASE }));
@@ -141,6 +148,60 @@ describe('AuthSession', () => {
 			ok: false,
 			error: 'Could not reach the server. Check your connection.'
 		});
+	});
+});
+
+describe('cached server data and the logged-in user (AUTH-004)', () => {
+	const request = {
+		endpointUrl: 'PokemonGen1',
+		variableName: '?p',
+		where: [{ subject: '?p', predicate: '<p>', object: '?o', filterType: null }]
+	};
+	const setup = () => {
+		const client = createApiClient({ baseUrl: BASE });
+		const queryClient = createAppQueryClient();
+		const auth = new AuthSession(client, () => queryClient.clear());
+		return { auth, cached: createCachedApi(client, queryClient) };
+	};
+
+	it('logout empties the cache, so the next identical request reaches the API', async () => {
+		current = 'Ada';
+		const { auth, cached } = setup();
+		await auth.refresh();
+		await cached.count(request);
+		await cached.count({ ...request });
+		expect(counts).toBe(1);
+		await auth.logout();
+		await cached.count({ ...request });
+		expect(counts).toBe(2);
+	});
+
+	it('an expired session found by refresh or logout also empties it', async () => {
+		current = 'Ada';
+		const { auth, cached } = setup();
+		await auth.refresh();
+		await cached.count(request);
+		current = null;
+		await auth.refresh();
+		await cached.count(request);
+		expect(counts).toBe(2);
+
+		auth.user = { username: 'Ada' };
+		expect(await auth.logout()).toEqual({ ok: true });
+		await cached.count(request);
+		expect(counts).toBe(3);
+	});
+
+	it('another user logging in empties it; the same user (any case) and anonymous login keep it', async () => {
+		accounts.set('ada', { username: 'Ada', password: 'correct horse' });
+		accounts.set('bob', { username: 'Bob', password: 'correct horse' });
+		const gone = vi.fn();
+		const auth = new AuthSession(createApiClient({ baseUrl: BASE }), gone);
+		await auth.login({ username: 'Ada', password: 'correct horse' });
+		await auth.login({ username: 'ADA', password: 'correct horse' });
+		expect(gone).not.toHaveBeenCalled();
+		await auth.login({ username: 'Bob', password: 'correct horse' });
+		expect(gone).toHaveBeenCalledTimes(1);
 	});
 });
 

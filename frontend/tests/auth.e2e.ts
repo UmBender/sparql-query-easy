@@ -2,6 +2,8 @@
  * AUTH-003 with the mocked API: the login page validates in the browser,
  * sends only valid credentials, shows the server's answers, and the editor's
  * toolbar follows the session. Passwords never reach URLs or storage.
+ * AUTH-004: protected pages send anonymous visitors to login and back, and
+ * logout empties the app's query cache.
  */
 import { expect, test, type Page } from '@playwright/test';
 import { guardOffline } from './support/offline';
@@ -148,4 +150,91 @@ test('an unavailable account database leaves the editor usable and says so on th
 	await expect(page.getByRole('status')).toHaveText(
 		'Accounts are temporarily unavailable. The query editor still works.'
 	);
+});
+
+test('a protected page sends an anonymous visitor to login and back after logging in', async ({
+	page
+}) => {
+	let loggedIn = false;
+	api.override('/api/auth/session', () =>
+		loggedIn
+			? { data: { username: 'Ada' } }
+			: { status: 401, json: { error: 'Login required' } }
+	);
+	api.override('/api/auth/login', (body) => {
+		loggedIn = true;
+		return { data: { username: String(body?.username) } };
+	});
+	await page.goto('/study');
+	await expect(page).toHaveURL(/\/login\?next=%2Fstudy$/);
+	await expect(page.getByRole('heading', { name: 'Proposed queries' })).toHaveCount(0);
+
+	await page.getByLabel('Username').fill('Ada');
+	await page.getByLabel('Password').fill('correct horse');
+	await loginForm(page).getByRole('button', { name: 'Log in' }).click();
+	await expect(page).toHaveURL(/\/study$/);
+	await expect(page.getByRole('heading', { name: 'Proposed queries' })).toBeVisible();
+
+	// The session survives a reload: the page shows directly, without visiting login.
+	await page.reload();
+	await expect(page.getByRole('heading', { name: 'Proposed queries' })).toBeVisible();
+	await expect(page).toHaveURL(/\/study$/);
+});
+
+test('a login link pointing to another site returns to the editor instead', async ({ page }) => {
+	api.override('/api/auth/login', (body) => ({ data: { username: String(body?.username) } }));
+	await page.goto('/login?next=%2F%2Fevil.example%2Fstudy');
+	await page.getByLabel('Username').fill('Ada');
+	await page.getByLabel('Password').fill('correct horse');
+	await loginForm(page).getByRole('button', { name: 'Log in' }).click();
+	await expect(page.locator('#cy')).toBeVisible();
+	expect(new URL(page.url()).pathname).toBe('/');
+});
+
+test('public pages never redirect an anonymous visitor', async ({ page }) => {
+	for (const path of ['/', '/login', '/styleguide']) {
+		await page.goto(path);
+		await expect(page.locator('main, #cy').first()).toBeVisible();
+		await expect(page.getByText('Checking your session…')).toHaveCount(0);
+		expect(new URL(page.url()).pathname).toBe(path);
+	}
+});
+
+test('logout empties the query cache and leaves a protected page for login', async ({ page }) => {
+	let loggedIn = true;
+	api.override('/api/auth/session', () =>
+		loggedIn
+			? { data: { username: 'Ada' } }
+			: { status: 401, json: { error: 'Login required' } }
+	);
+	api.override('/api/auth/logout', () => {
+		loggedIn = false;
+		return { status: 204 };
+	});
+	type Handle = {
+		__easyquery: {
+			queryClient: {
+				setQueryData(key: unknown[], value: unknown): void;
+				getQueryData(key: unknown[]): unknown;
+			};
+		};
+	};
+	await openEditor(page);
+	await expect(page.getByTestId('account-name')).toHaveText('Ada');
+	await page.evaluate(() =>
+		(window as never as Handle).__easyquery.queryClient.setQueryData(['probe'], 'Ada only')
+	);
+	await page.getByRole('button', { name: 'Log out' }).click();
+	await expect(page.getByRole('link', { name: 'Log in' })).toBeVisible();
+	expect(
+		await page.evaluate(() =>
+			(window as never as Handle).__easyquery.queryClient.getQueryData(['probe'])
+		)
+	).toBeUndefined();
+
+	loggedIn = true;
+	await page.goto('/study');
+	await expect(page.getByRole('heading', { name: 'Proposed queries' })).toBeVisible();
+	await page.getByRole('button', { name: 'Log out' }).click();
+	await expect(page).toHaveURL(/\/login\?next=%2Fstudy$/);
 });

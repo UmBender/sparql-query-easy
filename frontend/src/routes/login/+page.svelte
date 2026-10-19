@@ -1,13 +1,17 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
 	import { goto } from '$app/navigation';
+	import { page } from '$app/state';
 	import { resolve } from '$app/paths';
 	import { toast } from 'svelte-sonner';
 	import { Button } from '#lib/components/ui/button/index.js';
 	import AuthForm from '#lib/features/auth/auth-form.svelte';
 	import { authSession } from '#lib/features/auth/auth-session.svelte.js';
+	import { safeNext } from '#lib/features/auth/route-guard.js';
 
 	let mode = $state<'login' | 'register'>('login');
+	// AUTH-004: a protected page sent the visitor here and gets them back after login.
+	const next = $derived(safeNext(page.url.searchParams.get('next')));
 
 	onMount(() => {
 		if (authSession.status === 'checking') authSession.refresh();
@@ -56,7 +60,9 @@
 							? `Account created. Logged in as ${username}.`
 							: `Logged in as ${username}.`
 					);
-					goto(resolve('/'));
+					// `next` is a path of this app checked by safeNext; resolve() only takes known routes.
+					// eslint-disable-next-line svelte/no-navigation-without-resolve
+					goto(`${resolve('/')}${next.slice(1)}`);
 				}}
 			/>
 		{/if}

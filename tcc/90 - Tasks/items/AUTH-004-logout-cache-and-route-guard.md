@@ -1,7 +1,7 @@
 ---
 id: AUTH-004
 title: Clear cached server data on logout and send anonymous users from protected pages to login
-status: BACKLOG
+status: DONE
 priority: P1
 type: frontend
 depends_on: [AUTH-003, FE-043]
@@ -72,18 +72,18 @@ route or identity change, that card adapts this code.
 
 ## Acceptance criteria
 
-- [ ] After logout (and after an expired-session 401) the query cache is
+- [x] After logout (and after an expired-session 401) the query cache is
       empty. Test: the next identical count request reaches the API (MSW
       request count).
-- [ ] Visiting a protected path without a session lands on
+- [x] Visiting a protected path without a session lands on
       `/login?next=…`. After login the user returns to that path. A
       `next` pointing to another origin or `//host` is ignored.
-- [ ] With a session, the protected path loads directly, and still does
+- [x] With a session, the protected path loads directly, and still does
       after a page reload (session restore, no flash of the login page).
-- [ ] Public pages (`/`, `/login`, `/styleguide`) never redirect.
-- [ ] Login form: component test (validation, wrong password message, submit
+- [x] Public pages (`/`, `/login`, `/styleguide`) never redirect.
+- [x] Login form: component test (validation, wrong password message, submit
       calls the store), or a recorded reason it is not feasible.
-- [ ] Offline Playwright (`tests/auth.e2e.ts`): redirect, login-and-return,
+- [x] Offline Playwright (`tests/auth.e2e.ts`): redirect, login-and-return,
       logout clears the cache. Real stack (`tests-stack/auth.e2e.ts`): login,
       wrong password, logout, reload restore (exists), plus the redirect.
 
@@ -98,3 +98,35 @@ route or identity change, that card adapts this code.
 ## Execution log
 
 - 2026-10-18: Created from the T7 brief. Gaps confirmed in code (see Evidence).
+- 2026-10-18: Implemented (T7 goal).
+  - Cache: `appQueryClient` in `src/lib/api/queries.ts`, provided by
+    `src/routes/+layout.svelte` (`QueryClientProvider`); the editor takes it
+    with `useQueryClient()` and puts it on the e2e handle as `queryClient`.
+    `AuthSession` takes an `onUserGone` callback, run when the logged-in user
+    goes away (logout, refresh or logout finding the session expired, a
+    different user logging in; the same user in another case keeps it); the
+    app singleton clears the cache there.
+  - Guard: `src/lib/features/auth/route-guard.ts` (`PROTECTED_PREFIXES =
+    ['/study']`, `guardDecision` show/wait/redirect, `loginPath`, `safeNext`
+    rejecting absolute, `//host`, backslash and `/login` targets). The root
+    layout refreshes the session on a protected page, shows "Checking your
+    session…" meanwhile, and `goto(resolve(loginPath))` with `replaceState`.
+    `/login` follows `next` after login. `/study` is an empty placeholder
+    (heading "Proposed queries", Back to the editor, Log out) for STUDY-001.
+  - Component test: `auth-form.svelte.spec.ts` (3: validation, wrong
+    password, submit). It mocks `$app/state`, `$app/navigation`, `$app/forms`
+    (an `enhance` that prevents the native submit) and sets
+    `globalThis.STORIES` so Superforms applies results without
+    `applyAction`. Spreading the original `$app` modules hung Vitest.
+  - Tests: `route-guard.spec.ts` (7), `auth-session.spec.ts` +3 (cache
+    cleared on logout/expiry, MSW request count; user change);
+    `tests/auth.e2e.ts` +4 (redirect and return, reload restore, foreign
+    `next`, public pages, logout clears the cache and leaves `/study`);
+    `tests-stack/auth.e2e.ts` +1 (redirect, return, reload, logout).
+  - Validation: frontend check, lint, `test:coverage` (172), client Vitest
+    (7), Playwright (83), `test:stack` (9, no container left).
+  - Environment: the host was loaded by unrelated programs (load ~9.5 on 8
+    cores); the offline Playwright web server (60 s limit in
+    `playwright.config.ts`) timed out during the 46 s e2e build. Playwright
+    therefore ran through an uncommitted local config that only raised that
+    timeout; the repository config is unchanged.

@@ -18,7 +18,7 @@ Ordered by dependencies, then priority among selection candidates. See [worker r
 | BE-007 | DONE | P2 | backend | [Report database connectivity on GET /health without failing the query API](<items/BE-007-health-database-status.md>) |
 | AUTH-003 | DONE | P1 | frontend | [Register, log in and log out in the new frontend](<items/AUTH-003-new-frontend-auth.md>) |
 | DEC-013 | DONE | P1 | decision | [Decide whether the T7 brief changes the approved authentication contract](<items/DEC-013-t7-auth-brief-differences.md>) |
-| AUTH-004 | BACKLOG | P1 | frontend | [Clear cached server data on logout and send anonymous users from protected pages to login](<items/AUTH-004-logout-cache-and-route-guard.md>) |
+| AUTH-004 | DONE | P1 | frontend | [Clear cached server data on logout and send anonymous users from protected pages to login](<items/AUTH-004-logout-cache-and-route-guard.md>) |
 | BUG-001 | DONE | P0 | bug | [Repair C# local-search capture instrumentation and recapture baselines](<items/BUG-001-csharp-local-search-harness.md>) |
 | DEV-001 | DONE | P0 | development | [Tornar o desenvolvimento econômico, autônomo e verificável](<items/TASK-DEV-001.md>) |
 | DEV-002 | CANCELLED | P0 | development | [Approve the revised feature delivery workflow](<items/DEV-002-approve-feature-delivery-workflow.md>) |
