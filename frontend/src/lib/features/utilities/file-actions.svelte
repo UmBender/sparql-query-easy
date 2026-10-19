@@ -1,7 +1,8 @@
 <!--
 	Upload Triples, Upload Query and Export Query (legacy navbar, FE-048).
 	Queries use the versioned saved format (FE-042); legacy query_exported.json
-	files are refused with an explanation (D6b).
+	files are refused with an explanation (D6b). With a locked endpoint (FE-053)
+	there is no Upload Triples, which would replace it.
 -->
 <script lang="ts">
 	import UploadIcon from '@lucide/svelte/icons/upload';
@@ -86,15 +87,17 @@
 		if (file) uploadQuery(file);
 	}}
 />
-<Button
-	id="upload-triples-btn"
-	variant="ghost"
-	class={className}
-	title="Upload Turtle triples file"
-	onclick={() => triples?.click()}
->
-	<UploadIcon />Upload Triples
-</Button>
+{#if !store.endpointLocked}
+	<Button
+		id="upload-triples-btn"
+		variant="ghost"
+		class={className}
+		title="Upload Turtle triples file"
+		onclick={() => triples?.click()}
+	>
+		<UploadIcon />Upload Triples
+	</Button>
+{/if}
 <Button variant="ghost" class={className} title="Load a saved query" onclick={() => query?.click()}>
 	<FileUpIcon />Upload Query
 </Button>

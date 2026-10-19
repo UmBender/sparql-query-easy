@@ -74,6 +74,8 @@ export type QueryStoreOptions = {
 	endpoint?: Endpoint;
 	limit?: number;
 	historyLimit?: number;
+	/** FE-053: keep [endpoint] whatever the user does (a proposed task's endpoint). */
+	endpointLocked?: boolean;
 };
 
 /** Undo depth (FE-052): older edits are dropped beyond this many. */
@@ -96,6 +98,7 @@ export class QueryStore {
 	canUndo = $derived(this.past.length > 0);
 	canRedo = $derived(this.future.length > 0);
 	readonly #historyLimit: number;
+	readonly endpointLocked: boolean;
 
 	readonly #now: () => number;
 	#predicateSequence = 1;
@@ -105,10 +108,12 @@ export class QueryStore {
 		now = Date.now,
 		endpoint,
 		limit,
-		historyLimit = HISTORY_LIMIT
+		historyLimit = HISTORY_LIMIT,
+		endpointLocked = false
 	}: QueryStoreOptions = {}) {
 		this.#now = now;
 		this.#historyLimit = historyLimit;
+		this.endpointLocked = endpointLocked;
 		if (endpoint) this.endpoint = endpoint;
 		if (limit) this.limit = limit;
 		this.#refreshOrder();
@@ -334,6 +339,7 @@ export class QueryStore {
 		this.selection = selection;
 	}
 	setEndpoint(endpoint: Endpoint | string) {
+		if (this.endpointLocked) return;
 		const next = typeof endpoint === 'string' ? endpointFromText(endpoint) : endpoint;
 		if (JSON.stringify(next) !== JSON.stringify(this.endpoint)) this.clearHistory();
 		this.endpoint = next;
@@ -367,8 +373,9 @@ export class QueryStore {
 			order: this.order.slice()
 		};
 	}
+	/** A locked endpoint stays; the document's endpoint is then ignored. */
 	load(document: QueryDocument) {
-		this.endpoint = document.endpoint;
+		if (!this.endpointLocked) this.endpoint = document.endpoint;
 		this.limit = document.limit;
 		this.selection = null;
 		this.funnelDisabled = NO_DISABLED_STEPS;

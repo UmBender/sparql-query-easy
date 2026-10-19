@@ -22,7 +22,11 @@ The retired page is described in [[Legacy Page Architecture (retired)]].
 ## State and interaction
 
 Cytoscape renders `viewElements(store.graph)` and turns gestures into store or
-controller actions; it never owns query state. Query behavior (node kinds and
+controller actions; it never owns query state. Every `QueryEditor` creates its
+own `QueryStore`; a page that hosts one (a proposed task, the admin task
+editor) passes a start query, a locked endpoint, a side panel and toolbar
+actions as props and reads the graph from the store handed to `onready`
+(FE-053). Query behavior (node kinds and
 their actions, connections, filters, staged exploration, funnel and badges)
 follows the retired page row by row, see [[Frontend Parity Checklist]] and
 [[Two Variable Exploration Contract]]. Intended differences are recorded on

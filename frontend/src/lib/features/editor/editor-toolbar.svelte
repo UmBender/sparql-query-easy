@@ -221,6 +221,7 @@
 				label="SPARQL endpoint"
 				items={endpointItems}
 				bind:text={endpointText}
+				disabled={store.endpointLocked}
 				oninput={applyEndpoint}
 				onselect={(item) => {
 					endpointText = item.value;

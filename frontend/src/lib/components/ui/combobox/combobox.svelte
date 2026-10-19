@@ -21,7 +21,8 @@
 		onselect,
 		oninput,
 		class: className,
-		inputClass
+		inputClass,
+		disabled = false
 	}: {
 		id: string;
 		label: string;
@@ -35,6 +36,7 @@
 		oninput?: (text: string) => void;
 		class?: string;
 		inputClass?: string;
+		disabled?: boolean;
 	} = $props();
 
 	let open = $state(false);
@@ -78,6 +80,7 @@
 		aria-activedescendant={showList && active >= 0 ? `${id}-option-${active}` : undefined}
 		autocomplete="off"
 		{placeholder}
+		{disabled}
 		class={inputClass}
 		bind:value={text}
 		oninput={() => {

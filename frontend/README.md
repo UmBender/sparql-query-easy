@@ -39,7 +39,12 @@ store (graph, selection, endpoint, limit, stage order, funnel preview; every
 edit through a domain operation and `commit`). `src/lib/api/` holds the typed
 client, the TanStack Query cache and the OpenAPI snapshot (see its README).
 
-Editor (FE-044): `src/lib/features/editor/`. `query-editor.svelte` is the page;
+Editor (FE-044): `src/lib/features/editor/`. `query-editor.svelte` is the page.
+FE-053: other pages reuse it with optional props: `initial` (a saved query),
+`endpoint` and `lockEndpoint` (field disabled, Upload Triples hidden, the
+store keeps the endpoint), `panel` and `actions` snippets, and `onready`,
+which receives that editor's own `QueryStore` (read `store.document` to
+submit). `/` passes none;
 `graph-canvas.svelte` renders `viewElements(store.graph)` (`graph-view.ts`,
 pure) into Cytoscape and turns gestures into store or controller actions;
 `editor-controller.svelte.ts` holds the action lists, connections, results

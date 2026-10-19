@@ -1,11 +1,21 @@
 <!--
 	The query editor page (FE-044–FE-048): toolbar, canvas with its overlays,
 	panels and dialogs, all driven by one QueryStore through an EditorController.
+	FE-053: `/` passes nothing. Another page (a proposed task, the admin task
+	editor) can start from a saved query (`initial`, FE-042 format) and an
+	`endpoint`, lock that endpoint, add a side `panel` and toolbar `actions`,
+	and read the graph through the store handed to `onready`. Each editor
+	owns its store; nothing is shared between two editors.
 -->
 <script lang="ts">
-	import { onMount } from 'svelte';
+	import { onMount, untrack, type Snippet } from 'svelte';
 	import { api } from '#lib/api/client.js';
-	import { BUILT_IN_ENDPOINTS, nodeById } from '#lib/domain/index.js';
+	import {
+		BUILT_IN_ENDPOINTS,
+		nodeById,
+		type Endpoint,
+		type QueryDocument
+	} from '#lib/domain/index.js';
 	import { QueryStore } from '#lib/stores/query-store.svelte.js';
 	import { EditorController } from './editor-controller.svelte.js';
 	import { CanvasView } from './canvas-view.svelte.js';
@@ -37,7 +47,39 @@
 	import GuidedTour from '#lib/features/utilities/guided-tour.svelte';
 	import AccountMenu from '#lib/features/auth/account-menu.svelte';
 
-	const store = new QueryStore();
+	let {
+		initial,
+		endpoint,
+		lockEndpoint = false,
+		panel,
+		actions,
+		onready
+	}: {
+		/** The query to start from; an empty graph without it. */
+		initial?: QueryDocument;
+		/** The endpoint to start on; it wins over the one in `initial`. */
+		endpoint?: Endpoint;
+		/** Keep the start endpoint: the field is disabled and Upload Triples hidden. */
+		lockEndpoint?: boolean;
+		/** Extra side panel beside the canvas. */
+		panel?: Snippet;
+		/** Extra actions at the end of the toolbar's run actions. */
+		actions?: Snippet;
+		onready?: (store: QueryStore) => void;
+	} = $props();
+
+	// The props set up the editor once; later changes are not applied.
+	const store = untrack(() => {
+		const start = endpoint ?? initial?.endpoint;
+		const created = new QueryStore({
+			endpoint: start,
+			endpointLocked: lockEndpoint && start !== undefined
+		});
+		if (initial) created.load(initial);
+		if (endpoint) created.setEndpoint(endpoint);
+		onready?.(created);
+		return created;
+	});
 	const controller = new EditorController({ store, api });
 	const view = new CanvasView();
 	const exploration = new Exploration({ store, api, toast: controller.toast });
@@ -203,49 +245,59 @@
 					<FilterIcon aria-hidden="true" />Filter funnel
 				</Button>
 			</RunControls>
+			{@render actions?.()}
 		{/snippet}
 	</EditorToolbar>
-	<main class="relative min-h-0 flex-1 overflow-hidden" id="cy-wrapper">
-		<GraphCanvas
-			{controller}
-			{view}
-			onhover={(id, kind) => emphasis.hover(id, kind)}
-			viewState={{
-				selected: [
-					...(store.selection ? [store.selection.id] : []),
-					...(controller.connection ? [controller.connection.sourceId] : [])
-				],
-				emphasis: emphasis.elementIds,
-				rejected: badges.rejected
-			}}
-		/>
-		<ConnectionPreview {controller} {view} />
-		<ActionMenu {controller} {view} />
-		<GraphOverlays {view} />
-		<FilterBadgeLayer {badges} {view} />
-		{#if funnel.open}
-			<FunnelPanel {funnel} onclose={closeFunnel} />
-		{/if}
-		<ExplorationLayer
-			{exploration}
-			onclose={closeExploration}
-			onassume={(remaining) => {
-				if (remaining.length) runQuery();
-			}}
-		/>
-		{#if controller.busy > 0}
-			<div
-				id="loading-overlay"
-				role="status"
-				aria-label="Loading"
-				class="absolute inset-0 z-(--z-dialog) flex items-center justify-center bg-background/40"
+	<div class="flex min-h-0 flex-1 flex-col md:flex-row">
+		<main class="relative min-h-0 flex-1 overflow-hidden" id="cy-wrapper">
+			<GraphCanvas
+				{controller}
+				{view}
+				onhover={(id, kind) => emphasis.hover(id, kind)}
+				viewState={{
+					selected: [
+						...(store.selection ? [store.selection.id] : []),
+						...(controller.connection ? [controller.connection.sourceId] : [])
+					],
+					emphasis: emphasis.elementIds,
+					rejected: badges.rejected
+				}}
+			/>
+			<ConnectionPreview {controller} {view} />
+			<ActionMenu {controller} {view} />
+			<GraphOverlays {view} />
+			<FilterBadgeLayer {badges} {view} />
+			{#if funnel.open}
+				<FunnelPanel {funnel} onclose={closeFunnel} />
+			{/if}
+			<ExplorationLayer
+				{exploration}
+				onclose={closeExploration}
+				onassume={(remaining) => {
+					if (remaining.length) runQuery();
+				}}
+			/>
+			{#if controller.busy > 0}
+				<div
+					id="loading-overlay"
+					role="status"
+					aria-label="Loading"
+					class="absolute inset-0 z-(--z-dialog) flex items-center justify-center bg-background/40"
+				>
+					<span
+						class="size-10 animate-spin rounded-full border-4 border-primary border-t-transparent"
+					></span>
+				</div>
+			{/if}
+		</main>
+		{#if panel}
+			<aside
+				class="max-h-[40dvh] overflow-y-auto border-t bg-surface text-surface-foreground md:max-h-none md:w-96 md:border-t-0 md:border-l"
 			>
-				<span
-					class="size-10 animate-spin rounded-full border-4 border-primary border-t-transparent"
-				></span>
-			</div>
+				{@render panel()}
+			</aside>
 		{/if}
-	</main>
+	</div>
 	<StatusBar {store} {health} />
 	<ResultsSheet {controller} />
 	<SparqlDialog {controller} />

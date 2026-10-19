@@ -1,7 +1,7 @@
 ---
 id: FE-053
 title: Let the query editor start from a given query and endpoint and host an extra panel
-status: READY
+status: DONE
 priority: P1
 type: refactor
 depends_on: [FE-048, DEC-014]
@@ -36,16 +36,41 @@ behavior on `/`.
 
 ## Acceptance criteria
 
-- [ ] `/` is unchanged: the existing Vitest, browser, screenshot and
+- [x] `/` is unchanged: the existing Vitest, browser, screenshot and
       Playwright suites pass without edited oracles or screenshots.
-- [ ] A component test mounts `QueryEditor` with the
+- [x] A component test mounts `QueryEditor` with the
       `fire-speed-at-least-90.query.json` fixture and a locked PokemonGen1
       endpoint: the graph shows that query, the endpoint picker is disabled,
       and the extra panel/toolbar snippets render.
-- [ ] Two editors mounted one after the other do not share graph state.
+- [x] Two editors mounted one after the other do not share graph state.
 
 ## Validation
 
-Focused: `npm --prefix frontend run test:unit -- query-editor`
-(proposed name for the new spec). Closing gate: the new frontend gate
+Focused: `npx vitest run --project client src/lib/features/editor`
+(run in `frontend/`). Closing gate: the new frontend gate
 from the Operational Map.
+
+## Conclusion
+
+- `query-editor.svelte` props: `initial` (QueryDocument), `endpoint` (wins
+  over the document's), `lockEndpoint`, `panel` and `actions` snippets,
+  `onready(store)`. Props are read once at creation (`untrack`); each editor
+  builds its own `QueryStore`.
+- `QueryStore` option `endpointLocked`: `setEndpoint` is a no-op and `load`
+  keeps the endpoint. The toolbar disables the endpoint field (new
+  `disabled` prop on the `combobox` primitive) and `file-actions.svelte`
+  hides Upload Triples, which would replace the endpoint. Upload Query and
+  Export Query stay.
+- The side panel is an `aside` right of the canvas from `md` up (`w-96`),
+  below it on narrow screens.
+- Test: `query-editor.svelte.spec.ts` with `query-editor-harness.svelte`
+  (query client and tooltip providers); `fetch` is stubbed to 503, so no
+  network.
+
+Validation (2026-10-19): new frontend gate (`check`, `lint`, `npm test`)
+passes: Vitest 173 + 10 (3 new), Playwright 84, with screenshots and oracles
+unchanged. No API change, so `test:stack` was not rerun (it passed for
+AUTH-005 on the same backend).
+
+Limitations: the guided tour still offers itself on a hosting page (it
+remembers when it has been seen). Props are not reactive after creation.
