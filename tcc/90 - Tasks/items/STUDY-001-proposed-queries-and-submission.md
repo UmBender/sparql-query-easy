@@ -48,3 +48,24 @@ undecided: default hidden.
 (`frontend/src/lib/features/auth/route-guard.ts`): anonymous visitors go to
 `/login?next=/study` and come back after login. Fill that page here; further
 protected paths go in `PROTECTED_PREFIXES`.
+
+## Proposed changes (T8 brief, 2026-10-19; pending DEC-014)
+
+Not applied; the text above stays as written until the user decides.
+
+- Split: delivered by FE-053 (editor reuse), STUDY-003 (list and open),
+  STUDY-004 (submit, check, history) and STUDY-005 (final-submission lock).
+  On approval, `depends_on` gains those four and this card closes when they
+  are DONE.
+- Added acceptance criteria from the brief:
+  - [ ] At least 3 seeded PokemonGen1 tasks.
+  - [ ] Correctness is computed on the server only; a client value is ignored.
+  - [ ] Per-task comparison rule (DEC-014 Q4) with unit tests.
+  - [ ] Time spent per attempt stored, measured on the server.
+  - [ ] The task page uses the same editor component as `/` (no copy) and
+        starts empty or from the task's starting graph.
+  - [ ] Attempt history for the user's own submissions.
+  - [ ] e2e: log in, solve a seeded task, submit a wrong answer and see
+        feedback (subject to DEC-014 Q1/Q2).
+- Conflicting points (attempts, feedback visibility, task source/admin,
+  set vs multiset, client vs server mapping, LGPD) are in DEC-014.
