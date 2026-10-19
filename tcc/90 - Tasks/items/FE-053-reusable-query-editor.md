@@ -1,7 +1,7 @@
 ---
 id: FE-053
 title: Let the query editor start from a given query and endpoint and host an extra panel
-status: BACKLOG
+status: READY
 priority: P1
 type: refactor
 depends_on: [FE-048, DEC-014]
@@ -15,7 +15,8 @@ updated: 2026-10-19
 
 T8 preparation. The task page (STUDY-003) must use the same editor as `/`,
 not a copy, start empty or from the task's starting graph, keep the task's
-endpoint, and show a task panel and a submit button. Today
+endpoint, and show a task panel and a submit button. The admin task editor
+(STUDY-006) uses it the same way to draw the reference and starting graphs. Today
 `frontend/src/lib/features/editor/query-editor.svelte` builds its own
 `QueryStore` with no arguments, so a caller can pass nothing in.
 Skill: `tcc-refactor` (`tcc-style` for any markup change).

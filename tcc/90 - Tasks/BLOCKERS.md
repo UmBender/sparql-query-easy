@@ -49,17 +49,3 @@ blocked until these are known:
 name, and who issues its TLS certificate (Let's Encrypt or the university)?
 How can a deploy reach it (SSH, VPN, nothing from GitHub)? Where can off-host
 database backups be stored?
-
-## DEC-014 — T8 brief vs STUDY-001
-
-The T8 brief differs from STUDY-001, DEC-013 and D5/D6 in six points.
-FE-053 and STUDY-003/004/005 stay BACKLOG until the user decides.
-
-**Question:** Q1 attempts per task: unlimited until final submission, N, or
-one? Q2 feedback: correct/incorrect + counts, correct/incorrect only, hidden,
-or also the expected answer? Q3 tasks from a seed file synced to a table, or
-admin routes (needs roles)? Q4 per-task `set`/`multiset` comparison, or
-multiset only? Q5 server runs the client-derived request, or a Kotlin port of
-the graph mapping? Q6 keep LGPD deferred for this build, or add consent now?
-(Recommended: unlimited, counts without the answer, seed file, per-task, the
-client-derived request, deferred.)

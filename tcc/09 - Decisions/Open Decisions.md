@@ -16,7 +16,7 @@ The decision index and dated approvals below provide rationale and history.
 | DEC-009 | Resolved | Keep Kotlin `200 application/json {"status":"ok"}` as an approved intentional difference from captured C# `200 text/plain Healthy`; do not claim equivalence. |
 | DEC-012 | Approved (2026-10-18) | Persistence and real-stack tests move from embedded PostgreSQL to Testcontainers `postgres:17-alpine` (user choice B); implemented by QUAL-011. [[../90 - Tasks/items/DEC-012-test-database-engine]]. |
 | DEC-013 | Approved (2026-10-18) | T7 brief changes nothing in AUTH-000: keep `username` (no email), keep `GET /api/auth/session`, keep the application-owned session guard instead of the Ktor auth plugins; roles deferred to T9 (STUDY-002). [[../90 - Tasks/items/DEC-013-t7-auth-brief-differences]]. |
-| DEC-014 | Decision required | T8 brief vs STUDY-001: attempts per task, feedback visibility, seed file vs admin routes, set vs multiset comparison, server-side graph mapping, LGPD for submissions. [[../90 - Tasks/items/DEC-014-t8-study-brief-differences]]. |
+| DEC-014 | Approved (2026-10-19) | T8: unlimited attempts until final submission; verdict + counts, never the answer; admin routes with roles (`ADMIN_USERNAMES`) and participant groups instead of a seed file (supersedes DEC-013 C2); per-task set/multiset; server runs the client-derived request; LGPD deferred. [[../90 - Tasks/items/DEC-014-t8-study-brief-differences]]. |
 
 ## Already documented decisions
 

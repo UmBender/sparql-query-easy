@@ -1,10 +1,10 @@
 ---
 id: DEC-014
 title: Decide how the T8 brief changes the proposed-query contract of STUDY-001
-status: BLOCKED
+status: DONE
 priority: P1
 type: decision
-depends_on: [STUDY-001, DEC-013]
+depends_on: [DEC-013]
 human_gate: true
 created: 2026-10-19
 updated: 2026-10-19
@@ -103,13 +103,43 @@ can have several variables with participant-chosen names. It is part of Q4.
 
 ## Acceptance criteria
 
-- [ ] The user picks an option for Q1–Q6. Record the choices here, in Open
+- [x] The user picks an option for Q1–Q6. Record the choices here, in Open
       Decisions and in Current Contracts (Study row).
-- [ ] FE-053, STUDY-003, STUDY-004 and STUDY-005 are updated to the chosen
+- [x] FE-053, STUDY-003, STUDY-004 and STUDY-005 are updated to the chosen
       options before any of them leaves BACKLOG. A B choice for Q3 or Q6 gets
-      its own card that depends on this one.
-- [ ] STUDY-001's proposed changes (its "Proposed changes" section) are
+      its own card that depends on this one (Q3 B: AUTH-005, STUDY-006,
+      STUDY-007).
+- [x] STUDY-001's proposed changes (its "Proposed changes" section) are
       accepted or rejected; STUDY-001 itself is not rewritten.
+
+## Decision
+
+- 2026-10-19: The user chose:
+  - Q1 A: unlimited attempts per task until the final submission (D6);
+    every attempt is stored and counted.
+  - Q2 A: correct/incorrect plus counts; the expected answer is never shown.
+  - Q3 B: admin routes, not a seed file. The seed file was rejected because
+    it makes the tasks static per deploy, and the user applies different
+    tasks depending on the person. Consequences, also chosen by the user:
+    - roles `participant`/`admin`; the first admin comes from a configured
+      username list (`ADMIN_USERNAMES`). This reopens DEC-013 C2 ("roles
+      with T9") for T8: AUTH-005.
+    - the admin creates tasks by drawing the reference query; the server
+      stores the expected result: STUDY-006.
+    - groups of participants, each with its own ordered tasks; every
+      participant is in one group; the admin assigns them (not random):
+      STUDY-007.
+  - Q4 A: per-task `set` (answer variable, default) or `multiset`
+    comparison, `max_results` default 1000.
+  - Q5 A: the client sends the graph and the request it derives; the server
+    runs it on the task's endpoint and decides correctness.
+  - Q6 A: LGPD stays deferred (D5); store only user id and query data;
+    consent is a go-live item with STUDY-002/LEARN-014.
+- STUDY-001's proposed changes are accepted, except "at least 3 seeded
+  tasks": they become test/e2e data created through STUDY-006, not a
+  production seed.
+- Order: FE-053 and AUTH-005 → STUDY-006 → STUDY-007 → STUDY-003 →
+  STUDY-004 → STUDY-005.
 
 ## Validation
 

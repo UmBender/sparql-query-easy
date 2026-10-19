@@ -30,9 +30,9 @@ Excluded: consent and LGPD (deferred by the user, 2026-10-16).
 ## Pending input
 
 Question content and the before/after placement are the user's.
-Roles (for example participant/admin, who may read or export answers) were
-deferred to this task by DEC-013; decide them here before adding any
-answer-export or admin route.
+Roles `participant`/`admin` arrive earlier with AUTH-005 (DEC-014,
+2026-10-19). Decide here who may read or export answers before adding any
+answer-export route.
 
 ## Acceptance criteria
 

@@ -76,3 +76,5 @@ Nothing changes until then. The gaps that don't conflict are in AUTH-004.
     is an approved deviation from the target architecture's
     "Ktor Authentication" wording.
   No implementation card follows. AUTH-004 is unaffected.
+- 2026-10-19: DEC-014 Q3 B supersedes C2: roles are needed for T8 admin
+  task management and arrive with AUTH-005. C1, C3 and C4 are unchanged.

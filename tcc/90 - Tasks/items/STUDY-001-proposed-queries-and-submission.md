@@ -4,10 +4,10 @@ title: Let a logged-in user solve proposed queries and submit answers once
 status: BACKLOG
 priority: P1
 type: fullstack
-depends_on: [AUTH-001, AUTH-003, AUTH-004, BE-005, FE-046]
+depends_on: [AUTH-001, AUTH-003, AUTH-004, BE-005, FE-046, FE-053, AUTH-005, STUDY-006, STUDY-007, STUDY-003, STUDY-004, STUDY-005]
 human_gate: false
 created: 2026-10-16
-updated: 2026-10-16
+updated: 2026-10-19
 ---
 # Let a logged-in user solve proposed queries and submit answers once
 
@@ -49,13 +49,17 @@ undecided: default hidden.
 `/login?next=/study` and come back after login. Fill that page here; further
 protected paths go in `PROTECTED_PREFIXES`.
 
-## Proposed changes (T8 brief, 2026-10-19; pending DEC-014)
+## Proposed changes (T8 brief, 2026-10-19; accepted by DEC-014)
 
-Not applied; the text above stays as written until the user decides.
+DEC-014 (2026-10-19) accepted these changes; where the text above differs
+(one submission, hidden correctness, repository task file, multiset only),
+DEC-014 wins. Tasks come from admin routes with participant groups
+(AUTH-005, STUDY-006, STUDY-007), so the 3 seeded tasks are test data.
 
-- Split: delivered by FE-053 (editor reuse), STUDY-003 (list and open),
-  STUDY-004 (submit, check, history) and STUDY-005 (final-submission lock).
-  On approval, `depends_on` gains those four and this card closes when they
+- Split: delivered by FE-053 (editor reuse), AUTH-005 (roles), STUDY-006
+  (admin tasks), STUDY-007 (groups), STUDY-003 (list and open), STUDY-004
+  (submit, check, history) and STUDY-005 (final-submission lock).
+  On approval, `depends_on` gains those seven and this card closes when they
   are DONE.
 - Added acceptance criteria from the brief:
   - [ ] At least 3 seeded PokemonGen1 tasks.

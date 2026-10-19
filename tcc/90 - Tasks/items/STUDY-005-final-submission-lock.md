@@ -1,7 +1,7 @@
 ---
 id: STUDY-005
 title: End the proposed queries with a final submission that closes them for that user
-status: BACKLOG
+status: READY
 priority: P1
 type: fullstack
 depends_on: [STUDY-004, DEC-014]
@@ -26,8 +26,6 @@ Skill: `tcc-fullstack`.
 - After finishing, every `/api/study/tasks/**` and submission route answers
   403 with a clear error, and `/study` shows a "study finished" page instead of
   the tasks.
-- If DEC-014 Q1 = B or C, a task also closes when its attempts run out
-  (same 403 rule per task).
 
 Excluded: the questionnaire shown after finishing (STUDY-002).
 

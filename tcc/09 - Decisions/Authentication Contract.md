@@ -41,6 +41,11 @@ guard in `AuthRoutes.kt` instead of the Ktor auth/sessions plugins (same
 behavior, approved deviation from the target-architecture wording). There are
 no roles; roles are planned with T9 (STUDY-002).
 
+DEC-014 (2026-10-19) moves roles forward: `participant` (default) and
+`admin`, the first admin from the configured `ADMIN_USERNAMES` list, never
+from self-registration. `/api/admin/**` will answer 401 without a session and
+403 for a participant (AUTH-005, planned).
+
 AUTH-001 implemented these paths; details (username rules, cookie
 attributes, `403`/`415`/`429`/`503` answers, proxy-aware rate limit) are in
 OpenAPI and [[../03 - Backend/API v1]] under "Accounts and sessions".

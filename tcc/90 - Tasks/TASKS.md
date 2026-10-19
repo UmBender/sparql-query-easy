@@ -104,11 +104,14 @@ Ordered by dependencies, then priority among selection candidates. See [worker r
 | FE-047 | DONE | P1 | frontend | [Show the filter funnel with switchable steps and kept/total badges](<items/FE-047-filter-funnel-and-badges.md>) |
 | FE-048 | DONE | P1 | frontend | [Upload triples, load and export queries, auto layout and the guided tour](<items/FE-048-editor-utilities.md>) |
 | QUAL-007 | REVIEW | P1 | quality | [Add the new frontend test layers and a GitHub Actions CI for all gates](<items/QUAL-007-new-frontend-tests-and-ci.md>) |
-| DEC-014 | BLOCKED | P1 | decision | [Decide how the T8 brief changes the proposed-query contract of STUDY-001](<items/DEC-014-t8-study-brief-differences.md>) |
-| FE-053 | BACKLOG | P1 | refactor | [Let the query editor start from a given query and endpoint and host an extra panel](<items/FE-053-reusable-query-editor.md>) |
-| STUDY-003 | BACKLOG | P1 | fullstack | [List the proposed tasks and open one in the editor](<items/STUDY-003-open-proposed-task.md>) |
-| STUDY-004 | BACKLOG | P1 | fullstack | [Submit a drawn query as an answer, check it on the server and show the attempt history](<items/STUDY-004-submit-and-check-answer.md>) |
-| STUDY-005 | BACKLOG | P1 | fullstack | [End the proposed queries with a final submission that closes them for that user](<items/STUDY-005-final-submission-lock.md>) |
+| DEC-014 | DONE | P1 | decision | [Decide how the T8 brief changes the proposed-query contract of STUDY-001](<items/DEC-014-t8-study-brief-differences.md>) |
+| FE-053 | READY | P1 | refactor | [Let the query editor start from a given query and endpoint and host an extra panel](<items/FE-053-reusable-query-editor.md>) |
+| AUTH-005 | READY | P1 | security | [Give accounts a participant or admin role and guard the admin routes](<items/AUTH-005-admin-role-and-guard.md>) |
+| STUDY-006 | READY | P1 | fullstack | [Let an admin create, edit and retire proposed tasks by drawing the reference query](<items/STUDY-006-admin-task-management.md>) |
+| STUDY-007 | READY | P1 | fullstack | [Let an admin put participants in groups and give each group its own tasks](<items/STUDY-007-participant-groups.md>) |
+| STUDY-003 | READY | P1 | fullstack | [List the proposed tasks assigned to the user and open one in the editor](<items/STUDY-003-open-proposed-task.md>) |
+| STUDY-004 | READY | P1 | fullstack | [Submit a drawn query as an answer, check it on the server and show the attempt history](<items/STUDY-004-submit-and-check-answer.md>) |
+| STUDY-005 | READY | P1 | fullstack | [End the proposed queries with a final submission that closes them for that user](<items/STUDY-005-final-submission-lock.md>) |
 | STUDY-001 | BACKLOG | P1 | fullstack | [Let a logged-in user solve proposed queries and submit answers once](<items/STUDY-001-proposed-queries-and-submission.md>) |
 | STUDY-002 | BACKLOG | P1 | fullstack | [Show two questionnaires to logged-in users and store their answers](<items/STUDY-002-questionnaires.md>) |
 | OPS-006 | DONE | P1 | operations | [Run db, backend and web together with Docker Compose](<items/OPS-006-docker-compose-stack.md>) |

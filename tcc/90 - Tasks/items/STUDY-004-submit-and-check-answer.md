@@ -1,7 +1,7 @@
 ---
 id: STUDY-004
 title: Submit a drawn query as an answer, check it on the server and show the attempt history
-status: BACKLOG
+status: READY
 priority: P1
 type: fullstack
 depends_on: [STUDY-003, DEC-014]
@@ -19,18 +19,20 @@ set using the task's comparison rule, stores the attempt and answers with the
 feedback DEC-014 allows. A correctness value from the client is never read.
 Skill: `tcc-fullstack`.
 
-Attempt limits (Q1), feedback content (Q2), comparison (Q4) and what the
-client sends (Q5) follow DEC-014. Text below states the recommended options;
-update it with the user's answers before READY.
+DEC-014 (2026-10-19): unlimited attempts until the final submission (Q1);
+feedback is correct/incorrect plus counts, never the expected answer (Q2);
+per-task `set`/`multiset` comparison (Q4); the client sends the graph and
+the request it derives, the server runs it and decides correctness (Q5).
 
 ## Scope
 
 - Pure comparison module in the application layer (no Jena types): modes
   `set` on the answer variable and `multiset` over rows; RDF terms compared as
   typed terms (IRI, literal with datatype/language), not display labels.
-  Returns correct plus counts (matched, missing, extra) for feedback.
-- Flyway `V4__study_submissions.sql`: `study_submission` (id, user_id →
-  `app_user`, task_id → `study_task`, graph jsonb (FE-042), request jsonb,
+  Returns correct plus counts (matched, missing, extra) for feedback. The
+  expected snapshot comes from STUDY-006.
+- Flyway migration `study_submission` (id, user_id →
+  `app_user`, task_id → `study_task`, task revision (STUDY-006), graph jsonb (FE-042), request jsonb,
   generated SPARQL, answer variable, result summary jsonb, correct, feedback,
   invalid (query failed), created_at, time_spent_ms). Time spent is measured
   on the server from the first open of the task by that user (recorded by
@@ -44,8 +46,12 @@ update it with the user's answers before READY.
   feedback display, attempt history list (Superforms + Zod only if a form is
   needed); OpenAPI snapshot and generated types.
 
+- Feedback text in the response: verdict plus counts (for example "3 of 7
+  expected results; 2 extra"); the response never contains expected rows.
+
 Excluded: final submission lock (STUDY-005); showing the expected answer
-unless DEC-014 Q2 = D; export of submissions (roles with STUDY-002).
+(DEC-014 Q2); export of submissions (STUDY-002); attempt limits (Q1:
+unlimited).
 
 ## Acceptance criteria
 
@@ -63,7 +69,8 @@ unless DEC-014 Q2 = D; export of submissions (roles with STUDY-002).
       external services.
 - [ ] e2e (`test:stack`): log in, open a seeded task, submit a correct graph
       and see it accepted; submit a wrong graph and see the feedback and both
-      attempts in the history (shape adjusted to DEC-014 Q1/Q2).
+      attempts in the history.
+- [ ] Each stored attempt carries the task revision it was checked against.
 
 ## Validation
 
