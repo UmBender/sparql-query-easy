@@ -85,4 +85,18 @@ Operational Map). On GitHub: the runs above, after the user pushes.
   three; each run lists `playwright-reports`; a branch with the snapshot
   rename and one with a token change turn red. That also closes QUAL-007's
   open criterion.
+- 2026-10-20, first GitHub runs (main pushed with the user's authorization):
+  `frontend-fast`, `frontend-browser` and `compose-smoke` green on `main`
+  (run 39509582323); `kotlin` red. Added a failure-only step that turns failed
+  JUnit tests and ktlint/detekt lines into public annotations (job logs need
+  a login). It named `PostgresDatabaseTest` "a ready database lost after
+  startup ... ready again when it returns": expected Ready, got Unavailable.
+  Reproduced locally 8/8 with the test pinned to 2 CPUs: after
+  `DROP DATABASE ... WITH (FORCE)` Hikari backs off, so the first check
+  after `CREATE DATABASE` can still time out and the next one is Ready (probe:
+  Unavailable, then Ready 29 times). The product recovers within one more
+  retry interval; the test assumed exactly one check. It now requires Ready
+  within 5 retry intervals (still fails if the database never returns);
+  5/5 pinned runs and the Kotlin gate passed. Pre-existing since BE-007; the
+  workflow had never run on GitHub before.
 - Commit: completion commit for this task.

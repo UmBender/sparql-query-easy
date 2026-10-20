@@ -116,7 +116,14 @@ class PostgresDatabaseTest {
             TestPostgres.recreate(settings)
             now = 20
             it.poll().shouldBeInstanceOf<PersistenceStatus.Unavailable>()
-            it.poll() shouldBe PersistenceStatus.Ready
+            // Hikari backs off after the lost database's failed connections, so on a slow machine (2 CPUs, CI)
+            // the first check after it returns can still fail; it is ready again within a few retry intervals.
+            val afterReturn =
+                (1..RECOVERY_CHECKS).asSequence().map { check ->
+                    now = 20L + 10 * check
+                    it.poll()
+                }
+            afterReturn.firstOrNull { status -> status == PersistenceStatus.Ready } shouldBe PersistenceStatus.Ready
         }
     }
 
@@ -131,5 +138,6 @@ class PostgresDatabaseTest {
 
     private companion object {
         const val HISTORY = "SELECT version FROM flyway_schema_history WHERE success ORDER BY installed_rank"
+        const val RECOVERY_CHECKS = 5
     }
 }
