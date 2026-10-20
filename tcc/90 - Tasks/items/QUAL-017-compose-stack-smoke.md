@@ -95,4 +95,8 @@ Operational Map plus `docker compose up --build` per the runbook.
   packaging gates).
 - REVIEW (human gate): confirm on GitHub that the job runs on `main` and
   nightly and not on pull requests or other branches.
+- GitHub evidence: `compose-smoke` green on `main` in runs 39509582323 and
+  39513553250 and skipped on the pushes of `t10-red-contract` and
+  `t10-red-screenshot` (other branches). Still to see: a pull request run
+  skips it and the nightly run runs it.
 - Commit: completion commit for this task.

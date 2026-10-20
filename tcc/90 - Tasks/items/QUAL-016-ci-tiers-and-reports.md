@@ -99,4 +99,14 @@ Operational Map). On GitHub: the runs above, after the user pushes.
   within 5 retry intervals (still fails if the database never returns);
   5/5 pinned runs and the Kotlin gate passed. Pre-existing since BE-007; the
   workflow had never run on GitHub before.
+- GitHub evidence: run 39513553250 on `main` (`cf6a7cc`) green in all four
+  jobs with artifacts `playwright-reports` and `compose-playwright-report`.
+  Push of `t10-red-contract` (snapshot `hasMore` renamed only): `kotlin` and
+  `frontend-fast` (`test:coverage`) red, `frontend-browser` and
+  `compose-smoke` skipped (run 39509870303), so the branch tier and the
+  contract check hold. Push of `t10-red-screenshot` (primary token changed):
+  `frontend-fast` green, browser and compose jobs skipped (run 39509922477).
+  Open: a pull request from `t10-red-screenshot` must turn `test:screens`
+  red; opening it needs the user (no `gh` or token here). Both branches are
+  deleted after that check.
 - Commit: completion commit for this task.
