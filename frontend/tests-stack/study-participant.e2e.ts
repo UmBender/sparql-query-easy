@@ -2,10 +2,12 @@
  * The participant's side of the study on the real stack (STUDY-003): the
  * tasks of their group in order, a task page with the statement and the
  * editor on the starting graph with the endpoint locked, and the note for a
- * participant without a group. Test data comes from the admin API.
+ * participant without a group. STUDY-004: a correct and a wrong answer, the
+ * server's feedback and the attempt history. Test data comes from the admin API.
  */
+import { readFileSync } from 'node:fs';
 import { expect, test } from '@playwright/test';
-import { guardOffline, loginAs, seedStudy } from './support.js';
+import { FIRE_SPEED, guardOffline, loginAs, seedStudy } from './support.js';
 
 let unexpected: string[];
 
@@ -52,4 +54,41 @@ test('a participant without a group is told no tasks are assigned', async ({ pag
 	await expect(page.getByTestId('no-tasks')).toContainText('No tasks are assigned to you yet');
 	await page.goto('/study/not-mine');
 	await expect(page.getByRole('alert')).toHaveText('Task not found');
+});
+
+test('a participant submits a correct and a wrong answer and sees the feedback and both attempts', async ({
+	page,
+	browser
+}) => {
+	const participant = `answerer-${Date.now()}`;
+	const keys = await seedStudy(browser, participant);
+	await loginAs(page.request, participant);
+
+	await page.goto(`/study/${keys[1]}`);
+	await expect(page.locator('#status-nodes')).toHaveText('Nodes: 3');
+	await expect(page.getByRole('radio', { name: '?pokemon' })).toBeChecked();
+	await page.locator('#submit-answer-btn').click();
+	await expect(page.getByTestId('answer-feedback')).toHaveText(
+		/^Correct: all \d+ expected results\.$/
+	);
+
+	// The same query without its speed filter: every Fire-type Pokémon.
+	const saved = JSON.parse(readFileSync(FIRE_SPEED, 'utf8'));
+	for (const node of saved.nodes) if (node.kind === 'valueVariable') node.filter = null;
+	await page.locator('#upload-json').setInputFiles({
+		name: 'fire-any-speed.query.json',
+		mimeType: 'application/json',
+		buffer: Buffer.from(JSON.stringify(saved))
+	});
+	await page.locator('#submit-answer-btn').click();
+	await expect(page.getByTestId('answer-feedback')).toHaveText(
+		/^Incorrect: (\d+) of \1 expected results; \d+ extra\.$/
+	);
+
+	const history = page.getByTestId('attempt-history').getByRole('listitem');
+	await expect(history).toHaveCount(2);
+	await expect(history.nth(0)).toContainText('#2 · Incorrect');
+	await expect(history.nth(1)).toContainText('#1 · Correct');
+	await page.reload();
+	await expect(page.getByTestId('attempt-history').getByRole('listitem')).toHaveCount(2);
 });

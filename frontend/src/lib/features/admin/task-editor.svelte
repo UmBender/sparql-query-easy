@@ -53,7 +53,7 @@
 		start?.comparison === 'multiset' ? 'multiset' : 'set'
 	);
 	let maxResults = $state(start?.maxResults ?? 1000);
-	let answerVariable = $state(start?.referenceQuery.variableName ?? '');
+	let answerVariable = $state(start?.referenceQuery?.variableName ?? '');
 	let useStarting = $state(!!start?.startingGraph);
 	let mode = $state<'reference' | 'starting'>('reference');
 	const documents: { reference?: QueryDocument; starting?: QueryDocument } = {

@@ -39,7 +39,7 @@ private class JsonbColumnType : ColumnType<String>() {
         }
 }
 
-private fun Table.jsonb(name: String): Column<String> = registerColumn(name, JsonbColumnType())
+internal fun Table.jsonb(name: String): Column<String> = registerColumn(name, JsonbColumnType())
 
 internal object StudyTasks : Table("study_task") {
     val id = long("id").autoIncrement()

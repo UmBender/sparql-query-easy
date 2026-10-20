@@ -607,6 +607,38 @@ tasks of their group (STUDY-007).
   `study_task_open` (`V6__study_task_opens.sql`); later opens keep the first
   time. STUDY-004 measures time spent from it.
 
+## Answers and attempts (participant, STUDY-004)
+
+| Route | Body | Success | Errors |
+|---|---|---|---|
+| `POST /api/study/tasks/{key}/submissions` | a drawn query `{"graph","query"}` (as for task references) | `201` the attempt | `400` malformed body (not stored), `404` task not open to the caller, `403`/`415` CSRF |
+| `GET /api/study/submissions?task={key}` | — | `200` the caller's attempts at the task, oldest first | `400` no `task`, `404` unknown key |
+
+- An attempt is `{"attempt","correct","invalid","feedback","matched","missing",
+  "extra","expectedCount","taskRevision","timeSpentMs","createdAt"}`;
+  `attempt` numbers the caller's attempts at the task from 1. It never holds
+  the expected values (DEC-014 Q2 A).
+- The server runs `query` on the task's endpoint with the task's cap (any
+  client endpoint or limit is ignored), compares the answer variable's terms
+  with the stored expected result and stores graph, request, generated
+  SPARQL, answer variable, the result terms and counts, the verdict, the task
+  revision and the time since the first open (`study_submission`,
+  `V7__study_submissions.sql`). Body fields such as `correct` or `expected`
+  are ignored. Attempts are unlimited (Q1 A).
+- Comparison (Q4): typed terms (IRI; literal by lexical form, datatype and
+  language, the tag regardless of case). `set`: distinct values; `multiset`:
+  values with repetitions. `matched` + `missing` = `expectedCount`; `extra`
+  counts answer values not expected.
+- Feedback: `Correct: all N expected results.`, `Incorrect: M of N expected
+  results[; X extra].`; an answer with more rows than the cap is incorrect
+  (`Incorrect: the query returns more than C results; the expected answer has
+  N.`).
+- A query that cannot be built or run is stored as an invalid attempt
+  (`201`, `invalid: true`, counts `null`, feedback `The query could not run:
+  …`), not a server error.
+- `timeSpentMs` is measured from the first `GET /api/study/tasks/{key}` (a
+  submission without one records the open first, so it counts 0).
+
 ## Endpoint selection
 
 `endpointUrl` accepts the built-in identifiers `CampeonatoBrasileiro2023` and

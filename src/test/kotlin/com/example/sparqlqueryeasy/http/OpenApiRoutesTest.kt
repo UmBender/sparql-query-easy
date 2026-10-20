@@ -103,6 +103,9 @@ class OpenApiRoutesTest {
                     // STUDY-003
                     "/api/study/tasks" to setOf("get"),
                     "/api/study/tasks/{key}" to setOf("get"),
+                    // STUDY-004
+                    "/api/study/tasks/{key}/submissions" to setOf("post"),
+                    "/api/study/submissions" to setOf("get"),
                 ),
                 document.operationInventory(),
             )

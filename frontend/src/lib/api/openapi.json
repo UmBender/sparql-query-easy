@@ -2597,6 +2597,190 @@
                     }
                 }
             }
+        },
+        "/api/study/tasks/{key}/submissions": {
+            "post": {
+                "operationId": "studySubmitAnswer",
+                "tags": [
+                    "Study"
+                ],
+                "summary": "Submit a drawn query as an answer",
+                "description": "The body is the drawn graph (formatVersion 1) and the request derived from it, whose variableName is the answer variable. The server runs it on the task's endpoint with the task's result cap, compares with the stored expected result (set or multiset) and stores the attempt with the task revision and the time since the first open. Attempts are unlimited. Unknown fields such as `correct` are ignored. A query that cannot run is stored as an invalid attempt (201, invalid true). The response never contains expected values. Same origin only (403) and JSON only (415). Requires a session (401 otherwise).",
+                "parameters": [
+                    {
+                        "name": "key",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/DrawnQueryHttpRequest"
+                            }
+                        }
+                    },
+                    "required": true
+                },
+                "responses": {
+                    "201": {
+                        "description": "The stored attempt.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "required": [
+                                        "data"
+                                    ],
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/components/schemas/StudySubmissionHttpResponse"
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Malformed body: missing graph or query, or a request that is not a query.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorResponse"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "No active task with this key in the caller's group.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorResponse"
+                                }
+                            }
+                        }
+                    },
+                    "415": {
+                        "description": "The body is not application/json.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorResponse"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "No valid session.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorResponse"
+                                }
+                            }
+                        }
+                    },
+                    "503": {
+                        "description": "The database is not configured or unreachable.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorResponse"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/study/submissions": {
+            "get": {
+                "operationId": "studyListSubmissions",
+                "tags": [
+                    "Study"
+                ],
+                "summary": "List my attempts at a task",
+                "description": "The caller's own attempts at the task given by `?task=<key>`, oldest first. Requires a session (401 otherwise).",
+                "parameters": [
+                    {
+                        "name": "task",
+                        "in": "query",
+                        "description": "The task key.",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "The attempts.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "required": [
+                                        "data"
+                                    ],
+                                    "properties": {
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "$ref": "#/components/schemas/StudySubmissionHttpResponse"
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "The task parameter is missing.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorResponse"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "No task has this key.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorResponse"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "No valid session.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorResponse"
+                                }
+                            }
+                        }
+                    },
+                    "503": {
+                        "description": "The database is not configured or unreachable.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorResponse"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
         }
     },
     "components": {
@@ -3280,7 +3464,10 @@
                 "title": "JsonElement"
             },
             "AnswerQueryHttpRequest": {
-                "type": "object",
+                "type": [
+                    "object",
+                    "null"
+                ],
                 "title": "AnswerQueryHttpRequest",
                 "properties": {
                     "variableName": {
@@ -3308,10 +3495,7 @@
                 }
             },
             "DrawnQueryHttpRequest": {
-                "type": [
-                    "object",
-                    "null"
-                ],
+                "type": "object",
                 "title": "DrawnQueryHttpRequest",
                 "properties": {
                     "graph": {
@@ -3673,6 +3857,69 @@
                         "additionalProperties": {
                             "$ref": "#/components/schemas/JsonElement"
                         }
+                    }
+                }
+            },
+            "StudySubmissionHttpResponse": {
+                "type": "object",
+                "title": "StudySubmissionHttpResponse",
+                "required": [
+                    "attempt",
+                    "correct",
+                    "invalid",
+                    "feedback",
+                    "taskRevision",
+                    "timeSpentMs",
+                    "createdAt"
+                ],
+                "properties": {
+                    "attempt": {
+                        "type": "integer",
+                        "description": "1 for the user's first attempt at the task, then 2, 3, …"
+                    },
+                    "correct": {
+                        "type": "boolean"
+                    },
+                    "invalid": {
+                        "type": "boolean",
+                        "description": "The query could not be built or run; the counts are null."
+                    },
+                    "feedback": {
+                        "type": "string"
+                    },
+                    "matched": {
+                        "type": [
+                            "integer",
+                            "null"
+                        ]
+                    },
+                    "missing": {
+                        "type": [
+                            "integer",
+                            "null"
+                        ]
+                    },
+                    "extra": {
+                        "type": [
+                            "integer",
+                            "null"
+                        ]
+                    },
+                    "expectedCount": {
+                        "type": [
+                            "integer",
+                            "null"
+                        ]
+                    },
+                    "taskRevision": {
+                        "type": "integer"
+                    },
+                    "timeSpentMs": {
+                        "type": "integer",
+                        "description": "Milliseconds since the user first opened the task, measured on the server."
+                    },
+                    "createdAt": {
+                        "type": "string"
                     }
                 }
             }

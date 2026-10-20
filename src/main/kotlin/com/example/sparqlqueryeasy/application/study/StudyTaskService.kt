@@ -5,14 +5,15 @@ import com.example.sparqlqueryeasy.application.endpoints.EndpointContextResolver
 import com.example.sparqlqueryeasy.application.query.GeneralQueryRequest
 import com.example.sparqlqueryeasy.application.query.GeneralQueryService
 import com.example.sparqlqueryeasy.application.query.GeneralQueryTerms
+import com.example.sparqlqueryeasy.domain.model.RdfValue
 import kotlinx.serialization.json.Json
 import java.time.Clock
 
 sealed interface AnswerRun {
     data class Complete(val result: ExpectedResult) : AnswerRun
 
-    /** More than the task's result cap came back, so the result would be cut. */
-    data class Truncated(val sparql: String, val maxResults: Int) : AnswerRun
+    /** More than the task's result cap came back, so the result is cut; [values] holds the first rows. */
+    data class Truncated(val sparql: String, val maxResults: Int, val values: List<RdfValue>) : AnswerRun
 
     /** The request or query was invalid or failed on the endpoint ([sparql] null when no query was built). */
     data class Failed(val sparql: String?, val diagnostic: String) : AnswerRun
@@ -42,7 +43,7 @@ class StudyQueryRunner(
             is GeneralQueryTerms.Failure -> AnswerRun.Failed(result.query, result.diagnostic)
             is GeneralQueryTerms.Success ->
                 if (result.values.size > maxResults) {
-                    AnswerRun.Truncated(result.query, maxResults)
+                    AnswerRun.Truncated(result.query, maxResults, result.values)
                 } else {
                     AnswerRun.Complete(ExpectedResult(result.query, result.values))
                 }

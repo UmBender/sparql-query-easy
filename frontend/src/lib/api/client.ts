@@ -37,6 +37,7 @@ export type TaskPreview = Schemas['TaskPreviewHttpResponse'];
 export type StudyGroup = Schemas['StudyGroupHttpResponse'];
 export type Participant = Schemas['ParticipantHttpResponse'];
 export type StudyTaskSummary = Schemas['StudyTaskSummaryHttpResponse'];
+export type StudySubmission = Schemas['StudySubmissionHttpResponse'];
 export type StudyTask = Omit<Schemas['StudyTaskHttpResponse'], 'startingGraph'> & {
 	startingGraph: SavedQueryV1 | null;
 };
@@ -425,6 +426,22 @@ export function createApiClient({
 					'Opening the task failed',
 					options,
 					isTask
+				),
+			/** STUDY-004: the server checks the answer; the client never sends a verdict. */
+			submit: (key: string, answer: DrawnQuery) =>
+				post<StudySubmission>(
+					`/api/study/tasks/${encodeURIComponent(key)}/submissions`,
+					answer,
+					'Submitting the answer failed',
+					{},
+					(data) => typeof (data as StudySubmission | null)?.correct === 'boolean'
+				),
+			submissions: (key: string, options?: Options) =>
+				get<StudySubmission[]>(
+					`/api/study/submissions?${new URLSearchParams({ task: key })}`,
+					'Attempt history failed',
+					options,
+					isArray
 				)
 		},
 		/** POST /api/auth/logout (204, no body). */

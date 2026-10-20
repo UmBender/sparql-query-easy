@@ -74,9 +74,11 @@ internal class StudyTestContext(
     suspend fun taskKeysFor(username: String): List<String> = study.groups.activeTasksFor(userId(username)).map { it.key }
 }
 
+/** A client with [name]'s session: registered, or logged in when the account exists. */
 internal suspend fun ApplicationTestBuilder.userClient(name: String): HttpClient =
     createClient { install(HttpCookies) }.also {
-        it.json("/api/auth/register", """{"username":"$name","password":"correct horse"}""")
+        val credentials = """{"username":"$name","password":"correct horse"}"""
+        if (it.json("/api/auth/register", credentials).status.value == 409) it.json("/api/auth/login", credentials)
     }
 
 internal suspend fun HttpClient.json(

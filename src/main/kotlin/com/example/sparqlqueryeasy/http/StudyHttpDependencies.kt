@@ -8,6 +8,7 @@ import com.example.sparqlqueryeasy.persistence.DatabaseConnector
 import com.example.sparqlqueryeasy.persistence.PostgresStudyGroupStore
 import com.example.sparqlqueryeasy.persistence.PostgresStudyProgressStore
 import com.example.sparqlqueryeasy.persistence.PostgresStudyStore
+import com.example.sparqlqueryeasy.persistence.PostgresStudySubmissionStore
 import java.time.Clock
 
 /** The proposed-task study (STUDY-006/007, STUDY-003/004/005). */
@@ -26,5 +27,12 @@ fun studyHttpDependencies(
     StudyHttpDependencies(
         StudyTaskService(PostgresStudyStore(database), runner, clock),
         StudyGroupService(PostgresStudyGroupStore(database), clock),
-        StudyService(PostgresStudyGroupStore(database), PostgresStudyProgressStore(database), clock),
+        StudyService(
+            PostgresStudyGroupStore(database),
+            PostgresStudyProgressStore(database),
+            PostgresStudySubmissionStore(database),
+            PostgresStudyStore(database),
+            runner,
+            clock,
+        ),
     )

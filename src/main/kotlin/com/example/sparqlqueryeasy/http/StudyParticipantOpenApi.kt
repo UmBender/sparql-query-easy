@@ -2,6 +2,7 @@
 
 package com.example.sparqlqueryeasy.http
 
+import io.ktor.http.ContentType
 import io.ktor.http.HttpStatusCode
 import io.ktor.openapi.Responses
 import io.ktor.openapi.jsonSchema
@@ -42,6 +43,72 @@ internal fun Route.documentStudyGetTask(): Route =
             }
             HttpStatusCode.NotFound {
                 description = "No active task with this key in the caller's group."
+                schema = jsonSchema<ErrorResponse>()
+            }
+            sessionErrors()
+        }
+    }
+
+internal fun Route.documentStudySubmit(): Route =
+    describe {
+        operationId = "studySubmitAnswer"
+        summary = "Submit a drawn query as an answer"
+        description =
+            "The body is the drawn graph (formatVersion 1) and the request derived from it, whose variableName is " +
+            "the answer variable. The server runs it on the task's endpoint with the task's result cap, compares " +
+            "with the stored expected result (set or multiset) and stores the attempt with the task revision and " +
+            "the time since the first open. Attempts are unlimited. Unknown fields such as `correct` are ignored. " +
+            "A query that cannot run is stored as an invalid attempt (201, invalid true). The response never " +
+            "contains expected values. Same origin only (403) and JSON only (415). $SESSION_NOTE"
+        tag("Study")
+        requestBody {
+            required = true
+            ContentType.Application.Json { schema = jsonSchema<DrawnQueryHttpRequest>() }
+        }
+        responses {
+            HttpStatusCode.Created {
+                description = "The stored attempt."
+                schema = jsonSchema<DataResponse<StudySubmissionHttpResponse>>()
+            }
+            HttpStatusCode.BadRequest {
+                description = "Malformed body: missing graph or query, or a request that is not a query."
+                schema = jsonSchema<ErrorResponse>()
+            }
+            HttpStatusCode.NotFound {
+                description = "No active task with this key in the caller's group."
+                schema = jsonSchema<ErrorResponse>()
+            }
+            HttpStatusCode.UnsupportedMediaType {
+                description = "The body is not application/json."
+                schema = jsonSchema<ErrorResponse>()
+            }
+            sessionErrors()
+        }
+    }
+
+internal fun Route.documentStudyListSubmissions(): Route =
+    describe {
+        operationId = "studyListSubmissions"
+        summary = "List my attempts at a task"
+        description = "The caller's own attempts at the task given by `?task=<key>`, oldest first. $SESSION_NOTE"
+        tag("Study")
+        parameters {
+            query("task") {
+                description = "The task key."
+                required = true
+            }
+        }
+        responses {
+            HttpStatusCode.OK {
+                description = "The attempts."
+                schema = jsonSchema<DataResponse<List<StudySubmissionHttpResponse>>>()
+            }
+            HttpStatusCode.BadRequest {
+                description = "The task parameter is missing."
+                schema = jsonSchema<ErrorResponse>()
+            }
+            HttpStatusCode.NotFound {
+                description = "No task has this key."
                 schema = jsonSchema<ErrorResponse>()
             }
             sessionErrors()
