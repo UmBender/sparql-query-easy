@@ -92,7 +92,10 @@ Both Playwright suites drive the editor, a proposed task and the
 questionnaires through the page objects in `tests/support/pages/`
 (QUAL-013); canvas gestures find nodes by id through the e2e hook, at any
 zoom and pan. `.github/workflows/ci.yml` runs
-check, lint, `npm test` and `test:stack` with the Kotlin and legacy gates.
+the Kotlin gate, check, lint and Vitest on every push, and the Playwright
+suites (`test:e2e`, `test:screens`, `test:stack`) on pull requests, `main`
+and nightly (QUAL-016); each suite's HTML report is kept as the
+`playwright-reports` artifact.
 
 Shared test helpers (QUAL-012, `src/lib/testing/`, test-only):
 `createTestStore` (a QueryStore with a fixed clock, optionally from a saved

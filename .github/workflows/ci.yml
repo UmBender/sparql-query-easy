@@ -3,19 +3,27 @@
 # Ktor-backed suites start the built distribution on a local port. PostgreSQL
 # runs as postgres:17-alpine through Testcontainers on the runner's Docker
 # (QUAL-011); each job pre-pulls it so a pull failure is reported on its own.
+#
+# When (DEC-016 Q2 A, QUAL-016): every job on pull requests, pushes to main,
+# the nightly schedule and manual runs. A push to any other branch runs only
+# the fast jobs (Kotlin with the OpenAPI contract, frontend check, lint and
+# Vitest); the browser job is skipped there.
 name: CI
 
 on:
   push:
-    branches: [main]
   pull_request:
+  schedule:
+    # Nightly at 03:17 UTC, off the hour to avoid the scheduler's peak.
+    - cron: '17 3 * * *'
   workflow_dispatch:
 
 permissions:
   contents: read
 
 concurrency:
-  group: ci-${{ github.ref }}
+  # A nightly run never cancels a push run on main, nor the other way round.
+  group: ci-${{ github.event_name }}-${{ github.ref }}
   cancel-in-progress: true
 
 env:
@@ -48,10 +56,35 @@ jobs:
           path: build/reports/
           retention-days: 7
 
-  frontend:
-    name: New frontend (check, lint, test, stack)
+  frontend-fast:
+    name: New frontend (check, lint, Vitest, contract)
     runs-on: ubuntu-24.04
-    timeout-minutes: 40
+    timeout-minutes: 20
+    defaults:
+      run:
+        working-directory: frontend
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+      # npm 10 reads this lockfile as out of sync (peer resolution); npm 11 installs it.
+      - run: npx --yes npm@11 ci
+      # Vitest browser mode (component tests) runs in Firefox.
+      - run: npx playwright install --with-deps firefox
+      - run: npm run check
+      - run: npm run lint
+      # Vitest server with domain coverage (includes the OpenAPI contract and fixture shapes), then components.
+      - run: npm run test:coverage
+      - run: npx vitest run --project client
+
+  frontend-browser:
+    name: New frontend (Playwright, screens, axe, stack)
+    if: github.event_name != 'push' || github.ref == 'refs/heads/main'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 45
     defaults:
       run:
         working-directory: frontend
@@ -71,20 +104,28 @@ jobs:
           path: /tmp/sparql-query-easy-gradle
           key: gradle-${{ runner.os }}-${{ hashFiles('build.gradle.kts', 'settings.gradle.kts', 'gradle.properties', 'gradle/wrapper/gradle-wrapper.properties') }}
           restore-keys: gradle-${{ runner.os }}-
-      # npm 10 reads this lockfile as out of sync (peer resolution); npm 11 installs it.
       - run: npx --yes npm@11 ci
       - run: npx playwright install --with-deps firefox
-      - run: npm run check
-      - run: npm run lint
-      # Vitest (server with coverage, then browser components), build, Playwright with screenshots and axe.
-      - run: npm test
+      # Build, then the offline Playwright suite: flows, canvas screenshots, axe on every main route.
+      - run: npm run test:e2e
       # QUAL-014: full-page screenshots in the pinned Playwright image (same fonts as the baselines).
       - name: Pull the screenshot image
-        run: docker pull mcr.microsoft.com/playwright:v$(node -p "require('./package.json').devDependencies['@playwright/test']")-noble
-      - run: npm run test:screens
+        if: ${{ !cancelled() }}
+        run: docker pull "mcr.microsoft.com/playwright:v$(node -p "require('./package.json').devDependencies['@playwright/test']")-noble"
+      - if: ${{ !cancelled() }}
+        run: npm run test:screens
       - name: Pull the test PostgreSQL image (QUAL-011)
+        if: ${{ !cancelled() }}
         run: docker pull postgres:17-alpine
-      - run: npm run test:stack
+      - if: ${{ !cancelled() }}
+        run: npm run test:stack
+      # QUAL-016: the HTML report of each Playwright suite (e2e, screens, stack) on every run.
+      - if: ${{ !cancelled() }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-reports
+          path: frontend/playwright-report/
+          retention-days: 14
       - if: failure()
         uses: actions/upload-artifact@v4
         with:

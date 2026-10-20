@@ -1,7 +1,7 @@
 ---
 id: QUAL-016
 title: Run CI per the DEC-016 tiers and keep every Playwright report as an artifact
-status: BACKLOG
+status: REVIEW
 priority: P1
 type: quality
 depends_on: [QUAL-007, DEC-016]
@@ -54,3 +54,35 @@ push, which is not authorized by planning or local commits. Skill:
 
 Locally: the Kotlin and frontend gates plus `test:stack` (CI row of the
 Operational Map). On GitHub: the runs above, after the user pushes.
+
+## Execution log
+
+- 2026-10-20: `.github/workflows/ci.yml`: triggers `push` (any branch),
+  `pull_request`, nightly `schedule` (`17 3 * * *`), `workflow_dispatch`;
+  concurrency per event and ref, so a nightly run and a push to `main` do not
+  cancel each other. Jobs: `kotlin` (unchanged; includes the OpenAPI snapshot
+  test), `frontend-fast` (npm ci, Firefox, check, lint, `test:coverage`,
+  Vitest components), `frontend-browser` (`if: event != push || ref ==
+  main`: `test:e2e`, then `test:screens` and `test:stack` even after an
+  earlier suite failed, so every report is produced). `playwright-reports`
+  (all of `frontend/playwright-report/`) is uploaded unless cancelled,
+  `test-results/` on failure.
+- Playwright configs: HTML reporter per suite (`playwright-report/e2e`,
+  `stack`, `screens`), stack results under `test-results/stack`.
+- actionlint 1.7.7 (Docker): clean after quoting the screenshot image name
+  (SC2046 in the QUAL-014 step).
+- Local, exact CI commands: check, lint, `test:coverage` (232),
+  Vitest client (25), `test:e2e` (110), `test:screens` (20), `test:stack`
+  (20) passed; the three report folders were written. Kotlin sources
+  unchanged since the QUAL-012 gate (287 passed), reused.
+- Local red checks: renaming `hasMore` in the snapshot only failed
+  `api-contract.spec.ts` (frontend-fast) and `FrontendOpenApiSnapshotTest`
+  (kotlin); a visible token change failed `test:screens` (QUAL-014). Both
+  reverted.
+- REVIEW (human gate): nothing has run on GitHub; `main` is not pushed. After
+  the push, confirm: `main` green; a push to another branch runs only
+  `kotlin` and `frontend-fast`; a pull request and the nightly run run all
+  three; each run lists `playwright-reports`; a branch with the snapshot
+  rename and one with a token change turn red. That also closes QUAL-007's
+  open criterion.
+- Commit: completion commit for this task.

@@ -16,6 +16,9 @@ export default defineConfig({
 	testMatch: '**/*.e2e.ts',
 	workers: 1,
 	fullyParallel: false,
+	// QUAL-016: CI keeps every run's HTML report as an artifact.
+	reporter: [['list'], ['html', { open: 'never', outputFolder: 'playwright-report/stack' }]],
+	outputDir: 'test-results/stack',
 	use: {
 		baseURL: `http://localhost:${WEB}`,
 		browserName: 'firefox',

@@ -9,6 +9,8 @@ export default defineConfig({
 	// One browser at a time, like the legacy suite: parallel Firefox instances time out here.
 	workers: 1,
 	fullyParallel: false,
+	// QUAL-016: CI keeps every run's HTML report as an artifact.
+	reporter: [['list'], ['html', { open: 'never', outputFolder: 'playwright-report/e2e' }]],
 	webServer: {
 		command: 'npx vite build --mode e2e --minify false && npm run preview',
 		port: 4173
