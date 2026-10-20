@@ -55,7 +55,11 @@ export const queryKeys = {
 	relationshipValue: (request: object) => ['relationship-value', payloadKey(request)] as const,
 	/** STUDY-006: the admin's task list and one task; saving invalidates `['admin', 'tasks']`. */
 	adminTasks: ['admin', 'tasks'] as const,
-	adminTask: (key: string) => ['admin', 'tasks', key] as const
+	adminTask: (key: string) => ['admin', 'tasks', key] as const,
+	/** STUDY-007: groups and participants; a change invalidates `['admin', 'groups']` and the participants. */
+	adminGroups: ['admin', 'groups'] as const,
+	adminGroup: (id: number) => ['admin', 'groups', id] as const,
+	adminParticipants: ['admin', 'participants'] as const
 };
 
 /** Cached request helpers bound to one client and one query cache. */

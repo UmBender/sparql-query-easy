@@ -2,14 +2,11 @@
  * The proposed-task study on the real stack (Ktor, Testcontainers PostgreSQL,
  * PokemonGen1). STUDY-006: the configured `stack-admin` creates a task by
  * drawing its reference query in the shared editor and finds it in the list.
+ * STUDY-007: the admin creates a group, adds a task and a participant.
  */
 import { expect, test } from '@playwright/test';
-import { guardOffline, loginAs } from './support.js';
-
-const FIRE_SPEED = new URL(
-	'../src/lib/domain/fixtures/fire-speed-at-least-90.query.json',
-	import.meta.url
-);
+import { readFileSync } from 'node:fs';
+import { FIRE_SPEED, createTask, guardOffline, loginAs } from './support.js';
 
 let unexpected: string[];
 
@@ -50,4 +47,52 @@ test('an admin creates a task by drawing the reference query and sees it in the 
 	const row = page.getByTestId('task-row').filter({ hasText: key });
 	await expect(row).toContainText('Fast Fire Pokémon');
 	await expect(row).toContainText('Active');
+});
+
+test('an admin creates a group, adds a task and a participant', async ({ page, browser }) => {
+	const stamp = Date.now();
+	const participant = `part-${stamp}`;
+	const other = await browser.newContext();
+	await loginAs(other.request, participant);
+	await other.close();
+
+	await loginAs(page.request, 'stack-admin');
+	const graph = JSON.parse(readFileSync(FIRE_SPEED, 'utf8'));
+	const task = `water-${stamp}`;
+	await createTask(page.request, task, 'All Water Pokémon', {
+		graph,
+		query: {
+			variableName: '?pokemon',
+			where: [
+				{
+					subject: '?pokemon',
+					predicate: '<http://easyquery.example.org/pokemon#hasType>',
+					object: '<http://easyquery.example.org/pokemon#WaterType>',
+					filterType: null
+				}
+			]
+		}
+	});
+
+	await page.goto('/admin');
+	await page.getByRole('link', { name: 'Participant groups' }).click();
+	await expect(page.getByTestId('unassigned')).toContainText(participant);
+	const name = `Condition ${stamp}`;
+	await page.getByLabel('New group name').fill(name);
+	await page.getByRole('button', { name: 'Create group' }).click();
+	await page.getByRole('link', { name: `Open ${name}` }).click();
+	await expect(page.getByRole('heading', { name })).toBeVisible();
+
+	await page.getByRole('button', { name: `Add task ${task}` }).click();
+	await expect(page.getByTestId('group-tasks')).toContainText('All Water Pokémon');
+	await page.getByRole('button', { name: `Add participant ${participant}` }).click();
+	await expect(page.getByTestId('group-members')).toContainText(participant);
+
+	await page.getByRole('link', { name: 'All groups' }).click();
+	await expect(page.getByTestId('group-row').filter({ hasText: name })).toContainText(
+		'1 tasks · 1 participants'
+	);
+	await expect(
+		page.getByRole('region', { name: 'Participants without a group' })
+	).not.toContainText(participant);
 });

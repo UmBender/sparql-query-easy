@@ -169,31 +169,34 @@ class PostgresStudyStore(private val connector: DatabaseConnector) : StudyTaskSt
         return StudyTasks.selectAll().where { StudyTasks.key eq key }.singleOrNull()?.toTask()
     }
 
-    private fun ResultRow.toTask(): StudyTask =
-        StudyTask(
-            id = this[StudyTasks.id],
-            key = this[StudyTasks.key],
-            title = this[StudyTasks.title],
-            statement = this[StudyTasks.statement],
-            endpoint = this[StudyTasks.endpoint],
-            startingGraphJson = this[StudyTasks.startingGraph],
-            referenceGraphJson = this[StudyTasks.referenceGraph],
-            referenceRequestJson = this[StudyTasks.referenceRequest],
-            expected = ExpectedResult(this[StudyTasks.referenceSparql], termsFromJson(this[StudyTasks.expectedResult])),
-            comparison = checkNotNull(Comparison.fromWire(this[StudyTasks.comparison])),
-            maxResults = this[StudyTasks.maxResults],
-            revision = this[StudyTasks.revision],
-            active = this[StudyTasks.active],
-            createdAt = this[StudyTasks.createdAt],
-            updatedAt = this[StudyTasks.updatedAt],
-        )
+    private suspend fun <T> use(block: JdbcTransaction.() -> T): T = connector.inTransaction(block)
+}
 
-    private suspend fun <T> use(block: JdbcTransaction.() -> T): T {
-        val database = connector.require()
-        return try {
-            database.transaction(block)
-        } catch (failure: SQLException) {
-            throw PersistenceUnavailableException("The database is unavailable: ${failure.message}", failure)
-        }
+internal fun ResultRow.toTask(): StudyTask =
+    StudyTask(
+        id = this[StudyTasks.id],
+        key = this[StudyTasks.key],
+        title = this[StudyTasks.title],
+        statement = this[StudyTasks.statement],
+        endpoint = this[StudyTasks.endpoint],
+        startingGraphJson = this[StudyTasks.startingGraph],
+        referenceGraphJson = this[StudyTasks.referenceGraph],
+        referenceRequestJson = this[StudyTasks.referenceRequest],
+        expected = ExpectedResult(this[StudyTasks.referenceSparql], termsFromJson(this[StudyTasks.expectedResult])),
+        comparison = checkNotNull(Comparison.fromWire(this[StudyTasks.comparison])),
+        maxResults = this[StudyTasks.maxResults],
+        revision = this[StudyTasks.revision],
+        active = this[StudyTasks.active],
+        createdAt = this[StudyTasks.createdAt],
+        updatedAt = this[StudyTasks.updatedAt],
+    )
+
+/** One transaction on the migrated database; SQL failures become [PersistenceUnavailableException]. */
+internal suspend fun <T> DatabaseConnector.inTransaction(block: JdbcTransaction.() -> T): T {
+    val database = require()
+    return try {
+        database.transaction(block)
+    } catch (failure: SQLException) {
+        throw PersistenceUnavailableException("The database is unavailable: ${failure.message}", failure)
     }
 }

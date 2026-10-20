@@ -41,7 +41,16 @@ describe('generated API types', () => {
 			['/api/admin/tasks/{key}', 'get'],
 			['/api/admin/tasks/{key}', 'put'],
 			['/api/admin/tasks/{key}/deactivate', 'post'],
-			['/api/admin/tasks/{key}/reactivate', 'post']
+			['/api/admin/tasks/{key}/reactivate', 'post'],
+			['/api/admin/participants', 'get'],
+			['/api/admin/groups', 'get'],
+			['/api/admin/groups', 'post'],
+			['/api/admin/groups/{id}', 'get'],
+			['/api/admin/groups/{id}', 'put'],
+			['/api/admin/groups/{id}/tasks', 'put'],
+			['/api/admin/groups/{id}/members', 'post'],
+			['/api/admin/groups/{id}/members/remove', 'post'],
+			['/api/admin/groups/{id}/delete', 'post']
 		];
 		for (const [path, method] of called)
 			expect(document.paths[path]?.[method], `${method} ${path}`).toBeTruthy();

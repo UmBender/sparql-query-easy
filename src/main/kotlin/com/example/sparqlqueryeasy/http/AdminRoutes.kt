@@ -19,7 +19,10 @@ internal fun Route.adminRoutes(
     auth: AuthHttpDependencies,
     study: StudyHttpDependencies?,
 ) {
-    study?.let { adminTaskRoutes(auth, it.tasks) }
+    study?.let {
+        adminTaskRoutes(auth, it.tasks)
+        adminGroupRoutes(auth, it.groups)
+    }
     route("/api/admin/{...}") {
         handle {
             accountsAvailable {
@@ -104,7 +107,7 @@ private suspend fun RoutingContext.taskNotFound() {
 }
 
 /** An admin GET: the session and role, with the persistence-unavailable answer. */
-private suspend fun RoutingContext.adminRead(
+internal suspend fun RoutingContext.adminRead(
     auth: AuthHttpDependencies,
     block: suspend RoutingContext.() -> Unit,
 ) {
@@ -112,7 +115,7 @@ private suspend fun RoutingContext.adminRead(
 }
 
 /** An admin POST/PUT: same-origin JSON, the session and role, and 400 for an invalid body. */
-private suspend fun RoutingContext.adminWrite(
+internal suspend fun RoutingContext.adminWrite(
     auth: AuthHttpDependencies,
     block: suspend RoutingContext.() -> Unit,
 ) {

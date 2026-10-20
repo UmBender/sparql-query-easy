@@ -34,6 +34,8 @@ export type AdminTask = Omit<
 	'startingGraph' | 'referenceGraph'
 > & { startingGraph: SavedQueryV1 | null; referenceGraph: SavedQueryV1 };
 export type TaskPreview = Schemas['TaskPreviewHttpResponse'];
+export type StudyGroup = Schemas['StudyGroupHttpResponse'];
+export type Participant = Schemas['ParticipantHttpResponse'];
 /** A drawn query (DEC-014 Q5): the saved graph and the request derived from it. */
 export type DrawnQuery = { graph: SavedQueryV1; query: AnswerQuery };
 export type AdminTaskBody = {
@@ -205,6 +207,8 @@ export function createApiClient({
 	const isArray = (data: unknown) => Array.isArray(data);
 	const isTask = (data: unknown) => !!data && typeof (data as { key?: unknown }).key === 'string';
 	const taskPath = (key: string) => `/api/admin/tasks/${encodeURIComponent(key)}`;
+	const isGroup = (data: unknown) => !!data && typeof (data as { id?: unknown }).id === 'number';
+	const groupPath = (id: number) => `/api/admin/groups/${id}`;
 	const isUser = (data: unknown) =>
 		!!data && typeof (data as { username?: unknown }).username === 'string';
 
@@ -334,7 +338,78 @@ export function createApiClient({
 					'Changing the task failed',
 					{},
 					isTask
-				)
+				),
+			/** STUDY-007: participant groups. */
+			participants: (options?: Options) =>
+				get<Participant[]>(
+					'/api/admin/participants',
+					'Participant list failed',
+					options,
+					isArray
+				),
+			groups: (options?: Options) =>
+				get<StudyGroup[]>('/api/admin/groups', 'Group list failed', options, isArray),
+			group: (id: number, options?: Options) =>
+				get<StudyGroup>(groupPath(id), 'Group lookup failed', options, isGroup),
+			createGroup: (name: string) =>
+				post<StudyGroup>(
+					'/api/admin/groups',
+					{ name },
+					'Creating the group failed',
+					{},
+					isGroup
+				),
+			renameGroup: (id: number, name: string) =>
+				put<StudyGroup>(groupPath(id), { name }, 'Renaming the group failed', isGroup),
+			setGroupTasks: (id: number, tasks: string[]) =>
+				put<StudyGroup>(
+					`${groupPath(id)}/tasks`,
+					{ tasks },
+					'Saving the tasks failed',
+					isGroup
+				),
+			assignMember: (id: number, username: string) =>
+				post<StudyGroup>(
+					`${groupPath(id)}/members`,
+					{ username },
+					'Adding the participant failed',
+					{},
+					isGroup
+				),
+			unassignMember: (id: number, username: string) =>
+				post<StudyGroup>(
+					`${groupPath(id)}/members/remove`,
+					{ username },
+					'Removing the participant failed',
+					{},
+					isGroup
+				),
+			/** 204 without a body. */
+			async deleteGroup(id: number): Promise<void> {
+				let response: Response;
+				try {
+					response = await fetcher(`${baseUrl}${groupPath(id)}/delete`, {
+						method: 'POST',
+						headers: { 'content-type': 'application/json' },
+						body: '{}'
+					});
+				} catch (error) {
+					throw new ApiError(
+						'network',
+						error instanceof Error ? error.message : String(error)
+					);
+				}
+				if (!response.ok) {
+					const body = (await response.json().catch(() => null)) as {
+						error?: string;
+					} | null;
+					throw new ApiError(
+						kindOf(response.status),
+						body?.error || `Deleting the group failed (${response.status}).`,
+						response.status
+					);
+				}
+			}
 		},
 		/** POST /api/auth/logout (204, no body). */
 		async logout(options: Options = {}): Promise<void> {

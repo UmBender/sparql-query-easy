@@ -29,3 +29,22 @@ export function guardOffline(page: Page, baseURL: string): string[] {
 	void page.addInitScript(() => window.localStorage.setItem('easyquery-tour-seen', 'true'));
 	return unexpected;
 }
+
+/** A saved query file the stack tests load into an editor. */
+export const FIRE_SPEED = new URL(
+	'../src/lib/domain/fixtures/fire-speed-at-least-90.query.json',
+	import.meta.url
+);
+
+/** Creates a task through the admin API (the session in `request` must be an admin's). */
+export async function createTask(
+	request: APIRequestContext,
+	key: string,
+	title: string,
+	reference: { graph: unknown; query: unknown }
+): Promise<void> {
+	const response = await request.post('/api/admin/tasks', {
+		data: { key, title, statement: `${title}.`, endpoint: 'PokemonGen1', reference }
+	});
+	expect(response.status(), `create task ${key}`).toBe(201);
+}

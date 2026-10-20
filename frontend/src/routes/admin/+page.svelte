@@ -21,6 +21,7 @@
 		</p>
 		<nav aria-label="Admin" class="flex flex-wrap gap-2">
 			<Button href={resolve('/admin/tasks')}>Proposed tasks</Button>
+			<Button href={resolve('/admin/groups')}>Participant groups</Button>
 			<Button variant="outline" href={resolve('/')}>Back to the editor</Button>
 		</nav>
 	</section>

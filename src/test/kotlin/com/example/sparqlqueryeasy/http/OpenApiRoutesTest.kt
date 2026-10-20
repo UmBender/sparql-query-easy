@@ -92,6 +92,14 @@ class OpenApiRoutesTest {
                     "/api/admin/tasks/{key}" to setOf("get", "put"),
                     "/api/admin/tasks/{key}/deactivate" to setOf("post"),
                     "/api/admin/tasks/{key}/reactivate" to setOf("post"),
+                    // STUDY-007
+                    "/api/admin/participants" to setOf("get"),
+                    "/api/admin/groups" to setOf("get", "post"),
+                    "/api/admin/groups/{id}" to setOf("get", "put"),
+                    "/api/admin/groups/{id}/tasks" to setOf("put"),
+                    "/api/admin/groups/{id}/members" to setOf("post"),
+                    "/api/admin/groups/{id}/members/remove" to setOf("post"),
+                    "/api/admin/groups/{id}/delete" to setOf("post"),
                 ),
                 document.operationInventory(),
             )

@@ -1,3 +1,5 @@
+@file:Suppress("MaxLineLength")
+
 package com.example.sparqlqueryeasy.http
 
 import com.example.sparqlqueryeasy.application.auth.AttemptLimiter
@@ -34,7 +36,7 @@ internal const val ADMIN = "Grace"
 internal fun ApplicationTestBuilder.studyApp(
     database: DatabaseSettings? = TestPostgres.freshDatabase(),
     clock: MutableClock = MutableClock(),
-) {
+): StudyTestContext {
     val connector = DatabaseConnector(database).also { it.connect() }
     val base = defaultHttpDependencies(AppSettings())
     val query = checkNotNull(base.query)
@@ -56,6 +58,18 @@ internal fun ApplicationTestBuilder.studyApp(
         configureErrorHandling()
         configureRouting(base.copy(auth = auth, study = study, ownedResources = listOf(base, connector)))
     }
+    return StudyTestContext(study, PostgresAccountStore(connector))
+}
+
+/** The services behind [studyApp], for checks below the HTTP layer. */
+internal class StudyTestContext(
+    val study: StudyHttpDependencies,
+    private val accounts: PostgresAccountStore,
+) {
+    suspend fun userId(username: String): Long = checkNotNull(accounts.findCredentials(username.lowercase())).user.id
+
+    /** The application query STUDY-003 serves: the keys of [username]'s group's active tasks, in order. */
+    suspend fun taskKeysFor(username: String): List<String> = study.groups.activeTasksFor(userId(username)).map { it.key }
 }
 
 internal suspend fun ApplicationTestBuilder.userClient(name: String): HttpClient =
@@ -123,3 +137,25 @@ internal fun taskBody(
         """"reference":$reference,"comparison":"$comparison","maxResults":$maxResults$extra}"""
 
 internal fun JsonElement.field(name: String): JsonElement = (this as JsonObject).getValue(name)
+
+/** Creates an all-Pokémon-of-[type] task through the admin route and returns its key. */
+internal suspend fun HttpClient.createTypeTask(
+    key: String,
+    type: String,
+): String {
+    val response = json("/api/admin/tasks", taskBody(key = key, title = "All $type", reference = drawn(typeQuery(type))))
+    check(response.status.value == 201) { "creating $key: ${response.bodyAsText()}" }
+    return key
+}
+
+/** Creates a group with [tasks] in order and [members]; returns its id. */
+internal suspend fun HttpClient.createGroup(
+    name: String,
+    tasks: List<String> = emptyList(),
+    members: List<String> = emptyList(),
+): Long {
+    val id = json("/api/admin/groups", """{"name":"$name"}""").data().field("id").toString().toLong()
+    putJson("/api/admin/groups/$id/tasks", """{"tasks":[${tasks.joinToString { "\"$it\"" }}]}""")
+    members.forEach { json("/api/admin/groups/$id/members", """{"username":"$it"}""") }
+    return id
+}

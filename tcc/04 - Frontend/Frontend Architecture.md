@@ -17,7 +17,7 @@ The retired page is described in [[Legacy Page Architecture (retired)]].
 | API | `src/lib/api/` | Typed client from the OpenAPI snapshot (`schema.d.ts`), TanStack Query cache, typed mock routes for tests (FE-043, QUAL-007) |
 | Components | `src/lib/components/ui/` | shadcn-svelte primitives and project components; `/styleguide` (FE-050) |
 | Features | `src/lib/features/` | `editor` (page shell, Cytoscape canvas as a pure view, action menus, results, View SPARQL), `filters`, `exploration` (staged Run Query, possible graph), `funnel` (funnel panel, badges), `utilities` (upload, load/export, tour), `auth` (session store, login form, account control) |
-| Routes | `src/routes/` | `/` (query editor), `/login` (AUTH-003), `/study` (session required; empty until STUDY-001, AUTH-004), `/admin` and `/admin/tasks`, `/admin/tasks/new`, `/admin/tasks/[key]` (admin role; STUDY-006 task editor in `features/admin/`), `/styleguide` |
+| Routes | `src/routes/` | `/` (query editor), `/login` (AUTH-003), `/study` (session required; empty until STUDY-001, AUTH-004), `/admin` and `/admin/tasks`, `/admin/tasks/new`, `/admin/tasks/[key]` (admin role; STUDY-006 task editor in `features/admin/`), `/admin/groups`, `/admin/groups/[id]` (STUDY-007), `/styleguide` |
 
 ## State and interaction
 

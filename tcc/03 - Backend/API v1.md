@@ -561,6 +561,33 @@ a session cookie gets `503 {"error":"Accounts are temporarily unavailable"}`.
 - Tasks are never deleted; deactivating keeps the row and hides the task from
   participants.
 
+## Participant groups (admin, STUDY-007)
+
+`V5__study_groups.sql`: `study_group` (unique `name`), `study_group_task`
+(ordered tasks), `study_group_member` (one row per user, so one group per
+participant). The admin assigns participants (no random assignment). Same
+role, CSRF and database rules as the task routes; `{id}` is the numeric group
+id (a non-number is `404`).
+
+| Route | Body | Success | Errors |
+|---|---|---|---|
+| `GET /api/admin/participants` | — | `200` `[{"username","groupId","groupName"}]`, participant accounts by username (`null` without a group) | — |
+| `GET /api/admin/groups` | — | `200` groups by name: `id`, `name`, `tasks` (`key`, `title`, `active`, in order), `members` (usernames), `updatedAt` | — |
+| `POST /api/admin/groups` | `{"name"}` | `201` the group | `400` name not 1–100 characters, `409 {"error":"A group with this name already exists"}` |
+| `GET /api/admin/groups/{id}` | — | `200` the group | `404 {"error":"Group not found"}` |
+| `PUT /api/admin/groups/{id}` | `{"name"}` | `200` renamed | `400`, `404`, `409` |
+| `PUT /api/admin/groups/{id}/tasks` | `{"tasks":[key…]}` | `200` the group with exactly these tasks in this order | `400` unknown (`Unknown tasks: …`) or repeated keys, `404` |
+| `POST /api/admin/groups/{id}/members` | `{"username"}` | `200` the group; a participant in another group is moved | `400` unknown username or an admin, `404` |
+| `POST /api/admin/groups/{id}/members/remove` | `{"username"}` | `200` the group | `400` not a member, `404` |
+| `POST /api/admin/groups/{id}/delete` | `{}` | `204` | `404`, `409` the group has members |
+
+- Inactive tasks stay in a group's list for the admin and are left out for
+  participants. The application query `StudyGroupService.activeTasksFor(user)`
+  (served to participants by STUDY-003) returns the active tasks of the
+  user's group in group order, none without a group.
+- Moving a participant keeps their submissions; they then see the new
+  group's tasks.
+
 ## Endpoint selection
 
 `endpointUrl` accepts the built-in identifiers `CampeonatoBrasileiro2023` and

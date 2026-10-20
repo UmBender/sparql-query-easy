@@ -1,7 +1,7 @@
 ---
 id: STUDY-007
 title: Let an admin put participants in groups and give each group its own tasks
-status: READY
+status: DONE
 priority: P1
 type: fullstack
 depends_on: [STUDY-006]
@@ -39,15 +39,40 @@ group's tasks.
 
 ## Acceptance criteria
 
-- [ ] Two groups with different tasks: each member's task query returns only
+- [x] Two groups with different tasks: each member's task query returns only
       their group's active tasks in the set order (Testcontainers test).
-- [ ] Assigning a user who is already in a group moves them (one group only).
-- [ ] Inactive tasks are excluded from the participant query but stay listed
+- [x] Assigning a user who is already in a group moves them (one group only).
+- [x] Inactive tasks are excluded from the participant query but stay listed
       for the admin.
-- [ ] Participant/anonymous calls: 403/401.
-- [ ] e2e: the admin creates a group, adds a task and a participant.
+- [x] Participant/anonymous calls: 403/401.
+- [x] e2e: the admin creates a group, adds a task and a participant.
 
 ## Validation
 
 Focused: `AdminGroupRoutesTest` (proposed). Closing gate: HTTP/fullstack
 union including `test:stack`.
+
+## Conclusion
+
+- Migration `V5__study_groups.sql`; `application/study/StudyGroups.kt`
+  (`StudyGroupService`, `StudyGroupStore` port, `GroupResult`);
+  `persistence/PostgresStudyGroupStore.kt` (assignment is an upsert on the
+  member's user id, so assigning moves; participants only; a group with
+  members is not deleted). `activeTasksFor(userId)` is the participant query
+  STUDY-003 serves.
+- HTTP: `AdminGroupRoutes.kt` (`/api/admin/groups/**`,
+  `/api/admin/participants`), docs in `StudyGroupOpenApi.kt`; the delete is
+  `POST …/delete` and unassigning `POST …/members/remove`, so every change
+  goes through the same-origin JSON check. OpenAPI snapshot and types
+  regenerated.
+- Frontend: client `api.admin.*` group calls, `/admin/groups` (create, list,
+  participants without a group) and `/admin/groups/[id]` (rename, ordered
+  tasks with up/down/remove/add saved at once, members, move a participant
+  from another group, delete when empty).
+- Tests: `AdminGroupRoutesTest` (two groups with different ordered tasks
+  through `activeTasksFor`, moving, inactive tasks, 401/403, invalid input,
+  delete rule), `study.e2e.ts` on the real stack.
+- Validation: Kotlin gate, frontend gate, `test:stack` (12) pass.
+- "Submissions" in "a group with members or submissions is not deleted":
+  submissions belong to a user and a task (STUDY-004), not to a group, so
+  the members rule is the one enforced.

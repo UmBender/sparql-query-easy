@@ -25,7 +25,7 @@ import org.jetbrains.exposed.v1.jdbc.update
 import java.sql.SQLException
 import java.time.Instant
 
-private object AppUsers : Table("app_user") {
+internal object AppUsers : Table("app_user") {
     val id = long("id").autoIncrement()
     val username = varchar("username", 32)
     val usernameKey = varchar("username_key", 32).uniqueIndex()
