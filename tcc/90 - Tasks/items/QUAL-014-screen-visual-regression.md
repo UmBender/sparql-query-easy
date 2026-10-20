@@ -1,7 +1,7 @@
 ---
 id: QUAL-014
 title: Compare screenshots of /styleguide and the main screens in light and dark themes
-status: BACKLOG
+status: DONE
 priority: P1
 type: quality
 depends_on: [QUAL-007]
@@ -46,13 +46,46 @@ screens in both themes. Skill: `tcc-test` (`tcc-style` for the styleguide).
 
 ## Acceptance criteria
 
-- [ ] Every route in the list has a light and a dark baseline.
-- [ ] Changing one colour token makes the run fail with a diff image
+- [x] Every route in the list has a light and a dark baseline.
+- [x] Changing one colour token makes the run fail with a diff image
   (verified once, reverted).
-- [ ] The documented update command regenerates the baselines identically on
+- [x] The documented update command regenerates the baselines identically on
   a second run.
 
 ## Validation
 
 Focused: `(cd frontend && npx playwright test visual)`. Closing: the new
 frontend gate.
+
+## Execution log
+
+- 2026-10-20: `tests/support/screens.ts`: `MAIN_ROUTES` (`/`, `/login`,
+  `/study`, `/study/fire-fast`, `/admin`, `/admin/tasks`,
+  `/admin/tasks/new`, `/admin/groups`, `/admin/groups/1`, `/styleguide`),
+  each with its role, a ready check, and session and study/admin data typed
+  from `schema.d.ts` through `mockApi` overrides (the shared defaults in
+  `mock-routes.ts` are unchanged); `useTheme` sets mode-watcher's stored
+  mode before load. `tests/screens.e2e.ts`: a full-page screenshot per route
+  and theme (20), offline guard kept.
+- Reproducibility: text is in the picture, so the suite runs only in
+  `mcr.microsoft.com/playwright:v1.63.0-noble` (version read from
+  `package.json`) through `scripts/test-screens.mjs` (`npm run test:screens`,
+  no container network, the repository mounted with its `node_modules`,
+  SELinux label disabled for Fedora). `playwright.config.ts` ignores the
+  file; `playwright.screens.config.ts` runs it. `.github/workflows/ci.yml`
+  pulls the image and runs `npm run test:screens` in the `frontend` job.
+  Existing canvas screenshots (`tests/visual.e2e.ts`) are unchanged.
+- Acceptance: two from-scratch generations were byte-identical (20/20
+  `cmp`); a second run without update passed 20/20. Token check: `primary`
+  `#1565c0` → `#2e7d32` plus `npm run tokens` failed the three light editor
+  screens (12 px each) with diffs in `test-results/screens/`; a one-unit
+  change (`#1565c1`) passes under Playwright's default per-pixel threshold,
+  kept to absorb sub-visible rasterisation noise. Both reverted.
+- Reviewed the PNGs: loaded data in every screen; the dark editor canvas
+  stays light by design (dark token `canvas: '#f7f9fc'`).
+- Docs: Operational Map (frontend row, command, closing gates), README,
+  `tcc-style` checklist; skill discovery checked.
+- Validation: check, lint; `npm test` (Vitest and 84 host Playwright, screens
+  excluded) passed; `test:screens` 20 passed; docs check; skill discovery.
+  The CI step has not run on GitHub (no push).
+- Commit: completion commit for this task.

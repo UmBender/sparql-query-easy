@@ -4,6 +4,8 @@ import { defineConfig } from '@playwright/test';
 export default defineConfig({
 	testDir: 'tests',
 	testMatch: '**/*.e2e.ts',
+	// Full-page screenshots run only in the pinned image (npm run test:screens, QUAL-014).
+	testIgnore: 'screens.e2e.ts',
 	// One browser at a time, like the legacy suite: parallel Firefox instances time out here.
 	workers: 1,
 	fullyParallel: false,

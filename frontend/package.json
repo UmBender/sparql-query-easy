@@ -18,7 +18,8 @@
 		"tokens": "UPDATE_TOKENS=1 vitest run src/lib/design/css.spec.ts",
 		"test:coverage": "vitest run --project server --coverage",
 		"api:types": "node scripts/generate-api-types.mjs",
-		"test:stack": "playwright test --config playwright.stack.config.ts"
+		"test:stack": "playwright test --config playwright.stack.config.ts",
+		"test:screens": "node scripts/test-screens.mjs"
 	},
 	"devDependencies": {
 		"@axe-core/playwright": "^4.10.2",

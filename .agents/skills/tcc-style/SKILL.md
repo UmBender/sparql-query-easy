@@ -77,3 +77,7 @@ closing only the element that has focus.
 - [ ] New tokens or components appear on `/styleguide` in both themes.
 - [ ] Focus ring, accessible names and keyboard path checked;
       `npm --prefix frontend test` (axe on `/styleguide`) passes.
+- [ ] `npm --prefix frontend run test:screens` passes (full-page screenshots
+      of the main routes in both themes, in the pinned Playwright image); for
+      an intended change refresh with `-- --update-snapshots` and review each
+      changed PNG.

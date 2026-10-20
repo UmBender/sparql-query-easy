@@ -78,6 +78,10 @@ jobs:
       - run: npm run lint
       # Vitest (server with coverage, then browser components), build, Playwright with screenshots and axe.
       - run: npm test
+      # QUAL-014: full-page screenshots in the pinned Playwright image (same fonts as the baselines).
+      - name: Pull the screenshot image
+        run: docker pull mcr.microsoft.com/playwright:v$(node -p "require('./package.json').devDependencies['@playwright/test']")-noble
+      - run: npm run test:screens
       - name: Pull the test PostgreSQL image (QUAL-011)
         run: docker pull postgres:17-alpine
       - run: npm run test:stack

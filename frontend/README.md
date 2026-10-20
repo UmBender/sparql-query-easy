@@ -81,7 +81,12 @@ responses typed from `schema.d.ts`; Vitest serves them through MSW
 (`mswHandlers`), the Playwright suites through `page.route`
 (`tests/support/mock-api.ts`). `tests/visual.e2e.ts` compares canvas
 screenshots (labels and overlays hidden, so font rendering does not matter)
-and runs axe on the editor in both themes. `.github/workflows/ci.yml` runs
+and runs axe on the editor in both themes. `tests/screens.e2e.ts` (QUAL-014) takes
+full-page screenshots of every main route (`tests/support/screens.ts`) in
+both themes, text included; it runs only in the pinned Playwright image
+(`npm run test:screens`, Docker), where fonts render the same on every
+machine, and is excluded from `npm test`. Refresh deliberately with
+`npm run test:screens -- --update-snapshots`. `.github/workflows/ci.yml` runs
 check, lint, `npm test` and `test:stack` with the Kotlin and legacy gates.
 
 Shared test helpers (QUAL-012, `src/lib/testing/`, test-only):
