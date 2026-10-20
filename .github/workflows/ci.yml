@@ -50,6 +50,27 @@ jobs:
       - name: Pull the test PostgreSQL image (QUAL-011)
         run: docker pull postgres:17-alpine
       - run: ./gradlew ktlintCheck detekt test --no-daemon
+      # QUAL-016: each failed test (or ktlint/detekt finding) as an annotation on the run page.
+      - name: Annotate Kotlin failures
+        if: failure()
+        run: |
+          python3 - <<'EOF'
+          import glob, xml.etree.ElementTree as ET
+          found = 0
+          for path in glob.glob('build/test-results/test/*.xml'):
+              for case in ET.parse(path).getroot().iter('testcase'):
+                  for problem in list(case.iter('failure')) + list(case.iter('error')):
+                      text = (problem.get('message') or problem.text or '').strip().replace('\n', ' ')[:900]
+                      print(f"::error title={case.get('classname')}.{case.get('name')}::{text}")
+                      found += 1
+          for path in glob.glob('build/reports/ktlint/**/*.txt', recursive=True) + glob.glob('build/reports/detekt/*.txt'):
+              lines = [line.strip() for line in open(path, encoding='utf-8') if line.strip()]
+              for line in lines[:20]:
+                  print(f"::error title={path}::{line[:900]}")
+                  found += 1
+          if not found:
+              print('::error title=Kotlin gate::no failed test or report line found; see the step log')
+          EOF
       - if: failure()
         uses: actions/upload-artifact@v4
         with:
