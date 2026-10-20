@@ -102,22 +102,54 @@ export async function addGraph(page: Page, items: Spec[]) {
 	}, items);
 }
 
-/** Clicks a node at its rendered position (the canvas listens to real pointer events). */
-export async function clickNode(
-	page: Page,
-	id: string,
-	options: { modifiers?: ('Alt' | 'Shift')[] } = {}
-) {
+/**
+ * A node's rendered position inside `#cy` (after the current zoom and pan), read
+ * through the test hook once the canvas has painted; fails when the id is unknown.
+ */
+export async function nodeCanvasPosition(page: Page, id: string) {
 	const point = await page.evaluate(async (nodeId) => {
 		const { view } = (
 			window as never as { __easyquery: { view: { cy: import('cytoscape').Core } } }
 		).__easyquery;
 		await new Promise((resolve) => requestAnimationFrame(() => requestAnimationFrame(resolve)));
 		const node = view.cy.getElementById(nodeId);
+		if (node.empty()) return null;
 		const rendered = node.renderedPosition();
 		return { x: rendered.x, y: rendered.y };
 	}, id);
+	if (!point) throw new Error(`No node ${id} on the canvas`);
+	return point;
+}
+
+/** The same point in page coordinates, for `page.mouse`. */
+export async function nodePagePosition(page: Page, id: string) {
+	const point = await nodeCanvasPosition(page, id);
+	const box = await page.locator('#cy').boundingBox();
+	if (!box) throw new Error('The canvas is not visible');
+	return { x: box.x + point.x, y: box.y + point.y };
+}
+
+/** Clicks a node at its rendered position (the canvas listens to real pointer events). */
+export async function clickNode(
+	page: Page,
+	id: string,
+	options: { modifiers?: ('Alt' | 'Shift')[] } = {}
+) {
+	const point = await nodeCanvasPosition(page, id);
 	await page.locator('#cy').click({ position: point, ...options });
+}
+
+export async function hoverNode(page: Page, id: string) {
+	await page.locator('#cy').hover({ position: await nodeCanvasPosition(page, id) });
+}
+
+/** Drags a node by `by` canvas pixels with real pointer events. */
+export async function dragNode(page: Page, id: string, by: { x: number; y: number }) {
+	const from = await nodePagePosition(page, id);
+	await page.mouse.move(from.x, from.y);
+	await page.mouse.down();
+	await page.mouse.move(from.x + by.x, from.y + by.y, { steps: 8 });
+	await page.mouse.up();
 }
 
 export async function clickEdge(page: Page, id: string) {

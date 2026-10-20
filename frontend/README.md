@@ -87,7 +87,11 @@ both themes, text included; it runs only in the pinned Playwright image
 (`npm run test:screens`, Docker), where fonts render the same on every
 machine, and is excluded from `npm test`. Refresh deliberately with
 `npm run test:screens -- --update-snapshots`. `tests/a11y.e2e.ts` (QUAL-015)
-runs axe on the same routes in both themes; any violation fails. `.github/workflows/ci.yml` runs
+runs axe on the same routes in both themes; any violation fails.
+Both Playwright suites drive the editor, a proposed task and the
+questionnaires through the page objects in `tests/support/pages/`
+(QUAL-013); canvas gestures find nodes by id through the e2e hook, at any
+zoom and pan. `.github/workflows/ci.yml` runs
 check, lint, `npm test` and `test:stack` with the Kotlin and legacy gates.
 
 Shared test helpers (QUAL-012, `src/lib/testing/`, test-only):

@@ -10,7 +10,9 @@
  */
 import { readFileSync } from 'node:fs';
 import AxeBuilder from '@axe-core/playwright';
-import { expect, test, type Locator } from '@playwright/test';
+import { expect, test } from '@playwright/test';
+import { QuestionnairePage } from '../tests/support/pages/questionnaire-page';
+import { TaskPage } from '../tests/support/pages/task-page';
 import {
 	FIRE_SPEED,
 	PROFILE_ANSWERS,
@@ -21,14 +23,6 @@ import {
 } from './support.js';
 
 let unexpected: string[];
-
-/** Chooses a point of a rating scale (its radio is visually hidden under the label). */
-async function rate(form: Locator, question: string, value: number) {
-	await form
-		.getByRole('group', { name: question })
-		.getByText(String(value), { exact: true })
-		.click();
-}
 
 test.beforeEach(({ page, baseURL }) => {
 	unexpected = guardOffline(page, baseURL!);
@@ -84,33 +78,28 @@ test('a participant submits a correct and a wrong answer and sees the feedback a
 	const keys = await seedStudy(browser, participant);
 	await loginAs(page.request, participant);
 
-	await page.goto(`/study/${keys[1]}`);
-	await expect(page.locator('#status-nodes')).toHaveText('Nodes: 3');
-	await expect(page.getByRole('radio', { name: '?pokemon' })).toBeChecked();
-	await page.locator('#submit-answer-btn').click();
-	await expect(page.getByTestId('answer-feedback')).toHaveText(
-		/^Correct: all \d+ expected results\.$/
-	);
+	const taskPage = new TaskPage(page);
+	await taskPage.open(keys[1]);
+	await expect(taskPage.editor.nodeCount).toHaveText('Nodes: 3');
+	await expect(taskPage.answerVariable('?pokemon')).toBeChecked();
+	await taskPage.submit();
+	await expect(taskPage.feedback).toHaveText(/^Correct: all \d+ expected results\.$/);
 
 	// The same query without its speed filter: every Fire-type Pokémon.
 	const saved = JSON.parse(readFileSync(FIRE_SPEED, 'utf8'));
 	for (const node of saved.nodes) if (node.kind === 'valueVariable') node.filter = null;
-	await page.locator('#upload-json').setInputFiles({
-		name: 'fire-any-speed.query.json',
-		mimeType: 'application/json',
-		buffer: Buffer.from(JSON.stringify(saved))
-	});
-	await page.locator('#submit-answer-btn').click();
-	await expect(page.getByTestId('answer-feedback')).toHaveText(
+	await taskPage.editor.uploadQuery('fire-any-speed.query.json', saved);
+	await taskPage.submit();
+	await expect(taskPage.feedback).toHaveText(
 		/^Incorrect: (\d+) of \1 expected results; \d+ extra\.$/
 	);
 
-	const history = page.getByTestId('attempt-history').getByRole('listitem');
+	const history = taskPage.attempts;
 	await expect(history).toHaveCount(2);
 	await expect(history.nth(0)).toContainText('#2 · Incorrect');
 	await expect(history.nth(1)).toContainText('#1 · Correct');
 	await page.reload();
-	await expect(page.getByTestId('attempt-history').getByRole('listitem')).toHaveCount(2);
+	await expect(taskPage.attempts).toHaveCount(2);
 });
 
 test('after the final submission the task pages show the finished page', async ({
@@ -165,18 +154,19 @@ test('a new participant sees the consent screen first and the tasks only after a
 	await page.getByRole('button', { name: 'I agree to take part' }).click();
 
 	// STUDY-010: the profile questionnaire before the tasks, checked in the browser and on the server.
-	const form = page.getByTestId('questionnaire');
+	const questionnaire = new QuestionnairePage(page);
+	const form = questionnaire.form;
 	await expect(form).toHaveAttribute('data-slug', 'profile');
 	const tasksBefore = await page.request.get('/api/study/tasks');
 	expect(await tasksBefore.json()).toEqual({ error: 'profile_required' });
 	const axe = await new AxeBuilder({ page }).include('[data-testid="questionnaire"]').analyze();
 	expect(axe.violations.map((violation) => violation.id)).toEqual([]);
-	await form.getByRole('radio', { name: 'I have heard of it' }).click();
-	await form.getByRole('checkbox', { name: 'SQL' }).click();
-	const years = form.getByLabel('PLACEHOLDER How many years have you programmed?');
+	await questionnaire.choose('I have heard of it');
+	await questionnaire.check('SQL');
+	const years = questionnaire.field('PLACEHOLDER How many years have you programmed?');
 	await years.fill('99');
-	await rate(form, 'PLACEHOLDER I am comfortable exploring data in tables.', 4);
-	await form.getByRole('button', { name: 'Send my answers' }).click();
+	await questionnaire.rate('PLACEHOLDER I am comfortable exploring data in tables.', 4);
+	await questionnaire.send();
 	await expect(form.getByText('Enter a number from 0 to 60.')).toBeVisible();
 	const bypass = await page.request.post('/api/study/forms/profile/responses', {
 		data: { version: 1, answers: { ...PROFILE_ANSWERS, programming_years: 99 } }
@@ -186,7 +176,7 @@ test('a new participant sees the consent screen first and the tasks only after a
 		programming_years: 'Enter a number from 0 to 60.'
 	});
 	await years.fill('4');
-	await form.getByRole('button', { name: 'Send my answers' }).click();
+	await questionnaire.send();
 	await expect(page.getByTestId('no-tasks')).toBeVisible();
 
 	await page.goto('/study/not-mine');
@@ -209,22 +199,23 @@ test('the usability questionnaire keeps its first page across a reload until log
 	expect((await page.request.post('/api/study/finish', { data: {} })).status()).toBe(200);
 
 	await page.goto('/study');
-	const form = page.getByTestId('questionnaire');
+	const questionnaire = new QuestionnairePage(page);
+	const form = questionnaire.form;
 	await expect(form).toHaveAttribute('data-slug', 'usability');
-	await expect(form.getByTestId('form-page')).toHaveText('Page 1 of 2');
+	await expect(questionnaire.pageLabel).toHaveText('Page 1 of 2');
 	for (const text of [
 		'PLACEHOLDER The graph editor was easy to use.',
 		'PLACEHOLDER Drawing a query was faster than writing SPARQL.',
 		'PLACEHOLDER I was confident my answers were correct.'
 	])
-		await rate(form, text, 4);
-	await form.getByRole('radio', { name: 'The filter funnel' }).click();
-	await form.getByRole('button', { name: 'Next' }).click();
-	await expect(form.getByTestId('form-page')).toHaveText('Page 2 of 2');
+		await questionnaire.rate(text, 4);
+	await questionnaire.choose('The filter funnel');
+	await questionnaire.next();
+	await expect(questionnaire.pageLabel).toHaveText('Page 2 of 2');
 
 	await page.reload();
-	await expect(form.getByTestId('form-page')).toHaveText('Page 2 of 2');
-	await form.getByRole('button', { name: 'Back' }).click();
+	await expect(questionnaire.pageLabel).toHaveText('Page 2 of 2');
+	await questionnaire.back();
 	await expect(form.getByRole('radio', { name: 'The filter funnel' })).toBeChecked();
 
 	await page.getByRole('button', { name: 'Log out' }).click();
@@ -236,18 +227,18 @@ test('the usability questionnaire keeps its first page across a reload until log
 
 	await loginAs(page.request, participant);
 	await page.goto('/study');
-	await expect(form.getByTestId('form-page')).toHaveText('Page 1 of 2');
+	await expect(questionnaire.pageLabel).toHaveText('Page 1 of 2');
 	await expect(form.getByRole('radio', { name: 'The filter funnel' })).not.toBeChecked();
 	for (const text of [
 		'PLACEHOLDER The graph editor was easy to use.',
 		'PLACEHOLDER Drawing a query was faster than writing SPARQL.',
 		'PLACEHOLDER I was confident my answers were correct.'
 	])
-		await rate(form, text, 5);
-	await form.getByRole('radio', { name: 'Search nodes' }).click();
-	await form.getByRole('button', { name: 'Next' }).click();
-	await form.getByLabel(/PLACEHOLDER In one sentence/).fill('  Choosing the filter type  ');
-	await form.getByRole('button', { name: 'Send my answers' }).click();
+		await questionnaire.rate(text, 5);
+	await questionnaire.choose('Search nodes');
+	await questionnaire.next();
+	await questionnaire.fill(/PLACEHOLDER In one sentence/, '  Choosing the filter type  ');
+	await questionnaire.send();
 	await expect(page.getByTestId('study-finished')).toBeVisible();
 	const status = await page.request.get('/api/study/forms/usability/response');
 	expect(((await status.json()) as { data: { answered: boolean } }).data.answered).toBe(true);

@@ -6,10 +6,12 @@
 import { readFileSync } from 'node:fs';
 import { expect, test, type Page } from '@playwright/test';
 import { guardOffline } from '../tests/support/offline';
+import { EditorPage } from '../tests/support/pages/editor-page';
 
 const FIXTURE = new URL('./fixtures/ordered-exploration.ttl', import.meta.url);
 
 let unexpected: string[];
+let editor: EditorPage;
 let stageRequests: { variableName: string; bindings: { variableName: string }[]; limit: number }[];
 let legacyQueryRequests: number;
 
@@ -37,9 +39,8 @@ test.beforeEach(async ({ page, baseURL }) => {
 		if (pathname === '/api/query') legacyQueryRequests += 1;
 	});
 	// Returning visitor: the first-visit guided tour (FE-048) would cover the toolbar.
-	await page.addInitScript(() => window.localStorage.setItem('easyquery-tour-seen', 'true'));
-	await page.goto('/');
-	await expect(page.locator('#status-api')).toHaveText('API: online');
+	editor = new EditorPage(page);
+	await editor.open();
 	const upload = await page.request.post('/api/local-database', {
 		multipart: {
 			ttlFile: {
@@ -51,17 +52,12 @@ test.beforeEach(async ({ page, baseURL }) => {
 	});
 	const graphId = (await upload.json()).data as string;
 	await page.getByRole('combobox', { name: 'SPARQL endpoint' }).fill(graphId);
-	await page.evaluate(
-		() => ((window as never as { __easyquery: Handle }).__easyquery.store.autoLayout = false)
-	);
+	await editor.setAutoLayout(false);
 });
 
 test.afterEach(() => {
 	expect(unexpected, 'Unexpected external browser requests').toEqual([]);
 });
-
-const candidates = (page: Page) => page.locator('#stage-candidates .stage-candidate');
-const blockNames = (page: Page) => page.locator('#variable-order-list [data-slot="chip-label"]');
 
 /** Adds typed nodes and edges in one store commit. */
 async function addGraph(
@@ -136,35 +132,35 @@ test('a reordered three-variable exploration binds a predicate, a typed literal 
 		[variable('?team', 150, 250), variable('?value', 450, 250)],
 		[{ id: 'attribute', source: '?team', target: '?value', predicate: '?attr', label: '?' }]
 	);
-	await expect(blockNames(page)).toHaveText(['?attr', '?team', '?value']);
+	await expect(editor.orderChips).toHaveText(['?attr', '?team', '?value']);
 	await page.getByRole('button', { name: 'Move ?value earlier' }).click();
 	const order = ['?attr', '?value', '?team'];
-	await expect(blockNames(page)).toHaveText(order);
+	await expect(editor.orderChips).toHaveText(order);
 
-	await page.locator('#run-query-btn').click();
-	await expect(page.locator('#stage-heading')).toHaveText('Stage 1 of 3: ?attr');
-	await expect(candidates(page)).toHaveText([
+	await editor.runQuery();
+	await expect(editor.stageHeading).toHaveText('Stage 1 of 3: ?attr');
+	await expect(editor.candidates).toHaveText([
 		/http:\/\/www\.w3\.org\/2000\/01\/rdf-schema#label\s*IRI/,
 		/https:\/\/example\.test\/city\s*IRI/,
 		/https:\/\/example\.test\/founded\s*IRI/
 	]);
-	await candidates(page).nth(1).hover();
+	await editor.candidates.nth(1).hover();
 	await expect(page.locator('#stage-preview-list li')).toHaveText([
 		'Porto Alegre (IRI)',
 		'Rio de Janeiro (IRI)'
 	]);
 
-	await candidates(page).nth(2).click();
-	await expect(page.locator('#stage-heading')).toHaveText('Stage 2 of 3: ?value');
-	await expect(candidates(page)).toHaveText([
+	await editor.candidates.nth(2).click();
+	await expect(editor.stageHeading).toHaveText('Stage 2 of 3: ?value');
+	await expect(editor.candidates).toHaveText([
 		/1895\s*literal integer/,
 		/1903\s*literal integer/,
 		/1909\s*literal integer/
 	]);
-	await candidates(page).nth(1).click();
-	await expect(page.locator('#stage-heading')).toHaveText('Stage 3 of 3: ?team');
-	await expect(candidates(page)).toHaveText([/Grêmio\s*IRI/]);
-	await candidates(page).first().click();
+	await editor.candidates.nth(1).click();
+	await expect(editor.stageHeading).toHaveText('Stage 3 of 3: ?team');
+	await expect(editor.candidates).toHaveText([/Grêmio\s*IRI/]);
+	await editor.candidates.first().click();
 	await expect(page.locator('#stage-commitments li')).toHaveText([
 		'?attr = https://example.test/founded',
 		'?value = 1903',
@@ -210,18 +206,18 @@ test('the typed literal binding returned by Ktor constrains the next stage exact
 	);
 	await page.getByRole('button', { name: 'Move ?team later' }).click();
 	const order = ['?city', '?year', '?team'];
-	await expect(blockNames(page)).toHaveText(order);
-	await page.locator('#run-query-btn').click();
-	await expect(candidates(page)).toHaveText([/Porto Alegre/, /Rio de Janeiro/]);
-	await candidates(page).first().focus();
+	await expect(editor.orderChips).toHaveText(order);
+	await editor.runQuery();
+	await expect(editor.candidates).toHaveText([/Porto Alegre/, /Rio de Janeiro/]);
+	await editor.candidates.first().focus();
 	await expect(page.locator('#stage-preview-list li')).toHaveText([
 		'1903 (literal integer)',
 		'1909 (literal integer)'
 	]);
 	await page.keyboard.press('Enter');
-	await expect(candidates(page)).toHaveText([/1903/, /1909/]);
-	await candidates(page).nth(1).click();
-	await expect(candidates(page)).toHaveText([/Internacional\s*IRI/]);
+	await expect(editor.candidates).toHaveText([/1903/, /1909/]);
+	await editor.candidates.nth(1).click();
+	await expect(editor.candidates).toHaveText([/Internacional\s*IRI/]);
 	expectOnlyNextStageRequests(order);
 });
 
@@ -248,9 +244,9 @@ test('one-variable Run Query is staged through Ktor', async ({ page }) => {
 			}
 		]
 	);
-	await page.locator('#run-query-btn').click();
-	await expect(page.locator('#stage-heading')).toHaveText('Stage 1 of 1: ?team');
-	await expect(candidates(page)).toHaveText([/Grêmio\s*IRI/, /Internacional\s*IRI/]);
+	await editor.runQuery();
+	await expect(editor.stageHeading).toHaveText('Stage 1 of 1: ?team');
+	await expect(editor.candidates).toHaveText([/Grêmio\s*IRI/, /Internacional\s*IRI/]);
 	expectOnlyNextStageRequests(['?team']);
 	expect(legacyQueryRequests).toBe(0);
 });
@@ -282,18 +278,18 @@ test('Assume on a predicate leaves the literal last variable staged with its val
 			}
 		]
 	);
-	await expect(blockNames(page)).toHaveText(['?attr', '?value']);
-	await page.locator('#run-query-btn').click();
-	await expect(page.locator('#stage-heading')).toHaveText('Stage 1 of 2: ?attr');
+	await expect(editor.orderChips).toHaveText(['?attr', '?value']);
+	await editor.runQuery();
+	await expect(editor.stageHeading).toHaveText('Stage 1 of 2: ?attr');
 	await page
 		.getByRole('button', {
 			name: 'Assume ?attr = https://example.test/founded in the graph now'
 		})
 		.click();
-	await expect(page.locator('#stage-heading')).toHaveText('Stage 1 of 1: ?value');
-	await expect(candidates(page)).toHaveText([/1903\s*literal integer/]);
+	await expect(editor.stageHeading).toHaveText('Stage 1 of 1: ?value');
+	await expect(editor.candidates).toHaveText([/1903\s*literal integer/]);
 	await page.getByRole('button', { name: 'Close query variable exploration' }).click();
-	await page.locator('#run-query-btn').click();
-	await expect(candidates(page)).toHaveText([/1903\s*literal integer/]);
+	await editor.runQuery();
+	await expect(editor.candidates).toHaveText([/1903\s*literal integer/]);
 	expect(legacyQueryRequests).toBe(0);
 });

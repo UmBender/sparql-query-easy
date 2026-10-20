@@ -7,7 +7,8 @@
  */
 import { readFile } from 'node:fs/promises';
 import AxeBuilder from '@axe-core/playwright';
-import { expect, test, type Locator, type Page } from '@playwright/test';
+import { expect, test, type Page } from '@playwright/test';
+import { QuestionnairePage } from '../tests/support/pages/questionnaire-page';
 import { guardOffline, loginAs } from './support.js';
 
 let unexpected: string[];
@@ -19,13 +20,6 @@ test.beforeEach(({ page, baseURL }) => {
 test.afterEach(() => {
 	expect(unexpected, 'Unexpected external browser requests').toEqual([]);
 });
-
-async function rate(form: Locator, question: string, value: number) {
-	await form
-		.getByRole('group', { name: question })
-		.getByText(String(value), { exact: true })
-		.click();
-}
 
 /** Downloads one questionnaire's CSV from the admin page; returns its rows as cells (no quoted cells here). */
 async function downloadCsv(page: Page, title: string): Promise<string[][]> {
@@ -52,30 +46,31 @@ test('a participant answers both questionnaires and the admin finds them in the 
 	await page.goto('/study');
 	await page.getByRole('button', { name: 'I agree to take part' }).click();
 
-	const form = page.getByTestId('questionnaire');
+	const questionnaire = new QuestionnairePage(page);
+	const form = questionnaire.form;
 	await expect(form).toHaveAttribute('data-slug', 'profile');
-	await form.getByRole('radio', { name: 'I have used it a few times' }).click();
-	await form.getByRole('checkbox', { name: 'SQL' }).click();
-	await form.getByRole('checkbox', { name: 'SPARQL' }).click();
-	const years = form.getByLabel('PLACEHOLDER How many years have you programmed?');
+	await questionnaire.choose('I have used it a few times');
+	await questionnaire.check('SQL');
+	await questionnaire.check('SPARQL');
+	const years = questionnaire.field('PLACEHOLDER How many years have you programmed?');
 	await years.fill('99');
-	await rate(form, 'PLACEHOLDER I am comfortable exploring data in tables.', 5);
-	await form.getByRole('button', { name: 'Send my answers' }).click();
+	await questionnaire.rate('PLACEHOLDER I am comfortable exploring data in tables.', 5);
+	await questionnaire.send();
 	await expect(form.getByText('Enter a number from 0 to 60.')).toBeVisible();
 	await years.fill('7');
-	await form.getByRole('button', { name: 'Send my answers' }).click();
+	await questionnaire.send();
 	await expect(page.getByTestId('no-tasks')).toBeVisible();
 
 	await page.getByRole('button', { name: 'Finish the study' }).click();
 	await page.getByRole('button', { name: 'Finish and submit' }).click();
 	await expect(form).toHaveAttribute('data-slug', 'usability');
-	await rate(form, 'PLACEHOLDER The graph editor was easy to use.', 4);
-	await rate(form, 'PLACEHOLDER Drawing a query was faster than writing SPARQL.', 3);
-	await rate(form, 'PLACEHOLDER I was confident my answers were correct.', 2);
-	await form.getByRole('radio', { name: 'Run Query stages' }).click();
-	await form.getByRole('button', { name: 'Next' }).click();
-	await form.getByLabel(/PLACEHOLDER In one sentence/).fill(hardest);
-	await form.getByRole('button', { name: 'Send my answers' }).click();
+	await questionnaire.rate('PLACEHOLDER The graph editor was easy to use.', 4);
+	await questionnaire.rate('PLACEHOLDER Drawing a query was faster than writing SPARQL.', 3);
+	await questionnaire.rate('PLACEHOLDER I was confident my answers were correct.', 2);
+	await questionnaire.choose('Run Query stages');
+	await questionnaire.next();
+	await questionnaire.fill(/PLACEHOLDER In one sentence/, hardest);
+	await questionnaire.send();
 	await expect(page.getByTestId('study-finished')).toBeVisible();
 
 	const admin = await browser.newContext({ acceptDownloads: true });
