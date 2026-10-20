@@ -1,9 +1,12 @@
 package com.example.sparqlqueryeasy.persistence
 
+import com.example.sparqlqueryeasy.application.study.ExportedResponse
 import com.example.sparqlqueryeasy.application.study.FormResponse
 import com.example.sparqlqueryeasy.application.study.FormResponseStore
+import org.jetbrains.exposed.v1.core.JoinType
 import org.jetbrains.exposed.v1.core.ReferenceOption
 import org.jetbrains.exposed.v1.core.ResultRow
+import org.jetbrains.exposed.v1.core.SortOrder
 import org.jetbrains.exposed.v1.core.Table
 import org.jetbrains.exposed.v1.core.and
 import org.jetbrains.exposed.v1.core.eq
@@ -54,6 +57,27 @@ class PostgresFormResponseStore(private val connector: DatabaseConnector) : Form
     override suspend fun hasResponses(formId: Long): Boolean =
         connector.inTransaction {
             !StudyFormResponses.selectAll().where { StudyFormResponses.formId eq formId }.limit(1).empty()
+        }
+
+    override suspend fun export(slug: String): List<ExportedResponse> =
+        connector.inTransaction {
+            StudyFormResponses
+                .join(StudyGroupMembers, JoinType.LEFT, StudyFormResponses.userId, StudyGroupMembers.userId)
+                .join(StudyGroups, JoinType.LEFT, StudyGroupMembers.groupId, StudyGroups.id)
+                .selectAll()
+                .where { StudyFormResponses.formSlug eq slug }
+                .orderBy(StudyFormResponses.submittedAt to SortOrder.ASC, StudyFormResponses.id to SortOrder.ASC)
+                .map { row ->
+                    ExportedResponse(
+                        id = row[StudyFormResponses.id],
+                        userId = row[StudyFormResponses.userId],
+                        groupName = row.getOrNull(StudyGroups.name),
+                        version = row[StudyFormResponses.formVersion],
+                        consentVersion = row[StudyFormResponses.consentVersion],
+                        answersJson = row[StudyFormResponses.answers],
+                        submittedAt = row[StudyFormResponses.submittedAt],
+                    )
+                }
         }
 }
 

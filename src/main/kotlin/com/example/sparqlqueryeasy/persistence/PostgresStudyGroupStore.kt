@@ -26,7 +26,7 @@ import org.jetbrains.exposed.v1.jdbc.update
 import org.jetbrains.exposed.v1.jdbc.upsert
 import java.time.Instant
 
-private object StudyGroups : Table("study_group") {
+internal object StudyGroups : Table("study_group") {
     val id = long("id").autoIncrement()
     val name = varchar("name", 100).uniqueIndex()
     val createdAt = timestamp("created_at")
@@ -41,7 +41,7 @@ private object StudyGroupTasks : Table("study_group_task") {
     override val primaryKey = PrimaryKey(groupId, taskId)
 }
 
-private object StudyGroupMembers : Table("study_group_member") {
+internal object StudyGroupMembers : Table("study_group_member") {
     val userId = long("user_id").references(AppUsers.id, onDelete = ReferenceOption.CASCADE)
     val groupId = long("group_id").references(StudyGroups.id)
     val assignedAt = timestamp("assigned_at")

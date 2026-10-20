@@ -1,7 +1,7 @@
 ---
 id: STUDY-002
 title: Show two questionnaires to logged-in users and store their answers
-status: BACKLOG
+status: DONE
 priority: P1
 type: fullstack
 depends_on: [STUDY-001, STUDY-008, STUDY-009, STUDY-010, STUDY-011]
@@ -36,8 +36,8 @@ answer-export route.
 
 ## Acceptance criteria
 
-- [ ] Each form submits once; invalid answers are rejected client- and server-side.
-- [ ] Anonymous access returns 401; e2e covers both forms.
+- [x] Each form submits once; invalid answers are rejected client- and server-side.
+- [x] Anonymous access returns 401; e2e covers both forms.
 
 ## Proposed changes (T9 brief, 2026-10-20; accepted by DEC-015)
 
@@ -53,19 +53,35 @@ and the usability form after the final submission. This card is not rewritten.
 - Export access (this card's pending input): admins only, through AUTH-005's
   `withAdmin` guard (brief).
 - Added acceptance criteria from the brief:
-  - [ ] Question types single choice, multiple choice, Likert, short text,
+  - [x] Question types single choice, multiple choice, Likert, short text,
         long text and number, rendered from JSON definitions.
-  - [ ] Zod schema built from the definition; the server applies the same
+  - [x] Zod schema built from the definition; the server applies the same
         rules (shared parity fixtures).
-  - [ ] Consent stored (user, consent version, accepted_at) before any
+  - [x] Consent stored (user, consent version, accepted_at) before any
         response is stored (DEC-015 Q1).
-  - [ ] Each response keeps its form version and `submitted_at`.
-  - [ ] Admin-only CSV export of responses.
-  - [ ] Progress kept per page for a multi-page form (DEC-015 Q4).
-  - [ ] Only what the forms ask is stored; no question asks for identifying
+  - [x] Each response keeps its form version and `submitted_at`.
+  - [x] Admin-only CSV export of responses.
+  - [x] Progress kept per page for a multi-page form (DEC-015 Q4).
+  - [x] Only what the forms ask is stored; no question asks for identifying
         data without the user's approval.
-  - [ ] Tests: schema validation, one component test per question type, e2e:
+  - [x] Tests: schema validation, one component test per question type, e2e:
         consent, both forms, an invalid answer rejected, responses found in
         the export.
 - The questions ship as `PLACEHOLDER` content (STUDY-009) until the user
   supplies them.
+
+## Conclusion (2026-10-20)
+
+T9 is delivered by its four slices, all DONE: STUDY-008 (consent),
+STUDY-009 (definitions and shared validation), STUDY-010 (one response per
+form, placement, per-page progress) and STUDY-011 (admin CSV export and the
+whole-flow e2e `tests-stack/study-questionnaires.e2e.ts`). Contracts:
+[[../../03 - Backend/API v1#Research consent (participant, STUDY-008)]],
+[[../../03 - Backend/API v1#Questionnaires (participant, STUDY-009)]],
+[[../../03 - Backend/API v1#Questionnaire responses (participant, STUDY-010)]],
+[[../../03 - Backend/API v1#Questionnaire export (admin, STUDY-011)]].
+
+Pending input that stays the user's: the question texts ship as
+`PLACEHOLDER` and must be replaced (a new version file per questionnaire)
+before real participants; the shipped placeholders ask for no identifying
+data.

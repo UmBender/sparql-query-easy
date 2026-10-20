@@ -144,6 +144,14 @@ function kindOf(status: number): ApiErrorKind {
 
 type Options = { signal?: AbortSignal };
 
+/**
+ * STUDY-011: where an admin downloads a questionnaire's responses as CSV. A
+ * plain link, not a fetch: the browser saves the attachment with the session
+ * cookie.
+ */
+export const formResponsesCsvPath = (slug: string) =>
+	`/api/admin/forms/${encodeURIComponent(slug)}/responses.csv`;
+
 export type ApiClientOptions = { fetch?: typeof fetch; baseUrl?: string };
 
 export function createApiClient({

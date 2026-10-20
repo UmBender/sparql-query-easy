@@ -740,6 +740,30 @@ before the finished view; answers of completed pages stay in `localStorage`
 (`easyquery-form:<user>:<slug>:v<version>`) until the submit or until the user
 goes away (logout, an expired session).
 
+## Questionnaire export (admin, STUDY-011)
+
+DEC-015 Q5 A. `GET /api/admin/forms/{slug}/responses.csv` (admin role: 401
+without a session, 403 for a participant; unknown slug 404) answers `200`
+`text/csv; charset=utf-8` with `Content-Disposition: attachment;
+filename=<slug>-responses.csv`. RFC 4180 with CRLF line ends, one row per
+response, oldest first:
+
+`response_id, participant, group, form_version, consent_version,
+submitted_at`, then one column per question id: the union over every version
+of the questionnaire in `study.json`, the newest version's order first, then
+ids only older versions had.
+
+- `participant` is the internal user id; no username, password hash or
+  session data is in the file. `group` is the participant's group at export
+  time (empty without one).
+- `submitted_at` is UTC ISO-8601. Multiple choice values are joined with `;`;
+  an unanswered question is empty; numbers are written as stored.
+- Text cells (answers and the group name) starting with `=`, `+`, `-`, `@`,
+  tab or carriage return get a leading `'` against spreadsheet formulas.
+
+`/admin` lists the questionnaires (`GET /api/study/forms`, which admins reach
+without consent) with one download link each (`formResponsesCsvPath`).
+
 ## Endpoint selection
 
 `endpointUrl` accepts the built-in identifiers `CampeonatoBrasileiro2023` and

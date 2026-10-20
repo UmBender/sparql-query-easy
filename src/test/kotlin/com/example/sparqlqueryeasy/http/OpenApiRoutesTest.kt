@@ -57,6 +57,8 @@ class OpenApiRoutesTest {
             "/api/admin/groups/{id}/members" to setOf("post"),
             "/api/admin/groups/{id}/members/remove" to setOf("post"),
             "/api/admin/groups/{id}/delete" to setOf("post"),
+            // STUDY-011
+            "/api/admin/forms/{slug}/responses.csv" to setOf("get"),
             // STUDY-003
             "/api/study/consent" to setOf("get", "post"),
             "/api/study/forms" to setOf("get"),

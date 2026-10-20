@@ -22,6 +22,7 @@ internal fun Route.adminRoutes(
     study?.let {
         adminTaskRoutes(auth, it.tasks)
         adminGroupRoutes(auth, it.groups)
+        adminFormRoutes(auth, it.questionnaires)
     }
     route("/api/admin/{...}") {
         handle {

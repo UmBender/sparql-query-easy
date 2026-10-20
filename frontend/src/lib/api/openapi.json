@@ -2475,6 +2475,78 @@
                 }
             }
         },
+        "/api/admin/forms/{slug}/responses.csv": {
+            "get": {
+                "operationId": "adminExportFormResponses",
+                "tags": [
+                    "Admin"
+                ],
+                "summary": "Download a questionnaire's responses as CSV",
+                "description": "RFC 4180, one row per response, oldest first: response_id, participant (the internal user id, never the username), group (the participant's group now), form_version, consent_version, submitted_at (UTC ISO-8601), then one column per question id over every version of the questionnaire. Multiple choice values are joined with ';' and unanswered questions are empty; text starting with =, +, -, @, tab or carriage return gets a leading ' against spreadsheet formulas. Sent as an attachment. Requires the admin role (401 without a session, 403 for a participant).",
+                "parameters": [
+                    {
+                        "name": "slug",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "The CSV file.",
+                        "content": {
+                            "text/csv": {
+                                "schema": {
+                                    "type": "string"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "No questionnaire has this slug.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorResponse"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "No valid session.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorResponse"
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "description": "The user lacks the role, or the request came from another site.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorResponse"
+                                }
+                            }
+                        }
+                    },
+                    "503": {
+                        "description": "The database is not configured or unreachable.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorResponse"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
         "/api/study/consent": {
             "post": {
                 "operationId": "studyAcceptConsent",

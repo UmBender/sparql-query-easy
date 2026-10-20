@@ -60,6 +60,9 @@ interface FormResponseStore {
     ): FormResponse?
 
     suspend fun hasResponses(formId: Long): Boolean
+
+    /** Every response to [slug], whatever the version, oldest first, with the user's current group (STUDY-011). */
+    suspend fun export(slug: String): List<ExportedResponse>
 }
 
 sealed interface FormSubmitResult {
@@ -119,6 +122,12 @@ class QuestionnaireService(
         }
         storedIds[key] = stored.id
         return stored.id
+    }
+
+    /** The CSV of every response to [slug] (STUDY-011), or null when there is no such questionnaire. */
+    suspend fun exportCsv(slug: String): String? {
+        current(slug) ?: return null
+        return FormResponsesCsv.render(resources.forms.filter { it.slug == slug }, responses.export(slug))
     }
 
     /** The user's response to [slug], or null. */

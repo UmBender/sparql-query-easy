@@ -1,7 +1,7 @@
 ---
 id: STUDY-011
 title: Let admins export questionnaire responses as CSV and cover the whole T9 flow end to end
-status: READY
+status: DONE
 priority: P1
 type: fullstack
 depends_on: [STUDY-010, AUTH-005]
@@ -42,15 +42,40 @@ Excluded: other formats, filters or a response viewer; deletion on request
 
 ## Acceptance criteria
 
-- [ ] Admin gets the CSV; a participant gets 403; anonymous 401; unknown slug 404.
-- [ ] CSV unit tests: quoting of commas, quotes and newlines; formula
+- [x] Admin gets the CSV; a participant gets 403; anonymous 401; unknown slug 404.
+- [x] CSV unit tests: quoting of commas, quotes and newlines; formula
       escaping; multiple choice joining; empty optional answers; two versions.
-- [ ] No username, password hash or session data appears in the file.
-- [ ] The e2e above passes in `test:stack`, including the rejected invalid
+- [x] No username, password hash or session data appears in the file.
+- [x] The e2e above passes in `test:stack`, including the rejected invalid
       answer and both responses found in the export.
-- [ ] axe check on the admin page with the download buttons.
+- [x] axe check on the admin page with the download buttons.
 
 ## Validation
 
 Focused: the new export route and CSV tests, then the HTTP/fullstack closing
 gate of the Operational Map, including `test:stack`.
+
+## Conclusion (2026-10-20)
+
+- Contract: [[../../03 - Backend/API v1#Questionnaire export (admin, STUDY-011)]].
+- Backend: `application/study/FormResponsesCsv.kt` (columns, RFC 4180
+  quoting, formula escaping of text cells; numbers as stored so a negative
+  number answer stays a number), `FormResponseStore.export` (responses with
+  the participant's current group, left joins on `study_group_member` and
+  `study_group`, whose table objects became `internal`),
+  `QuestionnaireService.exportCsv`, `http/AdminFormRoutes.kt` behind
+  `adminRead`.
+- Frontend: `/admin` gains a "Questionnaire responses" section with one
+  download link per questionnaire (`formResponsesCsvPath` in `client.ts`; a
+  plain link so the browser saves the attachment with the session cookie).
+- Tests: `FormResponsesCsvTest` (5), `AdminFormExportRoutesTest` (2),
+  `client.spec.ts` (+1: the link matches the OpenAPI path),
+  `tests-stack/study-questionnaires.e2e.ts` (whole T9 flow with axe on
+  `/admin`).
+- Validation: Kotlin gate `ktlintCheck detekt test` green (287 tests; it
+  first failed on an import order and a detekt condition in the new code,
+  both fixed); frontend check, lint and `npm test` green (199 unit, 23
+  component, 84 e2e); `test:stack` green (20). The stack ran before those two
+  fixes, which do not change behavior.
+- Remaining: the question texts are still PLACEHOLDER (STUDY-009); the user
+  supplies them.

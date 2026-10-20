@@ -2,7 +2,13 @@ import { readFileSync } from 'node:fs';
 import { http, HttpResponse } from 'msw';
 import { setupServer } from 'msw/node';
 import { afterAll, afterEach, beforeAll, describe, expect, it } from 'vitest';
-import { ApiError, createApiClient, isAbort, questionErrors } from './client.js';
+import {
+	ApiError,
+	createApiClient,
+	formResponsesCsvPath,
+	isAbort,
+	questionErrors
+} from './client.js';
 
 const BASE = 'http://api.test';
 const server = setupServer();
@@ -232,5 +238,16 @@ describe('typed API client', () => {
 		expect(
 			questionErrors(new ApiError('bad-request', 'Missing answers', 400, { error: 'x' }))
 		).toBeNull();
+	});
+
+	it('links the CSV export to the documented admin route (STUDY-011)', () => {
+		const spec = JSON.parse(
+			readFileSync(new URL('./openapi.json', import.meta.url), 'utf8')
+		) as {
+			paths: Record<string, unknown>;
+		};
+		expect(spec.paths).toHaveProperty(['/api/admin/forms/{slug}/responses.csv']);
+		expect(formResponsesCsvPath('profile')).toBe('/api/admin/forms/profile/responses.csv');
+		expect(formResponsesCsvPath('a b')).toBe('/api/admin/forms/a%20b/responses.csv');
 	});
 });
