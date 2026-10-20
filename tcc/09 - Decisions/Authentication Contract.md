@@ -15,7 +15,7 @@ security defaults below were proposed with them and are reversible.
 - LGPD/consent handling was deferred (D5). DEC-015 (2026-10-20) lifts it for
   the study: a stored consent for the current consent-text version is
   required before any questionnaire response or proposed-task attempt
-  (STUDY-008, planned); withdrawal and deletion stay a go-live item (LEARN-014).
+  (STUDY-008); withdrawal and deletion stay a go-live item (LEARN-014).
 
 ## Security defaults
 

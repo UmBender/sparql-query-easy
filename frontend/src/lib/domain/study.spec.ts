@@ -1,6 +1,13 @@
 import { readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
-import { answerQuery, answerVariables, emptyGraph, loadQuery, type QueryGraph } from './index.js';
+import {
+	answerQuery,
+	answerVariables,
+	emptyGraph,
+	loadQuery,
+	textBlocks,
+	type QueryGraph
+} from './index.js';
 import fireSpeed from './fixtures/fire-speed-at-least-90.query.json?raw';
 
 function graphOf(text: string): QueryGraph {
@@ -46,5 +53,21 @@ describe('answer query (STUDY-006, DEC-014 Q5)', () => {
 		expect(answerQuery(emptyGraph, '?x')).toEqual({
 			message: 'Draw at least one relation before submitting.'
 		});
+	});
+});
+
+describe('consent text blocks (STUDY-008)', () => {
+	it('splits paragraphs at blank lines and turns runs of "- " lines into lists', () => {
+		expect(
+			textBlocks('First line\ncontinues.\n\n- one\n- two\n\n\nLast.\n- not a list')
+		).toEqual([
+			{ kind: 'paragraph', text: 'First line continues.' },
+			{ kind: 'list', items: ['one', 'two'] },
+			{ kind: 'paragraph', text: 'Last. - not a list' }
+		]);
+	});
+
+	it('returns no blocks for blank text', () => {
+		expect(textBlocks('  \n\n ')).toEqual([]);
 	});
 });

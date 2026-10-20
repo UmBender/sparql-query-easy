@@ -2,7 +2,9 @@
 	The proposed queries (STUDY-003): the active tasks of the participant's
 	group, in the group's order (STUDY-007), or a note that none are assigned,
 	and the final submission (STUDY-005), after which the finished view shows.
-	The root layout's guard sends anonymous visitors to login (AUTH-004).
+	The consent screen comes first until the current text is accepted
+	(STUDY-008). The root layout's guard sends anonymous visitors to login
+	(AUTH-004).
 -->
 <script lang="ts">
 	import { resolve } from '$app/paths';
@@ -11,20 +13,34 @@
 	import { queryKeys } from '#lib/api/queries.js';
 	import { Button } from '#lib/components/ui/button/index.js';
 	import { authSession } from '#lib/features/auth/auth-session.svelte.js';
+	import ConsentScreen from '#lib/features/study/consent-screen.svelte';
 	import FinishStudy from '#lib/features/study/finish-study.svelte';
 	import StudyFinished from '#lib/features/study/study-finished.svelte';
 
+	const consent = createQuery(() => ({
+		queryKey: queryKeys.studyConsent,
+		queryFn: ({ signal }) => api.study.consent({ signal }),
+		staleTime: 0
+	}));
+	const consented = $derived(!!consent.data?.acceptedAt || authSession.user?.role === 'admin');
 	const tasks = createQuery(() => ({
 		queryKey: queryKeys.studyTasks,
 		queryFn: ({ signal }) => api.study.tasks({ signal }),
-		staleTime: 0
+		staleTime: 0,
+		enabled: consented
 	}));
 	const finished = $derived(tasks.error instanceof ApiError && tasks.error.kind === 'forbidden');
 </script>
 
 <svelte:head><title>Proposed queries · SPARQL EasyQuery</title></svelte:head>
 
-{#if finished}
+{#if consent.isPending}
+	<p class="p-6 text-sm text-muted-foreground" role="status">Loading…</p>
+{:else if consent.isError}
+	<p class="p-6 text-sm text-danger" role="alert">{consent.error.message}</p>
+{:else if !consented}
+	<ConsentScreen consent={consent.data} />
+{:else if finished}
 	<StudyFinished />
 {:else}
 	<main class="mx-auto flex min-h-dvh w-full max-w-3xl flex-col gap-4 bg-background px-4 py-10">

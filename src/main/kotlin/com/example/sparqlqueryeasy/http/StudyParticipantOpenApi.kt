@@ -140,8 +140,8 @@ internal fun Route.documentStudyFinish(): Route =
 internal fun Responses.Builder.sessionErrors() {
     HttpStatusCode.Forbidden {
         description =
-            "The caller has made the final submission (task and submission routes), or the request came from " +
-            "another site."
+            "`consent_required`: the caller has not accepted the current consent text (STUDY-008); or the caller " +
+            "has made the final submission (task and submission routes); or the request came from another site."
         schema = jsonSchema<ErrorResponse>()
     }
     HttpStatusCode.Unauthorized {

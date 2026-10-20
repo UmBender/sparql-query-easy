@@ -61,3 +61,29 @@ export function answerQuery(
 		)
 	};
 }
+
+/**
+ * The 403 message of the study routes that store research data until the
+ * participant accepted the current consent text (STUDY-008, DEC-015 Q1).
+ */
+export const CONSENT_REQUIRED = 'consent_required';
+
+/** The consent text as blocks: paragraphs, and runs of `- ` lines as lists. */
+export type TextBlock = { kind: 'paragraph'; text: string } | { kind: 'list'; items: string[] };
+
+export function textBlocks(text: string): TextBlock[] {
+	const blocks: TextBlock[] = [];
+	for (const chunk of text.split(/\n\s*\n/)) {
+		const lines = chunk
+			.split('\n')
+			.map((line) => line.trim())
+			.filter(Boolean);
+		if (lines.length === 0) continue;
+		if (lines.every((line) => line.startsWith('- '))) {
+			blocks.push({ kind: 'list', items: lines.map((line) => line.slice(2).trim()) });
+		} else {
+			blocks.push({ kind: 'paragraph', text: lines.join(' ') });
+		}
+	}
+	return blocks;
+}

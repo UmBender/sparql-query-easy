@@ -4,11 +4,12 @@
  * editor on the starting graph with the endpoint locked, and the note for a
  * participant without a group. STUDY-004: a correct and a wrong answer, the
  * server's feedback and the attempt history. STUDY-005: the final submission
- * closes the tasks. Test data comes from the admin API.
+ * closes the tasks. STUDY-008: the consent screen comes first. Test data comes from the admin API.
  */
 import { readFileSync } from 'node:fs';
+import AxeBuilder from '@axe-core/playwright';
 import { expect, test } from '@playwright/test';
-import { FIRE_SPEED, guardOffline, loginAs, seedStudy } from './support.js';
+import { FIRE_SPEED, guardOffline, joinStudy, loginAs, seedStudy } from './support.js';
 
 let unexpected: string[];
 
@@ -51,6 +52,7 @@ test('a participant sees their group tasks in order and opens one in the editor'
 
 test('a participant without a group is told no tasks are assigned', async ({ page }) => {
 	await loginAs(page.request, `lonely-${Date.now()}`);
+	await joinStudy(page.request);
 	await page.goto('/study');
 	await expect(page.getByTestId('no-tasks')).toContainText('No tasks are assigned to you yet');
 	await page.goto('/study/not-mine');
@@ -122,4 +124,37 @@ test('after the final submission the task pages show the finished page', async (
 		data: { graph: {}, query: {} }
 	});
 	expect(submit.status()).toBe(403);
+});
+
+test('a new participant sees the consent screen first and the tasks only after agreeing', async ({
+	page
+}) => {
+	const participant = `consenting-${Date.now()}`;
+	await loginAs(page.request, participant);
+
+	await page.goto('/study');
+	await expect(page.getByRole('heading', { name: 'Consent to take part' })).toBeVisible();
+	await expect(page.getByTestId('consent-text')).toContainText('PLACEHOLDER');
+	const results = await new AxeBuilder({ page })
+		.include('[data-testid="consent-screen"]')
+		.analyze();
+	expect(results.violations.map((violation) => violation.id)).toEqual([]);
+	const before = await page.request.get('/api/study/tasks');
+	expect(before.status()).toBe(403);
+
+	await page.getByRole('button', { name: 'I do not agree' }).click();
+	await expect(page.getByTestId('consent-declined')).toBeVisible();
+	await page.getByRole('button', { name: 'Read it again' }).click();
+	await page.getByRole('button', { name: 'I agree to take part' }).click();
+	await expect(page.getByTestId('no-tasks')).toBeVisible();
+
+	await page.goto('/study/not-mine');
+	await expect(page.getByRole('alert')).toHaveText('Task not found');
+});
+
+test('a task link opened before consenting leads to the consent screen', async ({ page }) => {
+	await loginAs(page.request, `early-${Date.now()}`);
+	await page.goto('/study/any-task');
+	await expect(page).toHaveURL(/\/study$/);
+	await expect(page.getByTestId('consent-screen')).toBeVisible();
 });

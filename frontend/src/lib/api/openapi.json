@@ -2475,6 +2475,164 @@
                 }
             }
         },
+        "/api/study/consent": {
+            "post": {
+                "operationId": "studyAcceptConsent",
+                "tags": [
+                    "Study"
+                ],
+                "summary": "Accept the consent text",
+                "description": "Stores the caller's consent to the given version with the server's time; nothing else is stored. Accepting again answers 200 with the first time. Until then the questionnaire and task routes answer 403 `consent_required` (DEC-015 Q1). Same origin only (403) and JSON only (415). Requires a session (401 otherwise).",
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/StudyConsentHttpRequest"
+                            }
+                        }
+                    },
+                    "required": true
+                },
+                "responses": {
+                    "200": {
+                        "description": "The accepted version and when it was accepted.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "required": [
+                                        "data"
+                                    ],
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/components/schemas/StudyConsentAcceptedHttpResponse"
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "The version is missing.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorResponse"
+                                }
+                            }
+                        }
+                    },
+                    "409": {
+                        "description": "The version is not the current one; nothing is stored.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorResponse"
+                                }
+                            }
+                        }
+                    },
+                    "415": {
+                        "description": "The body is not application/json.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorResponse"
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "description": "`consent_required`: the caller has not accepted the current consent text (STUDY-008); or the caller has made the final submission (task and submission routes); or the request came from another site.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorResponse"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "No valid session.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorResponse"
+                                }
+                            }
+                        }
+                    },
+                    "503": {
+                        "description": "The database is not configured or unreachable.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorResponse"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "get": {
+                "operationId": "studyGetConsent",
+                "tags": [
+                    "Study"
+                ],
+                "summary": "Read the consent text",
+                "description": "The current version of the study's consent text and whether the caller accepted it. Requires a session (401 otherwise).",
+                "responses": {
+                    "200": {
+                        "description": "The current consent text.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "required": [
+                                        "data"
+                                    ],
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/components/schemas/StudyConsentHttpResponse"
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "description": "`consent_required`: the caller has not accepted the current consent text (STUDY-008); or the caller has made the final submission (task and submission routes); or the request came from another site.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorResponse"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "No valid session.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorResponse"
+                                }
+                            }
+                        }
+                    },
+                    "503": {
+                        "description": "The database is not configured or unreachable.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorResponse"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
         "/api/study/tasks": {
             "get": {
                 "operationId": "studyListTasks",
@@ -2506,7 +2664,7 @@
                         }
                     },
                     "403": {
-                        "description": "The caller has made the final submission (task and submission routes), or the request came from another site.",
+                        "description": "`consent_required`: the caller has not accepted the current consent text (STUDY-008); or the caller has made the final submission (task and submission routes); or the request came from another site.",
                         "content": {
                             "application/json": {
                                 "schema": {
@@ -2586,7 +2744,7 @@
                         }
                     },
                     "403": {
-                        "description": "The caller has made the final submission (task and submission routes), or the request came from another site.",
+                        "description": "`consent_required`: the caller has not accepted the current consent text (STUDY-008); or the caller has made the final submission (task and submission routes); or the request came from another site.",
                         "content": {
                             "application/json": {
                                 "schema": {
@@ -2696,7 +2854,7 @@
                         }
                     },
                     "403": {
-                        "description": "The caller has made the final submission (task and submission routes), or the request came from another site.",
+                        "description": "`consent_required`: the caller has not accepted the current consent text (STUDY-008); or the caller has made the final submission (task and submission routes); or the request came from another site.",
                         "content": {
                             "application/json": {
                                 "schema": {
@@ -2790,7 +2948,7 @@
                         }
                     },
                     "403": {
-                        "description": "The caller has made the final submission (task and submission routes), or the request came from another site.",
+                        "description": "`consent_required`: the caller has not accepted the current consent text (STUDY-008); or the caller has made the final submission (task and submission routes); or the request came from another site.",
                         "content": {
                             "application/json": {
                                 "schema": {
@@ -2860,7 +3018,7 @@
                         }
                     },
                     "403": {
-                        "description": "The caller has made the final submission (task and submission routes), or the request came from another site.",
+                        "description": "`consent_required`: the caller has not accepted the current consent text (STUDY-008); or the caller has made the final submission (task and submission routes); or the request came from another site.",
                         "content": {
                             "application/json": {
                                 "schema": {
@@ -3914,6 +4072,58 @@
                             "string",
                             "null"
                         ]
+                    }
+                }
+            },
+            "StudyConsentHttpResponse": {
+                "type": "object",
+                "title": "StudyConsentHttpResponse",
+                "required": [
+                    "version",
+                    "text"
+                ],
+                "properties": {
+                    "version": {
+                        "type": "integer"
+                    },
+                    "text": {
+                        "type": "string",
+                        "description": "The consent text (Markdown)."
+                    },
+                    "acceptedAt": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "description": "When the caller accepted this version; null when they have not."
+                    }
+                }
+            },
+            "StudyConsentHttpRequest": {
+                "type": "object",
+                "title": "StudyConsentHttpRequest",
+                "properties": {
+                    "version": {
+                        "type": [
+                            "integer",
+                            "null"
+                        ]
+                    }
+                }
+            },
+            "StudyConsentAcceptedHttpResponse": {
+                "type": "object",
+                "title": "StudyConsentAcceptedHttpResponse",
+                "required": [
+                    "version",
+                    "acceptedAt"
+                ],
+                "properties": {
+                    "version": {
+                        "type": "integer"
+                    },
+                    "acceptedAt": {
+                        "type": "string"
                     }
                 }
             },

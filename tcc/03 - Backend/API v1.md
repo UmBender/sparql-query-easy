@@ -651,6 +651,27 @@ answer `403 {"error":"You have finished the study; the proposed queries are
 closed"}` (D6, 2026-10-16). Other study paths and the account routes are
 unaffected; the questionnaire after finishing is STUDY-002.
 
+## Research consent (participant, STUDY-008)
+
+DEC-015 Q1. The consent text is a versioned repository file named by
+`src/main/resources/study/study.json` (`consent.version`, `consent.file`;
+v1 is a placeholder, not for participants). `GET /api/study/consent`
+(session) answers `200 {"data":{"version":1,"text":"…","acceptedAt":null}}`;
+`acceptedAt` is the caller's acceptance of that version. `POST
+/api/study/consent` with `{"version":1}` (session, same origin, JSON) stores
+(user, version, server time) in `study_consent` (`V9__study_consent.sql`) and
+answers `200 {"data":{"version":1,"acceptedAt":"…"}}`; accepting again keeps
+the first time; another version answers `409`, a missing one `400`. Nothing
+else is stored (no IP, no user agent).
+
+Until a participant accepted the current version, the task routes
+(`GET /api/study/tasks`, `GET /api/study/tasks/{key}`,
+`POST /api/study/tasks/{key}/submissions`, `GET /api/study/submissions`) and
+`POST /api/study/finish` answer `403 {"error":"consent_required"}` and store
+nothing; this check comes before the finished check. Admins are not gated.
+A new consent version asks everyone again. Withdrawal and deletion are not
+routes (go-live, LEARN-014).
+
 ## Endpoint selection
 
 `endpointUrl` accepts the built-in identifiers `CampeonatoBrasileiro2023` and

@@ -16,6 +16,7 @@ import com.example.sparqlqueryeasy.persistence.TestPostgres
 import com.example.sparqlqueryeasy.security.Argon2PasswordHasher
 import io.ktor.client.HttpClient
 import io.ktor.client.plugins.cookies.HttpCookies
+import io.ktor.client.request.get
 import io.ktor.client.request.post
 import io.ktor.client.request.put
 import io.ktor.client.request.setBody
@@ -37,8 +38,8 @@ internal const val ADMIN = "Grace"
 internal fun ApplicationTestBuilder.studyApp(
     database: DatabaseSettings? = TestPostgres.freshDatabase(),
     clock: MutableClock = MutableClock(),
+    connector: DatabaseConnector = DatabaseConnector(database).also { it.connect() },
 ): StudyTestContext {
-    val connector = DatabaseConnector(database).also { it.connect() }
     val base = defaultHttpDependencies(AppSettings())
     val query = checkNotNull(base.query)
     val auth =
@@ -74,12 +75,27 @@ internal class StudyTestContext(
     suspend fun taskKeysFor(username: String): List<String> = study.groups.activeTasksFor(userId(username)).map { it.key }
 }
 
-/** A client with [name]'s session: registered, or logged in when the account exists. */
-internal suspend fun ApplicationTestBuilder.userClient(name: String): HttpClient =
+/**
+ * A client with [name]'s session: registered, or logged in when the account exists. With [consent] it also
+ * accepts the current consent text (STUDY-008), as every participant must before the task routes open.
+ */
+internal suspend fun ApplicationTestBuilder.userClient(
+    name: String,
+    consent: Boolean = true,
+): HttpClient =
     createClient { install(HttpCookies) }.also {
         val credentials = """{"username":"$name","password":"correct horse"}"""
         if (it.json("/api/auth/register", credentials).status.value == 409) it.json("/api/auth/login", credentials)
+        if (consent) it.acceptConsent()
     }
+
+/** Accepts the current consent text: the version GET /api/study/consent names. */
+internal suspend fun HttpClient.acceptConsent(): HttpResponse {
+    val current = get("/api/study/consent")
+    if (current.status.value != 200) return current
+    val version = current.data().field("version")
+    return json("/api/study/consent", """{"version":$version}""")
+}
 
 internal suspend fun HttpClient.json(
     path: String,

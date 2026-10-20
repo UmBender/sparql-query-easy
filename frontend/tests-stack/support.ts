@@ -16,6 +16,18 @@ export async function loginAs(request: APIRequestContext, username: string): Pro
 	}
 }
 
+/**
+ * What every participant does before the proposed tasks open, through the API: accept the current consent text
+ * (STUDY-008). The session in `request` must be the participant's.
+ */
+export async function joinStudy(request: APIRequestContext): Promise<void> {
+	const consent = await request.get('/api/study/consent');
+	expect(consent.status(), 'read consent').toBe(200);
+	const { version } = ((await consent.json()) as { data: { version: number } }).data;
+	const accepted = await request.post('/api/study/consent', { data: { version } });
+	expect(accepted.status(), 'accept consent').toBe(200);
+}
+
 /** Fails the test on any browser request leaving the app's origin (no external services). */
 export function guardOffline(page: Page, baseURL: string): string[] {
 	const unexpected: string[] = [];
@@ -70,8 +82,8 @@ export const FIRE_SPEED_QUERY = {
 };
 
 /**
- * STUDY-003 test data, created through the admin API as `stack-admin` in its own context: three
- * PokemonGen1 tasks (Water, then Fire with speed ≥ 90 starting from the drawn Fire query, then Grass) in a
+ * STUDY-003 test data, created through the admin API as `stack-admin` in its own context: the participant
+ * joins the study (`joinStudy`), then three PokemonGen1 tasks (Water, then Fire with speed ≥ 90 starting from the drawn Fire query, then Grass) in a
  * new group with `participant` in it. Returns the task keys in group order.
  */
 export async function seedStudy(browser: Browser, participant: string): Promise<string[]> {
@@ -80,6 +92,7 @@ export async function seedStudy(browser: Browser, participant: string): Promise<
 	const admin = await browser.newContext();
 	try {
 		await loginAs(admin.request, participant);
+		await joinStudy(admin.request);
 		await admin.request.post('/api/auth/logout', { data: {} });
 		await loginAs(admin.request, 'stack-admin');
 		const keys = [`water-${stamp}`, `fire-fast-${stamp}`, `grass-${stamp}`];

@@ -1,6 +1,8 @@
 package com.example.sparqlqueryeasy.http
 
+import com.example.sparqlqueryeasy.application.auth.Role
 import com.example.sparqlqueryeasy.application.auth.User
+import com.example.sparqlqueryeasy.application.study.ConsentService
 import com.example.sparqlqueryeasy.application.study.StudyService
 import com.example.sparqlqueryeasy.application.study.StudyTask
 import com.example.sparqlqueryeasy.application.study.Submission
@@ -54,12 +56,15 @@ data class StudySubmissionHttpResponse(
 @Serializable
 data class StudyFinishHttpResponse(val finishedAt: String)
 
-/** The participant's study API (STUDY-003…005); every path below /api/study requires a session. */
+/** The participant's study API (STUDY-003…005, STUDY-008); every path below /api/study requires a session. */
 internal fun Route.studyRoutes(
     auth: AuthHttpDependencies,
     study: StudyHttpDependencies?,
 ) {
-    study?.let { participantTaskRoutes(auth, it.study) }
+    study?.let {
+        consentRoutes(auth, it.consent)
+        participantTaskRoutes(auth, it)
+    }
     route("/api/study/{...}") {
         handle {
             accountsAvailable {
@@ -71,24 +76,26 @@ internal fun Route.studyRoutes(
 
 private fun Route.participantTaskRoutes(
     auth: AuthHttpDependencies,
-    study: StudyService,
+    dependencies: StudyHttpDependencies,
 ) {
+    val study = dependencies.study
+    val consent = dependencies.consent
     route("/api/study/tasks") {
         get {
-            studyOpen(auth, study) { user -> call.respond(DataResponse(study.tasks(user.id).map { it.toSummary() })) }
+            studyOpen(auth, study, consent) { user -> call.respond(DataResponse(study.tasks(user.id).map { it.toSummary() })) }
         }.documentStudyListTasks()
         get("{key}") {
-            studyOpen(auth, study) { user ->
+            studyOpen(auth, study, consent) { user ->
                 val task = study.open(user.id, call.parameters["key"].orEmpty())
                 if (task == null) studyTaskNotFound() else call.respond(DataResponse(task.toParticipantResponse()))
             }
         }.documentStudyGetTask()
         post("{key}/submissions") {
-            sameOriginJson { studyOpen(auth, study) { user -> validRequest { submit(study, user) } } }
+            sameOriginJson { studyOpen(auth, study, consent) { user -> validRequest { submit(study, user) } } }
         }.documentStudySubmit()
     }
     get("/api/study/submissions") {
-        studyOpen(auth, study) { user ->
+        studyOpen(auth, study, consent) { user ->
             val key = call.request.queryParameters["task"]
             val attempts = key?.let { study.attempts(user.id, it) }
             when {
@@ -101,7 +108,7 @@ private fun Route.participantTaskRoutes(
     }.documentStudyListSubmissions()
     post("/api/study/finish") {
         sameOriginJson {
-            participantRead(auth) { user ->
+            consented(auth, consent) { user ->
                 val finishedAt = study.finish(user.id)
                 call.respond(DataResponse(StudyFinishHttpResponse(finishedAt.toString())))
             }
@@ -124,13 +131,17 @@ private suspend fun RoutingContext.submit(
     }
 }
 
-/** A proposed-query route: the session, then 403 once the user has made the final submission (STUDY-005, D6). */
+/**
+ * A proposed-query route: the session and the consent (STUDY-008), then 403 once the user has made the final
+ * submission (STUDY-005, D6).
+ */
 private suspend fun RoutingContext.studyOpen(
     auth: AuthHttpDependencies,
     study: StudyService,
+    consent: ConsentService,
     block: suspend RoutingContext.(User) -> Unit,
 ) {
-    participantRead(auth) { user ->
+    consented(auth, consent) { user ->
         if (study.finishedAt(user.id) == null) {
             block(user)
         } else {
@@ -138,6 +149,26 @@ private suspend fun RoutingContext.studyOpen(
         }
     }
 }
+
+/**
+ * A study route that stores research data: the session, then 403 `consent_required` until the participant
+ * accepted the current consent text (DEC-015 Q1). Admins are not gated.
+ */
+internal suspend fun RoutingContext.consented(
+    auth: AuthHttpDependencies,
+    consent: ConsentService,
+    block: suspend RoutingContext.(User) -> Unit,
+) {
+    participantRead(auth) { user ->
+        if (user.role == Role.ADMIN || consent.hasConsented(user.id)) {
+            block(user)
+        } else {
+            call.respond(HttpStatusCode.Forbidden, ErrorResponse(CONSENT_REQUIRED))
+        }
+    }
+}
+
+internal const val CONSENT_REQUIRED = "consent_required"
 
 private const val STUDY_FINISHED = "You have finished the study; the proposed queries are closed"
 

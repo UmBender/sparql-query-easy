@@ -113,6 +113,17 @@ export const mockRoutes: MockRoute[] = [
 		data: { username: body.username ?? '', role: 'participant' }
 	})),
 	route('post', '/api/auth/logout', () => ({ status: 204 })),
+	// STUDY-008: the participant has accepted the current consent text by default.
+	route('get', '/api/study/consent', () => ({
+		data: {
+			version: 1,
+			text: 'PLACEHOLDER consent text.',
+			acceptedAt: '2026-10-20T12:00:00Z'
+		}
+	})),
+	route('post', '/api/study/consent', (body) => ({
+		data: { version: body.version ?? 1, acceptedAt: '2026-10-20T12:00:00Z' }
+	})),
 	// STUDY-003: a participant without a group by default.
 	route('get', '/api/study/tasks', () => ({ data: [] }))
 ];

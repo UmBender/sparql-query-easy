@@ -103,6 +103,8 @@ test('a protected page needs a session and returns there after login', async ({
 		.getByRole('button', { name: 'Log in' })
 		.click();
 	await expect(page).toHaveURL(/\/study$/);
+	// STUDY-008: a new participant consents first.
+	await page.getByRole('button', { name: 'I agree to take part' }).click();
 	await expect(page.getByRole('heading', { name: 'Proposed queries' })).toBeVisible();
 
 	await page.reload();

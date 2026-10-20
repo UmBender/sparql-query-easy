@@ -61,6 +61,7 @@ export const queryKeys = {
 	adminGroup: (id: number) => ['admin', 'groups', id] as const,
 	adminParticipants: ['admin', 'participants'] as const,
 	/** STUDY-003: the caller's tasks; the cache is cleared on logout (AUTH-004). */
+	studyConsent: ['study', 'consent'] as const,
 	studyTasks: ['study', 'tasks'] as const,
 	studyTask: (key: string) => ['study', 'tasks', key] as const,
 	studySubmissions: (key: string) => ['study', 'submissions', key] as const,

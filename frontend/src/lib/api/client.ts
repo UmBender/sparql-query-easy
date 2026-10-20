@@ -38,6 +38,7 @@ export type StudyGroup = Schemas['StudyGroupHttpResponse'];
 export type Participant = Schemas['ParticipantHttpResponse'];
 export type StudyTaskSummary = Schemas['StudyTaskSummaryHttpResponse'];
 export type StudySubmission = Schemas['StudySubmissionHttpResponse'];
+export type StudyConsent = Schemas['StudyConsentHttpResponse'];
 export type StudyTask = Omit<Schemas['StudyTaskHttpResponse'], 'startingGraph'> & {
 	startingGraph: SavedQueryV1 | null;
 };
@@ -416,8 +417,25 @@ export function createApiClient({
 				}
 			}
 		},
-		/** STUDY-003…005: the caller's proposed tasks. */
+		/** STUDY-003…005: the caller's proposed tasks; STUDY-008: the consent that opens them. */
 		study: {
+			consent: (options?: Options) =>
+				get<StudyConsent>(
+					'/api/study/consent',
+					'Loading the consent text failed',
+					options,
+					(data) => typeof (data as StudyConsent | null)?.version === 'number'
+				),
+			/** Accepting stores the version with the server's time; a stale version answers `conflict`. */
+			acceptConsent: (version: number) =>
+				post<{ version: number; acceptedAt: string }>(
+					'/api/study/consent',
+					{ version },
+					'Accepting the consent failed',
+					{},
+					(data) =>
+						typeof (data as { acceptedAt?: unknown } | null)?.acceptedAt === 'string'
+				),
 			tasks: (options?: Options) =>
 				get<StudyTaskSummary[]>('/api/study/tasks', 'Task list failed', options, isArray),
 			task: (key: string, options?: Options) =>

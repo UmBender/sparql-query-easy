@@ -1,7 +1,7 @@
 ---
 id: STUDY-008
 title: Ask logged-in users for research consent and store it before any response
-status: READY
+status: DONE
 priority: P1
 type: fullstack
 depends_on: [DEC-015, AUTH-005]
@@ -49,20 +49,55 @@ notice page; real consent text (user/advisor input).
 
 ## Acceptance criteria
 
-- [ ] Accepting stores one row with the current version and a server
+- [x] Accepting stores one row with the current version and a server
       timestamp; repeating it changes nothing.
-- [ ] Accepting an old or unknown version answers 409 and stores nothing.
-- [ ] A new consent version makes the screen appear again for a user who
+- [x] Accepting an old or unknown version answers 409 and stores nothing.
+- [x] A new consent version makes the screen appear again for a user who
       accepted only the old one.
-- [ ] Without consent the gated routes answer 403 `consent_required`
+- [x] Without consent the gated routes answer 403 `consent_required`
       (including the participant task routes); with consent they behave as
       before (existing `Study*RoutesTest` stay green after adding consent to
       their setup).
-- [ ] Anonymous `GET`/`POST /api/study/consent` answer 401.
-- [ ] Component test: accept and decline; axe check on the consent screen.
+- [x] Anonymous `GET`/`POST /api/study/consent` answer 401.
+- [x] Component test: accept and decline; axe check on the consent screen.
 
 ## Validation
 
 Focused: `GRADLE_USER_HOME=/tmp/sparql-query-easy-gradle ./gradlew test --tests '*Consent*' --no-daemon`
 (proposed test class names), then the HTTP/fullstack closing gate of the
 Operational Map, including `test:stack` (participant e2e gains the consent step).
+
+## Conclusion (2026-10-20)
+
+- Backend: `study/study.json` names the consent text (`consent/v1.md`, a
+  marked placeholder); `StudyResources` loads it at startup and fails on a
+  missing or empty file. `ConsentService`/`ConsentStore`,
+  `PostgresConsentStore`, `V9__study_consent.sql`. Routes in
+  `http/StudyConsentRoutes.kt`; the `consented` check in `StudyRoutes.kt`
+  runs before the finished check on list, open, submit, history and finish.
+  The 403 body is `{"error":"consent_required"}`.
+- Frontend: `features/study/consent-screen.svelte` (text as paragraphs and
+  lists by `textBlocks`, accept, decline); `/study` shows it until the
+  current version is accepted; `/study/[key]` sends a participant without
+  consent to `/study`. Client `api.study.consent`/`acceptConsent`, query key
+  `studyConsent`, mock routes; OpenAPI snapshot and generated types.
+- Tests: `StudyConsentRoutesTest` (placeholder resource, gate on the five
+  routes, idempotent accept with the server time, 409/400, a new version
+  through `ConsentService` on the same database, admins and anonymous,
+  same-origin/JSON); existing study tests consent through `userClient`
+  (`consent = true` by default); `consent-screen.svelte.spec.ts`;
+  `textBlocks` unit tests; stack e2e consent screen with axe, decline,
+  accept and the early task link; `joinStudy` in `tests-stack/support.ts`.
+  The auth stack test now consents after login.
+- Validation: Kotlin gate `ktlintCheck detekt test`: 258/259 passed; the
+  failure is `PostgresDatabaseTest` "a ready database lost after startup…"
+  (pre-existing: it also fails on clean HEAD `40ec003` when run with
+  `--tests`; it passed in the first full run of this task; timing of the
+  dropped and recreated database, unrelated to consent). Frontend gate
+  (check, lint, `npm test`: 178 unit, 13 component, 84 e2e) passed.
+  `test:stack` 18/18 after one rerun: `study.e2e.ts` "an admin creates a
+  task…" once timed out because the upload toast covered the Preview button
+  (pre-existing flake, passed on rerun; admin editor not touched).
+- Limitations: withdrawal and deletion stay with LEARN-014; the consent text
+  is a placeholder.
+- Completion commit for this task.
