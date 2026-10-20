@@ -112,7 +112,7 @@ Ordered by dependencies, then priority among selection candidates. See [worker r
 | STUDY-003 | DONE | P1 | fullstack | [List the proposed tasks assigned to the user and open one in the editor](<items/STUDY-003-open-proposed-task.md>) |
 | STUDY-004 | DONE | P1 | fullstack | [Submit a drawn query as an answer, check it on the server and show the attempt history](<items/STUDY-004-submit-and-check-answer.md>) |
 | STUDY-005 | DONE | P1 | fullstack | [End the proposed queries with a final submission that closes them for that user](<items/STUDY-005-final-submission-lock.md>) |
-| STUDY-001 | BACKLOG | P1 | fullstack | [Let a logged-in user solve proposed queries and submit answers once](<items/STUDY-001-proposed-queries-and-submission.md>) |
+| STUDY-001 | DONE | P1 | fullstack | [Let a logged-in user solve proposed queries and submit answers once](<items/STUDY-001-proposed-queries-and-submission.md>) |
 | STUDY-002 | BACKLOG | P1 | fullstack | [Show two questionnaires to logged-in users and store their answers](<items/STUDY-002-questionnaires.md>) |
 | OPS-006 | DONE | P1 | operations | [Run db, backend and web together with Docker Compose](<items/OPS-006-docker-compose-stack.md>) |
 | OPS-007 | DONE | P2 | operations | [Start only PostgreSQL for local development and reach it from ./gradlew run](<items/OPS-007-local-dev-database.md>) |
