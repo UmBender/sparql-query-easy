@@ -4,7 +4,7 @@ title: Write a testing guide that a clean clone can follow layer by layer
 status: BACKLOG
 priority: P1
 type: documentation
-depends_on: [QUAL-012, QUAL-013, QUAL-014, QUAL-015, QUAL-016]
+depends_on: [QUAL-012, QUAL-013, QUAL-014, QUAL-015, QUAL-016, QUAL-017]
 human_gate: false
 created: 2026-10-20
 updated: 2026-10-20
@@ -21,7 +21,7 @@ T10 documentation. Testing facts are spread over `frontend/README.md`
 
 - `tcc/08 - Quality/Testing Guide.md`: which layer to use for what (domain
   unit, store, component, MSW integration, contract, offline Playwright,
-  real stack, visual, a11y, Kotlin), one command per layer, prerequisites
+  real stack, compose smoke, visual, a11y, Kotlin), one command per layer, prerequisites
   (JDK 21, Node 22, `npx npm@11 ci`, Firefox via Playwright, Docker), how to
   add a fixture and a mock route, how to update API types and screenshots,
   what CI runs when.

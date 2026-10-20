@@ -13,7 +13,7 @@ updated: 2026-10-20
 
 ## Objective
 
-T10 CI gap. Apply the DEC-016 Q1/Q2 choices to `.github/workflows/ci.yml`
+T10 CI gap. Apply the DEC-016 Q2 choice to `.github/workflows/ci.yml`
 and keep reports for every run. `human_gate`: proving CI on GitHub needs a
 push, which is not authorized by planning or local commits. Skill:
 `tcc-test`.
@@ -27,11 +27,14 @@ push, which is not authorized by planning or local commits. Skill:
 
 ## Scope
 
-- Triggers and job split as DEC-016 Q2 decides (including a nightly
-  `schedule` in both options).
+- Triggers (DEC-016 Q2 A): every gate on every pull request and push to
+  `main` (unchanged); a nightly `schedule` running every gate; the fast job
+  (check, lint, Vitest, contract) also on pushes to any branch, so
+  `frontend` splits into a fast job and a browser job (Playwright,
+  `test:stack`) that skips pushes to branches other than `main`.
 - HTML reporter in both Playwright configs; upload `playwright-report/` of
   each suite on every run (`if: always()`), plus `test-results/` on failure.
-- If DEC-016 Q1 is B or C: the compose-based job, from its own card.
+- The compose smoke job belongs to QUAL-017, not this card.
 - Operational Map CI row.
 
 ## Out of scope
@@ -40,7 +43,8 @@ push, which is not authorized by planning or local commits. Skill:
 
 ## Acceptance criteria
 
-- [ ] On GitHub, `main` is green with the decided triggers.
+- [ ] On GitHub, `main` is green; a push to another branch runs only the
+  fast job; a pull request and the nightly run run every gate.
 - [ ] A deliberate API contract drift (a field renamed in the snapshot only)
   and a deliberate screenshot change each turn a run red on a branch
   (verified once, reverted). This also closes QUAL-007's open criterion.

@@ -29,8 +29,7 @@ on `/study`, the questionnaire and `/admin` (real stack). `/login`,
 
 - One offline spec that runs axe on every route in the list, light and
   dark, with the same failure rule and the existing tooltip exclusion.
-- Failure rule: any violation fails (current rule), unless DEC-016 Q3
-  chooses serious/critical only.
+- Failure rule: any violation fails, whatever its impact (DEC-016 Q3 A).
 - Fix violations found, following `tcc-style` and the tokens.
 
 ## Out of scope

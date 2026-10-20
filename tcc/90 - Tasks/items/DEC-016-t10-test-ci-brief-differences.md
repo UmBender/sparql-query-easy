@@ -1,7 +1,7 @@
 ---
 id: DEC-016
 title: Decide how the T10 brief changes the test and CI contract of QUAL-007
-status: BLOCKED
+status: DONE
 priority: P1
 type: decision
 depends_on: [QUAL-007]
@@ -17,8 +17,8 @@ The T10 brief (2026-10-20, test infrastructure and CI) restates QUAL-007
 (REVIEW: all layers built and green locally, first GitHub run pending a
 push). Most of the brief is already done or is an additive gap
 (QUAL-012 to QUAL-015, DOC-004). Three points make a different decision from
-QUAL-007 or DEC-012. The user chooses for each. QUAL-016 (CI) waits for this
-card; nothing else does.
+QUAL-007 or DEC-012. The user chose for each (below). QUAL-016 (CI) and
+QUAL-017 (compose smoke) carry the choices.
 
 ## Already decided, not reopened
 
@@ -85,4 +85,14 @@ card; nothing else does.
 
 ## Decision
 
-Pending the user's answers to Q1–Q3.
+- 2026-10-20: The user accepted every recommendation ("Use the
+  recommendations").
+- **Q1 C.** `test:stack` (Testcontainers, DEC-012) stays the real-stack e2e
+  layer on every pull request and push to `main`. A separate compose smoke
+  (login, one PokemonGen1 query, one study page through Caddy, data seeded
+  through the API) runs on pushes to `main` and nightly: QUAL-017.
+- **Q2 A.** Every gate keeps running on every pull request and push to
+  `main`; a nightly `schedule` is added; the fast job (check, lint, Vitest,
+  contract) also runs on pushes to any branch: QUAL-016.
+- **Q3 A.** axe keeps failing on any violation, whatever its impact:
+  QUAL-015.
