@@ -2474,6 +2474,129 @@
                     }
                 }
             }
+        },
+        "/api/study/tasks": {
+            "get": {
+                "operationId": "studyListTasks",
+                "tags": [
+                    "Study"
+                ],
+                "summary": "List my proposed tasks",
+                "description": "The active tasks of the caller's group, in the group's order; empty without a group. Requires a session (401 otherwise).",
+                "responses": {
+                    "200": {
+                        "description": "Key, title and a one-paragraph summary of the statement.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "required": [
+                                        "data"
+                                    ],
+                                    "properties": {
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "$ref": "#/components/schemas/StudyTaskSummaryHttpResponse"
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "No valid session.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorResponse"
+                                }
+                            }
+                        }
+                    },
+                    "503": {
+                        "description": "The database is not configured or unreachable.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorResponse"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/study/tasks/{key}": {
+            "get": {
+                "operationId": "studyGetTask",
+                "tags": [
+                    "Study"
+                ],
+                "summary": "Open a proposed task",
+                "description": "The statement, endpoint and optional starting graph (formatVersion 1); never the reference query or the expected result. The first open by the caller is recorded (time spent is measured from it). Requires a session (401 otherwise).",
+                "parameters": [
+                    {
+                        "name": "key",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "The task.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "required": [
+                                        "data"
+                                    ],
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/components/schemas/StudyTaskHttpResponse"
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "No active task with this key in the caller's group.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorResponse"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "No valid session.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorResponse"
+                                }
+                            }
+                        }
+                    },
+                    "503": {
+                        "description": "The database is not configured or unreachable.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorResponse"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
         }
     },
     "components": {
@@ -3497,6 +3620,59 @@
                             "string",
                             "null"
                         ]
+                    }
+                }
+            },
+            "StudyTaskSummaryHttpResponse": {
+                "type": "object",
+                "title": "StudyTaskSummaryHttpResponse",
+                "required": [
+                    "key",
+                    "title",
+                    "summary"
+                ],
+                "properties": {
+                    "key": {
+                        "type": "string"
+                    },
+                    "title": {
+                        "type": "string"
+                    },
+                    "summary": {
+                        "type": "string"
+                    }
+                }
+            },
+            "StudyTaskHttpResponse": {
+                "type": "object",
+                "title": "StudyTaskHttpResponse",
+                "required": [
+                    "key",
+                    "title",
+                    "statement",
+                    "endpoint"
+                ],
+                "properties": {
+                    "key": {
+                        "type": "string"
+                    },
+                    "title": {
+                        "type": "string"
+                    },
+                    "statement": {
+                        "type": "string"
+                    },
+                    "endpoint": {
+                        "type": "string"
+                    },
+                    "startingGraph": {
+                        "type": [
+                            "object",
+                            "null"
+                        ],
+                        "additionalProperties": {
+                            "$ref": "#/components/schemas/JsonElement"
+                        }
                     }
                 }
             }

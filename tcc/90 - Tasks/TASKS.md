@@ -109,7 +109,7 @@ Ordered by dependencies, then priority among selection candidates. See [worker r
 | AUTH-005 | DONE | P1 | security | [Give accounts a participant or admin role and guard the admin routes](<items/AUTH-005-admin-role-and-guard.md>) |
 | STUDY-006 | DONE | P1 | fullstack | [Let an admin create, edit and retire proposed tasks by drawing the reference query](<items/STUDY-006-admin-task-management.md>) |
 | STUDY-007 | DONE | P1 | fullstack | [Let an admin put participants in groups and give each group its own tasks](<items/STUDY-007-participant-groups.md>) |
-| STUDY-003 | READY | P1 | fullstack | [List the proposed tasks assigned to the user and open one in the editor](<items/STUDY-003-open-proposed-task.md>) |
+| STUDY-003 | DONE | P1 | fullstack | [List the proposed tasks assigned to the user and open one in the editor](<items/STUDY-003-open-proposed-task.md>) |
 | STUDY-004 | READY | P1 | fullstack | [Submit a drawn query as an answer, check it on the server and show the attempt history](<items/STUDY-004-submit-and-check-answer.md>) |
 | STUDY-005 | READY | P1 | fullstack | [End the proposed queries with a final submission that closes them for that user](<items/STUDY-005-final-submission-lock.md>) |
 | STUDY-001 | BACKLOG | P1 | fullstack | [Let a logged-in user solve proposed queries and submit answers once](<items/STUDY-001-proposed-queries-and-submission.md>) |

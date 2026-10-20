@@ -199,6 +199,7 @@ fun Application.configureRouting(dependencies: HttpDependencies = defaultHttpDep
         dependencies.auth?.let {
             authRoutes(it)
             adminRoutes(it, dependencies.study)
+            studyRoutes(it, dependencies.study)
         }
         openApiDocumentationRoutes()
     }

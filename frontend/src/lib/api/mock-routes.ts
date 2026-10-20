@@ -112,7 +112,9 @@ export const mockRoutes: MockRoute[] = [
 	route('post', '/api/auth/login', (body) => ({
 		data: { username: body.username ?? '', role: 'participant' }
 	})),
-	route('post', '/api/auth/logout', () => ({ status: 204 }))
+	route('post', '/api/auth/logout', () => ({ status: 204 })),
+	// STUDY-003: a participant without a group by default.
+	route('get', '/api/study/tasks', () => ({ data: [] }))
 ];
 
 export function isMockStatus(response: unknown): response is MockStatus {

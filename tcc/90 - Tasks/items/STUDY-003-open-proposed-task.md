@@ -1,7 +1,7 @@
 ---
 id: STUDY-003
 title: List the proposed tasks assigned to the user and open one in the editor
-status: READY
+status: DONE
 priority: P1
 type: fullstack
 depends_on: [DEC-014, FE-053, STUDY-007, AUTH-004, BE-005, QUAL-011]
@@ -44,15 +44,15 @@ Excluded: submitting and checking (STUDY-004); final-submission lock
 
 ## Acceptance criteria
 
-- [ ] Anonymous `GET /api/study/tasks` and `/api/study/tasks/{key}` return 401;
+- [x] Anonymous `GET /api/study/tasks` and `/api/study/tasks/{key}` return 401;
       `/study` and `/study/<key>` redirect to login (existing guard).
-- [ ] Logged in: the list shows exactly the caller's group's active tasks in
+- [x] Logged in: the list shows exactly the caller's group's active tasks in
       group order; a member of another group does not see them; an unknown,
       inactive or unassigned key returns 404.
-- [ ] A user without a group gets an empty list and the "no tasks" message.
-- [ ] Task responses never contain expected results, reference graph or
+- [x] A user without a group gets an empty list and the "no tasks" message.
+- [x] Task responses never contain expected results, reference graph or
       SPARQL (route test asserts the JSON keys).
-- [ ] The task page shows the statement and opens the editor on the task's
+- [x] The task page shows the statement and opens the editor on the task's
       starting graph (or empty) with the endpoint locked.
 
 ## Validation
@@ -60,3 +60,28 @@ Excluded: submitting and checking (STUDY-004); final-submission lock
 Focused: a new `StudyRoutesTest` (proposed) via the focused Kotlin command.
 Closing gate: HTTP/fullstack union (Kotlin closing gate, OpenAPI snapshot +
 `api:types`, frontend gate, `test:stack`).
+
+## Conclusion
+
+- Migration `V6__study_task_opens.sql`; `application/study/StudyService.kt`
+  (participant view: the group's active tasks, open with first-open record;
+  `StudyProgressStore` port with `recordOpen`/`firstOpen`);
+  `persistence/PostgresStudyProgressStore.kt`.
+- HTTP: `StudyRoutes.kt` (`GET /api/study/tasks`, `GET /api/study/tasks/{key}`;
+  the `/api/study/{...}` session stub moved here from `AuthRoutes.kt`),
+  docs in `StudyParticipantOpenApi.kt`; snapshot and types regenerated.
+  Study services take a clock (`studyHttpDependencies(…, clock)`) for tests.
+- Frontend: `api.study.tasks/task`, `/study` (ordered list or "No tasks are
+  assigned to you yet"), `/study/[key]` with `features/study/study-task.svelte`
+  (statement panel, shared `QueryEditor` on the starting graph or empty, the
+  task's endpoint locked). The offline mock answers `GET /api/study/tasks`
+  with `[]`.
+- Test data: `StudyRoutesTest` creates PokemonGen1 tasks (Fire speed ≥ 90 from
+  the FE-042 fixture, Water, Grass) through the admin routes;
+  `tests-stack/support.ts` `seedStudy` does the same for the stack suites.
+  No production seed.
+- Tests: `StudyRoutesTest` (401, group order, other group/inactive/unknown
+  404, empty list, response keys, first open), `study-participant.e2e.ts`
+  (order, statement, starting graph, locked endpoint, no-group note), offline
+  `auth.e2e.ts` checks the empty state.
+- Validation: Kotlin gate, frontend gate (84 e2e), `test:stack` (14) pass.

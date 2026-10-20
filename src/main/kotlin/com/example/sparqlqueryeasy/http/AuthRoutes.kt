@@ -93,14 +93,6 @@ internal fun Route.authRoutes(auth: AuthHttpDependencies) {
             }
         }.documentSession()
     }
-    // STUDY-001/002 add their routes here; every path below /api/study requires a session.
-    route("/api/study/{...}") {
-        handle {
-            accountsAvailable {
-                withSession(auth) { _, _ -> call.respond(HttpStatusCode.NotFound, ErrorResponse("Not found")) }
-            }
-        }
-    }.also(::hideFromOpenApi)
 }
 
 /**

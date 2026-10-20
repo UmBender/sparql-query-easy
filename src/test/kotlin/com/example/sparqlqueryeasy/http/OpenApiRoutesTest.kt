@@ -100,6 +100,9 @@ class OpenApiRoutesTest {
                     "/api/admin/groups/{id}/members" to setOf("post"),
                     "/api/admin/groups/{id}/members/remove" to setOf("post"),
                     "/api/admin/groups/{id}/delete" to setOf("post"),
+                    // STUDY-003
+                    "/api/study/tasks" to setOf("get"),
+                    "/api/study/tasks/{key}" to setOf("get"),
                 ),
                 document.operationInventory(),
             )

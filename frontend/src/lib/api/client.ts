@@ -36,6 +36,10 @@ export type AdminTask = Omit<
 export type TaskPreview = Schemas['TaskPreviewHttpResponse'];
 export type StudyGroup = Schemas['StudyGroupHttpResponse'];
 export type Participant = Schemas['ParticipantHttpResponse'];
+export type StudyTaskSummary = Schemas['StudyTaskSummaryHttpResponse'];
+export type StudyTask = Omit<Schemas['StudyTaskHttpResponse'], 'startingGraph'> & {
+	startingGraph: SavedQueryV1 | null;
+};
 /** A drawn query (DEC-014 Q5): the saved graph and the request derived from it. */
 export type DrawnQuery = { graph: SavedQueryV1; query: AnswerQuery };
 export type AdminTaskBody = {
@@ -410,6 +414,18 @@ export function createApiClient({
 					);
 				}
 			}
+		},
+		/** STUDY-003…005: the caller's proposed tasks. */
+		study: {
+			tasks: (options?: Options) =>
+				get<StudyTaskSummary[]>('/api/study/tasks', 'Task list failed', options, isArray),
+			task: (key: string, options?: Options) =>
+				get<StudyTask>(
+					`/api/study/tasks/${encodeURIComponent(key)}`,
+					'Opening the task failed',
+					options,
+					isTask
+				)
 		},
 		/** POST /api/auth/logout (204, no body). */
 		async logout(options: Options = {}): Promise<void> {

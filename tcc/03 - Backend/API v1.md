@@ -507,8 +507,8 @@ unaffected).
   `429 {"error":"Too many attempts; try again in a minute"}`. With
   `EASYQUERY_TRUST_PROXY=true` the address is the first `X-Forwarded-For`
   entry (set it only behind the bundled proxy).
-- Every path under `/api/study/` requires a session (`401` otherwise); until
-  STUDY-001/002 add routes, a logged-in request gets `404`.
+- Every path under `/api/study/` requires a session (`401` otherwise); a
+  logged-in request to a path no route serves gets `404`.
 - Roles (AUTH-005): `role` is `participant` or `admin`. An account is `admin`
   exactly when its username (case-insensitive) is in
   `EASYQUERY_ADMIN_USERNAMES` (comma-separated; a malformed name fails
@@ -587,6 +587,25 @@ id (a non-number is `404`).
   user's group in group order, none without a group.
 - Moving a participant keeps their submissions; they then see the new
   group's tasks.
+
+## Proposed tasks (participant, STUDY-003)
+
+Session required (`401 {"error":"Login required"}`); without a database a
+request with a session cookie gets `503`. A participant sees only the active
+tasks of their group (STUDY-007).
+
+| Route | Success | Errors |
+|---|---|---|
+| `GET /api/study/tasks` | `200 {"data":[{"key","title","summary"}]}` in group order; `[]` without a group | — |
+| `GET /api/study/tasks/{key}` | `200 {"data":{"key","title","statement","endpoint","startingGraph"}}` (`startingGraph` a saved query or `null`) | `404 {"error":"Task not found"}` for an unknown or inactive task or one outside the caller's group |
+
+- `summary` is the statement's first paragraph, whitespace collapsed, cut to
+  160 characters with `…`.
+- Neither route returns the reference graph, its request or SPARQL, or the
+  expected result.
+- The first `GET /api/study/tasks/{key}` by a user is recorded in
+  `study_task_open` (`V6__study_task_opens.sql`); later opens keep the first
+  time. STUDY-004 measures time spent from it.
 
 ## Endpoint selection
 

@@ -11,6 +11,7 @@ import com.example.sparqlqueryeasy.config.Argon2Settings
 import com.example.sparqlqueryeasy.config.DatabaseSettings
 import com.example.sparqlqueryeasy.persistence.DatabaseConnector
 import com.example.sparqlqueryeasy.persistence.PostgresAccountStore
+import com.example.sparqlqueryeasy.persistence.PostgresStudyProgressStore
 import com.example.sparqlqueryeasy.persistence.TestPostgres
 import com.example.sparqlqueryeasy.security.Argon2PasswordHasher
 import io.ktor.client.HttpClient
@@ -52,19 +53,20 @@ internal fun ApplicationTestBuilder.studyApp(
             secureCookies = false,
         )
     val runner = StudyQueryRunner(query.generalQueryService, query.endpointContextResolver)
-    val study = studyHttpDependencies(connector, runner)
+    val study = studyHttpDependencies(connector, runner, clock)
     application {
         configureSerialization()
         configureErrorHandling()
         configureRouting(base.copy(auth = auth, study = study, ownedResources = listOf(base, connector)))
     }
-    return StudyTestContext(study, PostgresAccountStore(connector))
+    return StudyTestContext(study, PostgresAccountStore(connector), PostgresStudyProgressStore(connector))
 }
 
 /** The services behind [studyApp], for checks below the HTTP layer. */
 internal class StudyTestContext(
     val study: StudyHttpDependencies,
     private val accounts: PostgresAccountStore,
+    val progress: PostgresStudyProgressStore,
 ) {
     suspend fun userId(username: String): Long = checkNotNull(accounts.findCredentials(username.lowercase())).user.id
 

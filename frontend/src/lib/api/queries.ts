@@ -59,7 +59,10 @@ export const queryKeys = {
 	/** STUDY-007: groups and participants; a change invalidates `['admin', 'groups']` and the participants. */
 	adminGroups: ['admin', 'groups'] as const,
 	adminGroup: (id: number) => ['admin', 'groups', id] as const,
-	adminParticipants: ['admin', 'participants'] as const
+	adminParticipants: ['admin', 'participants'] as const,
+	/** STUDY-003: the caller's tasks; the cache is cleared on logout (AUTH-004). */
+	studyTasks: ['study', 'tasks'] as const,
+	studyTask: (key: string) => ['study', 'tasks', key] as const
 };
 
 /** Cached request helpers bound to one client and one query cache. */

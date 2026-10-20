@@ -50,7 +50,9 @@ describe('generated API types', () => {
 			['/api/admin/groups/{id}/tasks', 'put'],
 			['/api/admin/groups/{id}/members', 'post'],
 			['/api/admin/groups/{id}/members/remove', 'post'],
-			['/api/admin/groups/{id}/delete', 'post']
+			['/api/admin/groups/{id}/delete', 'post'],
+			['/api/study/tasks', 'get'],
+			['/api/study/tasks/{key}', 'get']
 		];
 		for (const [path, method] of called)
 			expect(document.paths[path]?.[method], `${method} ${path}`).toBeTruthy();

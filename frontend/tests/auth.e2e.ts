@@ -177,6 +177,7 @@ test('a protected page sends an anonymous visitor to login and back after loggin
 	await loginForm(page).getByRole('button', { name: 'Log in' }).click();
 	await expect(page).toHaveURL(/\/study$/);
 	await expect(page.getByRole('heading', { name: 'Proposed queries' })).toBeVisible();
+	await expect(page.getByTestId('no-tasks')).toBeVisible();
 
 	// The session survives a reload: the page shows directly, without visiting login.
 	await page.reload();
