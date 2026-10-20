@@ -17,7 +17,7 @@ when the task crosses that responsibility. This is the canonical command map.
 | CI (QUAL-007, QUAL-016) | `.github/workflows/ci.yml` (DEC-016 Q2 A): jobs `kotlin` (ktlint, detekt, test, with the OpenAPI snapshot contract), `frontend-fast` (check, lint, Vitest server with coverage and the contract/fixture checks, Vitest components) and `frontend-browser` (`test:e2e`, `test:screens`, `test:stack`, each pre-pulling its image). Every job on pull requests, pushes to `main`, the nightly schedule (03:17 UTC) and manual runs; a push to another branch skips `frontend-browser`. Artifact `playwright-reports` (HTML reports of e2e, screens and stack under `frontend/playwright-report/`) on every run, `test-results/` on failure; no deploy, no secrets |
 | Accounts and sessions (AUTH-001) | `application/auth/` (`AuthService`, `AccountStore` port, `AttemptLimiter`), `security/Argon2PasswordHasher.kt` (BouncyCastle), `persistence/PostgresAccountStore.kt`, `http/AuthRoutes.kt` (cookie, Origin/JSON checks, `withSession` for protected routes), migration `V2__accounts.sql`; tests `AuthRoutesTest` (Testcontainers PostgreSQL), `AuthServiceTest` |
 | Study consent and questionnaires (T9) | `src/main/resources/study/` (`study.json` manifest, `consent/v<n>.md`); `application/study/StudyConsent.kt`, `StudyResources.kt`, `persistence/PostgresConsentStore.kt`, `http/StudyConsentRoutes.kt` (`consented` gate in `StudyGates.kt`), migration `V9__study_consent.sql` (STUDY-008); `study/forms/*.json`, `application/study/Questionnaires.kt` (`FormDefinitions`, `FormAnswerValidator`), `QuestionnaireService.kt`, `persistence/PostgresFormStore.kt`, `http/StudyFormRoutes.kt`, `V10__study_forms.sql`, frontend `domain/forms.ts` (rules and Zod schema), `features/forms/` (paged form, one component per question type), shared fixtures `domain/fixtures/forms/parity.json` (STUDY-009); `persistence/PostgresFormResponseStore.kt`, `http/StudyGates.kt` (`consented`, `readyForTasks`), `V11__study_form_responses.sql`, frontend `features/forms/form-progress.ts`, `features/study/questionnaire-step.svelte` (STUDY-010); `application/study/FormResponsesCsv.kt`, `http/AdminFormRoutes.kt`, `/admin` download links (STUDY-011); frontend `features/study/consent-screen.svelte`; tests `StudyConsentRoutesTest`, `FormAnswerValidatorTest`, `FormDefinitionsTest`, `StudyFormRoutesTest`, `StudyFormResponseRoutesTest`, `FormResponsesCsvTest`, `AdminFormExportRoutesTest`, `domain/forms.spec.ts`, `features/forms/form-progress.spec.ts`, `features/forms/questionnaire-form.svelte.spec.ts`, `tests-stack/study-participant.e2e.ts`, `tests-stack/study-questionnaires.e2e.ts` (whole T9 flow) (`joinStudy` in `tests-stack/support.ts`) |
-| Compose stack (OPS-006) | `compose.yaml` (db, backend, web), `compose.dev.yaml` (OPS-007: publishes only `db` on 127.0.0.1 for `./gradlew run`), `deploy/web.Dockerfile` (SPA build + Caddy), `deploy/Caddyfile`; runbook [[../07 - Operations/Docker Compose Stack]] |
+| Compose stack (OPS-006) | `compose.yaml` (db, backend, web), `compose.dev.yaml` (OPS-007: publishes only `db` on 127.0.0.1 for `./gradlew run`), `deploy/web.Dockerfile` (SPA build + Caddy), `deploy/Caddyfile`; smoke through Caddy (QUAL-017): `compose.test.yaml`, `deploy/compose-test.env`, `frontend/scripts/test-compose.mjs`, `frontend/playwright.compose.config.ts`, `frontend/tests-compose/`; runbook [[../07 - Operations/Docker Compose Stack]] |
 | Packaging | `build.gradle.kts` processResources explicit frontend includes; `Dockerfile` |
 | Work selection and cards | [[../90 - Tasks/TASKS]], [[../90 - Tasks/WORKER_PROMPT]], [[../90 - Tasks/FORMAT]] |
 
@@ -38,6 +38,7 @@ These are configured versions, not claims about a fresh successful build.
 | New frontend screenshots | Refresh only for an intended visual change: `(cd frontend && npx playwright test visual --update-snapshots)`, then review the PNG diff (labels and overlays are hidden: only canvas shapes and colours are compared) |
 | New frontend screen screenshots (QUAL-014) | `npm --prefix frontend run test:screens` (needs Docker and `mcr.microsoft.com/playwright:v<@playwright/test version>-noble`; offline, no container network); refresh only for an intended change with `npm --prefix frontend run test:screens -- --update-snapshots`, then review each changed PNG; failures leave diffs in `frontend/test-results/screens/` |
 | New frontend on the real stack (FE-046) | `npm --prefix frontend run test:stack` (builds Ktor and starts it on 18096 with an empty `postgres:17-alpine` container (`StackPostgres` via Testcontainers, test classpath via `writeStackPostgresClasspath`; the JDBC URL with Docker's mapped port goes through `build/stack-postgres.ready`; needs Docker), serves the e2e build through `vite preview` with `API_TARGET`; offline) |
+| Compose smoke (QUAL-017) | `npm --prefix frontend run test:compose` (builds the images, starts the project `easyquery-test` on 127.0.0.1:18097 with a tmpfs database, runs `tests-compose/` through Caddy, then removes it; needs Docker Compose v2.24+ and network for the image builds) |
 | New frontend dev server | `npm --prefix frontend run dev` (port 5173, proxies `/api`, `/health`, `/openapi.json` to Ktor on 8080) |
 | Distribution | `GRADLE_USER_HOME=/tmp/sparql-query-easy-gradle ./gradlew installDist --no-daemon` |
 | Run | `./gradlew run` or `./build/install/sparql-query-easy-kotlin/bin/sparql-query-easy-kotlin` |
@@ -54,7 +55,7 @@ These are configured versions, not claims about a fresh successful build.
   component, style or token changes; `test:stack` when API calls,
   accounts, saved queries or exploration change.
 - CI (`.github/workflows/ci.yml`): the Kotlin and frontend gates plus
-  `test:screens` and `test:stack`; change the workflow with the
+  `test:screens` and `test:stack`, and `test:compose` for its job; change the workflow with the
   gate it runs. Add dependencies with
   `npx npm@11 install` (npm 10 fails in peer resolution); commit
   `frontend/package-lock.json`.
@@ -62,8 +63,8 @@ These are configured versions, not claims about a fresh successful build.
   already included in Gradle test. Do not weaken their assertions. Changes to
   staged exploration or `POST /api/query/stage` also run `test:stack`.
 - Packaging/assets/dependencies: relevant area gates plus installDist and a local
-  smoke of the built distribution (`test:stack` does both); Compose changes
-  are checked with `docker compose up --build` per the runbook.
+  smoke of the built distribution (`test:stack` does both); Compose, image
+  or Caddy changes run `test:compose` (QUAL-017).
 - No product tests are required for purely operational documentation changes.
 
 Dependencies must already be available; gates do not authorize installation or

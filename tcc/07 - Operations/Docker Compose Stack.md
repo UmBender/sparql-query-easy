@@ -85,7 +85,26 @@ restarts (unchanged from OPS-001).
 - `down` then `up`: the earlier session and login still work (volume kept);
   `down -v` removes the volume and the login fails.
 
+## Automated smoke (QUAL-017)
+
+`npm --prefix frontend run test:compose` builds both images and starts the
+stack as the separate project `easyquery-test` with the `compose.test.yaml`
+override and `deploy/compose-test.env` instead of `.env` (throwaway password,
+`WEB_PORT=18097`, `EASYQUERY_ENVIRONMENT=production`, admin `stack-admin`,
+a high login attempt limit). The override keeps the database in tmpfs and
+tags the images `:test`, so the `easyquery` project, its volume and the
+`:local` images are untouched. Playwright (`tests-compose/`, Firefox) then
+checks through Caddy: `/health` with a ready database, `/api/endpoints`,
+`/openapi.json`, the
+SPA fallback and route guard, registration with the `HttpOnly`/`Secure`
+cookie, logout, a staged PokemonGen1 query from the saved Fire query, and a
+proposed task seeded through the admin API and answered correctly. Finally
+`down --volumes --remove-orphans` removes the project whatever the result;
+on failure the script prints the `web` and `backend` logs. CI runs it on
+pushes to `main`, nightly and on manual runs (DEC-016 Q1 C). It complements
+`test:stack`, which does not use Caddy or the images.
+
 ## Source files
 
-`compose.yaml`, `compose.dev.yaml` (OPS-007), `deploy/web.Dockerfile`, `deploy/Caddyfile`, `Dockerfile`,
+`compose.yaml`, `compose.dev.yaml` (OPS-007), `compose.test.yaml` and `deploy/compose-test.env` (QUAL-017), `deploy/web.Dockerfile`, `deploy/Caddyfile`, `Dockerfile`,
 `.env.example`, `.dockerignore`.

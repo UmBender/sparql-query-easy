@@ -8,8 +8,11 @@
 		"src",
 		"tests",
 		"tests-stack",
+		"tests-compose",
 		"vite.config.ts",
 		"playwright.config.ts",
-		"playwright.stack.config.ts"
+		"playwright.stack.config.ts",
+		"playwright.screens.config.ts",
+		"playwright.compose.config.ts"
 	]
 }

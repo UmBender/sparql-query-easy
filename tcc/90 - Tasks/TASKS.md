@@ -109,7 +109,7 @@ Ordered by dependencies, then priority among selection candidates. See [worker r
 | QUAL-014 | DONE | P1 | quality | [Compare screenshots of /styleguide and the main screens in light and dark themes](<items/QUAL-014-screen-visual-regression.md>) |
 | QUAL-015 | DONE | P1 | quality | [Run axe on every main route in both themes](<items/QUAL-015-axe-every-main-route.md>) |
 | QUAL-016 | REVIEW | P1 | quality | [Run CI per the DEC-016 tiers and keep every Playwright report as an artifact](<items/QUAL-016-ci-tiers-and-reports.md>) |
-| QUAL-017 | BACKLOG | P1 | quality | [Smoke-test the Docker Compose stack through Caddy on main and nightly](<items/QUAL-017-compose-stack-smoke.md>) |
+| QUAL-017 | REVIEW | P1 | quality | [Smoke-test the Docker Compose stack through Caddy on main and nightly](<items/QUAL-017-compose-stack-smoke.md>) |
 | QUAL-013 | DONE | P2 | quality | [Drive the editor, task page and questionnaires through Playwright page objects](<items/QUAL-013-playwright-page-objects.md>) |
 | DOC-004 | BACKLOG | P1 | documentation | [Write a testing guide that a clean clone can follow layer by layer](<items/DOC-004-testing-guide.md>) |
 | DEC-014 | DONE | P1 | decision | [Decide how the T8 brief changes the proposed-query contract of STUDY-001](<items/DEC-014-t8-study-brief-differences.md>) |

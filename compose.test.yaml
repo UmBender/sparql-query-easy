@@ -1,0 +1,14 @@
+# QUAL-017: override for the compose smoke test (DEC-016 Q1 C). Used only by
+#   npm --prefix frontend run test:compose
+# under the project name easyquery-test with deploy/compose-test.env instead
+# of .env, so it never touches the easyquery project, its volume or a
+# developer's settings. The database lives in tmpfs: every run starts empty.
+services:
+  db:
+    volumes: !reset []
+    tmpfs:
+      - /var/lib/postgresql/data
+  backend:
+    image: easyquery-backend:test
+  web:
+    image: easyquery-web:test

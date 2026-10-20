@@ -19,7 +19,8 @@
 		"test:coverage": "vitest run --project server --coverage",
 		"api:types": "node scripts/generate-api-types.mjs",
 		"test:stack": "playwright test --config playwright.stack.config.ts",
-		"test:screens": "node scripts/test-screens.mjs"
+		"test:screens": "node scripts/test-screens.mjs",
+		"test:compose": "node scripts/test-compose.mjs"
 	},
 	"devDependencies": {
 		"@axe-core/playwright": "^4.10.2",

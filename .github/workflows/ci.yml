@@ -7,7 +7,8 @@
 # When (DEC-016 Q2 A, QUAL-016): every job on pull requests, pushes to main,
 # the nightly schedule and manual runs. A push to any other branch runs only
 # the fast jobs (Kotlin with the OpenAPI contract, frontend check, lint and
-# Vitest); the browser job is skipped there.
+# Vitest); the browser job is skipped there. The compose smoke (DEC-016 Q1 C,
+# QUAL-017) runs only on pushes to main, the nightly schedule and manual runs.
 name: CI
 
 on:
@@ -131,4 +132,37 @@ jobs:
         with:
           name: frontend-playwright
           path: frontend/test-results/
+          retention-days: 7
+
+  compose-smoke:
+    name: Compose stack through Caddy (smoke)
+    if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch' || (github.event_name == 'push' && github.ref == 'refs/heads/main')
+    runs-on: ubuntu-24.04
+    timeout-minutes: 40
+    defaults:
+      run:
+        working-directory: frontend
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+      - run: npx --yes npm@11 ci
+      - run: npx playwright install --with-deps firefox
+      # Builds the backend and web images, starts db, backend and web as the project easyquery-test, runs
+      # tests-compose/ on 127.0.0.1:18097 and removes the project's containers and volumes.
+      - run: npm run test:compose
+      - if: ${{ !cancelled() }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: compose-playwright-report
+          path: frontend/playwright-report/compose/
+          retention-days: 14
+      - if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: compose-test-results
+          path: frontend/test-results/compose/
           retention-days: 7
