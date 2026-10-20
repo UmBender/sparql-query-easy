@@ -62,7 +62,7 @@
 	--border: #d5dbe3;
 	--input: #c3cbd6;
 	--ring: #1565c0;
-	--primary: #1565c0;
+	--primary: #2e7d32;
 	--primary-foreground: #ffffff;
 	--secondary: #e3eaf7;
 	--secondary-foreground: #0d3a75;
@@ -90,13 +90,13 @@
 	--destructive-foreground: #ffffff;
 	--sidebar: #ffffff;
 	--sidebar-foreground: #1a2433;
-	--sidebar-primary: #1565c0;
+	--sidebar-primary: #2e7d32;
 	--sidebar-primary-foreground: #ffffff;
 	--sidebar-accent: #e3f2fd;
 	--sidebar-accent-foreground: #0d3a75;
 	--sidebar-border: #d5dbe3;
 	--sidebar-ring: #1565c0;
-	--chart-1: #1565c0;
+	--chart-1: #2e7d32;
 	--chart-2: #2e7d32;
 	--chart-3: #a85200;
 	--chart-4: #c62828;

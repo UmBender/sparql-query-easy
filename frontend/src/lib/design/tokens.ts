@@ -116,7 +116,7 @@ export const tokens: Tokens = {
 		border: '#d5dbe3',
 		input: '#c3cbd6',
 		ring: '#1565c0',
-		primary: '#1565c0',
+		primary: '#2e7d32',
 		primaryForeground: '#ffffff',
 		secondary: '#e3eaf7',
 		secondaryForeground: '#0d3a75',
