@@ -1,15 +1,11 @@
 import { describe, expect, it } from 'vitest';
-import { QueryStore, HISTORY_LIMIT } from './query-store.svelte.js';
+import { HISTORY_LIMIT } from './query-store.svelte.js';
+import { createTestStore } from '#lib/testing/store.js';
 import { emptyGraph, loadQuery, saveQueryText } from '#lib/domain/index.js';
-
-function clock(start = 1_760_000_000_000) {
-	let time = start;
-	return () => time++;
-}
 
 describe('undo and redo (FE-052)', () => {
 	it('N undos restore the initial graph and N redos the final one, with canUndo/canRedo at each step', () => {
-		const store = new QueryStore({ now: clock() });
+		const store = createTestStore();
 		const snapshots = [store.graph];
 		const a = store.addVariable();
 		snapshots.push(store.graph);
@@ -36,7 +32,7 @@ describe('undo and redo (FE-052)', () => {
 	});
 
 	it('selection, funnel toggles, node moves and the stage order add no history entries', () => {
-		const store = new QueryStore({ now: clock() });
+		const store = createTestStore();
 		const a = store.addVariable();
 		const b = store.addVariable();
 		store.connect(a, b, '<p>', 'p');
@@ -51,7 +47,7 @@ describe('undo and redo (FE-052)', () => {
 	});
 
 	it('an edit after undo empties redo, and history never exceeds the bound', () => {
-		const store = new QueryStore({ now: clock(), historyLimit: 3 });
+		const store = createTestStore({ historyLimit: 3 });
 		for (let index = 0; index < 5; index++) store.addVariable();
 		expect(store.past.length).toBe(3);
 		store.undo();
@@ -63,7 +59,7 @@ describe('undo and redo (FE-052)', () => {
 	});
 
 	it('load, New Query and an endpoint change clear the history', () => {
-		const store = new QueryStore({ now: clock() });
+		const store = createTestStore();
 		store.addVariable();
 		store.addVariable();
 		store.undo();

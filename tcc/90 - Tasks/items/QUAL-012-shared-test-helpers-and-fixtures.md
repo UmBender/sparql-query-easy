@@ -1,7 +1,7 @@
 ---
 id: QUAL-012
 title: Share test helpers and serve legacy fixtures by name through MSW, checked against the API types
-status: BACKLOG
+status: DONE
 priority: P1
 type: quality
 depends_on: [QUAL-007]
@@ -55,16 +55,55 @@ still build stores, query clients and fixture paths by hand. Skill:
 
 ## Acceptance criteria
 
-- [ ] A component test renders a component that uses svelte-query with one
+- [x] A component test renders a component that uses svelte-query with one
   helper call and no hand-made provider.
-- [ ] `loadFixture('fire-speed-at-least-90')` (or any existing scenario name)
+- [x] `loadFixture('fire-speed-at-least-90')` (or any existing scenario name)
   returns typed parts; an unknown name fails with the list of names.
-- [ ] One integration spec drives the typed client against
-  `fixtureHandler(name)` and gets the captured response.
-- [ ] Changing a field type in one response fixture makes the shape check
-  fail, naming the file and field (verified once, reverted).
+- [x] One integration spec drives the typed client against
+  `fixtureHandlers(name)` and gets the captured response.
+- [x] Changing a field type in one response fixture makes the shape check
+  fail, naming the file and field (kept as a permanent test on a copy, so
+  no fixture file is touched).
 
 ## Validation
 
 Focused: `npx --prefix frontend vitest run --project server src/lib/testing`.
 Closing: the new frontend gate from the Operational Map.
+
+## Execution log
+
+- 2026-10-20: `frontend/src/lib/testing/`: `fixtures.ts` (`loadFixture`,
+  `FIXTURE_NAMES`; Vite `import.meta.glob`, so the browser project loads the
+  fixtures too), `fixture-handlers.ts` (`fixtureHandlers(name, base)`: the
+  captured responses per method and path in order, 500 once exhausted; named
+  in the plural because it returns one handler per route), `mock-fetch.ts`
+  (`mockFetch(...handlers)` through MSW `getResponse`), `openapi-shapes.ts`
+  (Zod `fromJSONSchema` over the OpenAPI snapshot; union failures name the
+  deepest field and enum values), `store.ts` (`createTestStore`,
+  `testClock`, `TEST_NOW`), `render.ts` + `test-providers.svelte`
+  (`renderWithProviders`). Specs: `fixtures.spec.ts` (every scenario's shapes,
+  a changed field type, an unknown route, an enum value),
+  `fixture-handlers.spec.ts`, `store.spec.ts`, `render.svelte.spec.ts`
+  (`finish-study.svelte`, which calls `useQueryClient()`, invalidates its own
+  client; the fixture glob works in Firefox).
+- Migrated: `query-store.spec.ts`, `query-store-history.spec.ts` (fixed
+  clock), `client.spec.ts`, `request-parity.spec.ts` (`loadFixture`).
+- Contract finding: every request with `filterType: null` failed its schema.
+  The snapshot declared `type: ["integer","null"]` with `enum: [0..6]`, and
+  JSON Schema rejects a value missing from `enum`. The server accepts null
+  (`Int? = null`) and the legacy page sent it, so the published document was
+  wrong, not the fixtures. `QueryHttpModels.kt` now lists `"null"` in both
+  `@JsonSchema.Enum`s; `OpenApiRoutesTest` expects it; snapshot and
+  `schema.d.ts` regenerated (types unchanged except the hash); API v1 notes
+  it. No runtime behaviour changed. After the fix all 24 scenarios match.
+- Limitation: the snapshot's object schemas allow unknown properties, so an
+  extra fixture field is not reported; only types, required fields and enums
+  are checked.
+- Validation: `npm run check`, `npm run lint` pass; `npm test`: Vitest server
+  232, component 25, Playwright 84 passed, domain coverage 99.08% lines /
+  91.78% branches; Kotlin `ktlintCheck detekt test` passed (287 tests);
+  `npm run test:stack` 20 passed (live `/openapi.json` equals the snapshot);
+  docs check.
+- QUAL-007 is still REVIEW only for its first GitHub run; this card was
+  executed on the user's explicit request to implement T10.
+- Commit: completion commit for this task.

@@ -4,7 +4,6 @@
  * ones the legacy page sent. `where` and `variableFilters` compare as
  * multisets; Date.now() ids compare after the capture's `<tsN>` normalization.
  */
-import { readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
 import {
 	addElements,
@@ -41,13 +40,10 @@ import {
 import { moveItem } from './legacy/query-stages.js';
 import { filterLabel, filterTypeOf } from './legacy/query-calculations.js';
 import { valueVariableFilterData, isVariableName } from './legacy/graph-model.js';
+import { loadFixture } from '#lib/testing/fixtures.js';
 
-type Captured = { method: string; path: string; body: unknown };
-const FIXTURES = new URL('../../../../fixtures/legacy/', import.meta.url);
-const fixture = (name: string): Captured[] =>
-	JSON.parse(readFileSync(new URL(`${name}.request.json`, FIXTURES), 'utf8'));
-const responses = (name: string): { status: number; body: unknown }[] =>
-	JSON.parse(readFileSync(new URL(`${name}.response.json`, FIXTURES), 'utf8'));
+const fixture = (name: string) => loadFixture(name).requests;
+const responses = (name: string) => loadFixture(name).responses;
 
 const PK = 'http://easyquery.example.org/pokemon#';
 const iri = (local: string) => `<${PK}${local}>`;

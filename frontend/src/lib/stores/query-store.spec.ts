@@ -1,18 +1,13 @@
 import { describe, expect, it } from 'vitest';
-import { QueryStore } from './query-store.svelte.js';
+import { createTestStore } from '#lib/testing/store.js';
 import { edgesOf, nodeById, nodesOf, saveQueryText, loadQuery } from '#lib/domain/index.js';
 
 const PK = 'http://easyquery.example.org/pokemon#';
 const iri = (local: string) => `<${PK}${local}>`;
 
-function clock(start = 1_760_000_000_000) {
-	let time = start;
-	return () => time++;
-}
-
 describe('QueryStore actions', () => {
 	it('builds the graph through domain operations with legacy ids', () => {
-		const store = new QueryStore({ now: clock() });
+		const store = createTestStore();
 		const pokemon = store.addVariable({ x: 100, y: 100 });
 		expect(pokemon).toBe('?node_1760000000000');
 		store.addEntity(iri('FireType'), 'Fire', { x: 300, y: 100 });
@@ -41,7 +36,7 @@ describe('QueryStore actions', () => {
 	});
 
 	it('convert, toggle, filter edits and results-table choices keep the selection on the new node', () => {
-		const store = new QueryStore({ now: clock() });
+		const store = createTestStore();
 		const variable = store.addVariable();
 		store.addRelationValue({
 			id: 'true',
@@ -76,7 +71,7 @@ describe('QueryStore actions', () => {
 	});
 
 	it('removes nodes and relations, clears the selection of a removed element, and clears the graph', () => {
-		const store = new QueryStore({ now: clock() });
+		const store = createTestStore();
 		const a = store.addVariable();
 		const b = store.addVariable();
 		store.dragConnect(a, b);
@@ -99,7 +94,7 @@ describe('QueryStore actions', () => {
 	});
 
 	it('saves and loads documents with endpoint, limit and stage order', () => {
-		const store = new QueryStore({ now: clock() });
+		const store = createTestStore();
 		store.setEndpoint('PokemonGen1');
 		store.setLimit(40);
 		const a = store.addVariable();
@@ -107,7 +102,7 @@ describe('QueryStore actions', () => {
 		store.connect(a, b, '?p', '?');
 		store.moveStage(0, 2);
 		const text = saveQueryText(store.document);
-		const other = new QueryStore({ now: clock() });
+		const other = createTestStore();
 		const loaded = loadQuery(text);
 		if (!('document' in loaded)) throw new Error(loaded.error.message);
 		other.load(loaded.document);
@@ -120,7 +115,7 @@ describe('QueryStore actions', () => {
 
 describe('QueryStore derived values', () => {
 	it('context follows the endpoint and limit', () => {
-		const store = new QueryStore({ now: clock() });
+		const store = createTestStore();
 		expect(store.context).toMatchObject({
 			endpointUrl: 'CampeonatoBrasileiro2023',
 			limit: 150
@@ -140,7 +135,7 @@ describe('QueryStore derived values', () => {
 	});
 
 	it('validation follows graph edits', () => {
-		const store = new QueryStore({ now: clock() });
+		const store = createTestStore();
 		expect(store.validation.map((error) => error.code)).toEqual(['empty']);
 		store.addEntity('<a>', 'A');
 		expect(store.validation.map((error) => error.code)).toEqual(['no-variable']);
@@ -155,7 +150,7 @@ describe('QueryStore derived values', () => {
 	});
 
 	it('the stage order resets on signature changes and keeps a manual order otherwise', () => {
-		const store = new QueryStore({ now: clock() });
+		const store = createTestStore();
 		const a = store.addVariable();
 		const b = store.addVariable();
 		store.connect(a, b, '<p>', 'p');
@@ -174,8 +169,7 @@ describe('QueryStore derived values', () => {
 	});
 
 	it('active filters, funnel steps and the selected node follow their edits', () => {
-		const store = new QueryStore({
-			now: clock(),
+		const store = createTestStore({
 			endpoint: { kind: 'builtIn', id: 'PokemonGen1' },
 			limit: 150
 		});

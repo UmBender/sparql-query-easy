@@ -69,7 +69,10 @@ Several Maximum/Minimum filters must all hold. Such a query's `LIMIT` is the
 request `limit` capped by `EASYQUERY_EXTREME_RESULT_LIMIT` (default 100). The
 C# behavior (`ORDER BY`, forced `LIMIT 1`) is retired; `SELECT-ORDER-MAX-001`
 and `SELECT-ORDER-MIN-001` keep their captures and still match by result.
-An omitted `filterType` produces an exact `str()` match. The `/api/query/sparql` display route deliberately ignores a
+An omitted or `null` `filterType` produces an exact `str()` match; the OpenAPI
+enums of both `filterType` fields list `null` (QUAL-012: the legacy fixtures
+send it, and JSON Schema rejects a value missing from `enum` even when `type`
+allows null). The `/api/query/sparql` display route deliberately ignores a
 provided `filterType`, preserving C# behavior.
 
 ### Variable filters (FE-034)

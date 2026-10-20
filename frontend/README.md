@@ -84,6 +84,17 @@ screenshots (labels and overlays hidden, so font rendering does not matter)
 and runs axe on the editor in both themes. `.github/workflows/ci.yml` runs
 check, lint, `npm test` and `test:stack` with the Kotlin and legacy gates.
 
+Shared test helpers (QUAL-012, `src/lib/testing/`, test-only):
+`createTestStore` (a QueryStore with a fixed clock, optionally from a saved
+query or a graph), `renderWithProviders` (a component inside a fresh
+svelte-query client and the tooltip provider), `mockFetch` (answers `fetch`
+from MSW handlers in either Vitest project), `loadFixture(name)` (a
+`fixtures/legacy/` scenario's requests, responses, SPARQL and export) and
+`fixtureHandlers(name)` (MSW handlers replaying its captured responses in
+order). `fixtures.spec.ts` checks every fixture against the OpenAPI snapshot
+with Zod schemas built from it (`openapi-shapes.ts`); a mismatch names the
+file, index and field.
+
 Playwright is pinned to the root suite's version so both share the installed
 browsers. npm 10 fails while resolving new dependencies (`edgesOut` error in
 peer resolution); add or update packages with `npx npm@11 install ...`.

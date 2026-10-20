@@ -100,7 +100,7 @@ data class WhereHttpRequest(
         "Literal filter: 0 Starts, 1 Contains, 2 Greater/equal, 3 Lesser/equal, 4 Max, 5 Min, " +
             "6 Between (object min..max, both inclusive).",
     )
-    @JsonSchema.Enum("0", "1", "2", "3", "4", "5", "6")
+    @JsonSchema.Enum("0", "1", "2", "3", "4", "5", "6", "null")
     val filterType: Int? = null,
 )
 
@@ -113,7 +113,7 @@ data class VariableFilterHttpRequest(
     @JsonSchema.Description("The filtered SPARQL variable, with or without the leading ?.")
     val variableName: String? = null,
     @JsonSchema.Description("0 Starts, 1 Contains, 2 Greater/equal, 3 Lesser/equal, 6 Between (value min..max).")
-    @JsonSchema.Enum("0", "1", "2", "3", "6")
+    @JsonSchema.Enum("0", "1", "2", "3", "6", "null")
     val filterType: Int? = null,
     val value: String? = null,
 )

@@ -9,6 +9,7 @@ import {
 	isAbort,
 	questionErrors
 } from './client.js';
+import { loadFixture } from '#lib/testing/fixtures.js';
 
 const BASE = 'http://api.test';
 const server = setupServer();
@@ -17,13 +18,7 @@ afterEach(() => server.resetHandlers());
 afterAll(() => server.close());
 
 const client = createApiClient({ baseUrl: BASE });
-const fixture = (name: string) =>
-	JSON.parse(
-		readFileSync(
-			new URL(`../../../../fixtures/legacy/${name}.response.json`, import.meta.url),
-			'utf8'
-		)
-	) as { status: number; body: unknown }[];
+const fixture = (name: string) => loadFixture(name).responses;
 
 const stageBody = {
 	endpointUrl: 'PokemonGen1',
