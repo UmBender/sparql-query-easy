@@ -107,7 +107,7 @@ Ordered by dependencies, then priority among selection candidates. See [worker r
 | DEC-014 | DONE | P1 | decision | [Decide how the T8 brief changes the proposed-query contract of STUDY-001](<items/DEC-014-t8-study-brief-differences.md>) |
 | FE-053 | DONE | P1 | refactor | [Let the query editor start from a given query and endpoint and host an extra panel](<items/FE-053-reusable-query-editor.md>) |
 | AUTH-005 | DONE | P1 | security | [Give accounts a participant or admin role and guard the admin routes](<items/AUTH-005-admin-role-and-guard.md>) |
-| STUDY-006 | READY | P1 | fullstack | [Let an admin create, edit and retire proposed tasks by drawing the reference query](<items/STUDY-006-admin-task-management.md>) |
+| STUDY-006 | DONE | P1 | fullstack | [Let an admin create, edit and retire proposed tasks by drawing the reference query](<items/STUDY-006-admin-task-management.md>) |
 | STUDY-007 | READY | P1 | fullstack | [Let an admin put participants in groups and give each group its own tasks](<items/STUDY-007-participant-groups.md>) |
 | STUDY-003 | READY | P1 | fullstack | [List the proposed tasks assigned to the user and open one in the editor](<items/STUDY-003-open-proposed-task.md>) |
 | STUDY-004 | READY | P1 | fullstack | [Submit a drawn query as an answer, check it on the server and show the attempt history](<items/STUDY-004-submit-and-check-answer.md>) |

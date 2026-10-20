@@ -14,6 +14,8 @@ import type {
 	VariableFilter
 } from '#lib/domain/legacy/query-calculations.js';
 import type { StageRequest } from '#lib/domain/legacy/query-stages.js';
+import type { SavedQueryV1 } from '#lib/domain/saved-format.js';
+import type { AnswerQuery } from '#lib/domain/study.js';
 
 type Schemas = components['schemas'];
 export type PropertyItem = Schemas['PropertyDtoResponse'];
@@ -26,6 +28,24 @@ export type EndpointItem = Schemas['EndpointHttpItem'];
 export type Health = Schemas['HealthResponse'];
 export type SessionUser = Schemas['SessionUserHttpResponse'];
 export type Credentials = { username: string; password: string };
+export type AdminTaskSummary = Schemas['AdminTaskSummaryHttpResponse'];
+export type AdminTask = Omit<
+	Schemas['AdminTaskHttpResponse'],
+	'startingGraph' | 'referenceGraph'
+> & { startingGraph: SavedQueryV1 | null; referenceGraph: SavedQueryV1 };
+export type TaskPreview = Schemas['TaskPreviewHttpResponse'];
+/** A drawn query (DEC-014 Q5): the saved graph and the request derived from it. */
+export type DrawnQuery = { graph: SavedQueryV1; query: AnswerQuery };
+export type AdminTaskBody = {
+	key: string;
+	title: string;
+	statement: string;
+	endpoint: string;
+	startingGraph: SavedQueryV1 | null;
+	reference: DrawnQuery;
+	comparison: 'set' | 'multiset';
+	maxResults: number;
+};
 
 export type QueryBody = {
 	endpointUrl: string;
@@ -47,7 +67,7 @@ export type SearchBody = { endpointUrl: string; search: string; limit: number };
 /**
  * `bad-request` 400, `not-found` 404 (unknown uploaded graph), `upstream` 502
  * (endpoint failure); for the account routes (AUTH-001) `unauthorized` 401,
- * `conflict` 409, `rate-limited` 429, `unavailable` 503; `server` any other status, `network` no response,
+ * `forbidden` 403 (admin and study routes), `conflict` 409, `rate-limited` 429, `unavailable` 503; `server` any other status, `network` no response,
  * `aborted` cancelled by the caller, `unexpected` a 200 whose body is not the
  * documented shape.
  */
@@ -56,6 +76,7 @@ export type ApiErrorKind =
 	| 'not-found'
 	| 'upstream'
 	| 'unauthorized'
+	| 'forbidden'
 	| 'conflict'
 	| 'rate-limited'
 	| 'unavailable'
@@ -87,6 +108,7 @@ function kindOf(status: number): ApiErrorKind {
 	if (status === 404) return 'not-found';
 	if (status === 502) return 'upstream';
 	if (status === 401) return 'unauthorized';
+	if (status === 403) return 'forbidden';
 	if (status === 409) return 'conflict';
 	if (status === 429) return 'rate-limited';
 	if (status === 503) return 'unavailable';
@@ -158,7 +180,31 @@ export function createApiClient({
 			fallback,
 			valid
 		);
+	const put = <T>(
+		path: string,
+		body: unknown,
+		fallback: string,
+		valid?: (data: unknown) => boolean
+	) =>
+		call<T>(
+			path,
+			{
+				method: 'PUT',
+				headers: { 'content-type': 'application/json' },
+				body: JSON.stringify(body)
+			},
+			fallback,
+			valid
+		);
+	const get = <T>(
+		path: string,
+		fallback: string,
+		options: Options = {},
+		valid?: (data: unknown) => boolean
+	) => call<T>(path, { signal: options.signal }, fallback, valid);
 	const isArray = (data: unknown) => Array.isArray(data);
+	const isTask = (data: unknown) => !!data && typeof (data as { key?: unknown }).key === 'string';
+	const taskPath = (key: string) => `/api/admin/tasks/${encodeURIComponent(key)}`;
 	const isUser = (data: unknown) =>
 		!!data && typeof (data as { username?: unknown }).username === 'string';
 
@@ -260,6 +306,36 @@ export function createApiClient({
 			post<SessionUser>('/api/auth/register', body, 'Registration failed', options, isUser),
 		login: (body: Credentials, options?: Options) =>
 			post<SessionUser>('/api/auth/login', body, 'Login failed', options, isUser),
+		/** STUDY-006: the proposed tasks, for admins. */
+		admin: {
+			tasks: (options?: Options) =>
+				get<AdminTaskSummary[]>('/api/admin/tasks', 'Task list failed', options, isArray),
+			task: (key: string, options?: Options) =>
+				get<AdminTask>(taskPath(key), 'Task lookup failed', options, isTask),
+			createTask: (body: AdminTaskBody) =>
+				post<AdminTask>('/api/admin/tasks', body, 'Saving the task failed', {}, isTask),
+			updateTask: (key: string, body: AdminTaskBody) =>
+				put<AdminTask>(taskPath(key), body, 'Saving the task failed', isTask),
+			previewTask: (
+				body: { endpoint: string; reference: DrawnQuery; maxResults: number },
+				options?: Options
+			) =>
+				post<TaskPreview>(
+					'/api/admin/tasks/preview',
+					body,
+					'Preview failed',
+					options,
+					(data) => Array.isArray((data as TaskPreview | null)?.expected)
+				),
+			setTaskActive: (key: string, active: boolean) =>
+				post<AdminTaskSummary>(
+					`${taskPath(key)}/${active ? 'reactivate' : 'deactivate'}`,
+					{},
+					'Changing the task failed',
+					{},
+					isTask
+				)
+		},
 		/** POST /api/auth/logout (204, no body). */
 		async logout(options: Options = {}): Promise<void> {
 			let response: Response;

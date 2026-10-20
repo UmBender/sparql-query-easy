@@ -52,7 +52,10 @@ export const queryKeys = {
 	stage: (request: StageRequest | StageRequestBody) => ['stage', payloadKey(request)] as const,
 	search: (endpointUrl: string, text: string, limit: number) =>
 		['search', endpointUrl, text, limit] as const,
-	relationshipValue: (request: object) => ['relationship-value', payloadKey(request)] as const
+	relationshipValue: (request: object) => ['relationship-value', payloadKey(request)] as const,
+	/** STUDY-006: the admin's task list and one task; saving invalidates `['admin', 'tasks']`. */
+	adminTasks: ['admin', 'tasks'] as const,
+	adminTask: (key: string) => ['admin', 'tasks', key] as const
 };
 
 /** Cached request helpers bound to one client and one query cache. */

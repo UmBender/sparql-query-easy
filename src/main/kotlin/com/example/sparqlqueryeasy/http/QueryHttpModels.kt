@@ -436,7 +436,7 @@ internal fun StageCandidatePage.toResponse() =
             },
     )
 
-private fun RdfValue.toTermResponse(): RdfTermHttp =
+internal fun RdfValue.toTermResponse(): RdfTermHttp =
     when (this) {
         is Iri -> RdfTermHttp("iri", value)
         is Literal -> RdfTermHttp("literal", lexicalForm, datatype?.value, language)

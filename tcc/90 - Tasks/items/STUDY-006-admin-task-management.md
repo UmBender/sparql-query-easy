@@ -1,7 +1,7 @@
 ---
 id: STUDY-006
 title: Let an admin create, edit and retire proposed tasks by drawing the reference query
-status: READY
+status: DONE
 priority: P1
 type: fullstack
 depends_on: [DEC-014, AUTH-005, FE-053, BE-005, QUAL-011]
@@ -46,20 +46,56 @@ Excluded: groups and assignment (STUDY-007); participant routes (STUDY-003).
 
 ## Acceptance criteria
 
-- [ ] Participant/anonymous calls to every route: 403/401.
-- [ ] Creating the Fire-type speed ≥ 90 task from
+- [x] Participant/anonymous calls to every route: 403/401.
+- [x] Creating the Fire-type speed ≥ 90 task from
       `fire-speed-at-least-90.query.json` stores the expected rows that the
       same request returns on PokemonGen1 (Testcontainers + local graph; no
       external services).
-- [ ] A request body with expected rows is ignored; a truncated reference
+- [x] A request body with expected rows is ignored; a truncated reference
       result is rejected with 400.
-- [ ] Editing the reference increments `revision`; editing only the title
+- [x] Editing the reference increments `revision`; editing only the title
       does not change the expected snapshot.
-- [ ] Deactivating keeps the row; duplicate `key` returns 409.
-- [ ] e2e: an admin creates a task by drawing the reference graph and sees it
+- [x] Deactivating keeps the row; duplicate `key` returns 409.
+- [x] e2e: an admin creates a task by drawing the reference graph and sees it
       in the list.
 
 ## Validation
 
 Focused: `AdminTaskRoutesTest` (proposed) via the focused Kotlin command.
 Closing gate: HTTP/fullstack union including `test:stack`.
+
+## Conclusion
+
+- Migration `V4__study_tasks.sql` (`study_task`, JSONB graphs, request and
+  expected terms). `application/study`: `StudyTaskService` (validation,
+  revision rule, preview), `StudyQueryRunner` (runs the client-derived request
+  through `GeneralQueryService.executeTerms` on the task's endpoint with
+  `LIMIT maxResults + 1`; more rows than the cap is rejected), `StudyTaskStore`
+  port; `persistence/PostgresStudyStore.kt` with a JSONB column type.
+- `GeneralQueryService.executeTerms` shares generation, validation and
+  execution with `execute` and answers the typed terms of the variable per row.
+- HTTP: `/api/admin/tasks` (list, get, create, update, preview,
+  deactivate/reactivate) in `AdminRoutes.kt`; models in `StudyHttpModels.kt`
+  (bodies decoded ignoring unknown fields), docs in `StudyOpenApi.kt`; the
+  same-origin JSON guard is shared (`sameOriginJson`). OpenAPI snapshot and
+  `schema.d.ts` regenerated.
+- Revision: rerun and increment when the derived request (compared as JSON
+  values: JSONB reorders keys), endpoint or cap change; statement and
+  comparison changes also increment; a title-only edit keeps the snapshot.
+- Frontend: `domain/study.ts` (`answerVariables`, `answerQuery`, checked
+  against the captured legacy Fire request), client `api.admin.*` and a
+  `forbidden` error kind, `/admin/tasks` list, `/admin/tasks/new` and
+  `/admin/tasks/[key]` with `features/admin/task-editor.svelte` hosting the
+  shared `QueryEditor` (locked endpoint; reference or starting graph).
+- Tests: `AdminTaskRoutesTest` (Testcontainers + PokemonGen1), `study.spec.ts`,
+  `tests-stack/study.e2e.ts` (the admin loads the Fire query in the task
+  editor, previews, saves and finds the task listed). The stack run raises
+  `EASYQUERY_AUTH_ATTEMPTS_PER_MINUTE` because the study suites log in many
+  users from one address.
+- Validation: Kotlin gate, frontend gate (176 unit, 84 e2e), `test:stack`
+  (11) pass. `PostgresDatabaseTest` "a ready database lost after startup…"
+  failed intermittently while editing; it fails the same way on an unchanged
+  `HEAD` worktree (environment timing), and passed in the final gate.
+- "Editing only the title does not change the expected snapshot": the
+  reference is not rerun then. A layout-only change of the reference graph
+  is stored without a new revision.

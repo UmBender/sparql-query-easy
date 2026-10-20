@@ -17,7 +17,7 @@ The retired page is described in [[Legacy Page Architecture (retired)]].
 | API | `src/lib/api/` | Typed client from the OpenAPI snapshot (`schema.d.ts`), TanStack Query cache, typed mock routes for tests (FE-043, QUAL-007) |
 | Components | `src/lib/components/ui/` | shadcn-svelte primitives and project components; `/styleguide` (FE-050) |
 | Features | `src/lib/features/` | `editor` (page shell, Cytoscape canvas as a pure view, action menus, results, View SPARQL), `filters`, `exploration` (staged Run Query, possible graph), `funnel` (funnel panel, badges), `utilities` (upload, load/export, tour), `auth` (session store, login form, account control) |
-| Routes | `src/routes/` | `/` (query editor), `/login` (AUTH-003), `/study` (session required; empty until STUDY-001, AUTH-004), `/styleguide` |
+| Routes | `src/routes/` | `/` (query editor), `/login` (AUTH-003), `/study` (session required; empty until STUDY-001, AUTH-004), `/admin` and `/admin/tasks`, `/admin/tasks/new`, `/admin/tasks/[key]` (admin role; STUDY-006 task editor in `features/admin/`), `/styleguide` |
 
 ## State and interaction
 
@@ -26,7 +26,11 @@ controller actions; it never owns query state. Every `QueryEditor` creates its
 own `QueryStore`; a page that hosts one (a proposed task, the admin task
 editor) passes a start query, a locked endpoint, a side panel and toolbar
 actions as props and reads the graph from the store handed to `onready`
-(FE-053). Query behavior (node kinds and
+(FE-053). The admin task editor draws the reference and the optional
+starting graph in one editor, recreated (`{#key}`) when the drawing or the
+endpoint changes after keeping the current drawing; the answer request comes
+from `domain/study.ts` (`answerQuery`), the Run Query mapping with a chosen
+answer variable (STUDY-006). Query behavior (node kinds and
 their actions, connections, filters, staged exploration, funnel and badges)
 follows the retired page row by row, see [[Frontend Parity Checklist]] and
 [[Two Variable Exploration Contract]]. Intended differences are recorded on

@@ -308,7 +308,7 @@ class AuthRoutesTest {
             participant.json("/api/admin/tasks").status shouldBe HttpStatusCode.Forbidden
 
             val admin = browser().also { it.register("Grace") }
-            admin.get("/api/admin/tasks").status shouldBe HttpStatusCode.NotFound
+            admin.get("/api/admin/unknown").status shouldBe HttpStatusCode.NotFound
         }
 
     @Test

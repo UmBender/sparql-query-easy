@@ -988,6 +988,645 @@
                     }
                 }
             }
+        },
+        "/api/admin/tasks": {
+            "post": {
+                "operationId": "adminCreateTask",
+                "tags": [
+                    "Admin"
+                ],
+                "summary": "Create a proposed task",
+                "description": "Runs the reference query on the task's endpoint with the result cap and stores its result as the expected one (revision 1). A reference returning more than the cap is rejected. Requires the admin role (401 without a session, 403 for a participant). Same origin only: a mismatching Origin is rejected with 403 and a non-JSON body with 415. Unknown body fields are ignored; expected rows are never read from the client.",
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/AdminTaskHttpRequest"
+                            }
+                        }
+                    },
+                    "required": true
+                },
+                "responses": {
+                    "201": {
+                        "description": "The task is stored.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "required": [
+                                        "data"
+                                    ],
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/components/schemas/AdminTaskHttpResponse"
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "409": {
+                        "description": "A task with this key exists.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorResponse"
+                                }
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid or malformed body, or the query could not run.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorResponse"
+                                }
+                            }
+                        }
+                    },
+                    "415": {
+                        "description": "The body is not application/json.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorResponse"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "No valid session.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorResponse"
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "description": "The user lacks the role, or the request came from another site.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorResponse"
+                                }
+                            }
+                        }
+                    },
+                    "503": {
+                        "description": "The database is not configured or unreachable.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorResponse"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "get": {
+                "operationId": "adminListTasks",
+                "tags": [
+                    "Admin"
+                ],
+                "summary": "List the proposed tasks",
+                "description": "Every task, active or not, ordered by key. Requires the admin role (401 without a session, 403 for a participant).",
+                "responses": {
+                    "200": {
+                        "description": "The tasks.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "required": [
+                                        "data"
+                                    ],
+                                    "properties": {
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "$ref": "#/components/schemas/AdminTaskSummaryHttpResponse"
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "No valid session.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorResponse"
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "description": "The user lacks the role, or the request came from another site.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorResponse"
+                                }
+                            }
+                        }
+                    },
+                    "503": {
+                        "description": "The database is not configured or unreachable.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorResponse"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/admin/tasks/preview": {
+            "post": {
+                "operationId": "adminPreviewTask",
+                "tags": [
+                    "Admin"
+                ],
+                "summary": "Run a reference query without saving",
+                "description": "The expected result a task with this reference would store. Requires the admin role (401 without a session, 403 for a participant). Same origin only: a mismatching Origin is rejected with 403 and a non-JSON body with 415. Unknown body fields are ignored; expected rows are never read from the client.",
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/TaskPreviewHttpRequest"
+                            }
+                        }
+                    },
+                    "required": true
+                },
+                "responses": {
+                    "200": {
+                        "description": "The generated SPARQL and the answer variable's values.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "required": [
+                                        "data"
+                                    ],
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/components/schemas/TaskPreviewHttpResponse"
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid or malformed body, or the query could not run.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorResponse"
+                                }
+                            }
+                        }
+                    },
+                    "415": {
+                        "description": "The body is not application/json.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorResponse"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "No valid session.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorResponse"
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "description": "The user lacks the role, or the request came from another site.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorResponse"
+                                }
+                            }
+                        }
+                    },
+                    "503": {
+                        "description": "The database is not configured or unreachable.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorResponse"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/admin/tasks/{key}": {
+            "put": {
+                "operationId": "adminUpdateTask",
+                "tags": [
+                    "Admin"
+                ],
+                "summary": "Edit a proposed task",
+                "description": "Replaces the task's fields (the key stays). The reference runs again when its request, the endpoint or the cap changed; changing the statement, reference request, comparison, endpoint or cap increments the revision, a title or layout change does not. Requires the admin role (401 without a session, 403 for a participant). Same origin only: a mismatching Origin is rejected with 403 and a non-JSON body with 415. Unknown body fields are ignored; expected rows are never read from the client.",
+                "parameters": [
+                    {
+                        "name": "key",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/AdminTaskHttpRequest"
+                            }
+                        }
+                    },
+                    "required": true
+                },
+                "responses": {
+                    "200": {
+                        "description": "The updated task.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "required": [
+                                        "data"
+                                    ],
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/components/schemas/AdminTaskHttpResponse"
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "No task has this key.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorResponse"
+                                }
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid or malformed body, or the query could not run.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorResponse"
+                                }
+                            }
+                        }
+                    },
+                    "415": {
+                        "description": "The body is not application/json.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorResponse"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "No valid session.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorResponse"
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "description": "The user lacks the role, or the request came from another site.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorResponse"
+                                }
+                            }
+                        }
+                    },
+                    "503": {
+                        "description": "The database is not configured or unreachable.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorResponse"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "get": {
+                "operationId": "adminGetTask",
+                "tags": [
+                    "Admin"
+                ],
+                "summary": "Read a proposed task",
+                "description": "The task with its reference query and the expected result the server stored. Requires the admin role (401 without a session, 403 for a participant).",
+                "parameters": [
+                    {
+                        "name": "key",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "The task.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "required": [
+                                        "data"
+                                    ],
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/components/schemas/AdminTaskHttpResponse"
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "No task has this key.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorResponse"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "No valid session.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorResponse"
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "description": "The user lacks the role, or the request came from another site.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorResponse"
+                                }
+                            }
+                        }
+                    },
+                    "503": {
+                        "description": "The database is not configured or unreachable.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorResponse"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/admin/tasks/{key}/deactivate": {
+            "post": {
+                "operationId": "adminDeactivateTask",
+                "tags": [
+                    "Admin"
+                ],
+                "summary": "Deactivate a proposed task",
+                "description": "Tasks are never deleted. An inactive task stays listed for admins and is hidden from participants. The body is `{}`. Requires the admin role (401 without a session, 403 for a participant). Same origin only: a mismatching Origin is rejected with 403 and a non-JSON body with 415. Unknown body fields are ignored; expected rows are never read from the client.",
+                "parameters": [
+                    {
+                        "name": "key",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "The task after the deactivate.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "required": [
+                                        "data"
+                                    ],
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/components/schemas/AdminTaskSummaryHttpResponse"
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "No task has this key.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorResponse"
+                                }
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid or malformed body, or the query could not run.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorResponse"
+                                }
+                            }
+                        }
+                    },
+                    "415": {
+                        "description": "The body is not application/json.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorResponse"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "No valid session.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorResponse"
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "description": "The user lacks the role, or the request came from another site.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorResponse"
+                                }
+                            }
+                        }
+                    },
+                    "503": {
+                        "description": "The database is not configured or unreachable.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorResponse"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/admin/tasks/{key}/reactivate": {
+            "post": {
+                "operationId": "adminReactivateTask",
+                "tags": [
+                    "Admin"
+                ],
+                "summary": "Reactivate a proposed task",
+                "description": "Tasks are never deleted. An inactive task stays listed for admins and is hidden from participants. The body is `{}`. Requires the admin role (401 without a session, 403 for a participant). Same origin only: a mismatching Origin is rejected with 403 and a non-JSON body with 415. Unknown body fields are ignored; expected rows are never read from the client.",
+                "parameters": [
+                    {
+                        "name": "key",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "The task after the reactivate.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "required": [
+                                        "data"
+                                    ],
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/components/schemas/AdminTaskSummaryHttpResponse"
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "No task has this key.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorResponse"
+                                }
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid or malformed body, or the query could not run.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorResponse"
+                                }
+                            }
+                        }
+                    },
+                    "415": {
+                        "description": "The body is not application/json.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorResponse"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "No valid session.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorResponse"
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "description": "The user lacks the role, or the request came from another site.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorResponse"
+                                }
+                            }
+                        }
+                    },
+                    "503": {
+                        "description": "The database is not configured or unreachable.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorResponse"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
         }
     },
     "components": {
@@ -1623,6 +2262,280 @@
                     },
                     "role": {
                         "type": "string"
+                    }
+                }
+            },
+            "AdminTaskSummaryHttpResponse": {
+                "type": "object",
+                "title": "AdminTaskSummaryHttpResponse",
+                "required": [
+                    "key",
+                    "title",
+                    "endpoint",
+                    "comparison",
+                    "revision",
+                    "active",
+                    "expectedCount",
+                    "updatedAt"
+                ],
+                "properties": {
+                    "key": {
+                        "type": "string"
+                    },
+                    "title": {
+                        "type": "string"
+                    },
+                    "endpoint": {
+                        "type": "string"
+                    },
+                    "comparison": {
+                        "type": "string"
+                    },
+                    "revision": {
+                        "type": "integer"
+                    },
+                    "active": {
+                        "type": "boolean"
+                    },
+                    "expectedCount": {
+                        "type": "integer"
+                    },
+                    "updatedAt": {
+                        "type": "string"
+                    }
+                }
+            },
+            "JsonElement": {
+                "type": "object",
+                "title": "JsonElement"
+            },
+            "AnswerQueryHttpRequest": {
+                "type": "object",
+                "title": "AnswerQueryHttpRequest",
+                "properties": {
+                    "variableName": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "description": "The answer variable, with or without the leading ?."
+                    },
+                    "where": {
+                        "type": [
+                            "array",
+                            "null"
+                        ],
+                        "items": {
+                            "$ref": "#/components/schemas/WhereHttpRequest"
+                        }
+                    },
+                    "variableFilters": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/VariableFilterHttpRequest"
+                        }
+                    }
+                }
+            },
+            "DrawnQueryHttpRequest": {
+                "type": [
+                    "object",
+                    "null"
+                ],
+                "title": "DrawnQueryHttpRequest",
+                "properties": {
+                    "graph": {
+                        "type": [
+                            "object",
+                            "null"
+                        ],
+                        "description": "The drawn graph in the saved-query format (formatVersion 1), stored as sent.",
+                        "additionalProperties": {
+                            "$ref": "#/components/schemas/JsonElement"
+                        }
+                    },
+                    "query": {
+                        "$ref": "#/components/schemas/AnswerQueryHttpRequest"
+                    }
+                }
+            },
+            "AdminTaskHttpRequest": {
+                "type": "object",
+                "title": "AdminTaskHttpRequest",
+                "properties": {
+                    "key": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "description": "Stable key, 1 to 64 lowercase letters, digits or '-'. Ignored on update (the path wins)."
+                    },
+                    "title": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    },
+                    "statement": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    },
+                    "endpoint": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "description": "A built-in local graph id, such as PokemonGen1."
+                    },
+                    "startingGraph": {
+                        "type": [
+                            "object",
+                            "null"
+                        ],
+                        "description": "Optional saved query (formatVersion 1) the participant's editor starts from.",
+                        "additionalProperties": {
+                            "$ref": "#/components/schemas/JsonElement"
+                        }
+                    },
+                    "reference": {
+                        "$ref": "#/components/schemas/DrawnQueryHttpRequest"
+                    },
+                    "comparison": {
+                        "type": "string",
+                        "default": "set",
+                        "enum": [
+                            "set",
+                            "multiset"
+                        ]
+                    },
+                    "maxResults": {
+                        "type": "integer",
+                        "description": "Result cap for the reference and the answers, 1 to 10000.",
+                        "default": 1000
+                    }
+                }
+            },
+            "AdminTaskHttpResponse": {
+                "type": "object",
+                "title": "AdminTaskHttpResponse",
+                "required": [
+                    "key",
+                    "title",
+                    "statement",
+                    "endpoint",
+                    "referenceGraph",
+                    "referenceQuery",
+                    "referenceSparql",
+                    "expected",
+                    "comparison",
+                    "maxResults",
+                    "revision",
+                    "active",
+                    "createdAt",
+                    "updatedAt"
+                ],
+                "properties": {
+                    "key": {
+                        "type": "string"
+                    },
+                    "title": {
+                        "type": "string"
+                    },
+                    "statement": {
+                        "type": "string"
+                    },
+                    "endpoint": {
+                        "type": "string"
+                    },
+                    "startingGraph": {
+                        "type": [
+                            "object",
+                            "null"
+                        ],
+                        "additionalProperties": {
+                            "$ref": "#/components/schemas/JsonElement"
+                        }
+                    },
+                    "referenceGraph": {
+                        "type": "object",
+                        "additionalProperties": {
+                            "$ref": "#/components/schemas/JsonElement"
+                        }
+                    },
+                    "referenceQuery": {
+                        "$ref": "#/components/schemas/AnswerQueryHttpRequest"
+                    },
+                    "referenceSparql": {
+                        "type": "string"
+                    },
+                    "expected": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/RdfTermHttp"
+                        }
+                    },
+                    "comparison": {
+                        "type": "string"
+                    },
+                    "maxResults": {
+                        "type": "integer"
+                    },
+                    "revision": {
+                        "type": "integer"
+                    },
+                    "active": {
+                        "type": "boolean"
+                    },
+                    "createdAt": {
+                        "type": "string"
+                    },
+                    "updatedAt": {
+                        "type": "string"
+                    }
+                }
+            },
+            "TaskPreviewHttpRequest": {
+                "type": "object",
+                "title": "TaskPreviewHttpRequest",
+                "properties": {
+                    "endpoint": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    },
+                    "reference": {
+                        "$ref": "#/components/schemas/DrawnQueryHttpRequest"
+                    },
+                    "maxResults": {
+                        "type": "integer",
+                        "default": 1000
+                    }
+                }
+            },
+            "TaskPreviewHttpResponse": {
+                "type": "object",
+                "title": "TaskPreviewHttpResponse",
+                "required": [
+                    "sparql",
+                    "expected",
+                    "distinctCount"
+                ],
+                "properties": {
+                    "sparql": {
+                        "type": "string"
+                    },
+                    "expected": {
+                        "type": "array",
+                        "description": "Typed terms of the answer variable, one per result row.",
+                        "items": {
+                            "$ref": "#/components/schemas/RdfTermHttp"
+                        }
+                    },
+                    "distinctCount": {
+                        "type": "integer"
                     }
                 }
             }

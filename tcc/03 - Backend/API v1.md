@@ -517,7 +517,49 @@ unaffected).
   or demotes existing accounts.
 - Every path under `/api/admin/` requires the admin role: `401 {"error":"Login
   required"}` without a session, `403 {"error":"Admin role required"}` for a
-  participant; until STUDY-006/007 add routes, an admin gets `404`.
+  participant; an admin gets `404` on a path no route serves.
+
+## Proposed tasks (admin, STUDY-006)
+
+Tasks live in `study_task` (`V4__study_tasks.sql`) and are managed by admins
+(DEC-014 Q3 = B). Every route below needs the admin role; POST/PUT bodies
+follow the account routes' CSRF rule (same `Origin`, JSON only: `403`/`415`).
+Study and admin bodies ignore unknown fields, so a client-sent `expected`,
+`expectedResult` or `correct` is never read. Without a database a request with
+a session cookie gets `503 {"error":"Accounts are temporarily unavailable"}`.
+
+| Route | Body | Success | Errors |
+|---|---|---|---|
+| `GET /api/admin/tasks` | — | `200` summaries (`key`, `title`, `endpoint`, `comparison`, `revision`, `active`, `expectedCount`, `updatedAt`), active and inactive, by key | — |
+| `GET /api/admin/tasks/{key}` | — | `200` the task: statement, `startingGraph`, `referenceGraph`, `referenceQuery`, `referenceSparql`, `expected` (typed terms), settings | `404 {"error":"Task not found"}` |
+| `POST /api/admin/tasks` | task | `201` the task, revision 1 | `400` invalid field, malformed JSON, failing or truncated reference; `409 {"error":"A task with this key already exists"}` |
+| `PUT /api/admin/tasks/{key}` | task (its `key` is ignored) | `200` the task | `400`, `404` |
+| `POST /api/admin/tasks/preview` | `{"endpoint","reference","maxResults"}` | `200 {"data":{"sparql","expected":[term…],"distinctCount"}}`, nothing stored | `400` |
+| `POST /api/admin/tasks/{key}/deactivate`, `…/reactivate` | `{}` | `200` the summary | `404` |
+
+- Task body: `key` (1–64 of `a-z`, `0-9`, `-`, starting with a letter or
+  digit; fixed after creation), `title` (1–200), `statement` (1–10000),
+  `endpoint` (a built-in local graph: `CampeonatoBrasileiro2023`,
+  `PokemonGen1`; remote endpoints wait for DEC-004), optional `startingGraph`,
+  `reference`, `comparison` (`set` default, or `multiset`), `maxResults`
+  (1–10000, default 1000).
+- A drawn query (`reference`, DEC-014 Q5) is `{"graph": <saved query,
+  formatVersion 1>, "query": {"variableName","where","variableFilters"}}`:
+  the request the frontend derives from the graph with the Run Query mapping
+  (`frontend/src/lib/domain/study.ts`), its `variableName` being the answer
+  variable. The server ignores any endpoint or limit in it and runs it through
+  `GeneralQueryService` on the task's endpoint with `LIMIT maxResults + 1`.
+- Expected result: the typed RDF terms (`RdfTermHttp`) bound to the answer
+  variable, one per result row in result order, computed and stored by the
+  server; a result with more than `maxResults` rows is rejected (`400`), so a
+  stored expected result is never cut. `set` compares the distinct values,
+  `multiset` the values with their repetitions (STUDY-004).
+- Revision: an update reruns the reference only when its request (compared as
+  JSON values), the endpoint or `maxResults` changed; changing those, the
+  statement or the comparison increments `revision`. A title, layout-only
+  graph or starting-graph change keeps the revision and the expected result.
+- Tasks are never deleted; deactivating keeps the row and hides the task from
+  participants.
 
 ## Endpoint selection
 

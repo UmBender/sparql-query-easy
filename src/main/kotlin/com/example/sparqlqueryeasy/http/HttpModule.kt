@@ -40,6 +40,7 @@ import com.example.sparqlqueryeasy.application.relationships.RelationshipValueSe
 import com.example.sparqlqueryeasy.application.search.SearchRequest
 import com.example.sparqlqueryeasy.application.search.SearchResult
 import com.example.sparqlqueryeasy.application.search.SearchService
+import com.example.sparqlqueryeasy.application.study.StudyQueryRunner
 import com.example.sparqlqueryeasy.config.AppSettings
 import com.example.sparqlqueryeasy.domain.model.SparqlQueryExecutionFailure
 import com.example.sparqlqueryeasy.persistence.DatabaseConnector
@@ -103,6 +104,7 @@ data class HttpDependencies(
     val localDatabaseUploadService: LocalDatabaseUploadService,
     val query: QueryHttpDependencies? = null,
     val auth: AuthHttpDependencies? = null,
+    val study: StudyHttpDependencies? = null,
     private val ownedResources: List<AutoCloseable> = emptyList(),
     val health: HealthService = HealthService(),
 ) : AutoCloseable {
@@ -128,6 +130,7 @@ fun defaultHttpDependencies(settings: AppSettings = AppSettings.load()): HttpDep
     val relationshipResolver = EndpointExecutionResolverAdapter(endpointResolver)
     // BE-005: migrations run before routes serve; query routes never wait for the database.
     val database = DatabaseConnector(settings.database).also { reportDatabaseStartup(it.connect()) }
+    val generalQueries = GeneralQueryService(generator, JenaSparqlSyntaxValidator(), filtering)
     return HttpDependencies(
         LocalDatabaseUploadService(parser, cache),
         QueryHttpDependencies(
@@ -135,7 +138,7 @@ fun defaultHttpDependencies(settings: AppSettings = AppSettings.load()): HttpDep
             ElementRelationshipsService(relationshipResolver, generator, filtering),
             RelationshipValueService(relationshipResolver, generator, filtering),
             SearchService(generator, filtering, KtorWikidataEntitySearchClient("https://www.wikidata.org/w/api.php", httpClient)),
-            GeneralQueryService(generator, JenaSparqlSyntaxValidator(), filtering),
+            generalQueries,
             SparqlQueryGenerationService(generator, JenaSparqlSyntaxValidator()),
             StageQueryService(generator, JenaSparqlSyntaxValidator()),
             NumericProfileService(generator, JenaSparqlSyntaxValidator()),
@@ -151,6 +154,7 @@ fun defaultHttpDependencies(settings: AppSettings = AppSettings.load()): HttpDep
             secureCookies = settings.secureCookies,
             trustProxy = settings.auth.trustProxy,
         ),
+        studyHttpDependencies(database, StudyQueryRunner(generalQueries, endpointResolver)),
         ownedResources = listOf(httpClient, database),
         health = HealthService(database::poll),
     )
@@ -194,7 +198,7 @@ fun Application.configureRouting(dependencies: HttpDependencies = defaultHttpDep
         dependencies.query?.let(::queryRoutes)
         dependencies.auth?.let {
             authRoutes(it)
-            adminRoutes(it)
+            adminRoutes(it, dependencies.study)
         }
         openApiDocumentationRoutes()
     }

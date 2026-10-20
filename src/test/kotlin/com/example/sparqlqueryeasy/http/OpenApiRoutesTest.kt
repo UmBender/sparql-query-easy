@@ -86,6 +86,12 @@ class OpenApiRoutesTest {
                     "/api/auth/login" to setOf("post"),
                     "/api/auth/logout" to setOf("post"),
                     "/api/auth/session" to setOf("get"),
+                    // STUDY-006
+                    "/api/admin/tasks" to setOf("get", "post"),
+                    "/api/admin/tasks/preview" to setOf("post"),
+                    "/api/admin/tasks/{key}" to setOf("get", "put"),
+                    "/api/admin/tasks/{key}/deactivate" to setOf("post"),
+                    "/api/admin/tasks/{key}/reactivate" to setOf("post"),
                 ),
                 document.operationInventory(),
             )

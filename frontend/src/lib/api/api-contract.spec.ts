@@ -34,7 +34,14 @@ describe('generated API types', () => {
 			['/api/query/stage', 'post'],
 			['/api/query/numeric-profile', 'post'],
 			['/api/query/count', 'post'],
-			['/api/query/sparql', 'post']
+			['/api/query/sparql', 'post'],
+			['/api/admin/tasks', 'get'],
+			['/api/admin/tasks', 'post'],
+			['/api/admin/tasks/preview', 'post'],
+			['/api/admin/tasks/{key}', 'get'],
+			['/api/admin/tasks/{key}', 'put'],
+			['/api/admin/tasks/{key}/deactivate', 'post'],
+			['/api/admin/tasks/{key}/reactivate', 'post']
 		];
 		for (const [path, method] of called)
 			expect(document.paths[path]?.[method], `${method} ${path}`).toBeTruthy();

@@ -6,3 +6,4 @@ export * from './operations.js';
 export * from './query.js';
 export * from './validate.js';
 export * from './saved-format.js';
+export * from './study.js';

@@ -126,13 +126,22 @@ private suspend fun RoutingContext.authRoute(
     limited: Boolean,
     block: suspend RoutingContext.() -> Unit,
 ) {
+    sameOriginJson {
+        if (limited && !auth.limiter.tryAcquire(clientAddress(auth))) {
+            call.respond(HttpStatusCode.TooManyRequests, ErrorResponse("Too many attempts; try again in a minute"))
+        } else {
+            accountsAvailable(block)
+        }
+    }
+}
+
+/** CSRF for every state-changing account, admin and study route: same origin only, JSON only, then [block]. */
+internal suspend fun RoutingContext.sameOriginJson(block: suspend RoutingContext.() -> Unit) {
     when {
         !sameOrigin() -> call.respond(HttpStatusCode.Forbidden, ErrorResponse("Cross-origin request rejected"))
         !call.request.contentType().match(ContentType.Application.Json) ->
             call.respond(HttpStatusCode.UnsupportedMediaType, ErrorResponse("Content-Type must be application/json"))
-        limited && !auth.limiter.tryAcquire(clientAddress(auth)) ->
-            call.respond(HttpStatusCode.TooManyRequests, ErrorResponse("Too many attempts; try again in a minute"))
-        else -> accountsAvailable(block)
+        else -> block()
     }
 }
 
