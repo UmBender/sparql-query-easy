@@ -16,6 +16,15 @@ include predicate variables as well as variable nodes, and should hover show
 only the next variable's candidates (recommended) or also mutate a temporary
 graph preview? Confirm request caps and final selection behavior in DEC-008.
 
+## DEC-016 — T10 test and CI brief
+
+The T10 brief differs from QUAL-007/DEC-012 on how the e2e stack starts
+(Testcontainers `test:stack` versus `docker compose`), which CI tiers run
+e2e/visual/a11y, and the axe failure threshold. QUAL-016 waits for it.
+
+**Decision question:** Q1–Q3 in [[items/DEC-016-t10-test-ci-brief-differences]]
+(recommended: Q1 C, Q2 A, Q3 A).
+
 ## MIG-002 — Resolved C# removal gate
 
 DEC-009 is resolved: the user approved Kotlin's `200 application/json`

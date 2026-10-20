@@ -104,6 +104,13 @@ Ordered by dependencies, then priority among selection candidates. See [worker r
 | FE-047 | DONE | P1 | frontend | [Show the filter funnel with switchable steps and kept/total badges](<items/FE-047-filter-funnel-and-badges.md>) |
 | FE-048 | DONE | P1 | frontend | [Upload triples, load and export queries, auto layout and the guided tour](<items/FE-048-editor-utilities.md>) |
 | QUAL-007 | REVIEW | P1 | quality | [Add the new frontend test layers and a GitHub Actions CI for all gates](<items/QUAL-007-new-frontend-tests-and-ci.md>) |
+| DEC-016 | BLOCKED | P1 | decision | [Decide how the T10 brief changes the test and CI contract of QUAL-007](<items/DEC-016-t10-test-ci-brief-differences.md>) |
+| QUAL-012 | BACKLOG | P1 | quality | [Share test helpers and serve legacy fixtures by name through MSW, checked against the API types](<items/QUAL-012-shared-test-helpers-and-fixtures.md>) |
+| QUAL-014 | BACKLOG | P1 | quality | [Compare screenshots of /styleguide and the main screens in light and dark themes](<items/QUAL-014-screen-visual-regression.md>) |
+| QUAL-015 | BACKLOG | P1 | quality | [Run axe on every main route in both themes](<items/QUAL-015-axe-every-main-route.md>) |
+| QUAL-016 | BACKLOG | P1 | quality | [Run CI per the DEC-016 tiers and keep every Playwright report as an artifact](<items/QUAL-016-ci-tiers-and-reports.md>) |
+| QUAL-013 | BACKLOG | P2 | quality | [Drive the editor, task page and questionnaires through Playwright page objects](<items/QUAL-013-playwright-page-objects.md>) |
+| DOC-004 | BACKLOG | P1 | documentation | [Write a testing guide that a clean clone can follow layer by layer](<items/DOC-004-testing-guide.md>) |
 | DEC-014 | DONE | P1 | decision | [Decide how the T8 brief changes the proposed-query contract of STUDY-001](<items/DEC-014-t8-study-brief-differences.md>) |
 | FE-053 | DONE | P1 | refactor | [Let the query editor start from a given query and endpoint and host an extra panel](<items/FE-053-reusable-query-editor.md>) |
 | AUTH-005 | DONE | P1 | security | [Give accounts a participant or admin role and guard the admin routes](<items/AUTH-005-admin-role-and-guard.md>) |
