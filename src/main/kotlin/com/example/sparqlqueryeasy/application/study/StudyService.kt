@@ -22,6 +22,15 @@ interface StudyProgressStore {
         userId: Long,
         taskId: Long,
     ): Instant?
+
+    /** Records the final submission at [now] unless one exists; returns the stored time either way. */
+    suspend fun finish(
+        userId: Long,
+        now: Instant,
+    ): Instant
+
+    /** When the user made the final submission, or null. */
+    suspend fun finishedAt(userId: Long): Instant?
 }
 
 /**
@@ -36,6 +45,14 @@ class StudyService(
     private val runner: StudyQueryRunner,
     private val clock: Clock = Clock.systemUTC(),
 ) {
+    /**
+     * The final submission (STUDY-005, D6): afterwards the user can no longer list, open or answer the tasks.
+     * Finishing again keeps the first time.
+     */
+    suspend fun finish(userId: Long): Instant = progress.finish(userId, clock.instant())
+
+    suspend fun finishedAt(userId: Long): Instant? = progress.finishedAt(userId)
+
     /** The user's group's active tasks in group order; none without a group. */
     suspend fun tasks(userId: Long): List<StudyTask> = groups.activeTasksFor(userId)
 

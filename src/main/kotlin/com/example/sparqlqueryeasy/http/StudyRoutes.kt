@@ -51,6 +51,9 @@ data class StudySubmissionHttpResponse(
     val createdAt: String,
 )
 
+@Serializable
+data class StudyFinishHttpResponse(val finishedAt: String)
+
 /** The participant's study API (STUDY-003…005); every path below /api/study requires a session. */
 internal fun Route.studyRoutes(
     auth: AuthHttpDependencies,
@@ -72,30 +75,20 @@ private fun Route.participantTaskRoutes(
 ) {
     route("/api/study/tasks") {
         get {
-            participantRead(auth) { user -> call.respond(DataResponse(study.tasks(user.id).map { it.toSummary() })) }
+            studyOpen(auth, study) { user -> call.respond(DataResponse(study.tasks(user.id).map { it.toSummary() })) }
         }.documentStudyListTasks()
         get("{key}") {
-            participantRead(auth) { user ->
+            studyOpen(auth, study) { user ->
                 val task = study.open(user.id, call.parameters["key"].orEmpty())
                 if (task == null) studyTaskNotFound() else call.respond(DataResponse(task.toParticipantResponse()))
             }
         }.documentStudyGetTask()
         post("{key}/submissions") {
-            participantWrite(auth) { user ->
-                val key = call.parameters["key"].orEmpty()
-                val answer = receiveLenient<DrawnQueryHttpRequest>().toDrawnQuery("answer")
-                val submission = study.submit(user.id, key, answer)
-                if (submission == null) {
-                    studyTaskNotFound()
-                } else {
-                    val attempt = study.attempts(user.id, key).orEmpty().size
-                    call.respond(HttpStatusCode.Created, DataResponse(submission.toResponse(attempt)))
-                }
-            }
+            sameOriginJson { studyOpen(auth, study) { user -> validRequest { submit(study, user) } } }
         }.documentStudySubmit()
     }
     get("/api/study/submissions") {
-        participantRead(auth) { user ->
+        studyOpen(auth, study) { user ->
             val key = call.request.queryParameters["task"]
             val attempts = key?.let { study.attempts(user.id, it) }
             when {
@@ -106,15 +99,47 @@ private fun Route.participantTaskRoutes(
             }
         }
     }.documentStudyListSubmissions()
+    post("/api/study/finish") {
+        sameOriginJson {
+            participantRead(auth) { user ->
+                val finishedAt = study.finish(user.id)
+                call.respond(DataResponse(StudyFinishHttpResponse(finishedAt.toString())))
+            }
+        }
+    }.documentStudyFinish()
 }
 
-/** A study POST: same-origin JSON, the session, and 400 for an invalid body. */
-internal suspend fun RoutingContext.participantWrite(
+private suspend fun RoutingContext.submit(
+    study: StudyService,
+    user: User,
+) {
+    val key = call.parameters["key"].orEmpty()
+    val answer = receiveLenient<DrawnQueryHttpRequest>().toDrawnQuery("answer")
+    val submission = study.submit(user.id, key, answer)
+    if (submission == null) {
+        studyTaskNotFound()
+    } else {
+        val attempt = study.attempts(user.id, key).orEmpty().size
+        call.respond(HttpStatusCode.Created, DataResponse(submission.toResponse(attempt)))
+    }
+}
+
+/** A proposed-query route: the session, then 403 once the user has made the final submission (STUDY-005, D6). */
+private suspend fun RoutingContext.studyOpen(
     auth: AuthHttpDependencies,
+    study: StudyService,
     block: suspend RoutingContext.(User) -> Unit,
 ) {
-    sameOriginJson { participantRead(auth) { user -> validRequest { block(user) } } }
+    participantRead(auth) { user ->
+        if (study.finishedAt(user.id) == null) {
+            block(user)
+        } else {
+            call.respond(HttpStatusCode.Forbidden, ErrorResponse(STUDY_FINISHED))
+        }
+    }
 }
+
+private const val STUDY_FINISHED = "You have finished the study; the proposed queries are closed"
 
 private fun Submission.toResponse(attempt: Int) =
     StudySubmissionHttpResponse(

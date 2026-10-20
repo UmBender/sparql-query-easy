@@ -2505,6 +2505,16 @@
                             }
                         }
                     },
+                    "403": {
+                        "description": "The caller has made the final submission (task and submission routes), or the request came from another site.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorResponse"
+                                }
+                            }
+                        }
+                    },
                     "401": {
                         "description": "No valid session.",
                         "content": {
@@ -2567,6 +2577,16 @@
                     },
                     "404": {
                         "description": "No active task with this key in the caller's group.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorResponse"
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "description": "The caller has made the final submission (task and submission routes), or the request came from another site.",
                         "content": {
                             "application/json": {
                                 "schema": {
@@ -2675,6 +2695,16 @@
                             }
                         }
                     },
+                    "403": {
+                        "description": "The caller has made the final submission (task and submission routes), or the request came from another site.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorResponse"
+                                }
+                            }
+                        }
+                    },
                     "401": {
                         "description": "No valid session.",
                         "content": {
@@ -2751,6 +2781,86 @@
                     },
                     "404": {
                         "description": "No task has this key.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorResponse"
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "description": "The caller has made the final submission (task and submission routes), or the request came from another site.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorResponse"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "No valid session.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorResponse"
+                                }
+                            }
+                        }
+                    },
+                    "503": {
+                        "description": "The database is not configured or unreachable.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorResponse"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/study/finish": {
+            "post": {
+                "operationId": "studyFinish",
+                "tags": [
+                    "Study"
+                ],
+                "summary": "Make the final submission",
+                "description": "Ends the proposed queries for the caller (D6): afterwards every task and submission route answers 403. Finishing again answers 200 with the first time. The body is `{}`. Same origin only (403) and JSON only (415). Requires a session (401 otherwise).",
+                "responses": {
+                    "200": {
+                        "description": "When the caller finished.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "required": [
+                                        "data"
+                                    ],
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/components/schemas/StudyFinishHttpResponse"
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "415": {
+                        "description": "The body is not application/json.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorResponse"
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "description": "The caller has made the final submission (task and submission routes), or the request came from another site.",
                         "content": {
                             "application/json": {
                                 "schema": {
@@ -3919,6 +4029,18 @@
                         "description": "Milliseconds since the user first opened the task, measured on the server."
                     },
                     "createdAt": {
+                        "type": "string"
+                    }
+                }
+            },
+            "StudyFinishHttpResponse": {
+                "type": "object",
+                "title": "StudyFinishHttpResponse",
+                "required": [
+                    "finishedAt"
+                ],
+                "properties": {
+                    "finishedAt": {
                         "type": "string"
                     }
                 }

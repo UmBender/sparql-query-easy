@@ -3,7 +3,8 @@
  * tasks of their group in order, a task page with the statement and the
  * editor on the starting graph with the endpoint locked, and the note for a
  * participant without a group. STUDY-004: a correct and a wrong answer, the
- * server's feedback and the attempt history. Test data comes from the admin API.
+ * server's feedback and the attempt history. STUDY-005: the final submission
+ * closes the tasks. Test data comes from the admin API.
  */
 import { readFileSync } from 'node:fs';
 import { expect, test } from '@playwright/test';
@@ -91,4 +92,34 @@ test('a participant submits a correct and a wrong answer and sees the feedback a
 	await expect(history.nth(1)).toContainText('#1 · Correct');
 	await page.reload();
 	await expect(page.getByTestId('attempt-history').getByRole('listitem')).toHaveCount(2);
+});
+
+test('after the final submission the task pages show the finished page', async ({
+	page,
+	browser
+}) => {
+	const participant = `finisher-${Date.now()}`;
+	const keys = await seedStudy(browser, participant);
+	await loginAs(page.request, participant);
+
+	await page.goto(`/study/${keys[0]}`);
+	await expect(page.getByTestId('task-statement')).toBeVisible();
+	await page.getByRole('link', { name: 'All tasks' }).click();
+	await page.getByRole('button', { name: 'Finish the study' }).click();
+	const dialog = page.getByRole('dialog', { name: 'Finish the study?' });
+	await dialog.getByRole('button', { name: 'Keep working' }).click();
+	await expect(page.getByTestId('study-task')).toHaveCount(3);
+
+	await page.getByRole('button', { name: 'Finish the study' }).click();
+	await dialog.getByRole('button', { name: 'Finish and submit' }).click();
+	await expect(page.getByTestId('study-finished')).toBeVisible();
+	await expect(page.getByTestId('study-task')).toHaveCount(0);
+
+	await page.goto(`/study/${keys[0]}`);
+	await expect(page.getByRole('heading', { name: 'Study finished' })).toBeVisible();
+	await expect(page.locator('#cy')).toHaveCount(0);
+	const submit = await page.request.post(`/api/study/tasks/${keys[0]}/submissions`, {
+		data: { graph: {}, query: {} }
+	});
+	expect(submit.status()).toBe(403);
 });

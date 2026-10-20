@@ -639,6 +639,18 @@ tasks of their group (STUDY-007).
 - `timeSpentMs` is measured from the first `GET /api/study/tasks/{key}` (a
   submission without one records the open first, so it counts 0).
 
+## Final submission (participant, STUDY-005)
+
+`POST /api/study/finish` with `{}` (session, same origin, JSON) records the
+user's final submission in `study_completion` (`V8__study_completion.sql`)
+and answers `200 {"data":{"finishedAt":"…"}}`. Finishing again is idempotent:
+`200` with the first `finishedAt`. Afterwards, for that user only,
+`GET /api/study/tasks`, `GET /api/study/tasks/{key}`,
+`POST /api/study/tasks/{key}/submissions` and `GET /api/study/submissions`
+answer `403 {"error":"You have finished the study; the proposed queries are
+closed"}` (D6, 2026-10-16). Other study paths and the account routes are
+unaffected; the questionnaire after finishing is STUDY-002.
+
 ## Endpoint selection
 
 `endpointUrl` accepts the built-in identifiers `CampeonatoBrasileiro2023` and

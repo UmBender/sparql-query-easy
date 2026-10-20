@@ -115,7 +115,35 @@ internal fun Route.documentStudyListSubmissions(): Route =
         }
     }
 
+internal fun Route.documentStudyFinish(): Route =
+    describe {
+        operationId = "studyFinish"
+        summary = "Make the final submission"
+        description =
+            "Ends the proposed queries for the caller (D6): afterwards every task and submission route answers 403. " +
+            "Finishing again answers 200 with the first time. The body is `{}`. Same origin only (403) and JSON " +
+            "only (415). $SESSION_NOTE"
+        tag("Study")
+        responses {
+            HttpStatusCode.OK {
+                description = "When the caller finished."
+                schema = jsonSchema<DataResponse<StudyFinishHttpResponse>>()
+            }
+            HttpStatusCode.UnsupportedMediaType {
+                description = "The body is not application/json."
+                schema = jsonSchema<ErrorResponse>()
+            }
+            sessionErrors()
+        }
+    }
+
 internal fun Responses.Builder.sessionErrors() {
+    HttpStatusCode.Forbidden {
+        description =
+            "The caller has made the final submission (task and submission routes), or the request came from " +
+            "another site."
+        schema = jsonSchema<ErrorResponse>()
+    }
     HttpStatusCode.Unauthorized {
         description = "No valid session."
         schema = jsonSchema<ErrorResponse>()

@@ -436,6 +436,16 @@ export function createApiClient({
 					{},
 					(data) => typeof (data as StudySubmission | null)?.correct === 'boolean'
 				),
+			/** STUDY-005: the final submission; afterwards the task routes answer `forbidden`. */
+			finish: () =>
+				post<{ finishedAt: string }>(
+					'/api/study/finish',
+					{},
+					'Finishing the study failed',
+					{},
+					(data) =>
+						typeof (data as { finishedAt?: unknown } | null)?.finishedAt === 'string'
+				),
 			submissions: (key: string, options?: Options) =>
 				get<StudySubmission[]>(
 					`/api/study/submissions?${new URLSearchParams({ task: key })}`,

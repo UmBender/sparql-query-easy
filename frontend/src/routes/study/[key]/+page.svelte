@@ -1,11 +1,15 @@
-<!-- STUDY-003: one proposed task of the participant's group; others are 404. -->
+<!--
+	STUDY-003: one proposed task of the participant's group; others are 404.
+	After the final submission (STUDY-005) the finished view shows instead.
+-->
 <script lang="ts">
 	import { page } from '$app/state';
 	import { resolve } from '$app/paths';
 	import { createQuery } from '@tanstack/svelte-query';
-	import { api } from '#lib/api/client.js';
+	import { ApiError, api } from '#lib/api/client.js';
 	import { queryKeys } from '#lib/api/queries.js';
 	import { Button } from '#lib/components/ui/button/index.js';
+	import StudyFinished from '#lib/features/study/study-finished.svelte';
 	import StudyTask from '#lib/features/study/study-task.svelte';
 
 	const key = $derived(page.params.key ?? '');
@@ -20,6 +24,8 @@
 
 {#if task.isPending}
 	<p class="p-6 text-sm text-muted-foreground" role="status">Loading the task…</p>
+{:else if task.error instanceof ApiError && task.error.kind === 'forbidden'}
+	<StudyFinished />
 {:else if task.isError}
 	<main class="flex flex-col items-start gap-3 p-6">
 		<p class="text-sm text-danger" role="alert">{task.error.message}</p>

@@ -63,7 +63,9 @@ export const queryKeys = {
 	/** STUDY-003: the caller's tasks; the cache is cleared on logout (AUTH-004). */
 	studyTasks: ['study', 'tasks'] as const,
 	studyTask: (key: string) => ['study', 'tasks', key] as const,
-	studySubmissions: (key: string) => ['study', 'submissions', key] as const
+	studySubmissions: (key: string) => ['study', 'submissions', key] as const,
+	/** Every study query; finishing the study invalidates them all (STUDY-005). */
+	study: ['study'] as const
 };
 
 /** Cached request helpers bound to one client and one query cache. */

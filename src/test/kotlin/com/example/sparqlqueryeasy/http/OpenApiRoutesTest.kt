@@ -25,6 +25,48 @@ import kotlin.test.assertNotNull
 import kotlin.test.assertTrue
 
 class OpenApiRoutesTest {
+    private val expectedOperations =
+        mapOf(
+            "/health" to setOf("get"),
+            "/api/endpoints" to setOf("get"),
+            "/api/local-database" to setOf("post"),
+            "/api/query" to setOf("post"),
+            "/api/query/relationship-value" to setOf("post"),
+            "/api/query/relationships" to setOf("post"),
+            "/api/query/search" to setOf("post"),
+            "/api/query/sparql" to setOf("post"),
+            "/api/query/stage" to setOf("post"),
+            "/api/query/numeric-profile" to setOf("post"),
+            "/api/query/count" to setOf("post"),
+            // AUTH-001
+            "/api/auth/register" to setOf("post"),
+            "/api/auth/login" to setOf("post"),
+            "/api/auth/logout" to setOf("post"),
+            "/api/auth/session" to setOf("get"),
+            // STUDY-006
+            "/api/admin/tasks" to setOf("get", "post"),
+            "/api/admin/tasks/preview" to setOf("post"),
+            "/api/admin/tasks/{key}" to setOf("get", "put"),
+            "/api/admin/tasks/{key}/deactivate" to setOf("post"),
+            "/api/admin/tasks/{key}/reactivate" to setOf("post"),
+            // STUDY-007
+            "/api/admin/participants" to setOf("get"),
+            "/api/admin/groups" to setOf("get", "post"),
+            "/api/admin/groups/{id}" to setOf("get", "put"),
+            "/api/admin/groups/{id}/tasks" to setOf("put"),
+            "/api/admin/groups/{id}/members" to setOf("post"),
+            "/api/admin/groups/{id}/members/remove" to setOf("post"),
+            "/api/admin/groups/{id}/delete" to setOf("post"),
+            // STUDY-003
+            "/api/study/tasks" to setOf("get"),
+            "/api/study/tasks/{key}" to setOf("get"),
+            // STUDY-004
+            "/api/study/tasks/{key}/submissions" to setOf("post"),
+            "/api/study/submissions" to setOf("get"),
+            // STUDY-005
+            "/api/study/finish" to setOf("post"),
+        )
+
     @Test
     fun `health OpenAPI response documents approved JSON body`() =
         testApplication {
@@ -68,47 +110,7 @@ class OpenApiRoutesTest {
 
             assertEquals("3.1.0", document.requiredString("openapi"))
             assertFalse("security" in document, "Authentication is deliberately deferred in the current public contract")
-            assertEquals(
-                mapOf(
-                    "/health" to setOf("get"),
-                    "/api/endpoints" to setOf("get"),
-                    "/api/local-database" to setOf("post"),
-                    "/api/query" to setOf("post"),
-                    "/api/query/relationship-value" to setOf("post"),
-                    "/api/query/relationships" to setOf("post"),
-                    "/api/query/search" to setOf("post"),
-                    "/api/query/sparql" to setOf("post"),
-                    "/api/query/stage" to setOf("post"),
-                    "/api/query/numeric-profile" to setOf("post"),
-                    "/api/query/count" to setOf("post"),
-                    // AUTH-001
-                    "/api/auth/register" to setOf("post"),
-                    "/api/auth/login" to setOf("post"),
-                    "/api/auth/logout" to setOf("post"),
-                    "/api/auth/session" to setOf("get"),
-                    // STUDY-006
-                    "/api/admin/tasks" to setOf("get", "post"),
-                    "/api/admin/tasks/preview" to setOf("post"),
-                    "/api/admin/tasks/{key}" to setOf("get", "put"),
-                    "/api/admin/tasks/{key}/deactivate" to setOf("post"),
-                    "/api/admin/tasks/{key}/reactivate" to setOf("post"),
-                    // STUDY-007
-                    "/api/admin/participants" to setOf("get"),
-                    "/api/admin/groups" to setOf("get", "post"),
-                    "/api/admin/groups/{id}" to setOf("get", "put"),
-                    "/api/admin/groups/{id}/tasks" to setOf("put"),
-                    "/api/admin/groups/{id}/members" to setOf("post"),
-                    "/api/admin/groups/{id}/members/remove" to setOf("post"),
-                    "/api/admin/groups/{id}/delete" to setOf("post"),
-                    // STUDY-003
-                    "/api/study/tasks" to setOf("get"),
-                    "/api/study/tasks/{key}" to setOf("get"),
-                    // STUDY-004
-                    "/api/study/tasks/{key}/submissions" to setOf("post"),
-                    "/api/study/submissions" to setOf("get"),
-                ),
-                document.operationInventory(),
-            )
+            assertEquals(expectedOperations, document.operationInventory())
 
             document.operations().forEach { operation ->
                 assertTrue(operation.requiredString("operationId").isNotBlank())
