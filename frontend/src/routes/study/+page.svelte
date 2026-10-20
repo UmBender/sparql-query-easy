@@ -3,8 +3,10 @@
 	group, in the group's order (STUDY-007), or a note that none are assigned,
 	and the final submission (STUDY-005), after which the finished view shows.
 	The consent screen comes first until the current text is accepted
-	(STUDY-008). The root layout's guard sends anonymous visitors to login
-	(AUTH-004).
+	(STUDY-008), then the profile questionnaire until it is answered; after
+	the final submission the usability questionnaire comes before the finished
+	view (STUDY-010, DEC-015 Q3). Admins skip both. The root layout's guard
+	sends anonymous visitors to login (AUTH-004).
 -->
 <script lang="ts">
 	import { resolve } from '$app/paths';
@@ -12,9 +14,11 @@
 	import { ApiError, api } from '#lib/api/client.js';
 	import { queryKeys } from '#lib/api/queries.js';
 	import { Button } from '#lib/components/ui/button/index.js';
+	import { CONSENT_REQUIRED, PROFILE_REQUIRED } from '#lib/domain/study.js';
 	import { authSession } from '#lib/features/auth/auth-session.svelte.js';
 	import ConsentScreen from '#lib/features/study/consent-screen.svelte';
 	import FinishStudy from '#lib/features/study/finish-study.svelte';
+	import QuestionnaireStep from '#lib/features/study/questionnaire-step.svelte';
 	import StudyFinished from '#lib/features/study/study-finished.svelte';
 
 	const consent = createQuery(() => ({
@@ -22,14 +26,30 @@
 		queryFn: ({ signal }) => api.study.consent({ signal }),
 		staleTime: 0
 	}));
-	const consented = $derived(!!consent.data?.acceptedAt || authSession.user?.role === 'admin');
+	const admin = $derived(authSession.user?.role === 'admin');
+	const consented = $derived(!!consent.data?.acceptedAt || admin);
+	const forms = createQuery(() => ({
+		queryKey: queryKeys.studyForms,
+		queryFn: ({ signal }) => api.study.forms({ signal }),
+		staleTime: 0,
+		enabled: consented
+	}));
+	const before = $derived(forms.data?.find((form) => form.phase === 'before_tasks'));
+	const after = $derived(forms.data?.find((form) => form.phase === 'after_finish'));
+	const pending = (form: typeof before) => !admin && !!form && !form.submittedAt;
 	const tasks = createQuery(() => ({
 		queryKey: queryKeys.studyTasks,
 		queryFn: ({ signal }) => api.study.tasks({ signal }),
 		staleTime: 0,
-		enabled: consented
+		enabled: consented && forms.isSuccess && !pending(before)
 	}));
-	const finished = $derived(tasks.error instanceof ApiError && tasks.error.kind === 'forbidden');
+	const finished = $derived(
+		tasks.error instanceof ApiError &&
+			tasks.error.kind === 'forbidden' &&
+			tasks.error.message !== CONSENT_REQUIRED &&
+			tasks.error.message !== PROFILE_REQUIRED
+	);
+	const user = $derived(authSession.user?.username ?? '');
 </script>
 
 <svelte:head><title>Proposed queries · SPARQL EasyQuery</title></svelte:head>
@@ -40,6 +60,22 @@
 	<p class="p-6 text-sm text-danger" role="alert">{consent.error.message}</p>
 {:else if !consented}
 	<ConsentScreen consent={consent.data} />
+{:else if forms.isPending}
+	<p class="p-6 text-sm text-muted-foreground" role="status">Loading…</p>
+{:else if forms.isError}
+	<p class="p-6 text-sm text-danger" role="alert">{forms.error.message}</p>
+{:else if before && pending(before)}
+	<QuestionnaireStep
+		form={before}
+		{user}
+		intro="Before the proposed queries, please answer a few questions about yourself."
+	/>
+{:else if finished && after && pending(after)}
+	<QuestionnaireStep
+		form={after}
+		{user}
+		intro="You made your final submission. One last questionnaire about using the editor."
+	/>
 {:else if finished}
 	<StudyFinished />
 {:else}

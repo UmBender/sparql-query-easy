@@ -2,7 +2,7 @@ import { readFileSync } from 'node:fs';
 import { http, HttpResponse } from 'msw';
 import { setupServer } from 'msw/node';
 import { afterAll, afterEach, beforeAll, describe, expect, it } from 'vitest';
-import { ApiError, createApiClient, isAbort } from './client.js';
+import { ApiError, createApiClient, isAbort, questionErrors } from './client.js';
 
 const BASE = 'http://api.test';
 const server = setupServer();
@@ -203,5 +203,34 @@ describe('typed API client', () => {
 		await expect(client.health()).rejects.toMatchObject({ kind: 'unexpected' });
 		server.use(http.get(`${BASE}/health`, () => HttpResponse.error()));
 		await expect(client.health()).rejects.toMatchObject({ kind: 'network' });
+	});
+
+	it('keeps the error per question of a questionnaire 400 (STUDY-010)', async () => {
+		let sent: unknown;
+		server.use(
+			http.post(`${BASE}/api/study/forms/profile/responses`, async ({ request }) => {
+				sent = await request.json();
+				return HttpResponse.json(
+					{
+						error: 'Some answers are not valid',
+						errors: { programming_years: 'Enter a number from 0 to 60.' }
+					},
+					{ status: 400 }
+				);
+			})
+		);
+		const failure = await client.study
+			.submitForm('profile', 1, { programming_years: 99 })
+			.catch((error: unknown) => error);
+		expect(sent).toEqual({ version: 1, answers: { programming_years: 99 } });
+		expect(failure).toBeInstanceOf(ApiError);
+		expect((failure as ApiError).message).toBe('Some answers are not valid');
+		expect(questionErrors(failure)).toEqual({
+			programming_years: 'Enter a number from 0 to 60.'
+		});
+		expect(questionErrors(new ApiError('conflict', 'Already answered', 409))).toBeNull();
+		expect(
+			questionErrors(new ApiError('bad-request', 'Missing answers', 400, { error: 'x' }))
+		).toBeNull();
 	});
 });

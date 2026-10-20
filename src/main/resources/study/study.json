@@ -1,4 +1,5 @@
 {
   "consent": { "version": 1, "file": "consent/v1.md" },
-  "forms": ["forms/profile.v1.json", "forms/usability.v1.json"]
+  "forms": ["forms/profile.v1.json", "forms/usability.v1.json"],
+  "flow": { "beforeTasks": "profile", "afterFinish": "usability" }
 }

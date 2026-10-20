@@ -124,6 +124,25 @@ export const mockRoutes: MockRoute[] = [
 	route('post', '/api/study/consent', (body) => ({
 		data: { version: body.version ?? 1, acceptedAt: '2026-10-20T12:00:00Z' }
 	})),
+	// STUDY-010: both questionnaires already answered by default.
+	route('get', '/api/study/forms', () => ({
+		data: [
+			{
+				slug: 'profile',
+				title: 'About you',
+				version: 1,
+				phase: 'before_tasks',
+				submittedAt: '2026-10-20T12:00:00Z'
+			},
+			{
+				slug: 'usability',
+				title: 'Using the editor',
+				version: 1,
+				phase: 'after_finish',
+				submittedAt: '2026-10-20T12:30:00Z'
+			}
+		]
+	})),
 	// STUDY-003: a participant without a group by default.
 	route('get', '/api/study/tasks', () => ({ data: [] }))
 ];

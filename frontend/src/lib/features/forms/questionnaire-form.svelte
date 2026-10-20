@@ -14,6 +14,7 @@
 	import {
 		emptyAnswers,
 		formSchema,
+		type AnswerValue,
 		type Answers,
 		type FormDefinition
 	} from '#lib/domain/forms.js';
@@ -47,6 +48,9 @@
 		SPA: true,
 		dataType: 'json',
 		validators: schema,
+		// Not on blur: an error appearing as a field loses focus moves the
+		// questions below it while the participant is clicking one of them.
+		validationMethod: 'onsubmit',
 		resetForm: false,
 		async onUpdate({ form: submitted }) {
 			failure = '';
@@ -74,6 +78,15 @@
 		if (Array.isArray(value)) return value as string[];
 		const nested = (value as { _errors?: string[] } | undefined)?._errors;
 		return nested ?? [];
+	}
+
+	/**
+	 * Through the store, never by mutating `$data` in place: Superforms rewrites
+	 * the form data while it validates a field on blur, and an in-place change
+	 * made meanwhile (a click right after typing a number) would be lost.
+	 */
+	function setAnswer(id: string, value: AnswerValue) {
+		data.update((current) => ({ ...current, [id]: value }));
 	}
 
 	async function next() {
@@ -104,8 +117,7 @@
 				{question}
 				errors={errorsOf(question.id)}
 				bind:value={
-					() => ($data as Answers)[question.id],
-					(next) => (($data as Answers)[question.id] = next)
+					() => ($data as Answers)[question.id], (next) => setAnswer(question.id, next)
 				}
 			/>
 		{/each}

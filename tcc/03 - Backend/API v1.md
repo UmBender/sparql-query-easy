@@ -680,8 +680,7 @@ version of a slug is current. Definitions are checked at startup (strict
 fields, unique page and question ids, the type rules below) and a malformed
 file stops the application with a message naming it. A version is stored in
 `study_form` (`V10__study_forms.sql`) on first use; if its file changed, the
-stored copy is brought up to date (STUDY-010 refuses that once responses
-exist).
+stored copy is brought up to date until it has responses (STUDY-010).
 
 `GET /api/study/forms/{slug}` (session and consent: 401, 403
 `consent_required`; unknown slug 404) answers `200 {"data":<definition>}`:
@@ -702,6 +701,44 @@ question."; a wrong JSON type is "Invalid answer."; an unknown question id is
 "Unknown question.". The shared cases are
 `frontend/src/lib/domain/fixtures/forms/parity.json`. The shipped `profile`
 and `usability` v1 are placeholders (every text starts with `PLACEHOLDER`).
+
+## Questionnaire responses (participant, STUDY-010)
+
+DEC-015 Q3, Q4 A, Q6 A. `study/study.json` names the questionnaire answered
+before the tasks and the one answered after the final submission
+(`"flow": {"beforeTasks": "profile", "afterFinish": "usability"}`). All
+routes need a session (401) and the consent (403 `consent_required`).
+
+- `GET /api/study/forms` answers `200 {"data":[{slug, title, version,
+  phase, submittedAt}]}`: the current versions, `phase` `before_tasks`,
+  `after_finish` or `null`, and the caller's `submittedAt` or `null`.
+- `GET /api/study/forms/{slug}/response` answers `200 {"data":{answered,
+  submittedAt}}` for the caller only, never answers; unknown slug 404.
+- `POST /api/study/forms/{slug}/responses` with `{"version":1,"answers":{…}}`
+  (same origin, JSON; 403 cross-site, 415 not JSON) checks the answers with
+  `FormAnswerValidator` and answers `201 {"data":{slug, version,
+  submittedAt}}`. Invalid answers (unknown question ids included) answer
+  `400 {"error":"Some answers are not valid","errors":{"<id>":"<message>"}}`;
+  missing `answers` 400; unknown slug 404; already answered or a version that
+  is not current 409; the after-finish questionnaire before the final
+  submission 403 `finish_required`. Any other request field (e.g. a client
+  `submittedAt`) is ignored; the time is the server's.
+
+`study_form_response` (`V11__study_form_responses.sql`) keeps one row per
+user and slug (whatever the version, no edits) with the form id, slug and
+version, the accepted consent version, the answers as checked (question id →
+value, text trimmed, unanswered questions left out) and the server time; rows
+go with the user (`ON DELETE CASCADE`). A stored version with responses is no
+longer brought up to date from a changed file: its first use fails with an
+error naming it (publish a new version instead).
+
+Until the `beforeTasks` questionnaire is answered, the task routes and
+`POST /api/study/finish` answer `403 {"error":"profile_required"}` (after the
+consent check). Admins are not gated. In the browser `/study` shows consent →
+profile → tasks, and after the final submission the usability questionnaire
+before the finished view; answers of completed pages stay in `localStorage`
+(`easyquery-form:<user>:<slug>:v<version>`) until the submit or until the user
+goes away (logout, an expired session).
 
 ## Endpoint selection
 

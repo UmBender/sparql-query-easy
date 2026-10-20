@@ -68,6 +68,9 @@ export function answerQuery(
  */
 export const CONSENT_REQUIRED = 'consent_required';
 
+/** The 403 message of the task routes before the profile questionnaire is answered (STUDY-010). */
+export const PROFILE_REQUIRED = 'profile_required';
+
 /** The consent text as blocks: paragraphs, and runs of `- ` lines as lists. */
 export type TextBlock = { kind: 'paragraph'; text: string } | { kind: 'list'; items: string[] };
 

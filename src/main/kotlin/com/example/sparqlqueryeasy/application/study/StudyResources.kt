@@ -11,10 +11,14 @@ import kotlinx.serialization.json.Json
 data class StudyResources(
     val consent: ConsentText,
     val forms: List<FormDefinition> = emptyList(),
+    val flow: StudyFlow = StudyFlow(),
 ) {
     init {
         val repeated = forms.groupingBy { it.slug to it.version }.eachCount().filterValues { it > 1 }.keys
         require(repeated.isEmpty()) { "study.json lists form versions twice: $repeated" }
+        listOfNotNull(flow.beforeTasks, flow.afterFinish).forEach { slug ->
+            require(forms.any { it.slug == slug }) { "study.json: the flow names an unknown questionnaire '$slug'" }
+        }
     }
 
     /** The highest version of each questionnaire. */
@@ -34,7 +38,7 @@ data class StudyResources(
             val text = read(manifest.consent.file).trim()
             require(text.isNotEmpty()) { "Study resource ${manifest.consent.file} is empty" }
             val forms = manifest.forms.map { FormDefinitions.parse(read(it), ROOT + it) }
-            return StudyResources(ConsentText(manifest.consent.version, text), forms)
+            return StudyResources(ConsentText(manifest.consent.version, text), forms, manifest.flow)
         }
 
         private val manifestJson = Json { ignoreUnknownKeys = false }
@@ -44,8 +48,19 @@ data class StudyResources(
     private data class Manifest(
         val consent: ManifestConsent,
         val forms: List<String> = emptyList(),
+        val flow: StudyFlow = StudyFlow(),
     )
 
     @Serializable
     private data class ManifestConsent(val version: Int, val file: String)
 }
+
+/**
+ * Where the questionnaires sit in the study (DEC-015 Q3): [beforeTasks] must be answered before the proposed
+ * tasks open; [afterFinish] is answered after the final submission.
+ */
+@Serializable
+data class StudyFlow(
+    val beforeTasks: String? = null,
+    val afterFinish: String? = null,
+)

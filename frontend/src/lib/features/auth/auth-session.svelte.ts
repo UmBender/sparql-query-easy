@@ -4,9 +4,11 @@
  * HttpOnly, so this state is the page's only view of the session; nothing
  * is kept in browser storage. When the logged-in user goes away (logout, an
  * expired session, another user logging in) `onUserGone` runs, so the app can
- * drop cached server data of that user (AUTH-004).
+ * drop cached server data of that user (AUTH-004) and the questionnaire
+ * answers kept in the browser while they are filled in (STUDY-010).
  */
 import { appQueryClient } from '#lib/api/queries.js';
+import { clearAllProgress } from '#lib/features/forms/form-progress.js';
 import {
 	api,
 	ApiError,
@@ -93,4 +95,7 @@ export class AuthSession {
 }
 
 /** The app's session, shared by the root layout's guard, the editor's toolbar and the login page. */
-export const authSession = new AuthSession(api, () => appQueryClient.clear());
+export const authSession = new AuthSession(api, () => {
+	appQueryClient.clear();
+	clearAllProgress();
+});

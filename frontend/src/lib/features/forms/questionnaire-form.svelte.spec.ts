@@ -247,4 +247,25 @@ describe('paged form', () => {
 			.element(screen.getByRole('alert'))
 			.toHaveTextContent('Saving the answers failed (503).');
 	});
+
+	it('keeps every answer when another question is invalid', async () => {
+		const onsubmit = vi.fn(async () => null);
+		const screen = await render(QuestionnaireForm, {
+			definition: {
+				slug: 'keep',
+				version: 1,
+				title: 'Keep',
+				pages: [{ id: 'p', title: 'P', questions: [likert, count, single] }]
+			},
+			onsubmit
+		});
+		// A click right after typing a number: Superforms validates the number on blur meanwhile.
+		await screen.getByLabelText('How many').fill('99');
+		await screen.getByText('3', { exact: true }).click();
+		await screen.getByRole('button', { name: 'Submit' }).click();
+		await expect.element(screen.getByText('Enter a number from 0 to 60.')).toBeVisible();
+		await expect.element(screen.getByLabelText('3', { exact: true })).toBeChecked();
+		await expect.element(screen.getByLabelText('How many')).toHaveValue(99);
+		expect(onsubmit).not.toHaveBeenCalled();
+	});
 });

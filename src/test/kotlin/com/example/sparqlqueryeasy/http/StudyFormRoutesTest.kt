@@ -4,6 +4,7 @@ import com.example.sparqlqueryeasy.application.study.FormDefinition
 import com.example.sparqlqueryeasy.application.study.QuestionnaireService
 import com.example.sparqlqueryeasy.application.study.StudyResources
 import com.example.sparqlqueryeasy.persistence.DatabaseConnector
+import com.example.sparqlqueryeasy.persistence.PostgresFormResponseStore
 import com.example.sparqlqueryeasy.persistence.PostgresFormStore
 import com.example.sparqlqueryeasy.persistence.TestPostgres
 import io.kotest.matchers.shouldBe
@@ -53,12 +54,13 @@ class StudyFormRoutesTest {
             val connector = DatabaseConnector(TestPostgres.freshDatabase()).also { it.connect() }
             val store = PostgresFormStore(connector)
             val shipped = StudyResources.fromClasspath()
-            val first = QuestionnaireService(shipped, store)
+            val responses = PostgresFormResponseStore(connector)
+            val first = QuestionnaireService(shipped, store, responses)
             val profile = checkNotNull(first.current("profile"))
             val id = first.storedId(profile)
 
             val edited = profile.copy(title = "PLACEHOLDER edited")
-            val second = QuestionnaireService(shipped.copy(forms = listOf(edited)), store)
+            val second = QuestionnaireService(shipped.withProfile(edited), store, responses)
 
             second.storedId(edited) shouldBe id
             val stored = store.store("profile", 1, "{}", java.time.Instant.EPOCH).definitionJson

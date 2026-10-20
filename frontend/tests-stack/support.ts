@@ -16,16 +16,30 @@ export async function loginAs(request: APIRequestContext, username: string): Pro
 	}
 }
 
+/** Valid answers to the shipped placeholder profile questionnaire (v1). */
+export const PROFILE_ANSWERS = {
+	sparql_familiarity: 'heard_of',
+	query_languages: ['sql'],
+	programming_years: 4,
+	data_comfort: 4
+};
+
 /**
  * What every participant does before the proposed tasks open, through the API: accept the current consent text
- * (STUDY-008). The session in `request` must be the participant's.
+ * (STUDY-008) and, unless `profile` is false, answer the profile questionnaire (STUDY-010). The session in
+ * `request` must be the participant's.
  */
-export async function joinStudy(request: APIRequestContext): Promise<void> {
+export async function joinStudy(request: APIRequestContext, profile = true): Promise<void> {
 	const consent = await request.get('/api/study/consent');
 	expect(consent.status(), 'read consent').toBe(200);
 	const { version } = ((await consent.json()) as { data: { version: number } }).data;
 	const accepted = await request.post('/api/study/consent', { data: { version } });
 	expect(accepted.status(), 'accept consent').toBe(200);
+	if (!profile) return;
+	const answered = await request.post('/api/study/forms/profile/responses', {
+		data: { version: 1, answers: PROFILE_ANSWERS }
+	});
+	expect(answered.status(), 'answer the profile').toBe(201);
 }
 
 /** Fails the test on any browser request leaving the app's origin (no external services). */

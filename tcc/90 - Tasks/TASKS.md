@@ -116,7 +116,7 @@ Ordered by dependencies, then priority among selection candidates. See [worker r
 | DEC-015 | DONE | P1 | decision | [Decide how the T9 brief changes the questionnaire and consent contract of STUDY-002](<items/DEC-015-t9-questionnaire-brief-differences.md>) |
 | STUDY-008 | DONE | P1 | fullstack | [Ask logged-in users for research consent and store it before any response](<items/STUDY-008-research-consent.md>) |
 | STUDY-009 | DONE | P1 | fullstack | [Store the two questionnaire definitions and render them with the same validation on both sides](<items/STUDY-009-form-definitions.md>) |
-| STUDY-010 | READY | P1 | fullstack | [Submit a questionnaire once, validated on the server, with progress kept per page](<items/STUDY-010-submit-form-response.md>) |
+| STUDY-010 | DONE | P1 | fullstack | [Submit a questionnaire once, validated on the server, with progress kept per page](<items/STUDY-010-submit-form-response.md>) |
 | STUDY-011 | READY | P1 | fullstack | [Let admins export questionnaire responses as CSV and cover the whole T9 flow end to end](<items/STUDY-011-questionnaire-export-and-e2e.md>) |
 | STUDY-002 | BACKLOG | P1 | fullstack | [Show two questionnaires to logged-in users and store their answers](<items/STUDY-002-questionnaires.md>) |
 | OPS-006 | DONE | P1 | operations | [Run db, backend and web together with Docker Compose](<items/OPS-006-docker-compose-stack.md>) |

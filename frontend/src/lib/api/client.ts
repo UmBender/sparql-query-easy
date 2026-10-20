@@ -40,6 +40,7 @@ export type Participant = Schemas['ParticipantHttpResponse'];
 export type StudyTaskSummary = Schemas['StudyTaskSummaryHttpResponse'];
 export type StudySubmission = Schemas['StudySubmissionHttpResponse'];
 export type StudyConsent = Schemas['StudyConsentHttpResponse'];
+export type StudyFormSummary = Schemas['StudyFormSummaryHttpResponse'];
 /** STUDY-009: the served definition is the domain's `FormDefinition` (checked here at compile time). */
 export const servedFormIsDomainForm = (served: Schemas['FormDefinition']): FormDefinition => served;
 export type StudyTask = Omit<Schemas['StudyTaskHttpResponse'], 'startingGraph'> & {
@@ -99,12 +100,27 @@ export type ApiErrorKind =
 export class ApiError extends Error {
 	readonly kind: ApiErrorKind;
 	readonly status: number | null;
-	constructor(kind: ApiErrorKind, message: string, status: number | null = null) {
+	/** The JSON error body, for answers with details (a questionnaire's error per question, STUDY-010). */
+	readonly body: unknown;
+	constructor(
+		kind: ApiErrorKind,
+		message: string,
+		status: number | null = null,
+		body: unknown = null
+	) {
 		super(message);
 		this.name = kind === 'aborted' ? 'AbortError' : 'ApiError';
 		this.kind = kind;
 		this.status = status;
+		this.body = body;
 	}
+}
+
+/** The error per question id of a 400 from a questionnaire submit (STUDY-010), or null. */
+export function questionErrors(error: unknown): Record<string, string> | null {
+	if (!(error instanceof ApiError) || error.kind !== 'bad-request') return null;
+	const errors = (error.body as { errors?: unknown } | null)?.errors;
+	return errors && typeof errors === 'object' ? (errors as Record<string, string>) : null;
 }
 
 export function isAbort(error: unknown): boolean {
@@ -159,7 +175,8 @@ export function createApiClient({
 			throw new ApiError(
 				kindOf(response.status),
 				message || `${fallback} (${response.status}).`,
-				response.status
+				response.status,
+				body
 			);
 		}
 		const data =
@@ -428,6 +445,24 @@ export function createApiClient({
 					'Loading the consent text failed',
 					options,
 					(data) => typeof (data as StudyConsent | null)?.version === 'number'
+				),
+			/** STUDY-010: the questionnaires, their place in the study and when the caller answered them. */
+			forms: (options?: Options) =>
+				get<StudyFormSummary[]>(
+					'/api/study/forms',
+					'Loading the questionnaires failed',
+					options,
+					isArray
+				),
+			/** STUDY-010: a 400 carries the error per question (`questionErrors`); stored once per user. */
+			submitForm: (slug: string, version: number, answers: Record<string, unknown>) =>
+				post<{ slug: string; version: number; submittedAt: string }>(
+					`/api/study/forms/${encodeURIComponent(slug)}/responses`,
+					{ version, answers },
+					'Saving the answers failed',
+					{},
+					(data) =>
+						typeof (data as { submittedAt?: unknown } | null)?.submittedAt === 'string'
 				),
 			/** STUDY-009: the current version of a questionnaire. */
 			form: (slug: string, options?: Options) =>

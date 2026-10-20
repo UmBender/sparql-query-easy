@@ -1,8 +1,6 @@
 package com.example.sparqlqueryeasy.http
 
-import com.example.sparqlqueryeasy.application.auth.Role
 import com.example.sparqlqueryeasy.application.auth.User
-import com.example.sparqlqueryeasy.application.study.ConsentService
 import com.example.sparqlqueryeasy.application.study.StudyService
 import com.example.sparqlqueryeasy.application.study.StudyTask
 import com.example.sparqlqueryeasy.application.study.Submission
@@ -80,25 +78,24 @@ private fun Route.participantTaskRoutes(
     dependencies: StudyHttpDependencies,
 ) {
     val study = dependencies.study
-    val consent = dependencies.consent
     route("/api/study/tasks") {
         get {
-            studyOpen(auth, study, consent) { user ->
+            studyOpen(auth, dependencies) { user ->
                 call.respond(DataResponse(study.tasks(user.id).map { it.toSummary() }))
             }
         }.documentStudyListTasks()
         get("{key}") {
-            studyOpen(auth, study, consent) { user ->
+            studyOpen(auth, dependencies) { user ->
                 val task = study.open(user.id, call.parameters["key"].orEmpty())
                 if (task == null) studyTaskNotFound() else call.respond(DataResponse(task.toParticipantResponse()))
             }
         }.documentStudyGetTask()
         post("{key}/submissions") {
-            sameOriginJson { studyOpen(auth, study, consent) { user -> validRequest { submit(study, user) } } }
+            sameOriginJson { studyOpen(auth, dependencies) { user -> validRequest { submit(study, user) } } }
         }.documentStudySubmit()
     }
     get("/api/study/submissions") {
-        studyOpen(auth, study, consent) { user ->
+        studyOpen(auth, dependencies) { user ->
             val key = call.request.queryParameters["task"]
             val attempts = key?.let { study.attempts(user.id, it) }
             when {
@@ -111,7 +108,7 @@ private fun Route.participantTaskRoutes(
     }.documentStudyListSubmissions()
     post("/api/study/finish") {
         sameOriginJson {
-            consented(auth, consent) { user ->
+            readyForTasks(auth, dependencies) { user ->
                 val finishedAt = study.finish(user.id)
                 call.respond(DataResponse(StudyFinishHttpResponse(finishedAt.toString())))
             }
@@ -135,43 +132,22 @@ private suspend fun RoutingContext.submit(
 }
 
 /**
- * A proposed-query route: the session and the consent (STUDY-008), then 403 once the user has made the final
- * submission (STUDY-005, D6).
+ * A proposed-query route: the session, the consent (STUDY-008) and the before-the-tasks questionnaire
+ * (STUDY-010), then 403 once the user has made the final submission (STUDY-005, D6).
  */
 private suspend fun RoutingContext.studyOpen(
     auth: AuthHttpDependencies,
-    study: StudyService,
-    consent: ConsentService,
+    dependencies: StudyHttpDependencies,
     block: suspend RoutingContext.(User) -> Unit,
 ) {
-    consented(auth, consent) { user ->
-        if (study.finishedAt(user.id) == null) {
+    readyForTasks(auth, dependencies) { user ->
+        if (dependencies.study.finishedAt(user.id) == null) {
             block(user)
         } else {
             call.respond(HttpStatusCode.Forbidden, ErrorResponse(STUDY_FINISHED))
         }
     }
 }
-
-/**
- * A study route that stores research data: the session, then 403 `consent_required` until the participant
- * accepted the current consent text (DEC-015 Q1). Admins are not gated.
- */
-internal suspend fun RoutingContext.consented(
-    auth: AuthHttpDependencies,
-    consent: ConsentService,
-    block: suspend RoutingContext.(User) -> Unit,
-) {
-    participantRead(auth) { user ->
-        if (user.role == Role.ADMIN || consent.hasConsented(user.id)) {
-            block(user)
-        } else {
-            call.respond(HttpStatusCode.Forbidden, ErrorResponse(CONSENT_REQUIRED))
-        }
-    }
-}
-
-internal const val CONSENT_REQUIRED = "consent_required"
 
 private const val STUDY_FINISHED = "You have finished the study; the proposed queries are closed"
 

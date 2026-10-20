@@ -77,17 +77,29 @@ internal class StudyTestContext(
 
 /**
  * A client with [name]'s session: registered, or logged in when the account exists. With [consent] it also
- * accepts the current consent text (STUDY-008), as every participant must before the task routes open.
+ * accepts the current consent text (STUDY-008) and with [profile] answers the profile questionnaire
+ * (STUDY-010), as every participant must before the task routes open.
  */
 internal suspend fun ApplicationTestBuilder.userClient(
     name: String,
     consent: Boolean = true,
+    profile: Boolean = consent,
 ): HttpClient =
     createClient { install(HttpCookies) }.also {
         val credentials = """{"username":"$name","password":"correct horse"}"""
         if (it.json("/api/auth/register", credentials).status.value == 409) it.json("/api/auth/login", credentials)
         if (consent) it.acceptConsent()
+        if (profile) it.answerProfile()
     }
+
+/** Valid answers to the shipped placeholder profile questionnaire (v1). */
+internal const val PROFILE_ANSWERS =
+    """{"sparql_familiarity":"heard_of","query_languages":["sql","sparql"],"programming_years":4,""" +
+        """"data_comfort":4,"role":""}"""
+
+/** Answers the profile questionnaire; an already answered one answers 409, which is fine here. */
+internal suspend fun HttpClient.answerProfile(answers: String = PROFILE_ANSWERS): HttpResponse =
+    json("/api/study/forms/profile/responses", """{"version":1,"answers":$answers}""")
 
 /** Accepts the current consent text: the version GET /api/study/consent names. */
 internal suspend fun HttpClient.acceptConsent(): HttpResponse {
@@ -179,3 +191,8 @@ internal suspend fun HttpClient.createGroup(
     members.forEach { json("/api/admin/groups/$id/members", """{"username":"$it"}""") }
     return id
 }
+
+/** The shipped questionnaires with [profile] in place of the profile questionnaire. */
+internal fun com.example.sparqlqueryeasy.application.study.StudyResources.withProfile(
+    profile: com.example.sparqlqueryeasy.application.study.FormDefinition,
+) = copy(forms = forms.map { if (it.slug == profile.slug) profile else it })

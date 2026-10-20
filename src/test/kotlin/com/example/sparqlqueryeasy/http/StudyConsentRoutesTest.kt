@@ -63,6 +63,7 @@ class StudyConsentRoutesTest {
             context.progress.finishedAt(context.userId("Ada")) shouldBe null
 
             ada.acceptConsent().status shouldBe HttpStatusCode.OK
+            ada.answerProfile().status shouldBe HttpStatusCode.Created
             ada.gatedRoutes().map { it.status } shouldBe
                 listOf(
                     HttpStatusCode.OK,

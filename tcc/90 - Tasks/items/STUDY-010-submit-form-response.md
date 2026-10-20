@@ -1,7 +1,7 @@
 ---
 id: STUDY-010
 title: Submit a questionnaire once, validated on the server, with progress kept per page
-status: READY
+status: DONE
 priority: P1
 type: fullstack
 depends_on: [STUDY-008, STUDY-009, STUDY-005]
@@ -50,20 +50,49 @@ Excluded: export (STUDY-011); editing a submitted response; server drafts
 
 ## Acceptance criteria
 
-- [ ] A valid profile response is stored once with form and consent versions;
+- [x] A valid profile response is stored once with form and consent versions;
       a second submit answers 409 and changes nothing.
-- [ ] An invalid answer (a placeholder rule from STUDY-009, e.g.
+- [x] An invalid answer (a placeholder rule from STUDY-009, e.g.
       `programming_years: 99`) is rejected with 400 and the question's error
       even when the client-side check is bypassed; nothing is stored.
-- [ ] Extra fields and unknown question ids are rejected; a client
+- [x] Extra fields and unknown question ids are rejected; a client
       `submitted_at` is ignored.
-- [ ] Without consent: 403 `consent_required`, nothing stored. Anonymous: 401.
-- [ ] Task routes answer 403 `profile_required` before the profile form (Q3 A);
+- [x] Without consent: 403 `consent_required`, nothing stored. Anonymous: 401.
+- [x] Task routes answer 403 `profile_required` before the profile form (Q3 A);
       the usability form appears only after the final submission.
-- [ ] Reloading in the middle of the usability form restores page 1; logout
+- [x] Reloading in the middle of the usability form restores page 1; logout
       clears it (component or browser test).
 
 ## Validation
 
 Focused: the new response route test (Testcontainers PostgreSQL), then the
 HTTP/fullstack closing gate of the Operational Map, including `test:stack`.
+
+## Conclusion (2026-10-20)
+
+- Contract: [[../../03 - Backend/API v1#Questionnaire responses (participant, STUDY-010)]].
+  `study.json` gains `flow` (`beforeTasks`, `afterFinish`); `GET
+  /api/study/forms` lists the current versions with `phase` and the caller's
+  `submittedAt`. The after-finish questionnaire answers 403
+  `finish_required` before the final submission (not in the card's scope list,
+  needed so Q3's order holds on the server too).
+- Backend: `V11__study_form_responses.sql` (`study_form_response`, unique per
+  user and slug; the slug is denormalized for that constraint),
+  `PostgresFormResponseStore`, `QuestionnaireService.submit`/`response`,
+  gates `consented` and `readyForTasks` moved to `http/StudyGates.kt`. A
+  stored version with responses is no longer synced from a changed file.
+- Frontend: `features/study/questionnaire-step.svelte` in `/study` (consent →
+  profile → tasks; after the final submission usability → finished),
+  `/study/[key]` sends `profile_required` to `/study`, per-page progress in
+  `features/forms/form-progress.ts`, cleared on submit and in
+  `AuthSession`'s `onUserGone`. `questionnaire-form.svelte` validates on
+  submit/Next only and updates answers through the store (a blur-time
+  validation dropped a click made right after typing a number).
+- Tests: `StudyFormResponseRoutesTest` (6), `form-progress.spec.ts` (3),
+  `questionnaire-form.svelte.spec.ts` (+1), `client.spec.ts`, stack e2e
+  (profile with axe, usability reload/logout/submit).
+- Validation: Kotlin gate `ktlintCheck detekt test` green (280 tests);
+  frontend check, lint and `npm test` green (198 unit, 23 component, 84 e2e);
+  `test:stack` green (19).
+- Remaining: questions are still PLACEHOLDER (STUDY-009); export and the
+  whole-flow e2e are STUDY-011.

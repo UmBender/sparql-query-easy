@@ -6,6 +6,7 @@
  * `stack-admin` reaches the admin page; a participant does not.
  */
 import { expect, test } from '@playwright/test';
+import { PROFILE_ANSWERS } from './support.js';
 
 let unexpected: string[];
 
@@ -103,8 +104,14 @@ test('a protected page needs a session and returns there after login', async ({
 		.getByRole('button', { name: 'Log in' })
 		.click();
 	await expect(page).toHaveURL(/\/study$/);
-	// STUDY-008: a new participant consents first.
+	// STUDY-008/010: a new participant consents and answers the profile questionnaire first.
 	await page.getByRole('button', { name: 'I agree to take part' }).click();
+	await expect(page.getByTestId('questionnaire')).toHaveAttribute('data-slug', 'profile');
+	const profile = await page.request.post('/api/study/forms/profile/responses', {
+		data: { version: 1, answers: PROFILE_ANSWERS }
+	});
+	expect(profile.status()).toBe(201);
+	await page.reload();
 	await expect(page.getByRole('heading', { name: 'Proposed queries' })).toBeVisible();
 
 	await page.reload();

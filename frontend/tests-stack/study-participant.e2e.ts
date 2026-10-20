@@ -4,14 +4,31 @@
  * editor on the starting graph with the endpoint locked, and the note for a
  * participant without a group. STUDY-004: a correct and a wrong answer, the
  * server's feedback and the attempt history. STUDY-005: the final submission
- * closes the tasks. STUDY-008: the consent screen comes first. Test data comes from the admin API.
+ * closes the tasks. STUDY-008: the consent screen comes first. STUDY-010: the profile questionnaire before the
+ * tasks and the usability questionnaire after the final submission, with per-page progress kept in the browser.
+ * Test data comes from the admin API.
  */
 import { readFileSync } from 'node:fs';
 import AxeBuilder from '@axe-core/playwright';
-import { expect, test } from '@playwright/test';
-import { FIRE_SPEED, guardOffline, joinStudy, loginAs, seedStudy } from './support.js';
+import { expect, test, type Locator } from '@playwright/test';
+import {
+	FIRE_SPEED,
+	PROFILE_ANSWERS,
+	guardOffline,
+	joinStudy,
+	loginAs,
+	seedStudy
+} from './support.js';
 
 let unexpected: string[];
+
+/** Chooses a point of a rating scale (its radio is visually hidden under the label). */
+async function rate(form: Locator, question: string, value: number) {
+	await form
+		.getByRole('group', { name: question })
+		.getByText(String(value), { exact: true })
+		.click();
+}
 
 test.beforeEach(({ page, baseURL }) => {
 	unexpected = guardOffline(page, baseURL!);
@@ -114,7 +131,7 @@ test('after the final submission the task pages show the finished page', async (
 
 	await page.getByRole('button', { name: 'Finish the study' }).click();
 	await dialog.getByRole('button', { name: 'Finish and submit' }).click();
-	await expect(page.getByTestId('study-finished')).toBeVisible();
+	await expect(page.getByTestId('questionnaire')).toHaveAttribute('data-slug', 'usability');
 	await expect(page.getByTestId('study-task')).toHaveCount(0);
 
 	await page.goto(`/study/${keys[0]}`);
@@ -146,6 +163,30 @@ test('a new participant sees the consent screen first and the tasks only after a
 	await expect(page.getByTestId('consent-declined')).toBeVisible();
 	await page.getByRole('button', { name: 'Read it again' }).click();
 	await page.getByRole('button', { name: 'I agree to take part' }).click();
+
+	// STUDY-010: the profile questionnaire before the tasks, checked in the browser and on the server.
+	const form = page.getByTestId('questionnaire');
+	await expect(form).toHaveAttribute('data-slug', 'profile');
+	const tasksBefore = await page.request.get('/api/study/tasks');
+	expect(await tasksBefore.json()).toEqual({ error: 'profile_required' });
+	const axe = await new AxeBuilder({ page }).include('[data-testid="questionnaire"]').analyze();
+	expect(axe.violations.map((violation) => violation.id)).toEqual([]);
+	await form.getByRole('radio', { name: 'I have heard of it' }).click();
+	await form.getByRole('checkbox', { name: 'SQL' }).click();
+	const years = form.getByLabel('PLACEHOLDER How many years have you programmed?');
+	await years.fill('99');
+	await rate(form, 'PLACEHOLDER I am comfortable exploring data in tables.', 4);
+	await form.getByRole('button', { name: 'Send my answers' }).click();
+	await expect(form.getByText('Enter a number from 0 to 60.')).toBeVisible();
+	const bypass = await page.request.post('/api/study/forms/profile/responses', {
+		data: { version: 1, answers: { ...PROFILE_ANSWERS, programming_years: 99 } }
+	});
+	expect(bypass.status()).toBe(400);
+	expect((await bypass.json()).errors).toEqual({
+		programming_years: 'Enter a number from 0 to 60.'
+	});
+	await years.fill('4');
+	await form.getByRole('button', { name: 'Send my answers' }).click();
 	await expect(page.getByTestId('no-tasks')).toBeVisible();
 
 	await page.goto('/study/not-mine');
@@ -157,4 +198,57 @@ test('a task link opened before consenting leads to the consent screen', async (
 	await page.goto('/study/any-task');
 	await expect(page).toHaveURL(/\/study$/);
 	await expect(page.getByTestId('consent-screen')).toBeVisible();
+});
+
+test('the usability questionnaire keeps its first page across a reload until logout', async ({
+	page
+}) => {
+	const participant = `rater-${Date.now()}`;
+	await loginAs(page.request, participant);
+	await joinStudy(page.request);
+	expect((await page.request.post('/api/study/finish', { data: {} })).status()).toBe(200);
+
+	await page.goto('/study');
+	const form = page.getByTestId('questionnaire');
+	await expect(form).toHaveAttribute('data-slug', 'usability');
+	await expect(form.getByTestId('form-page')).toHaveText('Page 1 of 2');
+	for (const text of [
+		'PLACEHOLDER The graph editor was easy to use.',
+		'PLACEHOLDER Drawing a query was faster than writing SPARQL.',
+		'PLACEHOLDER I was confident my answers were correct.'
+	])
+		await rate(form, text, 4);
+	await form.getByRole('radio', { name: 'The filter funnel' }).click();
+	await form.getByRole('button', { name: 'Next' }).click();
+	await expect(form.getByTestId('form-page')).toHaveText('Page 2 of 2');
+
+	await page.reload();
+	await expect(form.getByTestId('form-page')).toHaveText('Page 2 of 2');
+	await form.getByRole('button', { name: 'Back' }).click();
+	await expect(form.getByRole('radio', { name: 'The filter funnel' })).toBeChecked();
+
+	await page.getByRole('button', { name: 'Log out' }).click();
+	await expect(page).toHaveURL(/\/login/);
+	const kept = await page.evaluate(() =>
+		Object.keys(window.localStorage).filter((key) => key.startsWith('easyquery-form:'))
+	);
+	expect(kept).toEqual([]);
+
+	await loginAs(page.request, participant);
+	await page.goto('/study');
+	await expect(form.getByTestId('form-page')).toHaveText('Page 1 of 2');
+	await expect(form.getByRole('radio', { name: 'The filter funnel' })).not.toBeChecked();
+	for (const text of [
+		'PLACEHOLDER The graph editor was easy to use.',
+		'PLACEHOLDER Drawing a query was faster than writing SPARQL.',
+		'PLACEHOLDER I was confident my answers were correct.'
+	])
+		await rate(form, text, 5);
+	await form.getByRole('radio', { name: 'Search nodes' }).click();
+	await form.getByRole('button', { name: 'Next' }).click();
+	await form.getByLabel(/PLACEHOLDER In one sentence/).fill('  Choosing the filter type  ');
+	await form.getByRole('button', { name: 'Send my answers' }).click();
+	await expect(page.getByTestId('study-finished')).toBeVisible();
+	const status = await page.request.get('/api/study/forms/usability/response');
+	expect(((await status.json()) as { data: { answered: boolean } }).data.answered).toBe(true);
 });
