@@ -53,7 +53,7 @@ the CI run needs a push. Skill: `tcc-test`.
   container or volume behind.
 - [x] Breaking the Caddy `/api` proxy (verified once, reverted) fails the
   smoke and does not fail `test:stack`.
-- [ ] On GitHub, the job runs on `main` and nightly, not on pull requests or
+- [ ] On GitHub, the job runs on `main` (verified) and nightly (first scheduled run pending), not on pull requests or
   other branches.
 
 ## Validation
@@ -97,6 +97,7 @@ Operational Map plus `docker compose up --build` per the runbook.
   nightly and not on pull requests or other branches.
 - GitHub evidence: `compose-smoke` green on `main` in runs 39509582323 and
   39513553250 and skipped on the pushes of `t10-red-contract` and
-  `t10-red-screenshot` (other branches). Still to see: a pull request run
-  skips it and the nightly run runs it.
+  `t10-red-screenshot` (other branches) and on pull request #2 (run
+  39516869500). Still REVIEW only for the first nightly run (03:17 UTC),
+  which should run it.
 - Commit: completion commit for this task.

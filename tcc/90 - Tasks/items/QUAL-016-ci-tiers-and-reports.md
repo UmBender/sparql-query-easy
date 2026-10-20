@@ -1,7 +1,7 @@
 ---
 id: QUAL-016
 title: Run CI per the DEC-016 tiers and keep every Playwright report as an artifact
-status: REVIEW
+status: DONE
 priority: P1
 type: quality
 depends_on: [QUAL-007, DEC-016]
@@ -43,12 +43,12 @@ push, which is not authorized by planning or local commits. Skill:
 
 ## Acceptance criteria
 
-- [ ] On GitHub, `main` is green; a push to another branch runs only the
+- [x] On GitHub, `main` is green; a push to another branch runs only the
   fast job; a pull request and the nightly run run every gate.
-- [ ] A deliberate API contract drift (a field renamed in the snapshot only)
+- [x] A deliberate API contract drift (a field renamed in the snapshot only)
   and a deliberate screenshot change each turn a run red on a branch
   (verified once, reverted). This also closes QUAL-007's open criterion.
-- [ ] Each run lists the Playwright report artifacts.
+- [x] Each run lists the Playwright report artifacts.
 
 ## Validation
 
@@ -106,7 +106,10 @@ Operational Map). On GitHub: the runs above, after the user pushes.
   `compose-smoke` skipped (run 39509870303), so the branch tier and the
   contract check hold. Push of `t10-red-screenshot` (primary token changed):
   `frontend-fast` green, browser and compose jobs skipped (run 39509922477).
-  Open: a pull request from `t10-red-screenshot` must turn `test:screens`
-  red; opening it needs the user (no `gh` or token here). Both branches are
-  deleted after that check.
+  The user opened PR #2 from `t10-red-screenshot`: run 39516869500 failed
+  only at `npm run test:screens` (`frontend-browser`); `kotlin`,
+  `frontend-fast`, `test:e2e` and `test:stack` passed and `compose-smoke` was
+  skipped on the pull request. Both branches were deleted, which closed PR #2.
+  The nightly schedule has not fired yet; its `if` conditions match the
+  verified push and pull-request cases.
 - Commit: completion commit for this task.

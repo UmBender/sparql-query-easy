@@ -1,7 +1,7 @@
 ---
 id: QUAL-007
 title: Add the new frontend test layers and a GitHub Actions CI for all gates
-status: REVIEW
+status: DONE
 priority: P1
 type: quality
 depends_on: [FE-040, FE-043]
@@ -28,7 +28,7 @@ T10. Skill: `tcc-test`. Deployment stays in OPS-005/OPS-006.
 ## Acceptance criteria
 
 - [x] Each layer has at least one passing test and runs in CI (passing locally with the exact CI commands; first GitHub run pending a push).
-- [ ] A deliberately failing test fails CI (verified once, then reverted). Locally verified: a broken assertion in `mock-routes.spec.ts` made `npm test` exit 1. The GitHub run needs a human push.
+- [x] A deliberately failing test fails CI (verified once, then reverted). Locally verified: a broken assertion in `mock-routes.spec.ts` made `npm test` exit 1. The GitHub run needs a human push.
 
 ## Execution log
 
@@ -66,3 +66,10 @@ T10. Skill: `tcc-test`. Deployment stays in OPS-005/OPS-006.
   deliberately failing test turns the run red. Screenshot baselines were
   generated on Fedora; if Ubuntu's Firefox canvas differs, regenerate them from
   the CI artifact.
+- 2026-10-20 (QUAL-016): closed on GitHub. `main` pushed with the user's
+  authorization; run 39513553250 green in every job after the
+  `PostgresDatabaseTest` backoff fix. A snapshot-only field rename failed
+  `kotlin` and `frontend-fast` (run 39509870303); a colour-token change
+  failed `test:screens` on PR #2 (run 39516869500). Both throwaway branches
+  deleted. The canvas baselines generated on Fedora passed on Ubuntu, so no
+  regeneration was needed.
