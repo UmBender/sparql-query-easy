@@ -113,11 +113,11 @@ Ordered by dependencies, then priority among selection candidates. See [worker r
 | STUDY-004 | DONE | P1 | fullstack | [Submit a drawn query as an answer, check it on the server and show the attempt history](<items/STUDY-004-submit-and-check-answer.md>) |
 | STUDY-005 | DONE | P1 | fullstack | [End the proposed queries with a final submission that closes them for that user](<items/STUDY-005-final-submission-lock.md>) |
 | STUDY-001 | DONE | P1 | fullstack | [Let a logged-in user solve proposed queries and submit answers once](<items/STUDY-001-proposed-queries-and-submission.md>) |
-| DEC-015 | BLOCKED | P1 | decision | [Decide how the T9 brief changes the questionnaire and consent contract of STUDY-002](<items/DEC-015-t9-questionnaire-brief-differences.md>) |
-| STUDY-008 | BACKLOG | P1 | fullstack | [Ask logged-in users for research consent and store it before any response](<items/STUDY-008-research-consent.md>) |
-| STUDY-009 | BACKLOG | P1 | fullstack | [Store the two questionnaire definitions and render them with the same validation on both sides](<items/STUDY-009-form-definitions.md>) |
-| STUDY-010 | BACKLOG | P1 | fullstack | [Submit a questionnaire once, validated on the server, with progress kept per page](<items/STUDY-010-submit-form-response.md>) |
-| STUDY-011 | BACKLOG | P1 | fullstack | [Let admins export questionnaire responses as CSV and cover the whole T9 flow end to end](<items/STUDY-011-questionnaire-export-and-e2e.md>) |
+| DEC-015 | DONE | P1 | decision | [Decide how the T9 brief changes the questionnaire and consent contract of STUDY-002](<items/DEC-015-t9-questionnaire-brief-differences.md>) |
+| STUDY-008 | READY | P1 | fullstack | [Ask logged-in users for research consent and store it before any response](<items/STUDY-008-research-consent.md>) |
+| STUDY-009 | READY | P1 | fullstack | [Store the two questionnaire definitions and render them with the same validation on both sides](<items/STUDY-009-form-definitions.md>) |
+| STUDY-010 | READY | P1 | fullstack | [Submit a questionnaire once, validated on the server, with progress kept per page](<items/STUDY-010-submit-form-response.md>) |
+| STUDY-011 | READY | P1 | fullstack | [Let admins export questionnaire responses as CSV and cover the whole T9 flow end to end](<items/STUDY-011-questionnaire-export-and-e2e.md>) |
 | STUDY-002 | BACKLOG | P1 | fullstack | [Show two questionnaires to logged-in users and store their answers](<items/STUDY-002-questionnaires.md>) |
 | OPS-006 | DONE | P1 | operations | [Run db, backend and web together with Docker Compose](<items/OPS-006-docker-compose-stack.md>) |
 | OPS-007 | DONE | P2 | operations | [Start only PostgreSQL for local development and reach it from ./gradlew run](<items/OPS-007-local-dev-database.md>) |

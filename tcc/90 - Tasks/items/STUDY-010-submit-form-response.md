@@ -1,7 +1,7 @@
 ---
 id: STUDY-010
 title: Submit a questionnaire once, validated on the server, with progress kept per page
-status: BACKLOG
+status: READY
 priority: P1
 type: fullstack
 depends_on: [STUDY-008, STUDY-009, STUDY-005]
@@ -18,8 +18,9 @@ the profile and usability forms at their place in the study flow and submits
 each once; the server validates the answers against the stored definition and
 stores them with the form version. Skill: `tcc-fullstack`.
 
-Placement (Q3), progress storage (Q4) and versions (Q6) follow DEC-015. Text
-below states the recommended options A.
+DEC-015 (2026-10-20): profile before the tasks, usability after the final
+submission (Q3 A); progress in the browser only (Q4 A); one response per
+user per form slug, no edits (Q6 A).
 
 ## Scope
 

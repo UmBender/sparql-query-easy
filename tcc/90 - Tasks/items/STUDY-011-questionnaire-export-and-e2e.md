@@ -1,7 +1,7 @@
 ---
 id: STUDY-011
 title: Let admins export questionnaire responses as CSV and cover the whole T9 flow end to end
-status: BACKLOG
+status: READY
 priority: P1
 type: fullstack
 depends_on: [STUDY-010, AUTH-005]
@@ -18,7 +18,7 @@ as CSV for analysis; participants never can. An e2e test on the real stack
 walks consent, both forms, an invalid answer and checks the stored responses
 through the export. Skill: `tcc-fullstack`.
 
-Identifier and file shape follow DEC-015 Q5. Text below states option A.
+DEC-015 (2026-10-20) Q5 A: one CSV per form, internal user id, no username.
 
 ## Scope
 

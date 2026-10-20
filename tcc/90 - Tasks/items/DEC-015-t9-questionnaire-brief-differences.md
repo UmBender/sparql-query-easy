@@ -1,10 +1,10 @@
 ---
 id: DEC-015
 title: Decide how the T9 brief changes the questionnaire and consent contract of STUDY-002
-status: BLOCKED
+status: DONE
 priority: P1
 type: decision
-depends_on: [STUDY-002, DEC-014]
+depends_on: [DEC-014]
 human_gate: true
 created: 2026-10-20
 updated: 2026-10-20
@@ -114,14 +114,38 @@ that does needs the user's approval (brief).
 
 ## Acceptance criteria
 
-- [ ] The user picks an option for Q1–Q6. Record the choices here, in Open
+- [x] The user picks an option for Q1–Q6. Record the choices here, in Open
       Decisions, in Current Contracts (Study row) and, for Q1, in the
       Authentication Contract (D5 note).
-- [ ] STUDY-008/009/010/011 are updated to the chosen options before any of
+- [x] STUDY-008/009/010/011 are updated to the chosen options before any of
       them leaves BACKLOG. A B choice for Q2 or Q4 gets its scope added to
       STUDY-009 or STUDY-010, or its own card if larger.
-- [ ] STUDY-002's proposed changes (its "Proposed changes" section) are
+- [x] STUDY-002's proposed changes (its "Proposed changes" section) are
       accepted or rejected; STUDY-002 itself is not rewritten.
+
+## Decision
+
+- 2026-10-20: The user chose A for all six:
+  - Q1 A: one consent per user and consent-text version before anything on
+    `/study`; without it no form response and no task attempt is stored
+    (403 `consent_required` on the participant task routes too; admins not
+    gated). Lifts D5 and DEC-014 Q6 A for the study. Withdrawal and deletion
+    stay a go-live item (LEARN-014), handled by hand.
+  - Q2 A: versioned JSON files `src/main/resources/study/forms/<slug>.v<version>.json`
+    upserted at startup into `form` by (slug, version); a stored version
+    with responses is never changed; a change is a new version file.
+  - Q3 A: consent → profile form → tasks (403 `profile_required` before the
+    profile) → final submission → usability form.
+  - Q4 A: per-page progress in `localStorage` only, cleared on submit and
+    logout; nothing stored on the server before submit.
+  - Q5 A: one admin-only CSV per form with the internal user id, never the
+    username.
+  - Q6 A: one response per user per form slug, whatever version; no edits.
+- STUDY-002's proposed changes are accepted; its `depends_on` gains
+  STUDY-008/009/010/011 and it closes when they are DONE.
+- Order: STUDY-008 and STUDY-009 → STUDY-010 → STUDY-011 → STUDY-002.
+- Still the user's input (not blocking the build): the real questions and
+  consent text; the slices ship `PLACEHOLDER` content.
 
 ## Validation
 

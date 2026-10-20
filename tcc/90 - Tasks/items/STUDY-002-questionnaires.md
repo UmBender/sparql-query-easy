@@ -4,10 +4,10 @@ title: Show two questionnaires to logged-in users and store their answers
 status: BACKLOG
 priority: P1
 type: fullstack
-depends_on: [STUDY-001]
+depends_on: [STUDY-001, STUDY-008, STUDY-009, STUDY-010, STUDY-011]
 human_gate: false
 created: 2026-10-16
-updated: 2026-10-16
+updated: 2026-10-20
 ---
 # Show two questionnaires to logged-in users and store their answers
 
@@ -39,16 +39,17 @@ answer-export route.
 - [ ] Each form submits once; invalid answers are rejected client- and server-side.
 - [ ] Anonymous access returns 401; e2e covers both forms.
 
-## Proposed changes (T9 brief, 2026-10-20; pending DEC-015)
+## Proposed changes (T9 brief, 2026-10-20; accepted by DEC-015)
 
-Not accepted yet. DEC-015 records the points where the brief differs from
-this card (consent excluded here, forms in files, open placement and export
-access); where DEC-015 is decided, it wins. This card is not rewritten.
+DEC-015 (2026-10-20, A for Q1–Q6) accepted these changes; where the text
+above differs (consent excluded, LGPD deferred), DEC-015 wins: consent gates
+the forms and the proposed tasks, the profile form comes before the tasks
+and the usability form after the final submission. This card is not rewritten.
 
 - Split: delivered by STUDY-008 (consent), STUDY-009 (form definitions and
   shared validation), STUDY-010 (submit once, per-page progress, placement)
-  and STUDY-011 (admin CSV export and the T9 e2e). On approval,
-  `depends_on` gains those four and this card closes when they are DONE.
+  and STUDY-011 (admin CSV export and the T9 e2e). `depends_on`
+  has those four; this card closes when they are DONE.
 - Export access (this card's pending input): admins only, through AUTH-005's
   `withAdmin` guard (brief).
 - Added acceptance criteria from the brief:

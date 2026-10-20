@@ -49,17 +49,3 @@ blocked until these are known:
 name, and who issues its TLS certificate (Let's Encrypt or the university)?
 How can a deploy reach it (SSH, VPN, nothing from GitHub)? Where can off-host
 database backups be stored?
-
-## DEC-015 — T9 brief vs STUDY-002
-
-The T9 brief differs from STUDY-002, D5 and DEC-014 Q6 in six points.
-STUDY-008/009/010/011 stay BACKLOG until the user decides.
-
-**Question:** Q1 consent gates only the forms, or the forms and the proposed
-tasks? Q2 form definitions from versioned files synced to a table, or admin
-routes? Q3 profile before the tasks and usability after the final
-submission, or both free on `/study`? Q4 per-page progress in the browser, or
-a server draft table? Q5 export with the internal user id, or also the
-username? Q6 one response per form, or one per form version?
-(Recommended: forms and tasks, files, before/after, browser, user id only,
-one per form.) The real questions and consent text are also the user's.

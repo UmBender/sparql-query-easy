@@ -1,7 +1,7 @@
 ---
 id: STUDY-009
 title: Store the two questionnaire definitions and render them with the same validation on both sides
-status: BACKLOG
+status: READY
 priority: P1
 type: fullstack
 depends_on: [DEC-015]
@@ -19,7 +19,8 @@ it and builds its Zod schema from the same definition, so a valid/invalid
 answer is judged the same on both sides. Nothing is submitted yet
 (STUDY-010). Skill: `tcc-fullstack`.
 
-Definition source follows DEC-015 Q2. Text below states option A.
+DEC-015 (2026-10-20) Q2 A: versioned files upserted into a `form` table;
+a stored version with responses never changes.
 
 ## Scope
 

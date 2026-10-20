@@ -1,7 +1,7 @@
 ---
 id: STUDY-008
 title: Ask logged-in users for research consent and store it before any response
-status: BACKLOG
+status: READY
 priority: P1
 type: fullstack
 depends_on: [DEC-015, AUTH-005]
@@ -18,8 +18,8 @@ screen on `/study` before the first form; accepting stores who accepted which
 consent text version and when. Without a stored consent the server refuses to
 store a form response (STUDY-010). Skill: `tcc-fullstack`.
 
-What the gate covers (forms only, or forms and tasks) follows DEC-015 Q1.
-Text below states the recommended option A; update it before READY.
+DEC-015 (2026-10-20) Q1 A: the gate covers the forms and the proposed
+tasks; admins are not gated; withdrawal and deletion stay with LEARN-014.
 
 ## Scope
 
@@ -36,7 +36,7 @@ Text below states the recommended option A; update it before READY.
   caller accepted it) and `POST /api/study/consent` (`{version}`; 409 if the
   version is not current; idempotent for the same version).
 - A shared check other routes call: no consent for the current version →
-  403 `{"error":"consent_required"}`. Q1 A also applies it to the STUDY-003/004
+  403 `{"error":"consent_required"}`. It also applies to the STUDY-003/004/005
   participant task routes (list, open, submit, history, finish); admins are
   not gated.
 - Frontend: consent screen in `features/study/` (text, accept, decline);
@@ -55,7 +55,7 @@ notice page; real consent text (user/advisor input).
 - [ ] A new consent version makes the screen appear again for a user who
       accepted only the old one.
 - [ ] Without consent the gated routes answer 403 `consent_required`
-      (Q1 A: also the participant task routes); with consent they behave as
+      (including the participant task routes); with consent they behave as
       before (existing `Study*RoutesTest` stay green after adding consent to
       their setup).
 - [ ] Anonymous `GET`/`POST /api/study/consent` answer 401.
