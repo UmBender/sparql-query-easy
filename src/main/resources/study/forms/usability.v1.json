@@ -1,0 +1,75 @@
+{
+  "slug": "usability",
+  "version": 1,
+  "title": "PLACEHOLDER Using the editor",
+  "description": "PLACEHOLDER questions, not for participants. How the query editor worked for you.",
+  "pages": [
+    {
+      "id": "ratings",
+      "title": "PLACEHOLDER Your ratings",
+      "questions": [
+        {
+          "id": "easy_to_use",
+          "type": "likert",
+          "text": "PLACEHOLDER The graph editor was easy to use.",
+          "required": true,
+          "scaleMax": 5,
+          "minLabel": "Disagree",
+          "maxLabel": "Agree"
+        },
+        {
+          "id": "faster_than_sparql",
+          "type": "likert",
+          "text": "PLACEHOLDER Drawing a query was faster than writing SPARQL.",
+          "required": true,
+          "scaleMax": 5,
+          "minLabel": "Disagree",
+          "maxLabel": "Agree"
+        },
+        {
+          "id": "confident",
+          "type": "likert",
+          "text": "PLACEHOLDER I was confident my answers were correct.",
+          "required": true,
+          "scaleMax": 5,
+          "minLabel": "Disagree",
+          "maxLabel": "Agree"
+        },
+        {
+          "id": "most_useful",
+          "type": "single_choice",
+          "text": "PLACEHOLDER Which feature helped you most?",
+          "required": true,
+          "options": [
+            { "value": "filter_funnel", "label": "The filter funnel" },
+            { "value": "run_query_stages", "label": "Run Query stages" },
+            { "value": "filter_histogram", "label": "The filter histogram" },
+            { "value": "search_nodes", "label": "Search nodes" }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "comments",
+      "title": "PLACEHOLDER Your comments",
+      "questions": [
+        {
+          "id": "hardest_part",
+          "type": "short_text",
+          "text": "PLACEHOLDER In one sentence, what was hardest?",
+          "description": "Do not write your name or any contact.",
+          "required": false,
+          "maxLength": 200
+        },
+        {
+          "id": "comments",
+          "type": "long_text",
+          "text": "PLACEHOLDER Any other comments?",
+          "description": "Do not write your name or any contact.",
+          "required": false,
+          "maxLength": 2000
+        }
+      ]
+    }
+  ]
+}

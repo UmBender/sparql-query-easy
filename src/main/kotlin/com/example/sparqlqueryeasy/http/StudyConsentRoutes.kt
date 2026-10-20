@@ -55,10 +55,10 @@ internal fun Route.consentRoutes(
                             receiveLenient<StudyConsentHttpRequest>().version
                                 ?: throw HttpRequestValidationFailure("Missing required field: version")
                         when (val result = consent.accept(user.id, version)) {
-                            is ConsentResult.Accepted ->
-                                call.respond(
-                                    DataResponse(StudyConsentAcceptedHttpResponse(version, result.acceptedAt.toString())),
-                                )
+                            is ConsentResult.Accepted -> {
+                                val accepted = StudyConsentAcceptedHttpResponse(version, result.acceptedAt.toString())
+                                call.respond(DataResponse(accepted))
+                            }
                             ConsentResult.NotCurrent ->
                                 call.respond(HttpStatusCode.Conflict, ErrorResponse(CONSENT_NOT_CURRENT))
                         }

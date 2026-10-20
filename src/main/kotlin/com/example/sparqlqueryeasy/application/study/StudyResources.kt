@@ -4,12 +4,23 @@ import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
 
 /**
- * The study's versioned texts in the repository (DEC-015): `study/study.json` names the current consent text.
- * A missing or malformed file fails startup with a clear message.
+ * The study's versioned texts in the repository (DEC-015): `study/study.json` names the current consent text and
+ * every questionnaire file (all versions; the highest version of a slug is current). A missing or malformed file
+ * fails startup with a clear message.
  */
 data class StudyResources(
     val consent: ConsentText,
+    val forms: List<FormDefinition> = emptyList(),
 ) {
+    init {
+        val repeated = forms.groupingBy { it.slug to it.version }.eachCount().filterValues { it > 1 }.keys
+        require(repeated.isEmpty()) { "study.json lists form versions twice: $repeated" }
+    }
+
+    /** The highest version of each questionnaire. */
+    val currentForms: Map<String, FormDefinition>
+        get() = forms.groupBy { it.slug }.mapValues { (_, versions) -> versions.maxBy { it.version } }
+
     companion object {
         private const val ROOT = "study/"
 
@@ -22,14 +33,18 @@ data class StudyResources(
             require(manifest.consent.version > 0) { "study.json: the consent version must be positive" }
             val text = read(manifest.consent.file).trim()
             require(text.isNotEmpty()) { "Study resource ${manifest.consent.file} is empty" }
-            return StudyResources(ConsentText(manifest.consent.version, text))
+            val forms = manifest.forms.map { FormDefinitions.parse(read(it), ROOT + it) }
+            return StudyResources(ConsentText(manifest.consent.version, text), forms)
         }
 
         private val manifestJson = Json { ignoreUnknownKeys = false }
     }
 
     @Serializable
-    private data class Manifest(val consent: ManifestConsent)
+    private data class Manifest(
+        val consent: ManifestConsent,
+        val forms: List<String> = emptyList(),
+    )
 
     @Serializable
     private data class ManifestConsent(val version: Int, val file: String)

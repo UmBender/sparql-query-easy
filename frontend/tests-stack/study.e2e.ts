@@ -34,6 +34,8 @@ test('an admin creates a task by drawing the reference query and sees it in the 
 	await expect(page.locator('#status-nodes')).toHaveText('Nodes: 3');
 	await expect(page.locator('#input-endpoint-sparql')).toBeDisabled();
 	await expect(page.getByRole('radio', { name: '?pokemon' })).toBeChecked();
+	// The upload's toast can cover the button, and hovering it keeps it open: wait until it closes.
+	await expect(page.locator('[data-sonner-toast]')).toHaveCount(0, { timeout: 15_000 });
 
 	await page.getByRole('button', { name: 'Preview expected result' }).click();
 	await expect(page.getByTestId('preview-count')).toContainText('distinct values');

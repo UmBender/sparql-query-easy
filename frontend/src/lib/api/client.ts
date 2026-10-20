@@ -16,6 +16,7 @@ import type {
 import type { StageRequest } from '#lib/domain/legacy/query-stages.js';
 import type { SavedQueryV1 } from '#lib/domain/saved-format.js';
 import type { AnswerQuery } from '#lib/domain/study.js';
+import type { FormDefinition } from '#lib/domain/forms.js';
 
 type Schemas = components['schemas'];
 export type PropertyItem = Schemas['PropertyDtoResponse'];
@@ -39,6 +40,8 @@ export type Participant = Schemas['ParticipantHttpResponse'];
 export type StudyTaskSummary = Schemas['StudyTaskSummaryHttpResponse'];
 export type StudySubmission = Schemas['StudySubmissionHttpResponse'];
 export type StudyConsent = Schemas['StudyConsentHttpResponse'];
+/** STUDY-009: the served definition is the domain's `FormDefinition` (checked here at compile time). */
+export const servedFormIsDomainForm = (served: Schemas['FormDefinition']): FormDefinition => served;
 export type StudyTask = Omit<Schemas['StudyTaskHttpResponse'], 'startingGraph'> & {
 	startingGraph: SavedQueryV1 | null;
 };
@@ -425,6 +428,14 @@ export function createApiClient({
 					'Loading the consent text failed',
 					options,
 					(data) => typeof (data as StudyConsent | null)?.version === 'number'
+				),
+			/** STUDY-009: the current version of a questionnaire. */
+			form: (slug: string, options?: Options) =>
+				get<FormDefinition>(
+					`/api/study/forms/${encodeURIComponent(slug)}`,
+					'Loading the questionnaire failed',
+					options,
+					(data) => Array.isArray((data as FormDefinition | null)?.pages)
 				),
 			/** Accepting stores the version with the server's time; a stale version answers `conflict`. */
 			acceptConsent: (version: number) =>

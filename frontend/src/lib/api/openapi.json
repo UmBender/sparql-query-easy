@@ -2633,6 +2633,86 @@
                 }
             }
         },
+        "/api/study/forms/{slug}": {
+            "get": {
+                "operationId": "studyGetForm",
+                "tags": [
+                    "Study"
+                ],
+                "summary": "Read a questionnaire",
+                "description": "The current version of the questionnaire: pages of questions of type single_choice, multiple_choice, likert (1..scaleMax, default 5), short_text (maxLength ≤ 200), long_text (maxLength ≤ 2000) or number (min, max, integer). Answers are checked on the server with the same rules (STUDY-009). Requires a session (401 otherwise) and the consent (403 `consent_required`).",
+                "parameters": [
+                    {
+                        "name": "slug",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "The definition.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "required": [
+                                        "data"
+                                    ],
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/components/schemas/FormDefinition"
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "No questionnaire has this slug.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorResponse"
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "description": "`consent_required`: the caller has not accepted the current consent text (STUDY-008); or the caller has made the final submission (task and submission routes); or the request came from another site.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorResponse"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "No valid session.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorResponse"
+                                }
+                            }
+                        }
+                    },
+                    "503": {
+                        "description": "The database is not configured or unreachable.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorResponse"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
         "/api/study/tasks": {
             "get": {
                 "operationId": "studyListTasks",
@@ -4124,6 +4204,179 @@
                     },
                     "acceptedAt": {
                         "type": "string"
+                    }
+                }
+            },
+            "ChoiceOption": {
+                "type": "object",
+                "title": "ChoiceOption",
+                "required": [
+                    "value",
+                    "label"
+                ],
+                "properties": {
+                    "value": {
+                        "type": "string"
+                    },
+                    "label": {
+                        "type": "string"
+                    }
+                }
+            },
+            "Question": {
+                "type": "object",
+                "title": "Question",
+                "required": [
+                    "id",
+                    "type",
+                    "text",
+                    "required"
+                ],
+                "properties": {
+                    "id": {
+                        "type": "string"
+                    },
+                    "type": {
+                        "type": "string",
+                        "enum": [
+                            "single_choice",
+                            "multiple_choice",
+                            "likert",
+                            "short_text",
+                            "long_text",
+                            "number"
+                        ]
+                    },
+                    "text": {
+                        "type": "string"
+                    },
+                    "required": {
+                        "type": "boolean"
+                    },
+                    "description": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    },
+                    "options": {
+                        "type": [
+                            "array",
+                            "null"
+                        ],
+                        "items": {
+                            "$ref": "#/components/schemas/ChoiceOption"
+                        }
+                    },
+                    "minSelected": {
+                        "type": [
+                            "integer",
+                            "null"
+                        ]
+                    },
+                    "maxSelected": {
+                        "type": [
+                            "integer",
+                            "null"
+                        ]
+                    },
+                    "scaleMax": {
+                        "type": [
+                            "integer",
+                            "null"
+                        ]
+                    },
+                    "minLabel": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    },
+                    "maxLabel": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    },
+                    "maxLength": {
+                        "type": [
+                            "integer",
+                            "null"
+                        ]
+                    },
+                    "min": {
+                        "type": [
+                            "number",
+                            "null"
+                        ]
+                    },
+                    "max": {
+                        "type": [
+                            "number",
+                            "null"
+                        ]
+                    },
+                    "integer": {
+                        "type": [
+                            "boolean",
+                            "null"
+                        ]
+                    }
+                }
+            },
+            "FormPage": {
+                "type": "object",
+                "title": "FormPage",
+                "required": [
+                    "id",
+                    "title",
+                    "questions"
+                ],
+                "properties": {
+                    "id": {
+                        "type": "string"
+                    },
+                    "title": {
+                        "type": "string"
+                    },
+                    "questions": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/Question"
+                        }
+                    }
+                }
+            },
+            "FormDefinition": {
+                "type": "object",
+                "title": "FormDefinition",
+                "required": [
+                    "slug",
+                    "version",
+                    "title",
+                    "pages"
+                ],
+                "properties": {
+                    "slug": {
+                        "type": "string"
+                    },
+                    "version": {
+                        "type": "integer"
+                    },
+                    "title": {
+                        "type": "string"
+                    },
+                    "description": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    },
+                    "pages": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/FormPage"
+                        }
                     }
                 }
             },

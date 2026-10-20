@@ -1,0 +1,183 @@
+{
+	"description": "STUDY-009: questionnaire answers judged the same by the Kotlin FormAnswerValidator and the TypeScript validateAnswers (domain/forms.ts). Each case lists the error per question id and the normalized answers that are stored when there is no error.",
+	"definition": {
+		"slug": "parity",
+		"version": 1,
+		"title": "Every question type",
+		"pages": [
+			{
+				"id": "one",
+				"title": "Choices",
+				"questions": [
+					{
+						"id": "single",
+						"type": "single_choice",
+						"text": "Pick one",
+						"required": true,
+						"options": [
+							{ "value": "a", "label": "A" },
+							{ "value": "b", "label": "B" }
+						]
+					},
+					{
+						"id": "multi",
+						"type": "multiple_choice",
+						"text": "Pick some",
+						"required": true,
+						"options": [
+							{ "value": "x", "label": "X" },
+							{ "value": "y", "label": "Y" },
+							{ "value": "z", "label": "Z" }
+						],
+						"minSelected": 1,
+						"maxSelected": 2
+					},
+					{
+						"id": "scale",
+						"type": "likert",
+						"text": "Rate it",
+						"required": true,
+						"scaleMax": 5,
+						"minLabel": "Disagree",
+						"maxLabel": "Agree"
+					}
+				]
+			},
+			{
+				"id": "two",
+				"title": "Free answers",
+				"questions": [
+					{
+						"id": "short",
+						"type": "short_text",
+						"text": "In a few words",
+						"required": false,
+						"maxLength": 10
+					},
+					{
+						"id": "long",
+						"type": "long_text",
+						"text": "In detail",
+						"required": false,
+						"maxLength": 20
+					},
+					{
+						"id": "count",
+						"type": "number",
+						"text": "How many",
+						"required": true,
+						"min": 0,
+						"max": 60,
+						"integer": true
+					},
+					{
+						"id": "ratio",
+						"type": "number",
+						"text": "Which share",
+						"required": false,
+						"min": 0.5
+					}
+				]
+			}
+		]
+	},
+	"cases": [
+		{
+			"name": "valid answers are stored trimmed, unanswered optional questions are left out",
+			"answers": {
+				"single": "a",
+				"multi": ["x", "z"],
+				"scale": 5,
+				"short": "  hi  ",
+				"long": "",
+				"count": 3,
+				"ratio": null
+			},
+			"errors": {},
+			"stored": { "single": "a", "multi": ["x", "z"], "scale": 5, "short": "hi", "count": 3 }
+		},
+		{
+			"name": "missing required answers",
+			"answers": { "single": "", "multi": [], "scale": null },
+			"errors": {
+				"single": "Answer this question.",
+				"multi": "Answer this question.",
+				"scale": "Answer this question.",
+				"count": "Answer this question."
+			}
+		},
+		{
+			"name": "out of range or unknown options",
+			"answers": {
+				"single": "c",
+				"multi": ["x", "w"],
+				"scale": 6,
+				"count": 99,
+				"ratio": 0.25,
+				"short": "eleven chars",
+				"long": "x"
+			},
+			"errors": {
+				"single": "Choose one of the options.",
+				"multi": "Choose from the options, each at most once.",
+				"scale": "Choose a value from 1 to 5.",
+				"count": "Enter a number from 0 to 60.",
+				"ratio": "Enter a number of at least 0.5.",
+				"short": "Use at most 10 characters."
+			}
+		},
+		{
+			"name": "too many or repeated choices, a fraction where a whole number is asked, a long text",
+			"answers": {
+				"single": "b",
+				"multi": ["x", "y", "z"],
+				"scale": 2.5,
+				"count": 1.5,
+				"long": "a text longer than twenty"
+			},
+			"errors": {
+				"multi": "Choose at most 2.",
+				"scale": "Choose a value from 1 to 5.",
+				"count": "Enter a whole number.",
+				"long": "Use at most 20 characters."
+			}
+		},
+		{
+			"name": "repeated choices",
+			"answers": { "single": "a", "multi": ["y", "y"], "scale": 1, "count": 0 },
+			"errors": { "multi": "Choose from the options, each at most once." }
+		},
+		{
+			"name": "wrong answer types",
+			"answers": {
+				"single": 1,
+				"multi": "x",
+				"scale": "3",
+				"short": 5,
+				"long": ["a"],
+				"count": "3",
+				"ratio": true
+			},
+			"errors": {
+				"single": "Invalid answer.",
+				"multi": "Invalid answer.",
+				"scale": "Invalid answer.",
+				"short": "Invalid answer.",
+				"long": "Invalid answer.",
+				"count": "Invalid answer.",
+				"ratio": "Invalid answer."
+			}
+		},
+		{
+			"name": "a question id the definition does not have",
+			"answers": {
+				"single": "a",
+				"multi": ["y"],
+				"scale": 3,
+				"count": 60,
+				"email": "someone@example.org"
+			},
+			"errors": { "email": "Unknown question." }
+		}
+	]
+}

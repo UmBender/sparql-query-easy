@@ -59,6 +59,7 @@ class OpenApiRoutesTest {
             "/api/admin/groups/{id}/delete" to setOf("post"),
             // STUDY-003
             "/api/study/consent" to setOf("get", "post"),
+            "/api/study/forms/{slug}" to setOf("get"),
             "/api/study/tasks" to setOf("get"),
             "/api/study/tasks/{key}" to setOf("get"),
             // STUDY-004

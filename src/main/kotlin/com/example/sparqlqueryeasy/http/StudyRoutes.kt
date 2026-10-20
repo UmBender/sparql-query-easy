@@ -63,6 +63,7 @@ internal fun Route.studyRoutes(
 ) {
     study?.let {
         consentRoutes(auth, it.consent)
+        questionnaireRoutes(auth, it)
         participantTaskRoutes(auth, it)
     }
     route("/api/study/{...}") {
@@ -82,7 +83,9 @@ private fun Route.participantTaskRoutes(
     val consent = dependencies.consent
     route("/api/study/tasks") {
         get {
-            studyOpen(auth, study, consent) { user -> call.respond(DataResponse(study.tasks(user.id).map { it.toSummary() })) }
+            studyOpen(auth, study, consent) { user ->
+                call.respond(DataResponse(study.tasks(user.id).map { it.toSummary() }))
+            }
         }.documentStudyListTasks()
         get("{key}") {
             studyOpen(auth, study, consent) { user ->

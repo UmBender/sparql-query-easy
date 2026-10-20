@@ -1,0 +1,70 @@
+{
+  "slug": "profile",
+  "version": 1,
+  "title": "PLACEHOLDER About you",
+  "description": "PLACEHOLDER questions, not for participants. A few questions about your experience before the proposed queries.",
+  "pages": [
+    {
+      "id": "experience",
+      "title": "PLACEHOLDER Your experience",
+      "questions": [
+        {
+          "id": "sparql_familiarity",
+          "type": "single_choice",
+          "text": "PLACEHOLDER How familiar are you with SPARQL?",
+          "required": true,
+          "options": [
+            { "value": "never_heard", "label": "I had never heard of it" },
+            { "value": "heard_of", "label": "I have heard of it" },
+            { "value": "used_few", "label": "I have used it a few times" },
+            { "value": "use_regularly", "label": "I use it regularly" }
+          ]
+        },
+        {
+          "id": "query_languages",
+          "type": "multiple_choice",
+          "text": "PLACEHOLDER Which of these have you used?",
+          "required": true,
+          "options": [
+            { "value": "sql", "label": "SQL" },
+            { "value": "sparql", "label": "SPARQL" },
+            { "value": "cypher", "label": "Cypher" },
+            { "value": "visual_tool", "label": "A visual query tool" },
+            { "value": "none", "label": "None of these" }
+          ],
+          "minSelected": 1
+        },
+        {
+          "id": "programming_years",
+          "type": "number",
+          "text": "PLACEHOLDER How many years have you programmed?",
+          "required": true,
+          "min": 0,
+          "max": 60,
+          "integer": true
+        },
+        {
+          "id": "data_comfort",
+          "type": "likert",
+          "text": "PLACEHOLDER I am comfortable exploring data in tables.",
+          "required": true,
+          "scaleMax": 5,
+          "minLabel": "Disagree",
+          "maxLabel": "Agree"
+        },
+        {
+          "id": "role",
+          "type": "single_choice",
+          "text": "PLACEHOLDER What best describes you?",
+          "required": false,
+          "options": [
+            { "value": "undergraduate", "label": "Undergraduate student" },
+            { "value": "graduate", "label": "Graduate student" },
+            { "value": "professional", "label": "Professional" },
+            { "value": "other", "label": "Other" }
+          ]
+        }
+      ]
+    }
+  ]
+}

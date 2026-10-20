@@ -672,6 +672,37 @@ nothing; this check comes before the finished check. Admins are not gated.
 A new consent version asks everyone again. Withdrawal and deletion are not
 routes (go-live, LEARN-014).
 
+## Questionnaires (participant, STUDY-009)
+
+DEC-015 Q2. Each questionnaire version is a JSON file listed in
+`study/study.json` (`forms`), e.g. `study/forms/profile.v1.json`; the highest
+version of a slug is current. Definitions are checked at startup (strict
+fields, unique page and question ids, the type rules below) and a malformed
+file stops the application with a message naming it. A version is stored in
+`study_form` (`V10__study_forms.sql`) on first use; if its file changed, the
+stored copy is brought up to date (STUDY-010 refuses that once responses
+exist).
+
+`GET /api/study/forms/{slug}` (session and consent: 401, 403
+`consent_required`; unknown slug 404) answers `200 {"data":<definition>}`:
+`{slug, version, title, description, pages:[{id, title, questions}]}`.
+Question types and answer rules (`FormAnswerValidator`, same messages as the
+frontend's `validateAnswers`):
+
+| Type | Fields | Answer |
+|---|---|---|
+| `single_choice` | `options` (≥ 2, unique values) | one option value; `""` unanswered |
+| `multiple_choice` | `options`, `minSelected`, `maxSelected` | distinct option values in an array; `[]` unanswered |
+| `likert` | `scaleMax` (2–10, default 5), `minLabel`, `maxLabel` | an integer from 1 to `scaleMax` |
+| `short_text` / `long_text` | `maxLength` (≤ 200 / ≤ 2000, default the limit) | a string, trimmed; empty unanswered |
+| `number` | `min`, `max`, `integer` | a JSON number in range |
+
+`null` is unanswered; a required unanswered question is "Answer this
+question."; a wrong JSON type is "Invalid answer."; an unknown question id is
+"Unknown question.". The shared cases are
+`frontend/src/lib/domain/fixtures/forms/parity.json`. The shipped `profile`
+and `usability` v1 are placeholders (every text starts with `PLACEHOLDER`).
+
 ## Endpoint selection
 
 `endpointUrl` accepts the built-in identifiers `CampeonatoBrasileiro2023` and
