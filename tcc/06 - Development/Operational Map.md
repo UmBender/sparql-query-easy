@@ -74,6 +74,8 @@ reject unexpected external requests (`frontend/tests/support/offline.ts`).
 ## Canonical facts and navigation
 
 - Current decisions/contracts: [[../09 - Decisions/Current Contracts]].
+- Test layers, helpers, fixtures, screenshot updates and CI tiers:
+  [[../08 - Quality/Testing Guide]] (DOC-004).
 - Detailed HTTP: [[../03 - Backend/API v1]].
 - Detailed graph interactions: [[../04 - Frontend/Frontend Architecture]],
   [[../04 - Frontend/Two Variable Exploration Contract]].

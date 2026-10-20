@@ -76,6 +76,9 @@ logged-in user goes away (logout, an expired session, another user logging
 in). The login form's component test (`auth-form.svelte.spec.ts`) replaces
 SvelteKit's `$app/*` modules and turns on Superforms' Storybook mode.
 
+Which layer to use, fixtures and screenshot updates: the testing guide,
+`tcc/08 - Quality/Testing Guide.md` (DOC-004).
+
 Test layers (QUAL-007): `src/lib/api/mock-routes.ts` holds the API mock
 responses typed from `schema.d.ts`; Vitest serves them through MSW
 (`mswHandlers`), the Playwright suites through `page.route`

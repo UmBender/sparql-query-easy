@@ -111,7 +111,7 @@ Ordered by dependencies, then priority among selection candidates. See [worker r
 | QUAL-016 | REVIEW | P1 | quality | [Run CI per the DEC-016 tiers and keep every Playwright report as an artifact](<items/QUAL-016-ci-tiers-and-reports.md>) |
 | QUAL-017 | REVIEW | P1 | quality | [Smoke-test the Docker Compose stack through Caddy on main and nightly](<items/QUAL-017-compose-stack-smoke.md>) |
 | QUAL-013 | DONE | P2 | quality | [Drive the editor, task page and questionnaires through Playwright page objects](<items/QUAL-013-playwright-page-objects.md>) |
-| DOC-004 | BACKLOG | P1 | documentation | [Write a testing guide that a clean clone can follow layer by layer](<items/DOC-004-testing-guide.md>) |
+| DOC-004 | DONE | P1 | documentation | [Write a testing guide that a clean clone can follow layer by layer](<items/DOC-004-testing-guide.md>) |
 | DEC-014 | DONE | P1 | decision | [Decide how the T8 brief changes the proposed-query contract of STUDY-001](<items/DEC-014-t8-study-brief-differences.md>) |
 | FE-053 | DONE | P1 | refactor | [Let the query editor start from a given query and endpoint and host an extra panel](<items/FE-053-reusable-query-editor.md>) |
 | AUTH-005 | DONE | P1 | security | [Give accounts a participant or admin role and guard the admin routes](<items/AUTH-005-admin-role-and-guard.md>) |
