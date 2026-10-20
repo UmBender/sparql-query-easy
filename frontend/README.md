@@ -86,7 +86,8 @@ full-page screenshots of every main route (`tests/support/screens.ts`) in
 both themes, text included; it runs only in the pinned Playwright image
 (`npm run test:screens`, Docker), where fonts render the same on every
 machine, and is excluded from `npm test`. Refresh deliberately with
-`npm run test:screens -- --update-snapshots`. `.github/workflows/ci.yml` runs
+`npm run test:screens -- --update-snapshots`. `tests/a11y.e2e.ts` (QUAL-015)
+runs axe on the same routes in both themes; any violation fails. `.github/workflows/ci.yml` runs
 check, lint, `npm test` and `test:stack` with the Kotlin and legacy gates.
 
 Shared test helpers (QUAL-012, `src/lib/testing/`, test-only):
