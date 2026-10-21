@@ -1,0 +1,17 @@
+<!-- OPS-010: one line per event on stdout, read with `docker compose logs backend`.
+     EASYQUERY_LOG_LEVEL (default INFO) sets the application's level; libraries stay at WARN
+     except Flyway, whose INFO lines name the applied migrations. -->
+<configuration>
+    <statusListener class="ch.qos.logback.core.status.NopStatusListener"/>
+    <appender name="STDOUT" class="ch.qos.logback.core.ConsoleAppender">
+        <encoder>
+            <pattern>%d{yyyy-MM-dd'T'HH:mm:ss.SSS'Z',UTC} %-5level %logger{0} - %msg%n%ex{short}</pattern>
+        </encoder>
+    </appender>
+    <logger name="com.example.sparqlqueryeasy" level="${EASYQUERY_LOG_LEVEL:-INFO}"/>
+    <logger name="io.ktor.server.Application" level="INFO"/>
+    <logger name="org.flywaydb.core.internal.command" level="INFO"/>
+    <root level="WARN">
+        <appender-ref ref="STDOUT"/>
+    </root>
+</configuration>

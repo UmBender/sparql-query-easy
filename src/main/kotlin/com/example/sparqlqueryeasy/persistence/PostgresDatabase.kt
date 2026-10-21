@@ -11,6 +11,7 @@ import org.flywaydb.core.Flyway
 import org.jetbrains.exposed.v1.jdbc.Database
 import org.jetbrains.exposed.v1.jdbc.JdbcTransaction
 import org.jetbrains.exposed.v1.jdbc.transactions.transaction
+import org.slf4j.LoggerFactory
 import java.sql.SQLException
 import java.util.concurrent.atomic.AtomicBoolean
 
@@ -170,12 +171,14 @@ class DatabaseConnector(
     }
 }
 
-/** Startup line on stderr: the app has no logging backend yet (OPS-004), and silence would hide the cause. */
+private val startupLog = LoggerFactory.getLogger("com.example.sparqlqueryeasy.persistence.Database")
+
+/** Startup line (OPS-010: through the logger, on stdout); silence would hide why accounts are unavailable. */
 fun reportDatabaseStartup(status: PersistenceStatus) {
     when (status) {
         PersistenceStatus.NotConfigured -> Unit
-        PersistenceStatus.Ready -> System.err.println("EasyQuery: database migrations applied")
+        PersistenceStatus.Ready -> startupLog.info("EasyQuery: database migrations applied")
         is PersistenceStatus.Unavailable ->
-            System.err.println("EasyQuery: database unavailable, will retry on use: ${status.reason}")
+            startupLog.warn("EasyQuery: database unavailable, will retry on use: {}", status.reason)
     }
 }

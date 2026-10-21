@@ -62,7 +62,8 @@ The `backup` service runs busybox `crond` with `BACKUP_SCHEDULE` (default
 `easyquery-<UTC stamp>.dump` (`pg_dump --format=custom`) under a temporary
 name and renames it when complete, mode `0600`, in `BACKUP_DIR` (default
 `./backups`, a host directory: `docker compose down -v` does not touch it;
-Docker creates it owned by root with mode 700). With `BACKUP_AGE_RECIPIENT`
+Docker creates it owned by root with mode 700; remove a test copy with
+`docker run --rm --security-opt label=disable -v "$PWD:/r" alpine:3 rm -rf /r/backups`). With `BACKUP_AGE_RECIPIENT`
 (an `age` public key) it also writes `<name>.age` to `BACKUP_OFFSITE_DIR`;
 mount off-host storage there or copy that directory off the server. Then
 `easyquery-prune` keeps the newest dump of each of the last 7 days and of
@@ -108,6 +109,33 @@ dump and its encrypted copy, a failed dump, restore of both into a fresh
 stack, every table compared and the account, consent and attempt checked
 through the API.
 
+## Logs and limits (OPS-010)
+
+The backend logs through Logback (`src/main/resources/logback.xml`) to
+stdout, one line per event: `<UTC time> <level> <logger> - <message>`.
+
+| Line | Example |
+|---|---|
+| Migrations at startup (Flyway) | `INFO  DbMigrate - Successfully applied 11 migrations to schema "public", now at version v11` |
+| Database ready | `INFO  Database - EasyQuery: database migrations applied` (or `WARN ... database unavailable, will retry on use: <reason>`) |
+| Each request except `/health` | `INFO  Requests - 401 POST /api/auth/login 496 ms`, `INFO  Requests - 502 POST /api/query/count 204 ms` |
+
+Request lines carry only status, method, path and duration: no query
+string, header, cookie or body, so passwords, session tokens and answers are
+never logged (`RequestLoggingTest`). `EASYQUERY_LOG_LEVEL` sets the
+application's level; libraries log only warnings (Flyway's migration lines
+excepted). Reading a failure: find the request's status line, then the
+`WARN`/`ERROR` lines just before it.
+
+Every service's Docker log rotates (`json-file`, `LOG_MAX_SIZE` 10m ×
+`LOG_MAX_FILES` 3). Memory caps from `.env` (DEC-017 Q6): `db` and
+`backend` 1 GiB, `web` and `backup` 256 MiB; CPU caps default to none
+(`*_CPU_LIMIT=0`). The JVM heap may use `BACKEND_HEAP_PERCENT` (75) % of the
+backend's cap (`JAVA_OPTS`). Measured on 2026-10-20 after start: backend
+252 MiB, db 93 MiB, web 57 MiB, backup under 1 MiB. Check with `docker
+stats` and `docker inspect -f '{{.HostConfig.Memory}}
+{{.HostConfig.LogConfig.Config}}' <container>`.
+
 ## Runbook
 
 From the repository root:
@@ -117,7 +145,7 @@ From the repository root:
 | Build and start | `docker compose up -d --build --wait` |
 | Open | `http://localhost:8080/` (editor), `/login`, `/swagger` |
 | Status | `docker compose ps` |
-| Logs | `docker compose logs -f backend` (or `web`, `db`); the backend prints `EasyQuery: database migrations applied` at startup |
+| Logs | `docker compose logs -f backend` (or `web`, `db`, `backup`); see Logs and limits below |
 | Stop, keep data | `docker compose down` |
 | Restart one service | `docker compose restart backend` |
 | Rebuild after code changes | `docker compose up -d --build --wait` |
@@ -187,5 +215,5 @@ pushes to `main`, nightly and on manual runs (DEC-016 Q1 C). It complements
 
 ## Source files
 
-`compose.yaml`, `compose.dev.yaml` (OPS-007), `compose.test.yaml` and `deploy/compose-test.env` (QUAL-017), `deploy/web.Dockerfile`, `deploy/Caddyfile`, `deploy/caddy/` and `deploy/test/` with `scripts/check-https-modes.mjs` (OPS-008), `deploy/backup.Dockerfile`, `deploy/backup/`, `scripts/restore-backup.sh`, `scripts/check-backup-restore.mjs` (OPS-009), `Dockerfile`,
+`compose.yaml`, `compose.dev.yaml` (OPS-007), `compose.test.yaml` and `deploy/compose-test.env` (QUAL-017), `deploy/web.Dockerfile`, `deploy/Caddyfile`, `deploy/caddy/` and `deploy/test/` with `scripts/check-https-modes.mjs` (OPS-008), `deploy/backup.Dockerfile`, `deploy/backup/`, `scripts/restore-backup.sh`, `scripts/check-backup-restore.mjs` (OPS-009), `src/main/resources/logback.xml` and `http/RequestLogging.kt` (OPS-010), `Dockerfile`,
 `.env.example`, `.dockerignore`.

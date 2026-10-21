@@ -5,7 +5,7 @@ when the task crosses that responsibility. This is the canonical command map.
 
 | Responsibility | Entry point |
 |---|---|
-| Ktor bootstrap/config | `src/main/kotlin/com/example/sparqlqueryeasy/Application.kt`; `src/main/resources/application.conf`; settings from env/`.env` in `config/AppSettings.kt` (`.env.example`) |
+| Ktor bootstrap/config | `src/main/kotlin/com/example/sparqlqueryeasy/Application.kt`; `src/main/resources/application.conf`; logging `src/main/resources/logback.xml` and `http/RequestLogging.kt` (OPS-010, test `RequestLoggingTest`; tests use `src/test/resources/logback-test.xml`); settings from env/`.env` in `config/AppSettings.kt` (`.env.example`) |
 | HTTP/JSON/OpenAPI | `src/main/kotlin/com/example/sparqlqueryeasy/http/{HttpModule,QueryHttpModels,OpenApiModule}.kt` |
 | Services and endpoint/cache state | `src/main/kotlin/com/example/sparqlqueryeasy/application/` |
 | RDF domain/ports/Jena | `src/main/kotlin/com/example/sparqlqueryeasy/{domain/model,rdf,rdf/jena}/` |

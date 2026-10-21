@@ -4,6 +4,13 @@
 # Runbook: tcc/07 - Operations/Docker Compose Stack.md.
 name: easyquery
 
+# OPS-010: rotate every container's log (docker compose logs reads it).
+x-logging: &logging
+  driver: json-file
+  options:
+    max-size: ${LOG_MAX_SIZE:-10m}
+    max-file: "${LOG_MAX_FILES:-3}"
+
 x-db-password: &db-password ${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD in .env (see .env.example)}
 
 services:
@@ -20,6 +27,13 @@ services:
       interval: 5s
       timeout: 3s
       retries: 20
+    logging: *logging
+    # OPS-010: caps from .env; CPU 0 means no CPU cap.
+    deploy:
+      resources:
+        limits:
+          memory: ${DB_MEMORY_LIMIT:-1g}
+          cpus: "${DB_CPU_LIMIT:-0}"
     restart: unless-stopped
 
   backend:
@@ -36,6 +50,9 @@ services:
       EASYQUERY_TRUST_PROXY: "true"
       # AUTH-005: comma-separated usernames with the admin role; empty means no admin.
       EASYQUERY_ADMIN_USERNAMES: ${EASYQUERY_ADMIN_USERNAMES:-}
+      # OPS-010: application log level; the heap is a share of the memory limit.
+      EASYQUERY_LOG_LEVEL: ${EASYQUERY_LOG_LEVEL:-INFO}
+      JAVA_OPTS: -XX:MaxRAMPercentage=${BACKEND_HEAP_PERCENT:-75}
     depends_on:
       db:
         condition: service_healthy
@@ -45,6 +62,13 @@ services:
       timeout: 3s
       start_period: 60s
       retries: 20
+    logging: *logging
+    # OPS-010: caps from .env; CPU 0 means no CPU cap.
+    deploy:
+      resources:
+        limits:
+          memory: ${BACKEND_MEMORY_LIMIT:-1g}
+          cpus: "${BACKEND_CPU_LIMIT:-0}"
     restart: unless-stopped
 
   # OPS-009: pg_dump on BACKUP_SCHEDULE into BACKUP_DIR (a host path, so
@@ -70,6 +94,13 @@ services:
     depends_on:
       db:
         condition: service_healthy
+    logging: *logging
+    # OPS-010: caps from .env; CPU 0 means no CPU cap.
+    deploy:
+      resources:
+        limits:
+          memory: ${BACKUP_MEMORY_LIMIT:-256m}
+          cpus: "${BACKUP_CPU_LIMIT:-0}"
     restart: unless-stopped
 
   web:
@@ -95,6 +126,13 @@ services:
     depends_on:
       backend:
         condition: service_healthy
+    logging: *logging
+    # OPS-010: caps from .env; CPU 0 means no CPU cap.
+    deploy:
+      resources:
+        limits:
+          memory: ${WEB_MEMORY_LIMIT:-256m}
+          cpus: "${WEB_CPU_LIMIT:-0}"
     restart: unless-stopped
 
 volumes:

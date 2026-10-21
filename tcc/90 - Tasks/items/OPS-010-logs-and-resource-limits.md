@@ -1,7 +1,7 @@
 ---
 id: OPS-010
 title: Write readable backend logs, rotate container logs and cap service resources
-status: BACKLOG
+status: DONE
 priority: P2
 type: operations
 depends_on: [DEC-017, OPS-006, QUAL-017]
@@ -44,12 +44,12 @@ DEC-017 Q6. Alerting stays OPS-004. Skill: `tcc-backend`.
 
 ## Acceptance criteria
 
-- [ ] `docker compose logs backend` shows startup, migrations and one line
+- [x] `docker compose logs backend` shows startup, migrations and one line
   per request; a failed login and a `502` from an upstream are visible
   without secrets.
-- [ ] `docker inspect` shows the log rotation and limits on every service;
+- [x] `docker inspect` shows the log rotation and limits on every service;
   the stack starts and `test:compose` passes within the default limits.
-- [ ] Kotlin gate stays green; no golden or contract change.
+- [x] Kotlin gate stays green; no golden or contract change.
 
 ## Validation
 
@@ -57,3 +57,30 @@ Focused: a Kotlin test that the request log line omits cookies and
 passwords (proposed); `docker inspect` of the running stack. Closing: Kotlin
 gate (`./gradlew ktlintCheck detekt test`), Compose row and
 `npm --prefix frontend run test:compose`.
+
+## Execution log
+
+- 2026-10-20: DEC-017 Q6 A. `logback-classic` 1.5.18 and
+  `ktor-server-call-logging` 3.5.1; `src/main/resources/logback.xml` (stdout,
+  UTC, app level `EASYQUERY_LOG_LEVEL`, libraries WARN except Flyway's
+  command INFO); `http/RequestLogging.kt` installed first in
+  `Application.module`: `<status> <method> <path> <ms> ms`, path only,
+  `/health` skipped; `reportDatabaseStartup` uses the logger with the same
+  text; `src/test/resources/logback-test.xml` keeps tests at WARN.
+  `compose.yaml`: `x-logging` (json-file 10m × 3, from `.env`) and memory/CPU
+  limits on all four services (db/backend 1 GiB, web/backup 256 MiB, CPU 0 =
+  none), backend `EASYQUERY_LOG_LEVEL` and
+  `JAVA_OPTS=-XX:MaxRAMPercentage=75`. `.env.example`, runbook section,
+  Operational Map. No HTTP response or contract changed.
+- Checks: `RequestLoggingTest` (2: the 401 and 502 lines match
+  `<status> <method> <path> <n> ms` and contain no password, cookie,
+  authorization or query string; `/health` not logged). Running stack
+  (`easyquery-ops010`, removed): Flyway lines, `EasyQuery: database
+  migrations applied`, `401 POST /api/auth/login 496 ms`, `502 POST
+  /api/query/count 204 ms` (unreachable endpoint); no `password`, `secret`
+  or session cookie in the backend log; `docker inspect` shows the memory
+  caps and `max-size:10m max-file:3` on every service; `docker stats`
+  backend 252 MiB, db 93 MiB, web 57 MiB, backup < 1 MiB.
+- Gates: `./gradlew ktlintCheck detekt test` passed (289 tests);
+  `test:stack` 20 passed; `test:compose` 4 passed.
+- Commit: completion commit for this task.

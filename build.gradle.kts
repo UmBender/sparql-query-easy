@@ -46,6 +46,7 @@ dependencies {
     implementation("io.ktor:ktor-server-netty:$ktorVersion")
     implementation("io.ktor:ktor-server-content-negotiation:$ktorVersion")
     implementation("io.ktor:ktor-server-status-pages:$ktorVersion")
+    implementation("io.ktor:ktor-server-call-logging:$ktorVersion")
     implementation("io.ktor:ktor-server-routing-openapi:$ktorVersion")
     implementation("io.ktor:ktor-server-swagger:$ktorVersion")
     implementation("io.ktor:ktor-serialization-kotlinx-json:$ktorVersion")
@@ -66,6 +67,8 @@ dependencies {
     implementation("org.jetbrains.exposed:exposed-java-time:1.5.0")
     // AUTH-001: Argon2id password hashing (pure Java).
     implementation("org.bouncycastle:bcprov-jdk18on:1.81")
+    // OPS-010: SLF4J backend; one line per event on stdout (src/main/resources/logback.xml).
+    implementation("ch.qos.logback:logback-classic:1.5.18")
 
     testImplementation("org.junit.jupiter:junit-jupiter:5.13.4")
     testImplementation(kotlin("test"))
