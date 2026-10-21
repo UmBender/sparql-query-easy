@@ -25,16 +25,22 @@ reviewed compatibility captures remain in this repository.
   legacy `index2.html` page after every parity row passed on the new app).
   Its offline browser tests and the real-stack suite contact no live service.
 
-The remaining work is production hardening and approved additions rather than
-another core feature port. OpenAPI 3.1 and Swagger UI are generated from the
-Ktor route contract and tested for drift. Accounts (self-registration,
-Argon2id, PostgreSQL sessions) are implemented (AUTH-001/AUTH-003). Recorded Wikidata route fixtures, production
-endpoint/upload policy, TLS/CORS, deployment, monitoring, and
-backup remain open.
+Production will run on the university server with Docker Compose (DEC-003;
+not live yet): PostgreSQL, Ktor and Caddy on one origin, with an HTTPS switch
+(`EASYQUERY_HTTPS_MODE`), scheduled and encrypted database backups with a
+restore drill, rotated logs, memory limits, and images tagged by release
+(OPS-006 to OPS-011). OpenAPI 3.1 and Swagger UI are generated from the Ktor
+route contract and tested for drift. Accounts (self-registration, Argon2id,
+PostgreSQL sessions), the study's proposed queries, consent and
+questionnaires are implemented (AUTH-001/003/005, STUDY-001/002).
+CI (`.github/workflows/ci.yml`) runs every test layer.
 
-The legacy .NET deployment workflow is archived outside the active GitHub
-Actions directory on the Kotlin branch. No Kotlin deployment workflow or
-hosting target is selected yet; see the
+Still open: the production endpoint, upload and cache limits (SEC-001,
+waiting for decisions DEC-004/DEC-005); the domain, chosen HTTPS mode and CORS
+policy (OPS-002), monitoring and alerting (OPS-004) and deploy automation
+(OPS-005), which wait for the university IT's answers in the
+[server checklist](tcc/07%20-%20Operations/University%20Server%20Checklist.md).
+The legacy .NET deployment workflow stays archived; see the
 [archived workflow note](tcc/07%20-%20Operations/Archived%20.NET%20Deployment%20Workflow.md).
 
 ## Run locally
@@ -97,7 +103,10 @@ integration task is opt-in and is not part of normal validation.
 - [Migration history and decisions](MIGRATION.md)
 - [Current compatibility report](MIGRATION_REPORT.md)
 - [Characterization corpus](compatibility/README.md)
-- [Current remaining work](remaining.md)
+- [C# port remaining-work record (historical)](remaining.md)
+- [Frontend architecture](tcc/04%20-%20Frontend/Frontend%20Architecture.md)
+- [Testing guide](tcc/08%20-%20Quality/Testing%20Guide.md)
+- [Server deploy runbook](tcc/07%20-%20Operations/Server%20Deploy%20Runbook.md)
 - [Obsidian knowledge-base home](tcc/00%20-%20Home.md)
 - [Task index](tcc/90%20-%20Tasks/TASKS.md)
 
@@ -110,7 +119,7 @@ integration task is opt-in and is not part of normal validation.
 - `src/main/kotlin/com/example/sparqlqueryeasy/http/OpenApiModule.kt` —
   generated OpenAPI metadata and documentation routes.
 - `frontend/` — the SvelteKit frontend (DEC-011, authoritative since FE-049).
-- `compose.yaml`, `deploy/` — local Docker Compose stack (OPS-006).
+- `compose.yaml`, `deploy/` — Docker Compose stack, Caddy, backups (OPS-006 to OPS-011).
 - `compatibility/expected/index.json` — immutable original C# case index.
 - `compatibility/retirement-expected/index.json` — three additional C# success
   captures retained after C# source removal.

@@ -1,7 +1,7 @@
 ---
 id: DOC-007
 title: Bring the README's current status in line with the cutover and the deploy work
-status: BACKLOG
+status: DONE
 priority: P2
 type: documentation
 depends_on: []
@@ -34,9 +34,23 @@ Compose stack, HTTPS switch, backups, logs and runbook. Skill:
 
 ## Acceptance criteria
 
-- [ ] No README sentence contradicts Current Contracts or TASKS.md statuses.
-- [ ] Every README link resolves.
+- [x] No README sentence contradicts Current Contracts or TASKS.md statuses.
+- [x] Every README link resolves.
 
 ## Validation
 
 Docs gate: `node scripts/check-project-docs.mjs`; `git diff --check`.
+
+## Execution log
+
+- 2026-10-20: README "Current status" rewritten from the cards: Compose stack
+  on the university server (not live), HTTPS switch, backups, logs, limits,
+  release tags (OPS-006 to OPS-011), accounts and study (AUTH-001/003/005,
+  STUDY-001/002), CI; open items SEC-001 (DEC-004/005), OPS-002/004/005
+  (DOC-005 answers). Documentation links add the Frontend Architecture,
+  Testing Guide and Server Deploy Runbook; `remaining.md` is labelled as the
+  historical C# port record (its text is out of scope). Source landmarks:
+  `compose.yaml`/`deploy/` cover OPS-006 to OPS-011. Claims checked against
+  `compose.yaml` and `.env.example` (`EASYQUERY_HTTPS_MODE`, memory limits,
+  `EASYQUERY_VERSION`). Validation: `node scripts/check-project-docs.mjs`,
+  `git diff --check`. The `/help` link is added by DOC-006.

@@ -137,7 +137,7 @@ Ordered by dependencies, then priority among selection candidates. See [worker r
 | OPS-011 | REVIEW | P1 | operations | [Install, update, roll back, restore and rotate secrets on the server by following one runbook](<items/OPS-011-deploy-runbook.md>) |
 | FE-049 | DONE | P1 | frontend | [Make the SvelteKit app the authoritative frontend and retire index2.html](<items/FE-049-legacy-cutover.md>) |
 | DEC-018 | DONE | P1 | decision | [Decide how the T12 brief changes the cutover done by FE-049](<items/DEC-018-t12-cutover-brief-differences.md>) |
-| DOC-007 | BACKLOG | P2 | documentation | [Bring the README's current status in line with the cutover and the deploy work](<items/DOC-007-readme-current-status.md>) |
+| DOC-007 | DONE | P2 | documentation | [Bring the README's current status in line with the cutover and the deploy work](<items/DOC-007-readme-current-status.md>) |
 | FE-054 | BACKLOG | P2 | frontend | [Rewrite the guided tour for the current editor's features](<items/FE-054-tour-for-current-editor.md>) |
 | DOC-006 | BACKLOG | P2 | frontend | [Add an in-app /help page with screenshots one command can regenerate](<items/DOC-006-user-guide-with-screenshots.md>) |
 | QUAL-018 | BACKLOG | P2 | quality | [Fail CI if jQuery or legacy page files come back, and confirm every test layer is green](<items/QUAL-018-legacy-free-guard.md>) |
