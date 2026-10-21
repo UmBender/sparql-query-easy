@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import {
 	addElements,
 	addEntity,
@@ -470,6 +470,24 @@ describe('binding a variable (graph-binding.unit.mjs)', () => {
 });
 
 describe('other edits', () => {
+	it('connects nodes without crypto.randomUUID, as over plain HTTP on a LAN address (BUG-008)', () => {
+		vi.stubGlobal('crypto', { getRandomValues: crypto.getRandomValues.bind(crypto) });
+		try {
+			let graph = addElements(emptyGraph, [node('a', 'entity'), node('b', 'entity')]);
+			graph = connectNodes(graph, 'a', 'b', '?predicate_1', '?');
+			graph = connectNodes(graph, 'a', 'b', '<https://e/p>', 'p');
+			const ids = edgesOf(graph).map((edge) => edge.id);
+			expect(ids).toHaveLength(2);
+			expect(new Set(ids).size).toBe(2);
+			for (const id of ids)
+				expect(id).toMatch(
+					/^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/
+				);
+		} finally {
+			vi.unstubAllGlobals();
+		}
+	});
+
 	it('adds variables, value variables and entities with the legacy ids and data', () => {
 		const variable = addVariable(emptyGraph, NOW, { x: 1, y: 2 });
 		const { id } = variable;

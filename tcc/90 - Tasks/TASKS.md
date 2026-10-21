@@ -142,6 +142,7 @@ Ordered by dependencies, then priority among selection candidates. See [worker r
 | DOC-006 | DONE | P2 | frontend | [Add an in-app /help page with screenshots one command can regenerate](<items/DOC-006-user-guide-with-screenshots.md>) |
 | QUAL-018 | DONE | P2 | quality | [Fail CI if jQuery or legacy page files come back, and confirm every test layer is green](<items/QUAL-018-legacy-free-guard.md>) |
 | BUG-007 | DONE | P1 | bug | [A click that moves a little still ends a pending connection](<items/BUG-007-connection-click-with-small-move.md>) |
+| BUG-008 | DONE | P1 | bug | [Edges can be added when the app is opened over plain HTTP on a LAN address](<items/BUG-008-edges-over-plain-http-lan.md>) |
 | BE-004 | DONE | P1 | fullstack | [Make MAX and MIN keep every entity with the extreme value, capped by a configurable limit](<items/BE-004-max-min-all-ties.md>) |
 | INV-001 | DONE | P1 | investigation | [Investigate Ktor HTTP-client and runtime resource lifecycle](<items/INV-001-runtime-resource-lifecycle.md>) |
 | LEARN-001 | REVIEW | P1 | learning | [Learn the Linux shell and networking needed to debug a web app](<items/LEARN-001-linux-shell-networking.md>) |
