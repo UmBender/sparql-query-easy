@@ -206,7 +206,7 @@ test('F-03 the histogram follows the handles and writes at least, between and at
 	await expect(valueInput(page)).toHaveValue('45');
 	expect(api.bodies('/api/query/numeric-profile')).toEqual([
 		{
-			endpointUrl: 'CampeonatoBrasileiro2023',
+			endpointUrl: 'PokemonGen1',
 			where: [],
 			subject: '?p',
 			predicate: '<https://example.test/speed>',
@@ -421,7 +421,7 @@ test('F-02 Add value filter lists datatype relations and opens the editor on a s
 	await expect(valueInput(page)).toHaveValue('39');
 	expect(await checked(page)).toBe('Any value');
 	expect(api.bodies('/api/query/numeric-profile')[0]).toEqual({
-		endpointUrl: 'CampeonatoBrasileiro2023',
+		endpointUrl: 'PokemonGen1',
 		where: [
 			{
 				subject: '?mon',
@@ -483,7 +483,7 @@ test('F-05 typing in a value variable filter suggests values; a choice is an exa
 	await expect(page.locator('#filter-suggestions button')).toHaveText(['Pikachu', 'Pidgey']);
 	const suggestion = api.bodies('/api/query/stage').at(-1) as Record<string, unknown>;
 	expect(suggestion).toEqual({
-		endpointUrl: 'CampeonatoBrasileiro2023',
+		endpointUrl: 'PokemonGen1',
 		variableName: '?name',
 		where: [
 			{ subject: '?mon', predicate: '<https://e/name>', object: '?name', filterType: null }

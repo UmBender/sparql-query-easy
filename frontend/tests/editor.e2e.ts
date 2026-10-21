@@ -54,7 +54,7 @@ test('P-02 search nodes sends the debounced text with the limit and adds the cho
 	await page.getByRole('combobox', { name: 'Search nodes' }).fill('Team');
 	await expect(page.getByRole('option', { name: /Team A/ })).toBeVisible();
 	expect(bodies('/api/query/search')).toEqual([
-		{ endpointUrl: 'CampeonatoBrasileiro2023', search: 'Team', limit: 150 }
+		{ endpointUrl: 'PokemonGen1', search: 'Team', limit: 150 }
 	]);
 	await page.getByRole('option', { name: /Team A/ }).click();
 	await expect(page.locator('#status-nodes')).toHaveText('Nodes: 1');
@@ -96,12 +96,12 @@ test('P-03 a search result related to an existing node is added with the discove
 test('P-04 P-05 the limit and endpoint fields feed requests', async ({ page }) => {
 	await page.locator('#input-max-results').fill('7');
 	const endpoint = page.getByRole('combobox', { name: 'SPARQL endpoint' });
-	await expect(endpoint).toHaveValue('CampeonatoBrasileiro2023');
-	await endpoint.fill('PokemonGen1');
+	await expect(endpoint).toHaveValue('PokemonGen1');
+	await endpoint.fill('CampeonatoBrasileiro2023');
 	await page.getByRole('combobox', { name: 'Search nodes' }).fill('Pika');
 	await expect
 		.poll(() => bodies('/api/query/search'))
-		.toEqual([{ endpointUrl: 'PokemonGen1', search: 'Pika', limit: 7 }]);
+		.toEqual([{ endpointUrl: 'CampeonatoBrasileiro2023', search: 'Pika', limit: 7 }]);
 });
 
 test('P-06 P-07 P-14 add, count and clear nodes; undo and redo edits', async ({ page }) => {
@@ -264,13 +264,13 @@ test('G-04 Explore relationships fills the results table and a row adds the valu
 	await menu(page).getByRole('button', { name: 'Explore relationships' }).click();
 	await expect(page.locator('#table-results-body')).toContainText('name');
 	expect(bodies('/api/query/relationships')).toEqual([
-		{ endpointUrl: 'CampeonatoBrasileiro2023', id: '<https://example.test/team-a>' }
+		{ endpointUrl: 'PokemonGen1', id: '<https://example.test/team-a>' }
 	]);
 	await page.locator('#table-results-body tr', { hasText: 'name' }).click();
 	await expect(page.locator('#status-nodes')).toHaveText('Nodes: 2');
 	expect(bodies('/api/query/relationship-value')).toEqual([
 		{
-			endpointUrl: 'CampeonatoBrasileiro2023',
+			endpointUrl: 'PokemonGen1',
 			subjectId: '<https://example.test/team-a>',
 			predicateId: '<https://example.test/hasName>',
 			isLiteral: true
@@ -347,7 +347,7 @@ test('G-06 Run query on a variable binds the chosen row and refetches its outgoi
 	await menu(page).getByRole('button', { name: 'Run query' }).click();
 	expect(bodies('/api/query')).toEqual([
 		{
-			endpointUrl: 'CampeonatoBrasileiro2023',
+			endpointUrl: 'PokemonGen1',
 			where: [
 				{
 					subject: '?x',
@@ -368,7 +368,7 @@ test('G-06 Run query on a variable binds the chosen row and refetches its outgoi
 		]);
 	expect(bodies('/api/query/relationship-value')).toEqual([
 		{
-			endpointUrl: 'CampeonatoBrasileiro2023',
+			endpointUrl: 'PokemonGen1',
 			subjectId: kindIri('Pikachu'),
 			predicateId: kindIri('region'),
 			isLiteral: false
@@ -407,7 +407,7 @@ test('G-07 connect with a variable or a defined predicate; Escape and the backgr
 	await menu(page).getByRole('button', { name: 'Connect with defined predicate' }).click();
 	await expect(menu(page).getByText('Choose a predicate:')).toBeVisible();
 	expect(bodies('/api/query/relationships')).toEqual([
-		{ endpointUrl: 'CampeonatoBrasileiro2023', id: '?s', limit: 150 }
+		{ endpointUrl: 'PokemonGen1', id: '?s', limit: 150 }
 	]);
 	await menu(page).getByRole('button', { name: 'name' }).click();
 	await clickNode(page, '<https://e/o>');
@@ -564,6 +564,6 @@ test('View SPARQL shows the generated query and Copy reports the result', async 
 		'SELECT DISTINCT ?item WHERE { ?item ?p ?o } LIMIT 20'
 	);
 	expect(bodies('/api/query/sparql')).toEqual([
-		{ endpointUrl: 'CampeonatoBrasileiro2023', where: [], variableName: '?item', limit: 150 }
+		{ endpointUrl: 'PokemonGen1', where: [], variableName: '?item', limit: 150 }
 	]);
 });

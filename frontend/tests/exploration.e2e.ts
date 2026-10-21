@@ -541,7 +541,7 @@ test('E-04 the first stage requests typed candidates for the reordered first var
 	await expect(page.locator('#stage-status')).toHaveText('4 values for ?team.');
 	expect(stageRequests()).toEqual([
 		{
-			endpointUrl: 'CampeonatoBrasileiro2023',
+			endpointUrl: 'PokemonGen1',
 			variableName: '?team',
 			where: [
 				{
@@ -678,7 +678,7 @@ test('E-05 hovering or focusing a candidate previews the next variable; supersed
 	await expect(page.locator('#stage-preview-list')).toHaveText('Grêmio (IRI)');
 	expect(stageRequests().filter((request) => request.variableName === '?team')).toEqual([
 		{
-			endpointUrl: 'CampeonatoBrasileiro2023',
+			endpointUrl: 'PokemonGen1',
 			variableName: '?team',
 			where: [
 				{

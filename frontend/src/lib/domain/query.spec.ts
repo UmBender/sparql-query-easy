@@ -246,7 +246,7 @@ describe('query mapping', () => {
 	});
 
 	it('endpoints map to the endpointUrl field', () => {
-		expect(endpointUrl(DEFAULT_ENDPOINT)).toBe('CampeonatoBrasileiro2023');
+		expect(endpointUrl(DEFAULT_ENDPOINT)).toBe('PokemonGen1');
 		expect(endpointUrl({ kind: 'remote', url: 'https://query.wikidata.org/sparql' })).toBe(
 			'https://query.wikidata.org/sparql'
 		);

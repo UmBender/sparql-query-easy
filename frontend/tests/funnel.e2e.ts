@@ -118,7 +118,7 @@ test('B-01 the funnel counts after each cumulative filter with one request per s
 		new Set(
 			[
 				{
-					endpointUrl: 'CampeonatoBrasileiro2023',
+					endpointUrl: 'PokemonGen1',
 					variableName: '?p',
 					where: [
 						{ ...type, object: '?__funnel0' },
@@ -126,12 +126,12 @@ test('B-01 the funnel counts after each cumulative filter with one request per s
 					]
 				},
 				{
-					endpointUrl: 'CampeonatoBrasileiro2023',
+					endpointUrl: 'PokemonGen1',
 					variableName: '?p',
 					where: [type, { ...speed, object: '?__funnel1', filterType: null }]
 				},
 				{
-					endpointUrl: 'CampeonatoBrasileiro2023',
+					endpointUrl: 'PokemonGen1',
 					variableName: '?p',
 					where: [type, speed]
 				}
@@ -468,7 +468,7 @@ test('B-04 after Assume the filtered node shows its actual value and checks it; 
 	);
 	expect(api.bodies('/api/query/relationship-value')).toEqual([
 		{
-			endpointUrl: 'CampeonatoBrasileiro2023',
+			endpointUrl: 'PokemonGen1',
 			subjectId: `<${PK}Pikachu>`,
 			predicateId: `<${PK}speed>`,
 			isLiteral: true
@@ -509,7 +509,7 @@ test('B-04 after Assume the filtered node shows its actual value and checks it; 
 	await expect(chip(page)).toHaveCount(0);
 
 	values = ['90', '95', '99', '120'];
-	await page.locator('#input-endpoint-sparql').fill('PokemonGen1');
+	await page.locator('#input-endpoint-sparql').fill('CampeonatoBrasileiro2023');
 	await setFilter('9', 0, 'starts with 9');
 	await expect(chip(page)).toHaveText('90, 95, 99, …');
 	await expect(chip(page)).toHaveAttribute('title', 'Actual value: 90, 95, 99, 120');

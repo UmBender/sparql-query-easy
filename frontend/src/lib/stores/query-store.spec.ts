@@ -95,7 +95,7 @@ describe('QueryStore actions', () => {
 
 	it('saves and loads documents with endpoint, limit and stage order', () => {
 		const store = createTestStore();
-		store.setEndpoint('PokemonGen1');
+		store.setEndpoint('CampeonatoBrasileiro2023');
 		store.setLimit(40);
 		const a = store.addVariable();
 		const b = store.addVariable();
@@ -106,7 +106,7 @@ describe('QueryStore actions', () => {
 		const loaded = loadQuery(text);
 		if (!('document' in loaded)) throw new Error(loaded.error.message);
 		other.load(loaded.document);
-		expect(other.endpoint).toEqual({ kind: 'builtIn', id: 'PokemonGen1' });
+		expect(other.endpoint).toEqual({ kind: 'builtIn', id: 'CampeonatoBrasileiro2023' });
 		expect(other.limit).toBe(40);
 		expect(other.order).toEqual(store.order);
 		expect(other.graph).toEqual(store.graph);
@@ -117,7 +117,7 @@ describe('QueryStore derived values', () => {
 	it('context follows the endpoint and limit', () => {
 		const store = createTestStore();
 		expect(store.context).toMatchObject({
-			endpointUrl: 'CampeonatoBrasileiro2023',
+			endpointUrl: 'PokemonGen1',
 			limit: 150
 		});
 		store.setEndpoint('https://query.wikidata.org/sparql');
@@ -161,7 +161,7 @@ describe('QueryStore derived values', () => {
 		expect(store.order).toEqual([b, a]);
 		store.moveNode(a, { x: 5, y: 5 });
 		expect(store.order).toEqual([b, a]);
-		store.setEndpoint('PokemonGen1');
+		store.setEndpoint('CampeonatoBrasileiro2023');
 		expect(store.order).toEqual([a, b]);
 		expect(store.signatureVersion).toBe(version + 1);
 		store.setPositions({ [a]: { x: 9, y: 9 } });

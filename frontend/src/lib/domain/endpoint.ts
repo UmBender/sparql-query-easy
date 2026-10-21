@@ -18,8 +18,8 @@ export const BUILT_IN_ENDPOINTS = [
 	{ id: 'https://query.wikidata.org/sparql', label: 'Wikidata', kind: 'remote' }
 ] as const;
 
-/** Legacy default of the endpoint field. */
-export const DEFAULT_ENDPOINT: Endpoint = { kind: 'builtIn', id: 'CampeonatoBrasileiro2023' };
+/** Default of the endpoint field: the PokemonGen1 example dataset (FE-055; legacy CampeonatoBrasileiro2023). */
+export const DEFAULT_ENDPOINT: Endpoint = { kind: 'builtIn', id: 'PokemonGen1' };
 /** Legacy default of the Limit field. */
 export const DEFAULT_LIMIT = 150;
 

@@ -74,7 +74,7 @@ describe('undo and redo (FE-052)', () => {
 		store.addVariable();
 		store.setEndpoint(store.endpoint);
 		expect(store.canUndo).toBe(true);
-		store.setEndpoint('PokemonGen1');
+		store.setEndpoint('CampeonatoBrasileiro2023');
 		expect([store.canUndo, store.canRedo]).toEqual([false, false]);
 	});
 });
