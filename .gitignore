@@ -380,3 +380,6 @@ frontend/.svelte-kit/
 
 # Local settings (BE-004); `.env.example` documents them
 .env
+
+# Database dumps of the compose backup service (OPS-009)
+/backups/

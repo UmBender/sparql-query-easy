@@ -1,0 +1,39 @@
+#!/bin/sh
+# OPS-009: retention for one directory of easyquery-<stamp>.dump[.age] files.
+# Keeps the newest dump of each of the last BACKUP_KEEP_DAILY days that have
+# one (default 7) and of each of the last BACKUP_KEEP_WEEKLY ISO weeks
+# (default 4); deletes the other dumps. Other files are never touched.
+set -eu
+dir="$1"
+keep_daily="${BACKUP_KEEP_DAILY:-7}"
+keep_weekly="${BACKUP_KEEP_WEEKLY:-4}"
+days=" "
+weeks=" "
+kept_days=0
+kept_weeks=0
+for file in $(ls "$dir" | grep -E '^easyquery-[0-9]{8}T[0-9]{6}Z\.dump(\.age)?$' | sort -r); do
+	stamp="${file#easyquery-}"
+	day="${stamp%%T*}"
+	week=$(date -u -d "${day:0:4}-${day:4:2}-${day:6:2}" +%G-%V)
+	keep=no
+	case "$days" in *" $day "*) ;; *)
+		if [ "$kept_days" -lt "$keep_daily" ]; then
+			days="$days$day "
+			kept_days=$((kept_days + 1))
+			keep=yes
+		fi
+		;;
+	esac
+	case "$weeks" in *" $week "*) ;; *)
+		if [ "$kept_weeks" -lt "$keep_weekly" ]; then
+			weeks="$weeks$week "
+			kept_weeks=$((kept_weeks + 1))
+			keep=yes
+		fi
+		;;
+	esac
+	if [ "$keep" = no ]; then
+		rm -f "$dir/$file"
+		echo "easyquery-backup: removed $file (retention)"
+	fi
+done

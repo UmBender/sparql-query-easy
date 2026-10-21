@@ -8,6 +8,7 @@ OPS-005.
 |---|---|---|
 | `db` | `postgres:17-alpine` | Accounts and sessions; data in the named volume `easyquery_db-data`; `pg_isready` health check |
 | `backend` | `easyquery-backend:local` (root `Dockerfile`, OPS-001) | Ktor on 8080, not published; Flyway migrations at startup (BE-005); waits for a healthy `db` |
+| `backup` | `easyquery-backup:local` (`deploy/backup.Dockerfile`: `postgres:17-alpine` + `age`) | `pg_dump` on `BACKUP_SCHEDULE` into `BACKUP_DIR`, retention, encrypted off-host copies (OPS-009, below); no port |
 | `web` | `easyquery-web:local` (`deploy/web.Dockerfile`) | Caddy on port 80 (and 443 in mode `auto`), published on `${WEB_BIND:-127.0.0.1}:${WEB_PORT:-8080}`: serves the SvelteKit build (`index.html` fallback) and proxies `/api/*`, `/health`, `/openapi.json` and `/swagger` to `backend` (`deploy/caddy/site.caddy`); certificates in the volume `easyquery_caddy-data` |
 
 Caddy keeps the `Host` header, which the backend's same-origin check on
@@ -54,6 +55,59 @@ Check: `node scripts/check-https-modes.mjs` starts `auto` (domain
 login attempts per minute) as throwaway projects from `deploy/test/` and
 `compose.test.yaml`, checks them with curl and removes them.
 
+## Backups and restore (OPS-009)
+
+The `backup` service runs busybox `crond` with `BACKUP_SCHEDULE` (default
+`17 2 * * *`, UTC). Each run (`deploy/backup/easyquery-backup`) writes
+`easyquery-<UTC stamp>.dump` (`pg_dump --format=custom`) under a temporary
+name and renames it when complete, mode `0600`, in `BACKUP_DIR` (default
+`./backups`, a host directory: `docker compose down -v` does not touch it;
+Docker creates it owned by root with mode 700). With `BACKUP_AGE_RECIPIENT`
+(an `age` public key) it also writes `<name>.age` to `BACKUP_OFFSITE_DIR`;
+mount off-host storage there or copy that directory off the server. Then
+`easyquery-prune` keeps the newest dump of each of the last 7 days and of
+each of the last 4 ISO weeks (`BACKUP_KEEP_DAILY`, `BACKUP_KEEP_WEEKLY`) in
+each directory and deletes the other dumps. A failed run logs
+`easyquery-backup: FAILED ...` and changes nothing. Uploaded Turtle graphs
+are in the backend's memory and are not backed up (DEC-005).
+
+Keys (DEC-017 Q4): create a key pair once on your own computer with
+`age-keygen -o easyquery-backup.agekey` (or `docker run --rm
+easyquery-backup:local age-keygen`), put the printed public key in
+`BACKUP_AGE_RECIPIENT` on the server, and keep the private key file off the
+server in two places (for example your computer and a password manager).
+Without it the `.age` copies cannot be restored.
+
+| Task | Command |
+|---|---|
+| Back up now | `docker compose exec backup easyquery-backup` |
+| List dumps | `docker compose exec backup ls -l /backups /offsite` |
+| Backup log | `docker compose logs backup` |
+| Restore a local dump | `scripts/restore-backup.sh easyquery-20261020T021700Z.dump` |
+| Restore an encrypted copy | `scripts/restore-backup.sh easyquery-20261020T021700Z.dump.age ~/easyquery-backup.agekey` (a name in `BACKUP_OFFSITE_DIR`, or a path to a copied file) |
+
+`scripts/restore-backup.sh` stops `backend` and `backup`, replaces the
+database (`DROP DATABASE ... WITH (FORCE)`, `CREATE DATABASE`, `pg_restore
+--no-owner`; `deploy/backup/easyquery-restore`), starts them again (Flyway
+applies migrations newer than the dump) and prints `/health`. Everything
+written after the dump is lost: take `easyquery-backup` first if the
+current database may still be needed. The private key text goes to that one
+`docker compose run` container's environment and is not stored. The script
+uses the same Compose settings as `docker compose` (`.env`, or
+`COMPOSE_PROJECT_NAME`, `COMPOSE_FILE`, `COMPOSE_ENV_FILES`).
+
+Restore into a fresh stack (for example a new server): clone, copy `.env`,
+`docker compose up -d --build --wait` (empty, migrated database), copy the
+dump into `BACKUP_DIR` (as root) or pass its path, run
+`scripts/restore-backup.sh`.
+
+Drill: `node scripts/check-backup-restore.mjs` runs all of this against
+throwaway projects (`easyquery-drill-a`, `-b`, port 18200, a temporary
+backup directory, a fresh key pair): retention on dummy files, a scheduled
+dump and its encrypted copy, a failed dump, restore of both into a fresh
+stack, every table compared and the account, consent and attempt checked
+through the API.
+
 ## Runbook
 
 From the repository root:
@@ -67,7 +121,7 @@ From the repository root:
 | Stop, keep data | `docker compose down` |
 | Restart one service | `docker compose restart backend` |
 | Rebuild after code changes | `docker compose up -d --build --wait` |
-| Reset (deletes accounts and sessions) | `docker compose down -v` |
+| Reset (deletes accounts and sessions; dumps in `BACKUP_DIR` stay) | `docker compose down -v` |
 | Database shell | `docker compose exec db psql -U easyquery easyquery` |
 
 ## Development database (OPS-007)
@@ -133,5 +187,5 @@ pushes to `main`, nightly and on manual runs (DEC-016 Q1 C). It complements
 
 ## Source files
 
-`compose.yaml`, `compose.dev.yaml` (OPS-007), `compose.test.yaml` and `deploy/compose-test.env` (QUAL-017), `deploy/web.Dockerfile`, `deploy/Caddyfile`, `deploy/caddy/` and `deploy/test/` with `scripts/check-https-modes.mjs` (OPS-008), `Dockerfile`,
+`compose.yaml`, `compose.dev.yaml` (OPS-007), `compose.test.yaml` and `deploy/compose-test.env` (QUAL-017), `deploy/web.Dockerfile`, `deploy/Caddyfile`, `deploy/caddy/` and `deploy/test/` with `scripts/check-https-modes.mjs` (OPS-008), `deploy/backup.Dockerfile`, `deploy/backup/`, `scripts/restore-backup.sh`, `scripts/check-backup-restore.mjs` (OPS-009), `Dockerfile`,
 `.env.example`, `.dockerignore`.

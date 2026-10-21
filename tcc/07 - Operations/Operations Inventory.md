@@ -13,11 +13,11 @@ not independently queried.
 **Confirmed:** `Dockerfile` and `.dockerignore` define a local-only Kotlin
 container build. See [[Local JVM and Container Runtime]]. No image is deployed.
 
-**Confirmed present (OPS-006):** `compose.yaml` (db, backend, web) and the Caddy reverse proxy (`deploy/Caddyfile`, `deploy/caddy/`) with HTTPS modes `local`, `auto` and `proxy` (OPS-008); see [[Docker Compose Stack]].
+**Confirmed present (OPS-006):** `compose.yaml` (db, backend, web) and the Caddy reverse proxy (`deploy/Caddyfile`, `deploy/caddy/`) with HTTPS modes `local`, `auto` and `proxy` (OPS-008), and the `backup` service with a restore script (OPS-009); see [[Docker Compose Stack]].
 
 **Questions for the server (DOC-005):** [[University Server Checklist]].
 
-**Confirmed absent from the repository:** Kubernetes manifests, Terraform, AWS configuration, DNS records, backup configuration, and Kotlin deployment workflow.
+**Confirmed absent from the repository:** Kubernetes manifests, Terraform, AWS configuration, DNS records, and Kotlin deployment workflow.
 
 ```mermaid
 flowchart LR

@@ -1,0 +1,38 @@
+#!/bin/sh
+# OPS-009: replace the database with one dump. The dump is a file name in
+# /backups or /offsite, or `-` for standard input. An .age dump needs the
+# private key in AGE_IDENTITY (its text, never stored on the server). The
+# backend must be stopped (scripts/restore-backup.sh does that); open
+# connections are closed by DROP DATABASE ... WITH (FORCE).
+set -eu
+umask 077
+source="${1:?usage: easyquery-restore <dump file name | -> [--age]}"
+work=$(mktemp -d)
+trap 'rm -rf "$work"' EXIT
+
+case "$source" in
+-) cat >"$work/input" ;;
+*/*) echo "easyquery-restore: give a file name in the backup directory, or - for standard input" >&2; exit 2 ;;
+*)
+	if [ -f "/backups/$source" ]; then cp "/backups/$source" "$work/input"
+	elif [ -f "/offsite/$source" ]; then cp "/offsite/$source" "$work/input"
+	else echo "easyquery-restore: no $source in the backup directories" >&2; exit 2
+	fi
+	;;
+esac
+
+if [ "${2:-}" = "--age" ] || [ "${source%.age}" != "$source" ]; then
+	[ -n "${AGE_IDENTITY:-}" ] || { echo "easyquery-restore: an .age dump needs AGE_IDENTITY (the private key)" >&2; exit 2; }
+	printf '%s\n' "$AGE_IDENTITY" >"$work/identity"
+	age --decrypt --identity "$work/identity" --output "$work/dump" "$work/input"
+else
+	mv "$work/input" "$work/dump"
+fi
+pg_restore --list "$work/dump" >/dev/null || { echo "easyquery-restore: not a pg_dump custom-format file" >&2; exit 2; }
+
+echo "easyquery-restore: replacing database $POSTGRES_DB"
+psql --host=db --username="$POSTGRES_USER" --dbname=postgres --quiet -v ON_ERROR_STOP=1 \
+	-c "DROP DATABASE IF EXISTS \"$POSTGRES_DB\" WITH (FORCE)" \
+	-c "CREATE DATABASE \"$POSTGRES_DB\" OWNER \"$POSTGRES_USER\""
+pg_restore --host=db --username="$POSTGRES_USER" --dbname="$POSTGRES_DB" --no-owner --exit-on-error "$work/dump"
+echo "easyquery-restore: done; start the backend to apply newer migrations"

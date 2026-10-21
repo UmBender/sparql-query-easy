@@ -1,0 +1,5 @@
+# OPS-009: tags the backup image `:test` for scripts/check-backup-restore.mjs,
+# like compose.test.yaml does for backend and web.
+services:
+  backup:
+    image: easyquery-backup:test

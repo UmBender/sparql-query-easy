@@ -1,0 +1,30 @@
+#!/bin/sh
+# OPS-009: one dump now. Writes /backups/easyquery-<UTC stamp>.dump
+# (pg_dump custom format, mode 0600) under a temporary name first, so a failed
+# dump never replaces or prunes anything. With BACKUP_AGE_RECIPIENT, also an
+# age-encrypted copy in /offsite (DEC-017 Q4). Then applies the retention.
+set -eu
+umask 077
+stamp=$(date -u +%Y%m%dT%H%M%SZ)
+name="easyquery-$stamp.dump"
+partial="/backups/.partial-$name"
+trap 'rm -f "$partial" "/offsite/.partial-$name.age"' EXIT
+
+fail() {
+	echo "easyquery-backup: FAILED at $stamp: $1; older dumps are kept" >&2
+	exit 1
+}
+
+pg_dump --host=db --username="$POSTGRES_USER" --dbname="$POSTGRES_DB" --format=custom --file="$partial" ||
+	fail "pg_dump of $POSTGRES_DB"
+mv "$partial" "/backups/$name"
+echo "easyquery-backup: wrote $name ($(du -h "/backups/$name" | cut -f1))"
+
+if [ -n "${BACKUP_AGE_RECIPIENT:-}" ]; then
+	age --encrypt --recipient "$BACKUP_AGE_RECIPIENT" --output "/offsite/.partial-$name.age" "/backups/$name" ||
+		fail "encrypting the off-host copy"
+	mv "/offsite/.partial-$name.age" "/offsite/$name.age"
+	echo "easyquery-backup: wrote off-host copy $name.age"
+	easyquery-prune /offsite
+fi
+easyquery-prune /backups

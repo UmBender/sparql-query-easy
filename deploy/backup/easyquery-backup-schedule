@@ -1,0 +1,14 @@
+#!/bin/sh
+# OPS-009: run easyquery-backup on BACKUP_SCHEDULE (cron syntax, UTC) with
+# busybox crond in the foreground; each run logs to `docker compose logs backup`.
+set -eu
+schedule="${BACKUP_SCHEDULE:-17 2 * * *}"
+chmod 700 /backups /offsite
+echo "$schedule /usr/local/bin/easyquery-backup >/proc/1/fd/1 2>/proc/1/fd/2" >/etc/crontabs/root
+echo "easyquery-backup: schedule '$schedule' UTC, keeping ${BACKUP_KEEP_DAILY:-7} daily and ${BACKUP_KEEP_WEEKLY:-4} weekly dumps"
+if [ -n "${BACKUP_AGE_RECIPIENT:-}" ]; then
+	echo "easyquery-backup: encrypted copies go to the off-host directory"
+else
+	echo "easyquery-backup: no BACKUP_AGE_RECIPIENT, so no off-host copies"
+fi
+exec crond -f -d 8

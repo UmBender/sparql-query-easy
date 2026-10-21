@@ -132,7 +132,7 @@ Ordered by dependencies, then priority among selection candidates. See [worker r
 | DEC-017 | DONE | P1 | decision | [Decide how the T11 brief changes the deployment contract of OPS-001 and OPS-006](<items/DEC-017-t11-deploy-brief-differences.md>) |
 | DOC-005 | DONE | P1 | documentation | [Write the checklist of questions for the university IT before go-live](<items/DOC-005-university-it-checklist.md>) |
 | OPS-008 | DONE | P1 | operations | [Choose HTTPS by Caddy certificates or behind the university proxy with one setting](<items/OPS-008-https-mode-switch.md>) |
-| OPS-009 | BACKLOG | P1 | operations | [Back up PostgreSQL on a schedule with retention and restore it into a fresh stack](<items/OPS-009-database-backups-and-restore.md>) |
+| OPS-009 | DONE | P1 | operations | [Back up PostgreSQL on a schedule with retention and restore it into a fresh stack](<items/OPS-009-database-backups-and-restore.md>) |
 | OPS-010 | BACKLOG | P2 | operations | [Write readable backend logs, rotate container logs and cap service resources](<items/OPS-010-logs-and-resource-limits.md>) |
 | OPS-011 | BACKLOG | P1 | operations | [Install, update, roll back, restore and rotate secrets on the server by following one runbook](<items/OPS-011-deploy-runbook.md>) |
 | FE-049 | DONE | P1 | frontend | [Make the SvelteKit app the authoritative frontend and retire index2.html](<items/FE-049-legacy-cutover.md>) |

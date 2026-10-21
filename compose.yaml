@@ -47,6 +47,31 @@ services:
       retries: 20
     restart: unless-stopped
 
+  # OPS-009: pg_dump on BACKUP_SCHEDULE into BACKUP_DIR (a host path, so
+  # `docker compose down -v` never deletes it), retention 7 daily + 4 weekly,
+  # age-encrypted copies in BACKUP_OFFSITE_DIR when BACKUP_AGE_RECIPIENT is set.
+  # Restore: scripts/restore-backup.sh. `:z` lets SELinux hosts write there.
+  backup:
+    build:
+      context: .
+      dockerfile: deploy/backup.Dockerfile
+    image: easyquery-backup:local
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-easyquery}
+      POSTGRES_USER: ${POSTGRES_USER:-easyquery}
+      PGPASSWORD: *db-password
+      BACKUP_SCHEDULE: ${BACKUP_SCHEDULE:-17 2 * * *}
+      BACKUP_KEEP_DAILY: ${BACKUP_KEEP_DAILY:-7}
+      BACKUP_KEEP_WEEKLY: ${BACKUP_KEEP_WEEKLY:-4}
+      BACKUP_AGE_RECIPIENT: ${BACKUP_AGE_RECIPIENT:-}
+    volumes:
+      - ${BACKUP_DIR:-./backups}:/backups:z
+      - ${BACKUP_OFFSITE_DIR:-./backups/offsite}:/offsite:z
+    depends_on:
+      db:
+        condition: service_healthy
+    restart: unless-stopped
+
   web:
     build:
       context: .
