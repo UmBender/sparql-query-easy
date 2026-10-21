@@ -127,6 +127,7 @@ Ordered by dependencies, then priority among selection candidates. See [worker r
 | STUDY-010 | DONE | P1 | fullstack | [Submit a questionnaire once, validated on the server, with progress kept per page](<items/STUDY-010-submit-form-response.md>) |
 | STUDY-011 | DONE | P1 | fullstack | [Let admins export questionnaire responses as CSV and cover the whole T9 flow end to end](<items/STUDY-011-questionnaire-export-and-e2e.md>) |
 | STUDY-002 | DONE | P1 | fullstack | [Show two questionnaires to logged-in users and store their answers](<items/STUDY-002-questionnaires.md>) |
+| STUDY-012 | READY | P1 | fullstack | [Build two feature-rich proposed queries in the editor end to end and show what the database stored and returned](<items/STUDY-012-query-creation-test.md>) |
 | OPS-006 | DONE | P1 | operations | [Run db, backend and web together with Docker Compose](<items/OPS-006-docker-compose-stack.md>) |
 | OPS-007 | DONE | P2 | operations | [Start only PostgreSQL for local development and reach it from ./gradlew run](<items/OPS-007-local-dev-database.md>) |
 | DEC-017 | DONE | P1 | decision | [Decide how the T11 brief changes the deployment contract of OPS-001 and OPS-006](<items/DEC-017-t11-deploy-brief-differences.md>) |
