@@ -15,6 +15,8 @@ container build. See [[Local JVM and Container Runtime]]. No image is deployed.
 
 **Confirmed present (OPS-006):** `compose.yaml` (db, backend, web) and the local Caddy reverse proxy (`deploy/Caddyfile`, HTTP only); see [[Docker Compose Stack]].
 
+**Questions for the server (DOC-005):** [[University Server Checklist]].
+
 **Confirmed absent from the repository:** Kubernetes manifests, Terraform, AWS configuration, DNS records, TLS configuration, backup configuration, and Kotlin deployment workflow.
 
 ```mermaid

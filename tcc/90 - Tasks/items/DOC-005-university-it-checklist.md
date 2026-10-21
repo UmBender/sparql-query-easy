@@ -1,7 +1,7 @@
 ---
 id: DOC-005
 title: Write the checklist of questions for the university IT before go-live
-status: BACKLOG
+status: DONE
 priority: P1
 type: documentation
 depends_on: [DEC-003]
@@ -40,11 +40,21 @@ answers unblock those cards and DEC-017 Q1/Q5/Q6. Skill: `tcc-plan-task`
 
 ## Acceptance criteria
 
-- [ ] Every T11 checklist topic (Docker allowed, root access, open ports,
+- [x] Every T11 checklist topic (Docker allowed, root access, open ports,
   external reachability, HTTPS, backup location) has at least one question.
-- [ ] Each question names the card it unblocks; BLOCKERS links to the note.
+- [x] Each question names the card it unblocks; BLOCKERS links to the note.
 
 ## Validation
 
 Documentation check: links resolve (Obsidian wikilinks to existing notes),
 the Operational Map documentation gate.
+
+## Execution log
+
+- 2026-10-20: [[../../07 - Operations/University Server Checklist]]: 21
+  questions in six groups (access, network, name and HTTPS, machine, data
+  and backups, operations), each with the reason, the card it unblocks and
+  an answer column. BLOCKERS links to it instead of repeating the list;
+  Operations Inventory links it.
+- Validation: `node scripts/check-project-docs.mjs`, `git diff --check`.
+- Commit: completion commit for this task.

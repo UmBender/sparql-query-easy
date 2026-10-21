@@ -40,12 +40,13 @@ university server); domain, TLS, monitoring, backup and security limits are
 still open under OPS-002, OPS-004, OPS-005 and SEC-001. No deployment or infrastructure mutation is
 authorized; see [[../07 - Operations/Local JVM and Container Runtime]].
 
-## University server facts (OPS-002, OPS-004, OPS-005)
+## University server facts (OPS-002, OPS-004, OPS-005, OPS-011)
 
 DEC-003 chose the university server with Docker Compose. Go-live stays
 blocked until these are known:
 
-**Questions:** Is the server publicly reachable on 80/443? Under which DNS
-name, and who issues its TLS certificate (Let's Encrypt or the university)?
-How can a deploy reach it (SSH, VPN, nothing from GitHub)? Where can off-host
-database backups be stored?
+**Questions:** the checklist for the university IT in
+[[../07 - Operations/University Server Checklist]] (DOC-005): access, network,
+DNS name and HTTPS, machine, off-host backup location, operations. The four
+open facts are still public 80/443 reachability, DNS name and TLS issuer,
+deploy access and the off-host backup location.
