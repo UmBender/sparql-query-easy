@@ -1,10 +1,13 @@
 <!--
-	Explore query variables (DEC-008; legacy #two-variable-panel): one value per
-	variable in stage order, with loading/empty/error/retry, Load more, the
-	hover/focus preview of the next variable, Back, Assume and Apply to graph.
+	Find matching values (DEC-008; legacy #two-variable-panel): one value per
+	variable in stage order, shown as steps with readable names (FE-056): done
+	steps keep their value and a Change button, the current step has
+	loading/empty/error/retry, Load more, the hover/focus preview of the next
+	variable and Assume; Apply to graph ends it.
 -->
 <script lang="ts">
 	import { tick } from 'svelte';
+	import CheckIcon from '@lucide/svelte/icons/check';
 	import { Button } from '#lib/components/ui/button/index.js';
 	import { Panel } from '#lib/components/ui/panel/index.js';
 	import {
@@ -24,6 +27,7 @@
 		$props();
 
 	const current = $derived(exploration.state!);
+	const nameOf = (name: string) => exploration.store.nameOf(name);
 	const variable = $derived(current.order[current.stage]);
 	const candidates = $derived(exploration.candidates);
 	const complete = $derived(exploration.complete);
@@ -32,13 +36,13 @@
 
 	const status = $derived.by(() => {
 		if (current.status === 'loading' && !candidates.length)
-			return `Loading values for ${variable}…`;
+			return `Loading values for ${nameOf(variable)}…`;
 		if (current.status === 'loading') return 'Loading more values…';
 		if (current.status === 'error') return current.error ?? '';
 		if (complete)
-			return 'Apply to graph replaces the variables with these values. Close or Back leaves the graph unchanged.';
-		if (!candidates.length) return `No values for ${variable} under the chosen bindings.`;
-		return `${candidates.length} value${candidates.length === 1 ? '' : 's'} for ${variable}.`;
+			return 'Apply to graph replaces the variables with these values. Close or Change leaves the graph unchanged.';
+		if (!candidates.length) return `No values for ${nameOf(variable)} fit the steps above.`;
+		return `${candidates.length} value${candidates.length === 1 ? '' : 's'} for ${nameOf(variable)}.`;
 	});
 
 	const preview = $derived.by(() => {
@@ -54,14 +58,14 @@
 			shown.status === 'error'
 				? (shown.error ?? '')
 				: shown.status !== 'loaded'
-					? `Loading values for ${next}…`
+					? `Loading values for ${nameOf(next)}…`
 					: !items.length
 						? `No values for ${next} under this assumption.`
 						: shown.page!.hasMore
 							? `First ${items.length} values:`
 							: `${items.length} value${items.length === 1 ? '' : 's'}:`;
 		return {
-			heading: `If ${current.order[current.stage]} = ${candidateText(candidate)}, ${next} could be:`,
+			heading: `If ${nameOf(current.order[current.stage])} = ${candidateText(candidate)}, ${nameOf(next)} could be:`,
 			line,
 			error: shown.status === 'error',
 			items
@@ -96,69 +100,138 @@
 
 <Panel
 	id="two-variable-panel"
-	title="Explore query variables"
-	closeLabel="Close query variable exploration"
+	title="Find matching values"
+	closeLabel="Close Find matching values"
 	closeId="two-variable-panel-close"
 	{onclose}
 	class="pointer-events-auto max-h-[55%] w-full shrink-0 overflow-y-auto lg:max-h-full lg:w-[min(26rem,100%)]"
 	aria-describedby="two-variable-panel-description"
 >
-	<ul
-		id="two-variable-list"
-		aria-label="Variables in this query"
-		class="flex flex-wrap gap-1 font-mono text-xs"
-	>
-		{#each current.order as name (name)}<li class="rounded bg-muted px-1.5 py-0.5">
-				{name}
-			</li>{/each}
-	</ul>
 	<p id="two-variable-panel-description" class="text-xs text-muted-foreground">
-		Staged exploration: choose one value per variable in stage order.
+		Choose one value per step. Each step only lists values that fit the steps above it.
 	</p>
-	<section id="stage-view" aria-labelledby="stage-heading" class="flex flex-col gap-2">
-		{#if current.bindings.length}
-			<ol
-				id="stage-commitments"
-				aria-label="Committed bindings"
-				class="flex flex-col gap-0.5 text-sm"
+	<ol id="stage-steps" aria-label="Steps" class="flex flex-col">
+		{#each current.order as name, index (name)}
+			{@const label = nameOf(name)}
+			{@const last = index === current.order.length - 1}
+			<li
+				class="stage-step flex gap-3"
+				data-variable={name}
+				aria-current={index === current.stage ? 'step' : undefined}
 			>
-				{#each current.bindings as binding, index (binding.variableName)}
-					<li title={binding.term.value}>
-						{binding.variableName} = {current.labels[index]}
-					</li>
-				{/each}
-			</ol>
-		{/if}
-		{#if current.stage > 0}
+				<div class="flex flex-col items-center">
+					{#if index < current.stage}
+						<span
+							class="flex size-7 shrink-0 items-center justify-center rounded-full bg-success text-success-foreground"
+							><CheckIcon role="img" aria-label="Done" class="size-4" /></span
+						>
+					{:else}
+						<span
+							aria-hidden="true"
+							class={[
+								'flex size-7 shrink-0 items-center justify-center rounded-full text-xs font-bold tabular-nums',
+								index === current.stage
+									? 'bg-stage text-stage-foreground'
+									: 'border text-muted-foreground'
+							]}>{index + 1}</span
+						>
+					{/if}
+					{#if !last}
+						<span
+							aria-hidden="true"
+							class={[
+								'min-h-3 w-0.5 grow',
+								index < current.stage ? 'bg-success' : 'bg-border'
+							]}
+						></span>
+					{/if}
+				</div>
+				<div class={['flex min-w-0 grow flex-col gap-2', !last && 'pb-4']}>
+					{#if index < current.stage}
+						<div class="stage-commitment flex items-start justify-between gap-2 pt-0.5">
+							<div
+								class="flex min-w-0 flex-col"
+								title={current.bindings[index]?.term.value}
+							>
+								<span class="stage-commitment-name text-sm font-semibold"
+									>{label}</span
+								>
+								<span class="stage-commitment-value truncate text-sm"
+									>{current.labels[index]}</span
+								>
+							</div>
+							<Button
+								variant="outline"
+								size="sm"
+								class="stage-change"
+								aria-label="Change {label}"
+								onclick={() => exploration.back(index)}>Change</Button
+							>
+						</div>
+					{:else if index > current.stage}
+						<div class="flex flex-col pt-0.5 text-muted-foreground">
+							<span class="text-sm font-semibold">{label}</span>
+							<span class="text-xs"
+								>Chosen after {nameOf(current.order[index - 1])}</span
+							>
+						</div>
+					{:else}
+						{@render stage()}
+					{/if}
+				</div>
+			</li>
+		{/each}
+	</ol>
+	{#if complete}
+		<section aria-labelledby="stage-heading" class="flex flex-col gap-2">
+			<h3
+				id="stage-heading"
+				bind:this={heading}
+				tabindex="-1"
+				class="text-sm font-semibold focus:outline-none"
+			>
+				All variables chosen
+			</h3>
+			<p
+				id="stage-status"
+				role="status"
+				aria-live="polite"
+				class="text-xs text-muted-foreground"
+			>
+				{status}
+			</p>
 			<Button
-				id="stage-back"
-				variant="ghost"
+				id="stage-apply"
 				size="sm"
-				class="self-start"
-				aria-label="Back to previous stage"
-				onclick={() => exploration.back()}>Back</Button
+				class="self-start bg-success text-success-foreground hover:bg-success/85"
+				onclick={() => exploration.apply()}>Apply to graph</Button
 			>
-		{/if}
-		<h3
-			id="stage-heading"
-			bind:this={heading}
-			tabindex="-1"
-			class="text-sm font-semibold focus:outline-none"
-		>
-			{complete
-				? 'All variables chosen'
-				: `Stage ${current.stage + 1} of ${current.order.length}: ${variable}`}
-		</h3>
-		<p
-			id="stage-status"
-			role="status"
-			aria-live="polite"
-			class="text-xs"
-			class:text-danger={current.status === 'error'}
-			class:text-muted-foreground={current.status !== 'error'}
-		>
-			{status}
-		</p>
+		</section>
+	{/if}
+</Panel>
+
+{#snippet stage()}
+	<section id="stage-view" aria-labelledby="stage-heading" class="flex flex-col gap-2">
+		<div class="flex flex-col gap-0.5 pt-0.5">
+			<h3
+				id="stage-heading"
+				bind:this={heading}
+				tabindex="-1"
+				class="text-sm font-semibold focus:outline-none"
+			>
+				Step {current.stage + 1} of {current.order.length}: {nameOf(variable)}
+			</h3>
+			<p
+				id="stage-status"
+				role="status"
+				aria-live="polite"
+				class="text-xs"
+				class:text-danger={current.status === 'error'}
+				class:text-muted-foreground={current.status !== 'error'}
+			>
+				{status}
+			</p>
+		</div>
 		{#if current.status === 'error'}<Button
 				id="stage-retry"
 				size="sm"
@@ -198,7 +271,7 @@
 						<button
 							type="button"
 							class="stage-assume rounded-md border border-success px-2 text-xs text-success hover:bg-success hover:text-success-foreground focus-visible:bg-success focus-visible:text-success-foreground focus-visible:outline-none"
-							aria-label="Assume {variable} = {candidateText(
+							aria-label="Assume {nameOf(variable)} = {candidateText(
 								candidate
 							)} in the graph now"
 							title="Apply this value to the graph now"
@@ -221,20 +294,12 @@
 				onclick={() => exploration.loadMore()}>Load more</Button
 			>
 		{/if}
-		{#if complete}
-			<Button
-				id="stage-apply"
-				size="sm"
-				class="self-start bg-success text-success-foreground hover:bg-success/85"
-				onclick={() => exploration.apply()}>Apply to graph</Button
-			>
-		{/if}
 		{#if preview}
 			<section
 				id="stage-preview"
 				aria-labelledby="stage-preview-heading"
 				aria-live="polite"
-				class="flex flex-col gap-1 border-l-3 border-primary bg-accent/50 p-2 text-sm"
+				class="flex flex-col gap-1 rounded-md bg-muted p-2 text-sm"
 			>
 				<h4 id="stage-preview-heading" class="font-medium">{preview.heading}</h4>
 				<p
@@ -253,4 +318,4 @@
 			</section>
 		{/if}
 	</section>
-</Panel>
+{/snippet}

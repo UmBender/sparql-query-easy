@@ -173,7 +173,7 @@ test('filter editor', async ({ page }) => {
 test('run query', async ({ page }) => {
 	const editor = await openExample(page);
 	await editor.runQuery();
-	await expect(editor.stageHeading).toContainText('?pokemon');
+	await expect(editor.stageHeading).toContainText('pokemon');
 	await expect(editor.candidates.first()).toBeVisible();
 	await shoot(page, 'run-query');
 });

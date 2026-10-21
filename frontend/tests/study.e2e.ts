@@ -73,7 +73,7 @@ test('a task starts from its drawn query, submits it and lists the attempt', asy
 	await taskPage.open('fire-fast');
 	await expect(taskPage.statement).toHaveText(task.statement);
 	await expect(taskPage.editor.nodeCount).toHaveText('Nodes: 3');
-	await expect(taskPage.answerVariable('?pokemon')).toBeChecked();
+	await expect(taskPage.answerVariable('pokemon')).toBeChecked();
 	await taskPage.submit();
 	await expect(taskPage.feedback).toHaveText('Correct: all 7 expected results.');
 	await expect(taskPage.attempts).toHaveCount(1);

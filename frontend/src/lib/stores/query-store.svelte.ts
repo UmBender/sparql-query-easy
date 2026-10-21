@@ -40,6 +40,8 @@ import {
 	toggleBoolean,
 	toggleFunnelStep,
 	validate,
+	variableLabel,
+	variableNames,
 	type Choice,
 	type Endpoint,
 	type OutgoingRelation,
@@ -48,6 +50,7 @@ import {
 	type QueryDocument,
 	type QueryGraph,
 	type QueryNode,
+	type VariableNames,
 	type VariableOrderState
 } from '#lib/domain/index.js';
 import { nodeFilter } from '#lib/domain/legacy/graph-model.js';
@@ -125,6 +128,8 @@ export class QueryStore {
 		now: () => this.#stamp()
 	});
 	order: string[] = $derived(this.orderState.order);
+	/** Readable names of the graph's variables (FE-056); SPARQL keeps the real names. */
+	variableNames: VariableNames = $derived(variableNames(this.graph));
 	validation = $derived(validate(this.graph));
 	activeFilters: ActiveFilter[] = $derived(
 		nodesOf(this.graph).flatMap((node) => {
@@ -353,6 +358,10 @@ export class QueryStore {
 		if (next.every((name, index) => name === this.order[index])) return false;
 		this.orderState = { ...this.orderState, order: next };
 		return true;
+	}
+	/** The label a variable is shown with (FE-056). */
+	nameOf(variable: string): string {
+		return variableLabel(this.variableNames, variable);
 	}
 	setOrder(order: string[]) {
 		this.orderState = { ...this.orderState, order: order.slice() };

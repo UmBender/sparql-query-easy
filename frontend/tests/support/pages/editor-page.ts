@@ -36,6 +36,26 @@ export class EditorPage {
 		this.nodeCount = page.locator('#status-nodes');
 	}
 
+	/** Moves one step in the Change order list (FE-056), then closes it with Done. */
+	async moveInOrder(name: string) {
+		await this.page.locator('#variable-order-edit').click();
+		await this.page.getByRole('button', { name }).click();
+		await this.page.getByRole('button', { name: 'Done' }).click();
+		await expect(this.page.locator('#variable-order-popover')).toBeHidden();
+	}
+
+	/** Finished exploration steps as "name = value". */
+	commitments() {
+		return this.page
+			.locator('#stage-steps .stage-commitment')
+			.evaluateAll((items) =>
+				items.map(
+					(item) =>
+						`${item.querySelector('.stage-commitment-name')?.textContent?.trim()} = ${item.querySelector('.stage-commitment-value')?.textContent?.trim()}`
+				)
+			);
+	}
+
 	/** Opens `path` as a returning visitor (no guided tour) and waits for the API status. */
 	async open(path = '/') {
 		await this.page.addInitScript(() =>

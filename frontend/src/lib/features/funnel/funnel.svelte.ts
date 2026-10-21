@@ -150,7 +150,9 @@ export class Funnel {
 		const last = stepCounts.length ? stepCounts[stepCounts.length - 1] : base;
 		const parts: string[] = [];
 		if (last != null)
-			parts.push(`Result: ${last} ${plan.variableName}${base != null ? ` of ${base}` : ''}.`);
+			parts.push(
+				`Result: ${last} ${this.store.nameOf(plan.variableName)}${base != null ? ` of ${base}` : ''}.`
+			);
 		if (off)
 			parts.push(
 				`Preview without ${off} filter${off === 1 ? '' : 's'}; Run Query still applies every filter.`

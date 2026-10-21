@@ -28,7 +28,7 @@ export const TOUR_STEPS: TourStep[] = [
 	},
 	{
 		target: '#run-query-btn',
-		text: 'Run the query. Variables are explored one at a time, in the numbered order next to this button: choose a value for each and apply it to the graph.'
+		text: 'Run the query. Variables are explored one at a time, in the numbered order next to this button (Change order reorders them): choose a value for each and apply it to the graph.'
 	},
 	{
 		target: '#view-sparql-btn',

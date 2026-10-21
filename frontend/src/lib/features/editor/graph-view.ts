@@ -4,7 +4,14 @@
  * Pure, so the view can always be rebuilt from the store
  * (graph-view.spec.ts).
  */
-import { edgeData, nodeData, type QueryGraph, type QueryNode } from '#lib/domain/index.js';
+import {
+	edgeData,
+	nodeData,
+	variableNames,
+	type QueryGraph,
+	type QueryNode,
+	type VariableNames
+} from '#lib/domain/index.js';
 import { relationLabelKind } from '#lib/domain/legacy/query-calculations.js';
 import type { NodeKindName } from '#lib/design/tokens.js';
 
@@ -45,7 +52,23 @@ export function nodeViewLabel(node: QueryNode): string {
 	return label;
 }
 
-export function viewElements(graph: QueryGraph, state: ViewState = {}): ViewElement[] {
+/** A variable's `?` (alone or before its filter, `? ≥ 90`) shows its readable name (FE-056). */
+function shownLabel(label: string, variable: string | null, names: VariableNames): string {
+	const name = variable ? names.get(variable)?.label : undefined;
+	if (!name) return label;
+	if (label === '?') return name;
+	return label.startsWith('? ') ? `${name}${label.slice(1)}` : label;
+}
+
+function nodeVariable(node: QueryNode): string | null {
+	return node.kind === 'variable' || node.kind === 'valueVariable' ? node.name : null;
+}
+
+export function viewElements(
+	graph: QueryGraph,
+	state: ViewState = {},
+	names: VariableNames = variableNames(graph)
+): ViewElement[] {
 	const selected = new Set(state.selected ?? []);
 	return graph.elements.map((element): ViewElement => {
 		const classes = [
@@ -60,13 +83,13 @@ export function viewElements(graph: QueryGraph, state: ViewState = {}): ViewElem
 					id: element.id,
 					source: element.source,
 					target: element.target,
-					label: element.label,
+					label: shownLabel(element.label, element.predicate, names),
 					kind: relationLabelKind(edgeData(element))
 				},
 				classes: classes.filter(Boolean).join(' ')
 			};
 		}
-		const label = nodeViewLabel(element);
+		const label = shownLabel(nodeViewLabel(element), nodeVariable(element), names);
 		if (label.length > LONG_LABEL) classes.push('label-below');
 		return {
 			group: 'nodes',

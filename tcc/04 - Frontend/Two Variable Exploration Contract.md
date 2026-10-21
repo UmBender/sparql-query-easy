@@ -64,6 +64,21 @@ or relation emphasizes its block, and hovering or keyboard-focusing a block
 emphasizes every node and relation of that variable (a node and a predicate
 sharing it together). Fixed elements and single-variable queries emphasize
 nothing. Emphasis is a class on both sides only and follows re-rendered blocks.
+*Implemented (FE-056):* variables are shown with readable names
+(`frontend/src/lib/domain/variable-names.ts`); the SPARQL variable, requests,
+saved queries and View SPARQL keep the real name. The first rule that applies:
+a name nobody generated, without its `?` (`?pokemon` → pokemon); the label of
+the variable's class (an edge to a class node or `rdf:type`); the fixed
+relation that leads to it, without a leading "has"/"is" (speed → Speed);
+otherwise Item A, B, … for nodes and Relation A, B, … for predicate
+variables, oldest first. A label already taken gets a number (Speed 2). The
+canvas shows the name on a variable whose label is `?` (and before a value
+variable's filter, `speed ≥ 90`), and the chips, the exploration panel, the
+possible graph, the funnel and the study/admin answer-variable choice use it.
+The toolbar shows the order as numbered chips joined by arrows; **Change
+order** opens a list of steps (name, the relations that describe it, Move
+earlier/later buttons, pointer drag on the row) that keeps the FE-009
+announcements and FE-023 emphasis.
 
 **Stages.** Stage *k* lists candidates for the *k*-th variable under the
 bindings committed for stages 1..*k*-1. Only the current stage is requested.
@@ -71,6 +86,10 @@ Hovering or keyboard-focusing a candidate temporarily assumes it and previews
 candidates of the next variable; click or Enter commits it and advances. The
 panel shows prior commitments; Back returns to the previous stage and clears
 it and every later commitment. Previews never mutate the graph.
+*Implemented (FE-056):* the panel ("Find matching values") lists every
+variable as a step in order: finished steps show their value and a **Change**
+button (Back to that step, clearing it and every later commitment), the
+current step holds the candidates, later steps wait.
 
 **Request budget.** Page size is the current Limit value capped at 50; "Load
 more" requests the next offset page of the current stage. A preview request is

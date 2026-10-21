@@ -81,7 +81,7 @@ test('a participant submits a correct and a wrong answer and sees the feedback a
 	const taskPage = new TaskPage(page);
 	await taskPage.open(keys[1]);
 	await expect(taskPage.editor.nodeCount).toHaveText('Nodes: 3');
-	await expect(taskPage.answerVariable('?pokemon')).toBeChecked();
+	await expect(taskPage.answerVariable('pokemon')).toBeChecked();
 	await taskPage.submit();
 	await expect(taskPage.feedback).toHaveText(/^Correct: all \d+ expected results\.$/);
 

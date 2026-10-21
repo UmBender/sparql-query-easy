@@ -19,6 +19,9 @@ PokemonGen1 dataset (the first 151 Pokémon), which the editor opens on.
   value variables; search the dataset to add nodes, explore an entity's
   relations, connect nodes with a chosen or a variable predicate, Alt+drag to
   draw relations, undo/redo, auto layout, light and dark themes.
+- Variables get readable names from the graph (the class they have, or the
+  relation that leads to them: Pokémon, Speed) instead of generated SPARQL
+  names; the query keeps its real variable names.
 - View SPARQL shows the generated query with a Copy button, so users learn the
   language as they go.
 - Upload Turtle triples to query your own data; export and reload queries as

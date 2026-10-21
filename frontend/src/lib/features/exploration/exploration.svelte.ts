@@ -237,12 +237,11 @@ export class Exploration {
 		this.#enter(state.stage + 1);
 	}
 
-	/** Back clears the previous stage's commitment and every later one. */
-	back() {
+	/** Back to `stage` (default: the previous one) clears its commitment and every later one. */
+	back(stage = (this.state?.stage ?? 0) - 1) {
 		const state = this.state;
-		if (!state || state.stage === 0) return;
+		if (!state || stage < 0 || stage >= state.stage) return;
 		this.#previews?.cancel();
-		const stage = state.stage - 1;
 		this.state = {
 			...state,
 			bindings: state.bindings.slice(0, stage),

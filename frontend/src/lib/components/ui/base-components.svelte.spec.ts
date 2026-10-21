@@ -8,18 +8,18 @@ import RatingScale from './rating-scale/rating-scale.svelte';
 import Field from './field/field.svelte';
 
 describe('base components', () => {
-	it('a numbered chip shows its stage number and keeps the stage name readable', async () => {
+	it('a numbered chip shows its step number beside a readable name (FE-056)', async () => {
 		const screen = await render(Chip, {
-			label: '?pokemon',
+			label: 'Pokémon',
 			number: 2,
-			'aria-label': 'Stage 2: ?pokemon'
+			'aria-label': 'Step 2: Pokémon'
 		});
-		const chip = screen.getByLabelText('Stage 2: ?pokemon');
+		const chip = screen.getByLabelText('Step 2: Pokémon');
 		await expect.element(chip).toBeVisible();
 		await expect
 			.element(chip.getByText('2', { exact: true }))
 			.toHaveAttribute('aria-hidden', 'true');
-		await expect.element(chip.getByText('?pokemon')).toHaveClass(/font-mono/);
+		await expect.element(chip.getByText('Pokémon')).not.toHaveClass(/font-mono/);
 		const plain = await render(Chip, { label: '?type' });
 		await expect.element(plain.getByText('?type')).not.toHaveClass(/font-mono/);
 	});

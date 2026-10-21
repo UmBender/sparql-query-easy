@@ -145,6 +145,7 @@ Ordered by dependencies, then priority among selection candidates. See [worker r
 | BUG-008 | DONE | P1 | bug | [Edges can be added when the app is opened over plain HTTP on a LAN address](<items/BUG-008-edges-over-plain-http-lan.md>) |
 | FE-055 | DONE | P2 | frontend | [Open the editor on the PokemonGen1 dataset by default](<items/FE-055-default-endpoint-pokemon.md>) |
 | DOC-008 | DONE | P2 | documentation | [Rewrite the README around the application and its features](<items/DOC-008-readme-application-focus.md>) |
+| FE-056 | DONE | P1 | frontend | [Show variables with readable names and make the exploration order clearer](<items/FE-056-readable-variable-names-and-order.md>) |
 | BE-004 | DONE | P1 | fullstack | [Make MAX and MIN keep every entity with the extreme value, capped by a configurable limit](<items/BE-004-max-min-all-ties.md>) |
 | INV-001 | DONE | P1 | investigation | [Investigate Ktor HTTP-client and runtime resource lifecycle](<items/INV-001-runtime-resource-lifecycle.md>) |
 | LEARN-001 | REVIEW | P1 | learning | [Learn the Linux shell and networking needed to debug a web app](<items/LEARN-001-linux-shell-networking.md>) |

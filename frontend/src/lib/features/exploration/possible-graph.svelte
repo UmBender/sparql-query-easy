@@ -26,7 +26,10 @@
 	let cycleKey: string | null = null;
 
 	const current = $derived(exploration.state!);
-	const view = $derived(possibleGraphView({ ...current, complete: exploration.complete }, cycle));
+	const nameOf = (name: string) => exploration.store.nameOf(name);
+	const view = $derived(
+		possibleGraphView({ ...current, complete: exploration.complete }, cycle, nameOf)
+	);
 
 	// The cycle restarts at the first value whenever the hovered option changes.
 	$effect(() => {
@@ -119,7 +122,7 @@
 		const graph = cy;
 		graph.batch(() => {
 			graph.elements().remove();
-			graph.add(consolidatedGraphElements(items, assignments));
+			graph.add(consolidatedGraphElements(items, assignments, nameOf));
 		});
 		placeLabels(graph);
 		graph.fit(undefined, 16);

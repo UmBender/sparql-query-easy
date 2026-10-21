@@ -117,7 +117,7 @@
 							bind:group={answerVariable}
 							class="size-4 accent-primary"
 						/>
-						{name}
+						{store?.nameOf(name) ?? name}
 					</label>
 				{:else}
 					<p class="text-xs text-muted-foreground">

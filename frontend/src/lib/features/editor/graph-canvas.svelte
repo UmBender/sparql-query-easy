@@ -48,7 +48,7 @@
 	}
 
 	function sync(cy: Core) {
-		const elements = viewElements(store.graph, viewState);
+		const elements = viewElements(store.graph, viewState, store.variableNames);
 		const wanted = new Map(elements.map((element) => [element.data.id, element]));
 		const unplaced: string[] = [];
 		cy.batch(() => {

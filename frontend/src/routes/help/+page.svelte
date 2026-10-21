@@ -148,7 +148,7 @@
 		{@render figure(
 			'editor',
 			'The editor with a variable connected to the entity Fire by has type and to a value variable at least 90 by speed; a badge 7 / 12 above the value variable.',
-			'The question drawn as a graph. The numbered chips next to Run Query give the order in which the variables are explored.'
+			'The question drawn as a graph. The numbered names next to Run Query give the order in which the variables are explored.'
 		)}
 	</section>
 
@@ -215,18 +215,22 @@
 		<h2 id="run-title" class="text-lg font-semibold">Running the query</h2>
 		<p class="text-sm">
 			<strong>Run Query</strong> explores the variables one at a time, in the order of the
-			numbered chips next to the button; use the arrows on a chip to change the order. For
-			each stage the panel lists the possible values. Hover over one to preview the graph it
-			leads to in the
-			<em>Possible graph</em> window, click it to choose it and go to the next variable, or
-			press
-			<strong>Assume</strong> to put it into the graph at once.
-			<strong>Apply to graph</strong> puts the chosen values into the graph.
+			numbered names next to the button. A variable is named after its class or the relation
+			that leads to it (Pokémon, Speed), or Item A, Item B when the graph says nothing about
+			it; a name you gave it in a loaded query is kept. <strong>Change order</strong> lists
+			the steps: drag one or use its arrows. The <em>Find matching values</em> panel shows the
+			steps in that order and lists the possible values of the current one, only those that
+			fit the values already chosen. Hover over a value to preview the graph it leads to in
+			the
+			<em>Possible graph</em> window, click it to choose it and go to the next step, or press
+			<strong>Assume</strong> to put it into the graph at once. <strong>Change</strong> on a
+			finished step goes back to it. <strong>Apply to graph</strong> puts the chosen values into
+			the graph.
 		</p>
 		{@render figure(
 			'run-query',
-			'The Explore query variables panel at stage 1 of 2 for ?pokemon, listing Arcanine, Charizard, Magmar, Moltres, Ninetales, Ponyta and Rapidash, each with an Assume button, beside the Possible graph window.',
-			'Stage 1: the seven Pokémon that answer the question.'
+			'The Find matching values panel at step 1 of 2 for pokemon, listing Arcanine, Charizard, Magmar, Moltres, Ninetales, Ponyta and Rapidash, each with an Assume button, with step 2, speed, waiting below, beside the Possible graph window.',
+			'Step 1: the seven Pokémon that answer the question.'
 		)}
 	</section>
 
@@ -241,7 +245,7 @@
 		</p>
 		{@render figure(
 			'filter-funnel',
-			'The Filter funnel panel counting distinct ?pokemon: any value 151, has type = Fire 12 (minus 139), speed at least 90 7 (minus 5). Result: 7 ?pokemon of 151.',
+			'The Filter funnel panel counting distinct pokemon: any value 151, has type = Fire 12 (minus 139), speed at least 90 7 (minus 5). Result: 7 pokemon of 151.',
 			'The funnel of the example.'
 		)}
 	</section>

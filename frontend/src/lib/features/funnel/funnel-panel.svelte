@@ -43,10 +43,12 @@
 					funnel.refresh();
 				}}
 			>
-				{#each rows.variables as name (name)}<option value={name}>{name}</option>{/each}
+				{#each rows.variables as name (name)}<option value={name}
+						>{funnel.store.nameOf(name)}</option
+					>{/each}
 			</select>
 		{:else if rows}
-			Counting distinct {rows.variableName}
+			Counting distinct {funnel.store.nameOf(rows.variableName)}
 		{/if}
 	</div>
 	<ol

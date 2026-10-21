@@ -80,7 +80,7 @@ test('a saved PokemonGen1 query runs as a staged query through Caddy', async ({ 
 	);
 	await expect(editor.nodeCount).toHaveText('Nodes: 3');
 	await editor.runQuery();
-	await expect(editor.stageHeading).toHaveText('Stage 1 of 2: ?pokemon');
+	await expect(editor.stageHeading).toHaveText('Step 1 of 2: pokemon');
 	// ?speed is the second stage. The legacy capture (fixtures/legacy/fire-speed-at-least-90), as a multiset.
 	await expect(editor.candidates).toHaveCount(7);
 	const labels = (await editor.candidates.allInnerTexts()).map((text) => text.split(/\s/)[0]);

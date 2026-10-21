@@ -266,8 +266,8 @@
 			<h3 class="text-sm font-medium">Chip</h3>
 			<div class="flex flex-wrap items-center gap-2">
 				<Chip label="?pokemon" />
-				<Chip label="?pokemon" number={1} aria-label="Stage 1: ?pokemon" />
-				<Chip label="?type" number={2} emphasized aria-label="Stage 2: ?type" />
+				<Chip label="Pokémon" number={1} aria-label="Step 1: Pokémon" />
+				<Chip label="Speed" number={2} emphasized aria-label="Step 2: Speed" />
 			</div>
 		</div>
 

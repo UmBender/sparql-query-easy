@@ -1,6 +1,6 @@
 <!--
 	A small labelled token. With `number` it is a numbered stage-order chip
-	(the legacy orange variable blocks, FE-009); `emphasized` draws the halo a
+	(FE-009): a neutral token with an orange step number (FE-056); `emphasized` draws the halo a
 	variable shares with its graph elements (FE-023). Trailing controls go in
 	`children`.
 -->
@@ -31,7 +31,7 @@
 		'inline-flex items-center gap-1 rounded-md border px-1.5 py-0.5 text-sm',
 		number === undefined
 			? 'border-border bg-secondary text-secondary-foreground'
-			: 'border-stage-border bg-stage text-stage-foreground',
+			: 'border-border bg-surface pl-0.5 text-foreground',
 		emphasized && 'outline-3 outline-offset-1 outline-emphasis',
 		className
 	)}
@@ -41,10 +41,10 @@
 		<span
 			data-slot="chip-number"
 			aria-hidden="true"
-			class="rounded-sm bg-stage-number px-1 text-xs font-semibold tabular-nums"
+			class="flex size-5 items-center justify-center rounded-full bg-stage text-xs font-bold text-stage-foreground tabular-nums"
 			>{number}</span
 		>
 	{/if}
-	<span data-slot="chip-label" class={number === undefined ? '' : 'font-mono'}>{label}</span>
+	<span data-slot="chip-label" class={number === undefined ? '' : 'font-medium'}>{label}</span>
 	{@render children?.()}
 </span>

@@ -52,15 +52,38 @@ describe('graph view', () => {
 			['?n', 'many', '3 results', 'emphasis'],
 			['v', 'value', 'A very long literal value', 'label-below'],
 			['old', 'legacyFilter', 'Named', ''],
-			['?v', 'valueVariable', '? ≥ 9', 'rejected'],
+			['?v', 'valueVariable', 'v ≥ 9', 'rejected'],
 			['c', 'class', 'Class', ''],
 			['e1', 'fixed', 'p', 'selected'],
-			['e2', 'variable', '?', 'emphasis'],
+			['e2', 'variable', 'p', 'emphasis'],
 			['e3', 'variable', '?', '']
 		]);
 		expect(view[0].position).toEqual({ x: 1, y: 2 });
 		expect(view[1].position).toBeUndefined();
 		expect(view[6].data).toMatchObject({ source: '<a>', target: '?n' });
+	});
+
+	it('a variable still labelled ? shows its readable name (FE-056)', () => {
+		const named = addElements(emptyGraph, [
+			{ kind: 'entity', id: '<a>', value: '<a>', label: 'Pikachu' },
+			{ kind: 'variable', id: '?node_1', name: '?node_1', label: '?' },
+			{
+				kind: 'valueVariable',
+				id: '?value_2',
+				name: '?value_2',
+				label: '?',
+				filter: null
+			},
+			{ id: 'e1', source: '?node_1', target: '<a>', predicate: '?predicate_1', label: '?' },
+			{ id: 'e2', source: '?node_1', target: '?value_2', predicate: '<s>', label: 'speed' }
+		]);
+		expect(viewElements(named).map((element) => element.data.label)).toEqual([
+			'Pikachu',
+			'Item A',
+			'Speed',
+			'Relation A',
+			'speed'
+		]);
 	});
 
 	it('is a function of the graph: the same graph gives the same view', () => {

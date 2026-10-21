@@ -33,7 +33,7 @@ test('an admin creates a task by drawing the reference query and sees it in the 
 	await page.locator('#upload-json').setInputFiles(FIRE_SPEED.pathname);
 	await expect(page.locator('#status-nodes')).toHaveText('Nodes: 3');
 	await expect(page.locator('#input-endpoint-sparql')).toBeDisabled();
-	await expect(page.getByRole('radio', { name: '?pokemon' })).toBeChecked();
+	await expect(page.getByRole('radio', { name: 'pokemon' })).toBeChecked();
 	// The upload's toast can cover the button, and hovering it keeps it open: wait until it closes.
 	await expect(page.locator('[data-sonner-toast]')).toHaveCount(0, { timeout: 15_000 });
 

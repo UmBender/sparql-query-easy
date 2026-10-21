@@ -132,13 +132,13 @@ test('a reordered three-variable exploration binds a predicate, a typed literal 
 		[variable('?team', 150, 250), variable('?value', 450, 250)],
 		[{ id: 'attribute', source: '?team', target: '?value', predicate: '?attr', label: '?' }]
 	);
-	await expect(editor.orderChips).toHaveText(['?attr', '?team', '?value']);
-	await page.getByRole('button', { name: 'Move ?value earlier' }).click();
+	await expect(editor.orderChips).toHaveText(['attr', 'team', 'value']);
+	await editor.moveInOrder('Move value earlier');
 	const order = ['?attr', '?value', '?team'];
-	await expect(editor.orderChips).toHaveText(order);
+	await expect(editor.orderChips).toHaveText(['attr', 'value', 'team']);
 
 	await editor.runQuery();
-	await expect(editor.stageHeading).toHaveText('Stage 1 of 3: ?attr');
+	await expect(editor.stageHeading).toHaveText('Step 1 of 3: attr');
 	await expect(editor.candidates).toHaveText([
 		/http:\/\/www\.w3\.org\/2000\/01\/rdf-schema#label\s*IRI/,
 		/https:\/\/example\.test\/city\s*IRI/,
@@ -151,21 +151,19 @@ test('a reordered three-variable exploration binds a predicate, a typed literal 
 	]);
 
 	await editor.candidates.nth(2).click();
-	await expect(editor.stageHeading).toHaveText('Stage 2 of 3: ?value');
+	await expect(editor.stageHeading).toHaveText('Step 2 of 3: value');
 	await expect(editor.candidates).toHaveText([
 		/1895\s*literal integer/,
 		/1903\s*literal integer/,
 		/1909\s*literal integer/
 	]);
 	await editor.candidates.nth(1).click();
-	await expect(editor.stageHeading).toHaveText('Stage 3 of 3: ?team');
+	await expect(editor.stageHeading).toHaveText('Step 3 of 3: team');
 	await expect(editor.candidates).toHaveText([/Grêmio\s*IRI/]);
 	await editor.candidates.first().click();
-	await expect(page.locator('#stage-commitments li')).toHaveText([
-		'?attr = https://example.test/founded',
-		'?value = 1903',
-		'?team = Grêmio'
-	]);
+	await expect
+		.poll(() => editor.commitments())
+		.toEqual(['attr = https://example.test/founded', 'value = 1903', 'team = Grêmio']);
 
 	await page.getByRole('button', { name: 'Apply to graph' }).click();
 	expect(await graphOf(page)).toEqual({
@@ -204,9 +202,9 @@ test('the typed literal binding returned by Ktor constrains the next stage exact
 			}
 		]
 	);
-	await page.getByRole('button', { name: 'Move ?team later' }).click();
+	await editor.moveInOrder('Move team later');
 	const order = ['?city', '?year', '?team'];
-	await expect(editor.orderChips).toHaveText(order);
+	await expect(editor.orderChips).toHaveText(['city', 'year', 'team']);
 	await editor.runQuery();
 	await expect(editor.candidates).toHaveText([/Porto Alegre/, /Rio de Janeiro/]);
 	await editor.candidates.first().focus();
@@ -245,7 +243,7 @@ test('one-variable Run Query is staged through Ktor', async ({ page }) => {
 		]
 	);
 	await editor.runQuery();
-	await expect(editor.stageHeading).toHaveText('Stage 1 of 1: ?team');
+	await expect(editor.stageHeading).toHaveText('Step 1 of 1: team');
 	await expect(editor.candidates).toHaveText([/Grêmio\s*IRI/, /Internacional\s*IRI/]);
 	expectOnlyNextStageRequests(['?team']);
 	expect(legacyQueryRequests).toBe(0);
@@ -278,17 +276,17 @@ test('Assume on a predicate leaves the literal last variable staged with its val
 			}
 		]
 	);
-	await expect(editor.orderChips).toHaveText(['?attr', '?value']);
+	await expect(editor.orderChips).toHaveText(['attr', 'value']);
 	await editor.runQuery();
-	await expect(editor.stageHeading).toHaveText('Stage 1 of 2: ?attr');
+	await expect(editor.stageHeading).toHaveText('Step 1 of 2: attr');
 	await page
 		.getByRole('button', {
-			name: 'Assume ?attr = https://example.test/founded in the graph now'
+			name: 'Assume attr = https://example.test/founded in the graph now'
 		})
 		.click();
-	await expect(editor.stageHeading).toHaveText('Stage 1 of 1: ?value');
+	await expect(editor.stageHeading).toHaveText('Step 1 of 1: value');
 	await expect(editor.candidates).toHaveText([/1903\s*literal integer/]);
-	await page.getByRole('button', { name: 'Close query variable exploration' }).click();
+	await page.getByRole('button', { name: 'Close Find matching values' }).click();
 	await editor.runQuery();
 	await expect(editor.candidates).toHaveText([/1903\s*literal integer/]);
 	expect(legacyQueryRequests).toBe(0);

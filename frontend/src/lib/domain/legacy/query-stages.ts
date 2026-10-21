@@ -307,7 +307,8 @@ export type PossibleGraphView = {
 /** Assignments and caption of the possible-graph window. */
 export function possibleGraphView(
 	input: PossibleGraphInput,
-	cycleIndex: number
+	cycleIndex: number,
+	nameOf: (name: string) => string = (name) => name
 ): PossibleGraphView {
 	const assignments = new Map<string, Assignment>();
 	input.bindings.forEach((binding, index) => {
@@ -327,8 +328,9 @@ export function possibleGraphView(
 	const { order, stage, preview } = input;
 	const assumedText = candidateText(candidate);
 	assignments.set(order[stage], { term: candidate.term, text: assumedText, state: 'assumed' });
-	const assumed = `If ${order[stage]} = ${assumedText}`;
+	const assumed = `If ${nameOf(order[stage])} = ${assumedText}`;
 	const nextName = order[stage + 1];
+	const nextLabel = nextName ? nameOf(nextName) : '';
 	if (!nextName) return { assignments, caption: `${assumed}.`, valueCount: 0 };
 	const current: PreviewState =
 		preview.key === input.previewKey ? preview : { key: null, status: 'loading' };
@@ -338,8 +340,8 @@ export function possibleGraphView(
 			current.status === 'error'
 				? `the preview failed: ${current.error}`
 				: current.status === 'loaded'
-					? `${nextName} has no values`
-					: `loading ${nextName}…`;
+					? `${nextLabel} has no values`
+					: `loading ${nextLabel}…`;
 		return { assignments, caption: `${assumed}, ${reason}.`, valueCount: 0 };
 	}
 	const index = cycleIndex % values.length;
@@ -347,7 +349,7 @@ export function possibleGraphView(
 	assignments.set(nextName, { term: values[index].term, text: valueText, state: 'possible' });
 	return {
 		assignments,
-		caption: `${assumed}, ${nextName} could be ${valueText} (${index + 1} of ${values.length}).`,
+		caption: `${assumed}, ${nextLabel} could be ${valueText} (${index + 1} of ${values.length}).`,
 		valueCount: values.length
 	};
 }
@@ -355,7 +357,8 @@ export function possibleGraphView(
 /** A read-only copy of the query graph with assigned variables replaced by their values. */
 export function consolidatedGraphElements(
 	items: ConsolidationItem[],
-	assignments: Map<string, Assignment>
+	assignments: Map<string, Assignment>,
+	nameOf: (name: string) => string = (name) => name
 ): ConsolidatedElement[] {
 	return items.map((item): ConsolidatedElement => {
 		const isEdge = Boolean(item.source && item.target);
@@ -376,7 +379,11 @@ export function consolidatedGraphElements(
 					classes: assignment.state
 				};
 			if (isVariable || !item.nodeId)
-				return { group: 'edges', data: { ...data, label: name || '?' }, classes: 'open' };
+				return {
+					group: 'edges',
+					data: { ...data, label: isVariable ? nameOf(name as string) : name || '?' },
+					classes: 'open'
+				};
 			return {
 				group: 'edges',
 				data: { ...data, label: item.label || item.nodeId || '' },
@@ -396,7 +403,8 @@ export function consolidatedGraphElements(
 				classes: `${assignment.state} ${kind}`
 			};
 		}
-		if (isVariable) return { ...node, data: { id, label: name as string }, classes: 'open' };
+		if (isVariable)
+			return { ...node, data: { id, label: nameOf(name as string) }, classes: 'open' };
 		const kind = nodeKind(item).kind === 'literal' ? 'literal' : 'iri';
 		return {
 			...node,

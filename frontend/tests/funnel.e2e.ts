@@ -100,13 +100,13 @@ test('B-01 the funnel counts after each cumulative filter with one request per s
 	await page.locator('#filter-funnel-btn').click();
 	await expect(page.locator('#filter-funnel-panel')).toBeVisible();
 	await expect(page.locator('#filter-funnel-btn')).toHaveAttribute('aria-expanded', 'true');
-	await expect(result(page)).toHaveText('Result: 7 ?p of 151.');
+	await expect(result(page)).toHaveText('Result: 7 p of 151.');
 	expect(await rows(page)).toEqual([
 		'With these relations, any value | 151',
 		'type = Fire | 12 −139',
 		'speed ≥ 90 | 7 −5'
 	]);
-	await expect(page.locator('#filter-funnel-variable')).toHaveText('Counting distinct ?p');
+	await expect(page.locator('#filter-funnel-variable')).toHaveText('Counting distinct p');
 	const type = {
 		subject: '?p',
 		predicate: `<${PK}type>`,
@@ -161,7 +161,7 @@ test('B-01 a MAX step is counted after the other filters, wherever it sits', asy
 	});
 	await page.locator('#filter-funnel-btn').click();
 	await expect(result(page)).toHaveText(
-		'Result: 2 ?p of 151. MAX/MIN keep every tied result and come after the other filters, as in the query.'
+		'Result: 2 p of 151. MAX/MIN keep every tied result and come after the other filters, as in the query.'
 	);
 	expect(await rows(page)).toEqual([
 		'With these relations, any value | 151',
@@ -176,10 +176,10 @@ test('B-01 unticking a step previews later counts only and Run Query still sends
 	await funnelGraph(page);
 	funnelCounts();
 	await page.locator('#filter-funnel-btn').click();
-	await expect(result(page)).toHaveText('Result: 7 ?p of 151.');
+	await expect(result(page)).toHaveText('Result: 7 p of 151.');
 	await toggle(page, 'type = Fire').click();
 	await expect(result(page)).toHaveText(
-		'Result: 40 ?p of 151. Preview without 1 filter; Run Query still applies every filter.'
+		'Result: 40 p of 151. Preview without 1 filter; Run Query still applies every filter.'
 	);
 	expect(await rows(page)).toEqual([
 		'With these relations, any value | 151',
@@ -193,7 +193,7 @@ test('B-01 unticking a step previews later counts only and Run Query still sends
 	).toEqual(['?__funnel0', '90']);
 	const counted = countRequests().length;
 	await toggle(page, 'type = Fire').click();
-	await expect(result(page)).toHaveText('Result: 7 ?p of 151.');
+	await expect(result(page)).toHaveText('Result: 7 p of 151.');
 	expect(countRequests()).toHaveLength(counted);
 	await toggle(page, 'type = Fire').click();
 	await page.locator('#run-query-btn').click();
@@ -213,7 +213,7 @@ test('B-02 count errors retry; an empty query is explained; edits refresh once; 
 	);
 	expect(countRequests()).toEqual([]);
 	await funnelGraph(page);
-	await expect(result(page)).toHaveText('Result: 7 ?p of 151.');
+	await expect(result(page)).toHaveText('Result: 7 p of 151.');
 	await page.locator('#filter-funnel-close').click();
 
 	funnelCounts({ fail: true });
@@ -224,7 +224,7 @@ test('B-02 count errors retry; an empty query is explained; edits refresh once; 
 	);
 	funnelCounts();
 	await page.locator('#filter-funnel-retry').click();
-	await expect(result(page)).toHaveText('Result: 7 ?p of 151.');
+	await expect(result(page)).toHaveText('Result: 7 p of 151.');
 	await expect(page.locator('#filter-funnel-retry')).toBeHidden();
 	await page.locator('#filter-funnel-close').click();
 
@@ -244,7 +244,7 @@ test('B-02 count errors retry; an empty query is explained; edits refresh once; 
 	await expect.poll(() => first).toBe(false);
 	await toggle(page, 'type = Fire').click();
 	await expect(result(page)).toHaveText(
-		'Result: 5 ?p of 5. Preview without 1 filter; Run Query still applies every filter.'
+		'Result: 5 p of 5. Preview without 1 filter; Run Query still applies every filter.'
 	);
 	release();
 	await page.waitForTimeout(150);
@@ -259,11 +259,11 @@ test('B-02 the funnel is keyboard reachable, Escape returns focus, and it caps c
 	await page.locator('#filter-funnel-btn').focus();
 	await page.keyboard.press('Enter');
 	await expect(page.locator('#filter-funnel-close')).toBeFocused();
-	await expect(result(page)).toHaveText('Result: 7 ?p of 151.');
+	await expect(result(page)).toHaveText('Result: 7 p of 151.');
 	await page.keyboard.press('Tab');
 	await expect(page.locator('[data-step-key="type"]')).toBeFocused();
 	await page.keyboard.press('Space');
-	await expect(result(page)).toContainText('Result: 40 ?p');
+	await expect(result(page)).toContainText('Result: 40 p');
 	await page.keyboard.press('Escape');
 	await expect(page.locator('#filter-funnel-panel')).toBeHidden();
 	await expect(page.locator('#filter-funnel-btn')).toBeFocused();
@@ -458,7 +458,7 @@ test('B-04 after Assume the filtered node shows its actual value and checks it; 
 		}))
 	}));
 	await page.locator('#run-query-btn').click();
-	await page.getByRole('button', { name: 'Assume ?p = Pikachu in the graph now' }).click();
+	await page.getByRole('button', { name: 'Assume p = Pikachu in the graph now' }).click();
 	await expect(chip(page)).toHaveText('90');
 	await expect(chip(page)).toHaveAttribute('aria-label', 'Actual value: 90');
 	await expect(badge(page)).toHaveText('✓');
@@ -583,7 +583,7 @@ test('B-05 value-variable filters are funnel steps counted on the entity variabl
 		};
 	});
 	await page.locator('#filter-funnel-btn').click();
-	await expect(result(page)).toHaveText('Result: 2 ?p of 151.');
+	await expect(result(page)).toHaveText('Result: 2 p of 151.');
 	await expect(page.locator('#filter-funnel-variable-select')).toHaveValue('?p');
 	expect(await rows(page)).toEqual([
 		'With these relations, any value | 151',
