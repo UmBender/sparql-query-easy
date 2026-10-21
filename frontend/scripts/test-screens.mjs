@@ -3,7 +3,8 @@
 // pinned @playwright/test version, so fonts and Firefox are the same on every
 // machine and in CI. The repository is mounted with its installed node_modules;
 // the container has no network (the suite is offline anyway). Extra arguments go
-// to `playwright test`, e.g. `npm run test:screens -- --update-snapshots`.
+// to `playwright test`, e.g. `npm run test:screens -- --update-snapshots`; a
+// `--config=` argument replaces the screens config (DOC-006 `help:screens`).
 import { spawnSync } from 'node:child_process';
 import { readFileSync } from 'node:fs';
 import { userInfo } from 'node:os';
@@ -15,6 +16,9 @@ const version = JSON.parse(readFileSync(`${frontend}package.json`, 'utf8')).devD
 ];
 const image = `mcr.microsoft.com/playwright:v${version}-noble`;
 const { uid, gid } = userInfo();
+const args = process.argv.slice(2);
+const config =
+	args.find((arg) => arg.startsWith('--config=')) ?? '--config=playwright.screens.config.ts';
 
 const result = spawnSync(
 	'docker',
@@ -34,8 +38,8 @@ const result = spawnSync(
 		'npx',
 		'playwright',
 		'test',
-		'--config=playwright.screens.config.ts',
-		...process.argv.slice(2)
+		config,
+		...args.filter((arg) => arg !== config)
 	],
 	{ stdio: 'inherit' }
 );

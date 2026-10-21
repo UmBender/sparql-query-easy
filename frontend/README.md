@@ -91,6 +91,9 @@ both themes, text included; it runs only in the pinned Playwright image
 machine, and is excluded from `npm test`. Refresh deliberately with
 `npm run test:screens -- --update-snapshots`. `tests/a11y.e2e.ts` (QUAL-015)
 runs axe on the same routes in both themes; any violation fails.
+The `/help` page's images (`static/help-images/`, DOC-006) are not tests: after a
+visible change to the editor, regenerate them with `npm run help:screens`
+(`tests-help/`, same pinned image, mocked PokemonGen1 example) and review them.
 Both Playwright suites drive the editor, a proposed task and the
 questionnaires through the page objects in `tests/support/pages/`
 (QUAL-013); canvas gestures find nodes by id through the e2e hook, at any

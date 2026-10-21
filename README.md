@@ -73,9 +73,9 @@ Requirements: JDK 21 and Node.js 22.
    (cd frontend && npx npm@11 ci && npm run dev)
    ```
 
-4. Open `http://localhost:5173/`. Vite forwards `/api`, `/health` and
-   `/openapi.json` to Ktor, so the browser sees one origin. Swagger UI is at
-   `http://localhost:8080/swagger`.
+4. Open `http://localhost:5173/`; the app's user guide is at `/help`. Vite
+   forwards `/api`, `/health` and `/openapi.json` to Ktor, so the browser sees
+   one origin. Swagger UI is at `http://localhost:8080/swagger`.
 
 The whole stack (PostgreSQL, Ktor, Caddy serving the built app) runs with
 `docker compose up -d --build --wait` after setting `POSTGRES_PASSWORD` in

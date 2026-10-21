@@ -22,5 +22,15 @@ export function markSeen(key: string): void {
 	}
 }
 
+/** Clears a flag, so the guided tour shows again (Start the tour on /help). */
+export function forget(key: string): void {
+	memory.delete(key);
+	try {
+		window.localStorage.removeItem(key);
+	} catch {
+		// Blocked storage: nothing was stored.
+	}
+}
+
 export const TOUR_KEY = 'easyquery-tour-seen';
 export const NODE_HINT_KEY = 'newNode';

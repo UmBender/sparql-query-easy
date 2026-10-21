@@ -9,10 +9,12 @@
 		"tests",
 		"tests-stack",
 		"tests-compose",
+		"tests-help",
 		"vite.config.ts",
 		"playwright.config.ts",
 		"playwright.stack.config.ts",
 		"playwright.screens.config.ts",
-		"playwright.compose.config.ts"
+		"playwright.compose.config.ts",
+		"playwright.help.config.ts"
 	]
 }

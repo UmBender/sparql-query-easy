@@ -100,6 +100,19 @@ const editorReady = async (page: Page) => {
 export const MAIN_ROUTES: Screen[] = [
 	{ name: 'editor', path: '/', ready: editorReady },
 	{ name: 'login', path: '/login', ready: heading('Log in') },
+	{
+		name: 'help',
+		path: '/help',
+		ready: async (page) => {
+			await heading('Help')(page);
+			// Lazy images: load every one before the full-page picture.
+			for (const image of await page.locator('main img').all()) {
+				await image.scrollIntoViewIfNeeded();
+				await expect(image).toHaveJSProperty('complete', true);
+			}
+			await page.evaluate(() => window.scrollTo(0, 0));
+		}
+	},
 	{ name: 'study', path: '/study', role: 'participant', ready: heading('Proposed queries') },
 	{
 		name: 'study-task',

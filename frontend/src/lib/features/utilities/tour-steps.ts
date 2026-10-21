@@ -1,4 +1,4 @@
-/** The guided tour over the editor's toolbar and canvas (FE-054; FE-048 ported the legacy texts). */
+/** The guided tour over the editor's toolbar and canvas (FE-054, DOC-006; FE-048 ported the legacy texts). */
 export type TourStep = { target: string; text: string };
 
 export const TOUR_STEPS: TourStep[] = [
@@ -43,5 +43,9 @@ export const TOUR_STEPS: TourStep[] = [
 		text: 'Upload a .ttl file of triples to query it as a local dataset.'
 	},
 	{ target: '#input-max-results', text: 'Limit: the most results each query returns.' },
-	{ target: '#auto-layout', text: 'Toggle automatic graph layout.' }
+	{ target: '#auto-layout', text: 'Toggle automatic graph layout.' },
+	{
+		target: '#help-link',
+		text: 'Help explains every feature with a worked example and can start this tour again.'
+	}
 ];

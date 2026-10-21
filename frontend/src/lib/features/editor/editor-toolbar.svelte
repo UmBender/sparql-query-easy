@@ -1,7 +1,7 @@
 <!--
 	App bar and toolbar (legacy navbar and toolbar panel): search, limit,
 	endpoint, Auto Layout, New Query, Add Variable, Add Value Variable, undo
-	and redo, View SPARQL. Feature cards add their controls through snippets.
+	and redo, View SPARQL, Help (DOC-006). Feature cards add their controls through snippets.
 -->
 <script lang="ts">
 	import { untrack, type Snippet } from 'svelte';
@@ -14,6 +14,8 @@
 	import RefreshCwIcon from '@lucide/svelte/icons/refresh-cw';
 	import PlusIcon from '@lucide/svelte/icons/plus';
 	import SearchIcon from '@lucide/svelte/icons/search';
+	import CircleHelpIcon from '@lucide/svelte/icons/circle-help';
+	import { resolve } from '$app/paths';
 	import { Button } from '#lib/components/ui/button/index.js';
 	import { IconButton } from '#lib/components/ui/icon-button/index.js';
 	import { Input } from '#lib/components/ui/input/index.js';
@@ -130,6 +132,14 @@
 			onclick={() => controller.viewSparql()}
 		>
 			<CodeIcon />View SPARQL
+		</Button>
+		<Button
+			id="help-link"
+			variant="ghost"
+			class="text-brand-foreground hover:bg-brand-foreground/15 hover:text-brand-foreground"
+			href={resolve('/help')}
+		>
+			<CircleHelpIcon />Help
 		</Button>
 		<IconButton
 			label="Undo"

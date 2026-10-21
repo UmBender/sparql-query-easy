@@ -139,7 +139,7 @@ Ordered by dependencies, then priority among selection candidates. See [worker r
 | DEC-018 | DONE | P1 | decision | [Decide how the T12 brief changes the cutover done by FE-049](<items/DEC-018-t12-cutover-brief-differences.md>) |
 | DOC-007 | DONE | P2 | documentation | [Bring the README's current status in line with the cutover and the deploy work](<items/DOC-007-readme-current-status.md>) |
 | FE-054 | DONE | P2 | frontend | [Rewrite the guided tour for the current editor's features](<items/FE-054-tour-for-current-editor.md>) |
-| DOC-006 | BACKLOG | P2 | frontend | [Add an in-app /help page with screenshots one command can regenerate](<items/DOC-006-user-guide-with-screenshots.md>) |
+| DOC-006 | DONE | P2 | frontend | [Add an in-app /help page with screenshots one command can regenerate](<items/DOC-006-user-guide-with-screenshots.md>) |
 | QUAL-018 | BACKLOG | P2 | quality | [Fail CI if jQuery or legacy page files come back, and confirm every test layer is green](<items/QUAL-018-legacy-free-guard.md>) |
 | BE-004 | DONE | P1 | fullstack | [Make MAX and MIN keep every entity with the extreme value, capped by a configurable limit](<items/BE-004-max-min-all-ties.md>) |
 | INV-001 | DONE | P1 | investigation | [Investigate Ktor HTTP-client and runtime resource lifecycle](<items/INV-001-runtime-resource-lifecycle.md>) |
