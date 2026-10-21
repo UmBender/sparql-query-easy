@@ -129,6 +129,12 @@ Ordered by dependencies, then priority among selection candidates. See [worker r
 | STUDY-002 | DONE | P1 | fullstack | [Show two questionnaires to logged-in users and store their answers](<items/STUDY-002-questionnaires.md>) |
 | OPS-006 | DONE | P1 | operations | [Run db, backend and web together with Docker Compose](<items/OPS-006-docker-compose-stack.md>) |
 | OPS-007 | DONE | P2 | operations | [Start only PostgreSQL for local development and reach it from ./gradlew run](<items/OPS-007-local-dev-database.md>) |
+| DEC-017 | BLOCKED | P1 | decision | [Decide how the T11 brief changes the deployment contract of OPS-001 and OPS-006](<items/DEC-017-t11-deploy-brief-differences.md>) |
+| DOC-005 | BACKLOG | P1 | documentation | [Write the checklist of questions for the university IT before go-live](<items/DOC-005-university-it-checklist.md>) |
+| OPS-008 | BACKLOG | P1 | operations | [Choose HTTPS by Caddy certificates or behind the university proxy with one setting](<items/OPS-008-https-mode-switch.md>) |
+| OPS-009 | BACKLOG | P1 | operations | [Back up PostgreSQL on a schedule with retention and restore it into a fresh stack](<items/OPS-009-database-backups-and-restore.md>) |
+| OPS-010 | BACKLOG | P2 | operations | [Write readable backend logs, rotate container logs and cap service resources](<items/OPS-010-logs-and-resource-limits.md>) |
+| OPS-011 | BACKLOG | P1 | operations | [Install, update, roll back, restore and rotate secrets on the server by following one runbook](<items/OPS-011-deploy-runbook.md>) |
 | FE-049 | DONE | P1 | frontend | [Make the SvelteKit app the authoritative frontend and retire index2.html](<items/FE-049-legacy-cutover.md>) |
 | BE-004 | DONE | P1 | fullstack | [Make MAX and MIN keep every entity with the extreme value, capped by a configurable limit](<items/BE-004-max-min-all-ties.md>) |
 | INV-001 | DONE | P1 | investigation | [Investigate Ktor HTTP-client and runtime resource lifecycle](<items/INV-001-runtime-resource-lifecycle.md>) |
