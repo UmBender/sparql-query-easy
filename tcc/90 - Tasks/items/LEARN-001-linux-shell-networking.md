@@ -7,7 +7,7 @@ type: learning
 depends_on: []
 human_gate: true
 created: 2026-10-07
-updated: 2026-10-07
+updated: 2026-10-20
 ---
 # Learn the Linux shell and networking needed to debug a web app
 
@@ -82,7 +82,7 @@ curl -v http://127.0.0.1:8080/health
 Look for: the TCP connect line, request headers, `HTTP/1.1 200 OK` and `{"status":"ok"}`
 
 ```sh
-curl -sS -o /dev/null -w '%{http_code} %{time_connect} %{time_total}\n' http://127.0.0.1:8080/index2.html
+curl -sS -o /dev/null -w '%{http_code} %{time_connect} %{time_total}\n' http://127.0.0.1:8080/health
 ```
 Look for: status code and timing breakdown
 
@@ -153,3 +153,8 @@ Look for: disk and memory headroom — the two things that silently kill small s
   a pause to show the reply. Status REVIEW: the user does the lab and ticks
   "Done when" in the tracker to close it (human gate). Validation:
   `node scripts/check-project-docs.mjs`, `git diff --check`.
+- 2026-10-20: DEC-018 amendment. FE-049 retired `index2.html` and Ktor's
+  `GET /` redirect (both now 404), so the timing exercise curls `/health`.
+  The lesson L01 still shows the outputs observed on 2026-10-07 (`302` from
+  `/` to `/index2.html`); re-observe them when the lab is redone. Status
+  unchanged.

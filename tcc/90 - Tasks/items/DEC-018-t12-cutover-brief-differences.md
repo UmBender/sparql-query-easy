@@ -1,7 +1,7 @@
 ---
 id: DEC-018
 title: Decide how the T12 brief changes the cutover done by FE-049
-status: BLOCKED
+status: DONE
 priority: P1
 type: decision
 depends_on: [FE-049]
@@ -93,6 +93,22 @@ Nothing changes until the user answers.
   the video shows the old UI). B: rewrite the texts and keep the video link.
   C: keep the legacy texts, fix wording only.
 
+## Decision
+
+- 2026-10-20: The user accepted the recommendations except Q4 ("Do the
+  recommendations for T12, except for the Q4 that I want C").
+- **Q1 A.** FE-049's immediate removal stands; no hidden legacy path. The
+  retired page stays recoverable from Git: local tag `legacy-final` on
+  `57e1514` (not pushed).
+- **Q2 A.** The legacy test oracles stay (`domain/legacy/*`, the vendored
+  Cytoscape 3.29.1 build, `fixtures/legacy/`,
+  `scripts/check-legacy-fixture-fields.mjs`); "legacy JS" means the served
+  page. QUAL-018 allow-lists them.
+- **Q3 A.** No card is marked superseded; D3 stands.
+- **Q4 C.** The user guide is an in-app `/help` route (DOC-006 rescoped).
+- **Q5 A.** FE-054 rewrites the tour and removes the legacy demo-video step
+  and link.
+
 ## Effects once answered
 
 - FE-054 (tour), DOC-006 (user guide), QUAL-018 (enforced acceptance) stay
@@ -111,3 +127,7 @@ Nothing changes until the user answers.
 
 - 2026-10-20: Created from the T12 brief with the coverage table above.
   Stops for the user's answers to Q1–Q5.
+- 2026-10-20: Answered (Q1 A, Q2 A, Q3 A, Q4 C, Q5 A). No FE-055/FE-056 or
+  Cytoscape refactor card is created. DOC-006 is now the `/help` route.
+  LEARN-001 received the amendment (`/health` instead of `/index2.html`).
+  FE-049 is unchanged; QUAL-018 carries the "no jQuery" criterion.

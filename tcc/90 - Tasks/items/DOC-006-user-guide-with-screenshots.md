@@ -1,49 +1,60 @@
 ---
 id: DOC-006
-title: Write a user guide for the SvelteKit app with screenshots one command can regenerate
+title: Add an in-app /help page with screenshots one command can regenerate
 status: BACKLOG
 priority: P2
-type: documentation
+type: frontend
 depends_on: [DEC-018, FE-054]
 human_gate: false
 created: 2026-10-20
 updated: 2026-10-20
 ---
-# Write a user guide for the SvelteKit app with screenshots one command can regenerate
+# Add an in-app /help page with screenshots one command can regenerate
 
 ## Objective
 
-T12 ("update user guide screenshots"). No user guide exists: the README is
-for developers and the vault is the thesis knowledge base. Participants and
-the university IT need one page that shows how to draw and run a query.
-Skill: `tcc-plan-task` (documentation) with `tcc-test` for the capture script.
+T12 ("update user guide screenshots"). No user guide exists. DEC-018 Q4 C:
+the guide is a route of the SvelteKit app, so participants find it where
+they work. Skills: `tcc-frontend`, `tcc-style`; `tcc-test` for the capture
+script.
 
-## Scope (assumes DEC-018 Q4 A; adjust to the answer)
+## Scope
 
-- `docs/user-guide.md` (proposed path), linked from the README: endpoint
-  picker, node kinds (entity, variable, value, value variable, class), edges,
-  filters and the filter editor, Run Query stages and Apply, the funnel and
-  badges, View SPARQL, upload/load/export, search, auto layout, the tour,
-  login and the study pages.
-- One worked example on PokemonGen1 (e.g. Fire Pokémon with speed ≥ 90,
-  matching `fixtures/legacy/fire-speed-at-least-90.*`).
-- Screenshots in `docs/user-guide/img/`, produced by one proposed script
-  (`npm --prefix frontend run docs:screens`) that drives the app through the
-  Playwright page objects (QUAL-013) on mocked API data, offline, light theme.
+- Route `frontend/src/routes/help/+page.svelte`, public (no session), linked
+  from the editor toolbar and the app layout; built from the base components
+  and tokens (FE-050), both themes.
+- Sections: endpoint picker, node kinds (entity, variable, value, value
+  variable, class), edges, filters and the filter editor, Run Query stages and
+  Apply, the funnel and badges, View SPARQL, upload/load/export, search, auto
+  layout, the tour (with a "start the tour" link), login and the study pages.
+- One worked example on PokemonGen1 (Fire Pokémon with speed ≥ 90, matching
+  `fixtures/legacy/fire-speed-at-least-90.*`).
+- Screenshots in `frontend/static/help/`, written by one proposed script
+  (`npm --prefix frontend run help:screens`) that drives the editor through
+  the Playwright page objects (QUAL-013) on mocked API data, offline, light
+  theme. Images have alt text.
+- `/help` joins `MAIN_ROUTES` in `tests/support/screens.ts`, so QUAL-014
+  screenshots and QUAL-015 axe cover it in both themes.
+- Update [[../../04 - Frontend/Frontend Architecture]] (routes) and link
+  `/help` from the README (DOC-007).
 
 ## Out of scope
 
-- An in-app help route (Q4 C), translations, video.
-- Visual regression: screenshots here are illustrations, not test baselines.
+- A Markdown guide in the repo or vault (Q4 A/B), translations, video.
+- Treating the help images as visual-regression baselines.
 
 ## Acceptance criteria
 
-- [ ] Every legacy feature group in the T12 brief has a section in the guide.
-- [ ] Every image in the guide is written by the script; re-running it on an
-  unchanged app changes no section text.
-- [ ] The script makes no external request (`tests/support/offline.ts`).
+- [ ] `/help` loads without a session and every feature group in the T12
+  brief has a section.
+- [ ] The toolbar link opens `/help`; the tour link on `/help` starts the tour
+  on `/`.
+- [ ] Every help image is written by the script; re-running it on an
+  unchanged app changes no page text, and it makes no external request
+  (`tests/support/offline.ts`).
+- [ ] axe passes on `/help` in light and dark themes.
 
 ## Validation
 
-Docs gate (`node scripts/check-project-docs.mjs`, `git diff --check`); the
-script run once; the new frontend gate if files under `frontend/` change.
+Focused: a `help.e2e.ts` Playwright spec. Closing: the new frontend gate and
+`test:screens` from the Operational Map (new page).

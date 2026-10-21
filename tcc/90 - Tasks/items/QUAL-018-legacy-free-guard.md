@@ -30,7 +30,7 @@ but nothing stops them regressing. Skill: `tcc-test`.
 
 ## Out of scope
 
-- Removing the kept oracles (DEC-018 Q2 B is its own card); new tests.
+- Removing the kept oracles (DEC-018 Q2 A keeps them); new product tests.
 
 ## Acceptance criteria
 
