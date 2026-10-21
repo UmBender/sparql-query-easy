@@ -13,7 +13,9 @@ import {
 	clickEdge,
 	clickNode,
 	expectCanvasMatchesStore,
+	dragNode,
 	graphOf,
+	nodePagePosition,
 	openEditor
 } from './support/editor';
 
@@ -417,6 +419,55 @@ test('G-07 connect with a variable or a defined predicate; Escape and the backgr
 			'?s|<https://example.test/hasName>|<https://e/o>',
 			'?s|?predicate_3|<https://e/o>'
 		]);
+});
+
+test('G-07 a click that moves a little still ends the connection and never drags the destination (BUG-007)', async ({
+	page
+}) => {
+	const pikachu = '<https://e/Pikachu>';
+	await addGraph(page, [
+		{ kind: 'valueVariable', id: '?v', x: 200, y: 250 },
+		{ kind: 'entity', id: pikachu, label: 'Pikachu', x: 500, y: 250 }
+	]);
+	const position = () =>
+		page.evaluate((id) => {
+			const { store } = (
+				window as never as {
+					__easyquery: {
+						store: { graph: { elements: { id: string; position?: object }[] } };
+					};
+				}
+			).__easyquery;
+			return JSON.stringify(
+				store.graph.elements.find((element) => element.id === id)?.position
+			);
+		}, pikachu);
+	const before = await position();
+	for (const [step, wobble] of [0, 8, 25].entries()) {
+		await clickNode(page, '?v');
+		await menu(page).getByRole('button', { name: 'Connect with variable predicate' }).click();
+		// A hand click: press on the node, move a few pixels, release.
+		const at = await nodePagePosition(page, pikachu);
+		await page.mouse.move(at.x, at.y);
+		await page.mouse.down();
+		await page.mouse.move(at.x + wobble, at.y + wobble, { steps: 3 });
+		await page.mouse.up();
+		await expect.poll(async () => (await graphOf(page)).edges.length).toBe(step + 1);
+		await expect(page.locator('#connection-preview')).toBeHidden();
+		await expect(menu(page)).toBeHidden();
+		// Moving on without a button pressed leaves the node where it was.
+		await page.mouse.move(at.x + 150, at.y + 120, { steps: 5 });
+		expect(await position()).toBe(before);
+	}
+	expect((await graphOf(page)).edges.map((edge) => edge.split('|')[1])).toEqual([
+		'?v',
+		'?v',
+		'?v'
+	]);
+
+	// Outside a connection, nodes drag as before.
+	await dragNode(page, pikachu, { x: 60, y: 0 });
+	await expect.poll(position).not.toBe(before);
 });
 
 test('G-08 Alt+drag adds a variable relation to a node, or a new variable node', async ({

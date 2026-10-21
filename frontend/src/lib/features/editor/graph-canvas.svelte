@@ -135,7 +135,27 @@
 		});
 
 		// ── Selection, dismissal, moves, hover ──
-		cy.on('tap', 'node', (event: EventObject) => controller.tapNode(event.target.id()));
+		// A pending connection completes on release over the pressed node, even when
+		// the pointer moved a little (Cytoscape then fires no tap); the tap that may
+		// follow must not open that node's action list.
+		let pressed: string | null = null;
+		let connectedOnRelease = false;
+		cy.on('tapstart', 'node', (event: EventObject) => {
+			pressed = event.target.id();
+			connectedOnRelease = false;
+		});
+		cy.on('tapend', 'node', (event: EventObject) => {
+			const id = event.target.id();
+			if (controller.connection && pressed === id) {
+				controller.completeConnection(id);
+				connectedOnRelease = true;
+			}
+			pressed = null;
+		});
+		cy.on('tap', 'node', (event: EventObject) => {
+			if (connectedOnRelease) connectedOnRelease = false;
+			else controller.tapNode(event.target.id());
+		});
 		cy.on('tap', 'edge', (event: EventObject) => controller.openEdgeMenu(event.target.id()));
 		cy.on('tap', (event: EventObject) => {
 			if (event.target === cy) controller.tapBackground();
@@ -160,6 +180,12 @@
 			view.cy = null;
 			cy.destroy();
 		};
+	});
+
+	// A pending connection ends with a click on the destination: nodes cannot be
+	// grabbed meanwhile, so a click that moves a few pixels is not a drag.
+	$effect(() => {
+		view.cy?.autoungrabify(controller.connection !== null);
 	});
 
 	$effect(() => {
