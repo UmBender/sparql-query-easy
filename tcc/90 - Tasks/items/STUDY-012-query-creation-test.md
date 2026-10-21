@@ -1,7 +1,7 @@
 ---
 id: STUDY-012
 title: Build two feature-rich proposed queries in the editor end to end and show what the database stored and returned
-status: READY
+status: REVIEW
 priority: P1
 type: fullstack
 depends_on: [STUDY-001]
@@ -132,17 +132,20 @@ require (consent/questionnaires may be satisfied via existing helpers).
 
 ## Acceptance criteria
 
-- [ ] Both tasks created by drawing in the admin UI; `expected_result` equals
-      `{Tentacruel, Seaking}` (Q1) and `[Arcanine, Moltres, Moltres]` (Q2).
-- [ ] Q1 funnel shows 32 → 13 → 7 → 4 → 2 (or the agent documents the
-      actual step order the funnel uses with the same final 2).
-- [ ] Participant attempts are stored with the fields above; wrong attempts
+- [x] Both tasks created by drawing in the admin UI; `expected_result` equals
+      `{Tentacruel, Seaking}` (Q1). Q2 stores `[Arcanine, Moltres]`, not
+      `[Arcanine, Moltres, Moltres]`: drawn answers run as `SELECT DISTINCT`
+      (finding, DEC-019).
+- [x] Q1 funnel ends at 2. The actual steps differ from the estimate above:
+      52 with these relations → 13 Water → 13 level-up → 13 Pokémon →
+      7 level 25–35 → 2 contains "fish" → 2 speed ≥ 60.
+- [x] Participant attempts are stored with the fields above. Wrong attempts
       are `correct = false` with counts in `feedback`, right ones
-      `correct = true`; nothing in the responses exposes expected rows.
-- [ ] Q2 shows multiset duplicate preservation (set-like answer incorrect).
-- [ ] `report.md` produced and readable; the card lists its path and the
-      manual SQL.
-- [ ] Spec runs offline in `test:stack` (no external traffic, QUAL-003).
+      `correct = true`. Responses carry only the verdict and counts.
+- [ ] Q2 shows multiset duplicate preservation: not possible today
+      (DEC-019). The Q2 wrong attempt is MIN instead of MAX.
+- [x] `report.md` produced and readable; path and manual SQL below.
+- [x] Spec runs offline in `test:stack` (no external traffic).
 
 ## Validation
 
@@ -159,4 +162,79 @@ spec and this card locally, prefixed `STUDY-012`.
 
 ## Conclusion / execution log
 
-(to be filled by the executing agent)
+Spec `frontend/tests-stack/study-query-creation.e2e.ts`, one test of about 1 min:
+
+- **Admin, Q1, in `/admin/tasks/new`:**
+  - Drawing: search (Tentacruel, Water, Level up), Explore relationships
+    (evolves from, rdf:type), Convert to variable on both Pokémon, and Add
+    value filter with Between 25..35, At least 60 and Contains "fish".
+  - Checks: View SPARQL; the order chips; Run Query with candidates Seaking
+    and Tentacruel; hover preview (Tentacool); Assume, then Undo, Redo, Undo
+    back to the same graph; the filter funnel, with "fish" unticked
+    (4 results) and ticked again (2).
+  - Export Query, New Query, then Upload Query gives back the same graph.
+  - Answer variable, `set`, Preview expected result, Save.
+- **Admin, Q2:**
+  - Drawing: search (Arcanine, Fire, Rock). Search also adds Fire↔Rock
+    type-chart edges and a primary-type edge; these are removed, and "has
+    type" is drawn with Connect with defined predicate.
+  - Explore relationships HP, Convert to variable, Edit value MAX, and the
+    weak-to edge converted to a predicate variable. Saved as `multiset`.
+- **Admin, groups page:** a new group with both tasks and the participant.
+- **Participant:** for Q1, a wrong attempt without "fish", then the
+  correct one. For Q2, a wrong attempt with MIN, then the correct one with
+  MAX. All four are drawn the same way.
+- **Database:** read with `docker exec <stack postgres> psql`. The
+  container is found through the port in `build/stack-postgres.ready`, so
+  no new dependency. Checked: `study_task` (graph, request, SPARQL,
+  expected result, comparison), `study_task_open` (both tasks) and
+  `study_submission` (4 rows: revision, answer variable, verdict, feedback
+  equal to the UI line, `time_spent_ms > 0`, SPARQL).
+- **Report:** `frontend/test-results/study-query-creation/report.md`
+  (ignored), also attached to the Playwright HTML report
+  (`frontend/playwright-report/stack`). Attempts in one run:
+
+  | Attempt | Returned | Verdict |
+  |---|---|---|
+  | Q1 without "fish" | Poliwhirl, Seadra, Seaking, Tentacruel | Incorrect: 2 of 2 expected results; 2 extra. |
+  | Q1 complete | Seaking, Tentacruel | Correct: all 2 expected results. |
+  | Q2 with MIN | Vulpix | Incorrect: 0 of 2 expected results; 1 extra. |
+  | Q2 complete | Arcanine, Moltres | Correct: all 2 expected results. |
+
+Findings (cards, not fixed here):
+
+- **BUG-009:** nodes added by search or Explore relationships all land at
+  (200, 200), on top of the first node, even with Auto Layout on. The spec
+  drags them aside.
+- **BUG-010:** MAX/MIN applied with an empty value field reopens in text
+  mode, so it cannot be switched back. The spec keeps the seeded value.
+- **DEC-019:** `multiset` cannot see duplicates, because drawn answers are
+  `SELECT DISTINCT`.
+- **Minor:** the funnel names rdf:type by its IRI, because the dataset has
+  no label for it.
+- **Minor:** the filter editor resets the chosen type once the value
+  profile loads. The spec retries the choice; a fast user could see it jump.
+
+How to look yourself (Compose dev database, OPS-007: `docker compose -f
+compose.yaml -f compose.dev.yaml up db`, `./gradlew run`; draw and submit in
+the browser), then:
+
+```sql
+-- docker compose exec db psql -U easyquery easyquery   (user/db from .env)
+select task_key, comparison, revision, jsonb_pretty(expected_result), reference_sparql
+  from study_task order by id desc limit 2;
+select u.username, t.task_key, o.* from study_task_open o
+  join study_task t on t.id = o.task_id join app_user u on u.id = o.user_id;
+select s.id, u.username, t.task_key, s.answer_variable, s.correct, s.invalid, s.feedback,
+       s.time_spent_ms, jsonb_pretty(s.result_summary), s.sparql
+  from study_submission s join study_task t on t.id = s.task_id
+  join app_user u on u.id = s.user_id order by s.id;
+```
+
+Validation: `npm --prefix frontend run check` (0 errors), prettier and eslint
+on the spec, focused spec passing on a reused stack, and the closing gate
+`npm --prefix frontend run test:stack`: 21 passed (3.1 min, fresh stack). Test-only:
+there is no product change, so the Kotlin gate is not needed.
+
+Left for human review: read the report and the rows, and confirm
+they look right. Then this card goes to DONE.
