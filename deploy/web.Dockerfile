@@ -11,5 +11,9 @@ RUN npm run build
 
 FROM caddy:2.10-alpine
 
+# OPS-008: one Caddyfile per EASYQUERY_HTTPS_MODE (compose.yaml picks
+# /etc/caddy/<mode>.Caddyfile); the image's default command uses the local one.
 COPY deploy/Caddyfile /etc/caddy/Caddyfile
+COPY deploy/caddy/ /etc/caddy/
+RUN ln -s Caddyfile /etc/caddy/local.Caddyfile
 COPY --from=build /app/build /srv

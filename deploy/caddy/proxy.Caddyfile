@@ -1,0 +1,18 @@
+# OPS-008, EASYQUERY_HTTPS_MODE=proxy: the university reverse proxy ends TLS
+# and forwards plain HTTP to port 80 (published on WEB_BIND:WEB_PORT). Only
+# the addresses in EASYQUERY_TRUSTED_PROXIES (CIDR ranges separated by
+# spaces) may name the client in X-Forwarded-For; strict mode reads the chain
+# from the right, so an address the client wrote itself is skipped.
+{
+	admin off
+	auto_https off
+	servers {
+		trusted_proxies static {$EASYQUERY_TRUSTED_PROXIES}
+		trusted_proxies_strict
+		client_ip_headers X-Forwarded-For
+	}
+}
+
+:80 {
+	import /etc/caddy/site.caddy
+}

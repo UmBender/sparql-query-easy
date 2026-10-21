@@ -1,0 +1,40 @@
+# OPS-008: a stand-in for the university reverse proxy, used only by
+#   node scripts/check-https-modes.mjs proxy
+# `edge` names the client from the X-Test-Client request header, as a real
+# proxy names it from the connection. Its fixed address is the only one in
+# EASYQUERY_TRUSTED_PROXIES (deploy/test/https-proxy.env).
+networks:
+  default:
+    ipam:
+      config:
+        - subnet: 172.30.99.0/24
+
+services:
+  edge:
+    image: caddy:2.10-alpine
+    configs:
+      - source: edge-caddyfile
+        target: /etc/caddy/Caddyfile
+    networks:
+      default:
+        ipv4_address: 172.30.99.10
+    ports:
+      - "127.0.0.1:${EDGE_PORT}:80"
+    depends_on:
+      web:
+        condition: service_started
+
+# Inline rather than a bind mount, which SELinux hosts refuse to the container.
+configs:
+  edge-caddyfile:
+    content: |
+      {
+      	admin off
+      	auto_https off
+      }
+      :80 {
+      	reverse_proxy web:80 {
+      		header_up X-Forwarded-For {http.request.header.X-Test-Client}
+      		header_up X-Forwarded-Proto https
+      	}
+      }

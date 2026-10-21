@@ -1,0 +1,20 @@
+# OPS-008, EASYQUERY_HTTPS_MODE=auto: Caddy obtains and renews the certificate
+# for EASYQUERY_DOMAIN itself (ports 80 and 443 reachable from the internet,
+# the DNS name pointing at the server). EASYQUERY_TLS is the e-mail address
+# given to Let's Encrypt, or `internal` for Caddy's own CA (tests only: browsers
+# do not trust it). Certificates live in the caddy-data volume. HTTP redirects
+# to HTTPS.
+{
+	admin off
+	# HTTP/3 needs UDP 443, which compose.yaml does not publish.
+	servers {
+		protocols h1 h2
+	}
+}
+
+{$EASYQUERY_DOMAIN} {
+	tls {$EASYQUERY_TLS}
+	import /etc/caddy/site.caddy
+	# Browsers keep using HTTPS for a year; no includeSubDomains (OPS-002).
+	header Strict-Transport-Security "max-age=31536000"
+}

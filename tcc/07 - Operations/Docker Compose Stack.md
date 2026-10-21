@@ -1,18 +1,19 @@
 # Docker Compose Stack — OPS-006
 
-Local HTTP stack of three services on one origin. TLS, backups and server
-deployment stay in OPS-002, OPS-004 and OPS-005.
+Stack of three services on one origin. HTTPS is a setting (OPS-008, below);
+the production domain and CORS policy stay in OPS-002, server deployment in
+OPS-005.
 
 | Service | Image | Role |
 |---|---|---|
 | `db` | `postgres:17-alpine` | Accounts and sessions; data in the named volume `easyquery_db-data`; `pg_isready` health check |
 | `backend` | `easyquery-backend:local` (root `Dockerfile`, OPS-001) | Ktor on 8080, not published; Flyway migrations at startup (BE-005); waits for a healthy `db` |
-| `web` | `easyquery-web:local` (`deploy/web.Dockerfile`) | Caddy on port 80, published on `127.0.0.1:${WEB_PORT:-8080}`: serves the SvelteKit build (`index.html` fallback) and proxies `/api/*`, `/health`, `/openapi.json` and `/swagger` to `backend` (`deploy/Caddyfile`) |
+| `web` | `easyquery-web:local` (`deploy/web.Dockerfile`) | Caddy on port 80 (and 443 in mode `auto`), published on `${WEB_BIND:-127.0.0.1}:${WEB_PORT:-8080}`: serves the SvelteKit build (`index.html` fallback) and proxies `/api/*`, `/health`, `/openapi.json` and `/swagger` to `backend` (`deploy/caddy/site.caddy`); certificates in the volume `easyquery_caddy-data` |
 
 Caddy keeps the `Host` header, which the backend's same-origin check on
-account routes compares with `Origin`, and sets `X-Forwarded-For`; the
-backend runs with `EASYQUERY_TRUST_PROXY=true`, so the login rate limit
-applies per client. Nothing but `web` is reachable from the host.
+account routes compares with `Origin`, and sets `X-Forwarded-For` to the one
+client address it determined (`{client_ip}`); the backend runs with
+`EASYQUERY_TRUST_PROXY=true`, so the login rate limit applies per client. Nothing but `web` is reachable from the host.
 `EASYQUERY_ADMIN_USERNAMES` (comma-separated, default empty) names the
 accounts with the admin role (AUTH-005); set it in the server's `.env`.
 
@@ -23,9 +24,35 @@ Copy `.env.example` to `.env` (git-ignored) and set at least
 `POSTGRES_DB`, `POSTGRES_USER` (both default `easyquery`), `WEB_PORT`
 (default 8080), `EASYQUERY_ENVIRONMENT` (default `production`: session
 cookies are `Secure`; browsers accept them on `http://localhost` and
-`http://127.0.0.1`, not on another host over plain HTTP — use
-`development` there until OPS-002 adds TLS), `EASYQUERY_EXTREME_RESULT_LIMIT`,
+`http://127.0.0.1`, not on another host over plain HTTP — serve another
+host through mode `auto` or `proxy`, below), `EASYQUERY_EXTREME_RESULT_LIMIT`,
 `EASYQUERY_AUTH_ATTEMPTS_PER_MINUTE`.
+
+## HTTPS modes (OPS-008)
+
+`EASYQUERY_HTTPS_MODE` in `.env` selects the Caddyfile
+(`/etc/caddy/<mode>.Caddyfile`); every mode imports the same site
+(`deploy/caddy/site.caddy`). The server's mode is chosen at go-live from the
+[[University Server Checklist]] answers (DEC-017 Q1, OPS-002).
+
+| Mode | File | Use when | Settings |
+|---|---|---|---|
+| `local` (default) | `deploy/Caddyfile` | development, tests | HTTP on `WEB_BIND:WEB_PORT` (127.0.0.1:8080) |
+| `auto` | `deploy/caddy/auto.Caddyfile` | the server is reachable on 80 and 443 under its own DNS name | `EASYQUERY_DOMAIN`, `EASYQUERY_TLS` (Let's Encrypt e-mail), `WEB_BIND=0.0.0.0`, `WEB_PORT=80`, `WEB_HTTPS_BIND=0.0.0.0`, `WEB_HTTPS_PORT=443`; HTTP redirects to HTTPS; HSTS one year without subdomains; HTTP/1.1 and 2 only |
+| `proxy` | `deploy/caddy/proxy.Caddyfile` | the university proxy ends TLS | `EASYQUERY_TRUSTED_PROXIES` (CIDR list), `WEB_BIND`/`WEB_PORT` the proxy reaches; the proxy must forward the original `Host` |
+
+A missing required setting stops Caddy with its name in the error (`docker
+compose logs web`). In `proxy` mode Caddy reads `X-Forwarded-For` from the
+right and stops at the first address that is not a trusted proxy
+(`trusted_proxies_strict`), so a client cannot choose its own address for
+the login limit. With `EASYQUERY_ENVIRONMENT=production` cookies are
+`Secure`, which browsers accept only over HTTPS or on localhost.
+
+Check: `node scripts/check-https-modes.mjs` starts `auto` (domain
+`easyquery.localhost`, Caddy's internal CA, 127.0.0.1:18180/18543) and
+`proxy` (behind a stand-in proxy `edge` on 18191, web direct on 18190, three
+login attempts per minute) as throwaway projects from `deploy/test/` and
+`compose.test.yaml`, checks them with curl and removes them.
 
 ## Runbook
 
@@ -106,5 +133,5 @@ pushes to `main`, nightly and on manual runs (DEC-016 Q1 C). It complements
 
 ## Source files
 
-`compose.yaml`, `compose.dev.yaml` (OPS-007), `compose.test.yaml` and `deploy/compose-test.env` (QUAL-017), `deploy/web.Dockerfile`, `deploy/Caddyfile`, `Dockerfile`,
+`compose.yaml`, `compose.dev.yaml` (OPS-007), `compose.test.yaml` and `deploy/compose-test.env` (QUAL-017), `deploy/web.Dockerfile`, `deploy/Caddyfile`, `deploy/caddy/` and `deploy/test/` with `scripts/check-https-modes.mjs` (OPS-008), `Dockerfile`,
 `.env.example`, `.dockerignore`.

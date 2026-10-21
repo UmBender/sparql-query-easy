@@ -1,5 +1,6 @@
 # OPS-006: PostgreSQL, the Ktor backend and the Caddy web front end on one
-# origin. Local HTTP only (TLS, backups and deployment: OPS-002/004/005).
+# origin. EASYQUERY_HTTPS_MODE (OPS-008) chooses local HTTP, Caddy's own
+# certificates or the university proxy; see .env.example.
 # Runbook: tcc/07 - Operations/Docker Compose Stack.md.
 name: easyquery
 
@@ -51,8 +52,21 @@ services:
       context: .
       dockerfile: deploy/web.Dockerfile
     image: easyquery-web:local
+    # OPS-008: local (deploy/Caddyfile), auto or proxy (deploy/caddy/).
+    command: ["caddy", "run", "--config", "/etc/caddy/${EASYQUERY_HTTPS_MODE:-local}.Caddyfile", "--adapter", "caddyfile"]
+    # Unset, these defaults make Caddy refuse to start in the mode that needs
+    # them, with the variable's name in the error.
+    environment:
+      EASYQUERY_DOMAIN: ${EASYQUERY_DOMAIN:-required:EASYQUERY_DOMAIN-in-auto-mode}
+      EASYQUERY_TLS: ${EASYQUERY_TLS:-EASYQUERY_TLS-is-required-in-auto-mode}
+      EASYQUERY_TRUSTED_PROXIES: ${EASYQUERY_TRUSTED_PROXIES:-EASYQUERY_TRUSTED_PROXIES-is-required-in-proxy-mode}
     ports:
-      - "127.0.0.1:${WEB_PORT:-8080}:80"
+      - "${WEB_BIND:-127.0.0.1}:${WEB_PORT:-8080}:80"
+      # HTTPS for mode auto; without WEB_HTTPS_PORT Docker picks a free
+      # loopback port that nothing uses.
+      - "${WEB_HTTPS_BIND:-127.0.0.1}:${WEB_HTTPS_PORT:-}:443"
+    volumes:
+      - caddy-data:/data
     depends_on:
       backend:
         condition: service_healthy
@@ -60,3 +74,5 @@ services:
 
 volumes:
   db-data:
+  # OPS-008: certificates and ACME account of mode auto.
+  caddy-data:

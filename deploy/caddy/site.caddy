@@ -1,0 +1,28 @@
+# OPS-006/OPS-008: the site shared by every HTTPS mode (EASYQUERY_HTTPS_MODE),
+# imported by deploy/Caddyfile (local) and deploy/caddy/{auto,proxy}.Caddyfile.
+encode zstd gzip
+
+# The API and its documentation come from the backend. reverse_proxy keeps the
+# Host header (the backend's same-origin check needs it). X-Forwarded-For
+# carries only the client address Caddy determined: the remote address, or in
+# `proxy` mode the first untrusted address of the chain (trusted_proxies), so
+# a header sent by the client itself is never believed
+# (EASYQUERY_TRUST_PROXY=true takes its first entry).
+@backend path /api/* /health /openapi.json /swagger /swagger/*
+handle @backend {
+	reverse_proxy backend:8080 {
+		header_up X-Forwarded-For {client_ip}
+	}
+}
+
+# Everything else is the SPA; unknown paths fall back to index.html.
+handle {
+	root * /srv
+	try_files {path} /index.html
+	file_server
+}
+
+header {
+	X-Content-Type-Options nosniff
+	Referrer-Policy strict-origin-when-cross-origin
+}

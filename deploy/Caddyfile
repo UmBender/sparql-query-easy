@@ -1,29 +1,11 @@
-# OPS-006: one origin for the SPA and the API. Local HTTP only; TLS is OPS-002.
+# OPS-006/OPS-008, EASYQUERY_HTTPS_MODE=local (the default): plain HTTP on
+# port 80, published on 127.0.0.1 by compose.yaml. Other modes:
+# deploy/caddy/auto.Caddyfile and deploy/caddy/proxy.Caddyfile.
 {
 	admin off
 	auto_https off
 }
 
 :80 {
-	encode zstd gzip
-
-	# The API and its documentation come from the backend. reverse_proxy keeps the
-	# Host header (the backend's same-origin check needs it) and sets
-	# X-Forwarded-For (EASYQUERY_TRUST_PROXY=true).
-	@backend path /api/* /health /openapi.json /swagger /swagger/*
-	handle @backend {
-		reverse_proxy backend:8080
-	}
-
-	# Everything else is the SPA; unknown paths fall back to index.html.
-	handle {
-		root * /srv
-		try_files {path} /index.html
-		file_server
-	}
-
-	header {
-		X-Content-Type-Options nosniff
-		Referrer-Policy strict-origin-when-cross-origin
-	}
+	import /etc/caddy/site.caddy
 }
