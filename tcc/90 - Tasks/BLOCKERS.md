@@ -50,3 +50,11 @@ blocked until these are known:
 DNS name and HTTPS, machine, off-host backup location, operations. The four
 open facts are still public 80/443 reachability, DNS name and TLS issuer,
 deploy access and the off-host backup location.
+
+## DEC-018 — T12 cutover brief
+
+FE-049 already made the SvelteKit app the only frontend. FE-054, DOC-006 and
+QUAL-018 wait for the user's answers to Q1–Q5 in
+[[items/DEC-018-t12-cutover-brief-differences]] (hidden legacy path, kept
+oracles, superseded marks, user guide location, tour text and video).
+DOC-007 does not wait.
