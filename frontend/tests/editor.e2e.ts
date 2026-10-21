@@ -93,6 +93,52 @@ test('P-03 a search result related to an existing node is added with the discove
 	await expect(page.locator('#status-nodes')).toHaveText('Nodes: 2');
 });
 
+for (const autoLayout of [true, false])
+	test(`BUG-009 related search results get their own place on the canvas (Auto Layout ${autoLayout ? 'on' : 'off'})`, async ({
+		page
+	}) => {
+		const auto = page.getByRole('checkbox', { name: 'Auto Layout' });
+		if (autoLayout) await auto.check();
+		else await auto.uncheck();
+		api.override('/api/query/search', (body) => {
+			const name = (body as { search: string }).search;
+			return {
+				data: [
+					{
+						propertyId: `<https://example.test/${name}>`,
+						propertyLabel: name,
+						propertyType: 'objetoClasse',
+						propertyClass: null
+					}
+				]
+			};
+		});
+		// Every probe finds a relation, so each result joins the nodes already there.
+		api.override('/api/query', () => ({
+			data: [
+				{
+					propertyId: '<https://example.test/near>',
+					propertyLabel: 'near',
+					propertyType: 'objetoClasse'
+				}
+			]
+		}));
+		for (const [index, name] of ['Alpha', 'Beta', 'Gamma'].entries()) {
+			await page.getByRole('combobox', { name: 'Search nodes' }).fill(name);
+			await page.getByRole('option', { name: new RegExp(name) }).click();
+			await expect(page.locator('#status-nodes')).toHaveText(`Nodes: ${index + 1}`);
+		}
+		await expect.poll(async () => (await graphOf(page)).edges.length).toBeGreaterThan(1);
+		const points = await Promise.all(
+			['Alpha', 'Beta', 'Gamma'].map((name) =>
+				nodePagePosition(page, `<https://example.test/${name}>`)
+			)
+		);
+		for (const [i, a] of points.entries())
+			for (const b of points.slice(i + 1))
+				expect(Math.hypot(a.x - b.x, a.y - b.y)).toBeGreaterThan(30);
+	});
+
 test('P-04 P-05 the limit and endpoint fields feed requests', async ({ page }) => {
 	await page.locator('#input-max-results').fill('7');
 	const endpoint = page.getByRole('combobox', { name: 'SPARQL endpoint' });

@@ -2,12 +2,12 @@
 	The Cytoscape canvas (FE-044). It renders `viewElements(store.graph)` and
 	turns gestures into controller/store actions; it never keeps query state of
 	its own. New nodes without a position get one from the layout (Auto Layout
-	on) or near the viewport centre, written back to the store.
+	on) or a free spot near the viewport centre, written back to the store.
 -->
 <script lang="ts">
 	import cytoscape, { type Core, type EventObject, type NodeSingular } from 'cytoscape';
 	import { graphStylesheet } from '#lib/design/cytoscape.js';
-	import { viewElements, type ViewState } from './graph-view.js';
+	import { freeSpots, viewElements, type ViewState } from './graph-view.js';
 	import type { CanvasView } from './canvas-view.svelte.js';
 	import type { EditorController } from './editor-controller.svelte.js';
 
@@ -33,12 +33,17 @@
 			cy.layout({ name: 'cose', animate: false, fit: true } as cytoscape.LayoutOptions).run();
 		} else {
 			const extent = cy.extent();
-			added.forEach((id, index) => {
-				cy.getElementById(id).position({
-					x: (extent.x1 + extent.x2) / 2 + index * 40,
-					y: (extent.y1 + extent.y2) / 2 + index * 40
-				});
-			});
+			const fresh = new Set(added);
+			const occupied = cy
+				.nodes()
+				.map((node) => ({ id: node.id(), ...node.position() }))
+				.filter((node) => !fresh.has(node.id));
+			const spots = freeSpots(
+				{ x: (extent.x1 + extent.x2) / 2, y: (extent.y1 + extent.y2) / 2 },
+				occupied,
+				added.length
+			);
+			added.forEach((id, index) => cy.getElementById(id).position(spots[index]));
 		}
 		const positions: Record<string, { x: number; y: number }> = {};
 		cy.nodes().forEach((node) => {

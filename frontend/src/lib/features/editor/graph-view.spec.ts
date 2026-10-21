@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { addElements, emptyGraph } from '#lib/domain/index.js';
-import { viewElements } from './graph-view.js';
+import { freeSpots, viewElements } from './graph-view.js';
 
 const graph = addElements(emptyGraph, [
 	{ kind: 'entity', id: '<a>', value: '<a>', label: 'Pikachu', position: { x: 1, y: 2 } },
@@ -88,5 +88,30 @@ describe('graph view', () => {
 
 	it('is a function of the graph: the same graph gives the same view', () => {
 		expect(viewElements(graph)).toEqual(viewElements(structuredClone(graph)));
+	});
+});
+
+describe('freeSpots (BUG-009)', () => {
+	const far = (points: { x: number; y: number }[], gap: number) =>
+		points.every((a, i) =>
+			points.slice(i + 1).every((b) => Math.hypot(a.x - b.x, a.y - b.y) >= gap - 1e-9)
+		);
+
+	it('uses the centre when it is free', () => {
+		expect(freeSpots({ x: 100, y: 50 }, [], 1)).toEqual([{ x: 100, y: 50 }]);
+	});
+
+	it('moves away from occupied positions and from each other', () => {
+		const occupied = [{ x: 0, y: 0 }];
+		const spots = freeSpots({ x: 0, y: 0 }, occupied, 3, 90);
+		expect(spots).toHaveLength(3);
+		expect(far([...occupied, ...spots], 90)).toBe(true);
+	});
+
+	it('one node at a time never lands on the previous ones', () => {
+		const placed: { x: number; y: number }[] = [];
+		for (let index = 0; index < 12; index += 1)
+			placed.push(...freeSpots({ x: 10, y: 10 }, placed, 1, 80));
+		expect(far(placed, 80)).toBe(true);
 	});
 });

@@ -104,3 +104,37 @@ export function viewElements(
 export function idSet(ids: Iterable<string>): ReadonlySet<string> {
 	return new Set(ids);
 }
+
+type Point = { x: number; y: number };
+
+/**
+ * Spots for `count` new nodes near `centre` without Auto Layout (BUG-009):
+ * the centre, then rings of `gap` around it, skipping any spot closer than
+ * `gap` to an occupied position or to a spot already handed out.
+ */
+export function freeSpots(
+	centre: Point,
+	occupied: readonly Point[],
+	count: number,
+	gap = 90
+): Point[] {
+	const taken = [...occupied];
+	const spots: Point[] = [];
+	const isFree = (point: Point) =>
+		taken.every((other) => Math.hypot(other.x - point.x, other.y - point.y) >= gap);
+	for (let ring = 0; spots.length < count; ring += 1) {
+		const steps = ring === 0 ? 1 : ring * 8;
+		for (let step = 0; step < steps && spots.length < count; step += 1) {
+			const angle = (2 * Math.PI * step) / steps;
+			const point = {
+				x: centre.x + ring * gap * Math.cos(angle),
+				y: centre.y + ring * gap * Math.sin(angle)
+			};
+			if (isFree(point)) {
+				spots.push(point);
+				taken.push(point);
+			}
+		}
+	}
+	return spots;
+}

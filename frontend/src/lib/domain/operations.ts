@@ -41,8 +41,6 @@ import type { QueryVariableEntry } from './legacy/query-stages.js';
 export type OperationResult =
 	{ graph: QueryGraph; error?: never } | { graph?: never; error: string };
 
-const DEFAULT_POSITION: Position = { x: 200, y: 200 };
-
 /** New Query. */
 export function clearGraph(): QueryGraph {
 	return { elements: [], incident: {} };
@@ -87,15 +85,18 @@ export function addValueVariable(
 	};
 }
 
-/** A search result as an IRI node (`addNode`). */
+/**
+ * A search result as an IRI node (`addNode`). Without `position` the canvas
+ * places it (Auto Layout, or a free spot near the viewport centre; BUG-009).
+ */
 export function addEntity(
 	graph: QueryGraph,
 	id: string,
 	label: string,
-	position: Position = DEFAULT_POSITION
+	position?: Position
 ): QueryGraph {
 	return addElements(graph, [
-		{ kind: 'entity', id, value: id, label, position: { ...position } }
+		{ kind: 'entity', id, value: id, label, ...(position ? { position: { ...position } } : {}) }
 	]);
 }
 
@@ -131,10 +132,7 @@ export function addRelationValue(
 	let next = graph;
 	if (!elementById(next, id)) {
 		next = addElements(next, [
-			nodeFromData(
-				nodeDataForRelationValue({ id, text, valueType, predicateLabel }),
-				DEFAULT_POSITION
-			)
+			nodeFromData(nodeDataForRelationValue({ id, text, valueType, predicateLabel }))
 		]);
 	}
 	const edgeId = freeId(next, `${predicateId}${predicateIndex}`);

@@ -22,8 +22,6 @@ const PK = 'http://easyquery.example.org/pokemon#';
 const iri = (name: string) => `<${PK}${name}>`;
 const REPORT_DIR = new URL('../test-results/study-query-creation/', import.meta.url);
 
-type Offset = { x: number; y: number };
-
 /** Builds a query on the canvas the way a user does: search, explore, convert, filter. */
 class Drawing {
 	readonly editor: EditorPage;
@@ -79,24 +77,55 @@ class Drawing {
 		return (await this.nodes()).map((node) => node.id);
 	}
 
-	/**
-	 * Adds a search result. New nodes land on top of the first one (STUDY-012
-	 * finding), so each is dragged aside like a user would.
-	 */
-	async search(text: string, option: RegExp, id: string, by: Offset) {
+	/** Adds a search result; Auto Layout gives it its own place (BUG-009). */
+	async search(text: string, option: RegExp) {
 		const before = await this.nodeIds();
 		await this.page.getByRole('combobox', { name: 'Search nodes' }).fill(text);
 		await this.page.getByRole('option', { name: option }).first().click();
 		await expect.poll(async () => (await this.nodeIds()).length).toBe(before.length + 1);
-		if (before.length) await this.editor.dragNode(id, by);
 	}
 
-	/** Closes any action list with a click on the canvas's empty top-right corner. */
+	/**
+	 * A canvas point (in canvas pixels) at least `margin` away from every node and relation and not under a
+	 * menu, panel or badge drawn over the canvas.
+	 */
+	freePoint(margin: number) {
+		return this.page.evaluate((margin) => {
+			const { cy } = (
+				window as never as { __easyquery: { view: { cy: import('cytoscape').Core } } }
+			).__easyquery.view;
+			const frame = cy.container()!.getBoundingClientRect();
+			const boxes = cy.elements().map((element) => element.renderedBoundingBox());
+			const bare = (x: number, y: number) =>
+				boxes.every(
+					(box) =>
+						x < box.x1 - margin ||
+						x > box.x2 + margin ||
+						y < box.y1 - margin ||
+						y > box.y2 + margin
+				) &&
+				!document
+					.elementFromPoint(frame.x + x, frame.y + y)
+					?.closest('aside, [role="dialog"], [role="region"], button, .filter-badge');
+			for (let y = margin + 8; y < frame.height - margin; y += 16)
+				for (let x = margin + 8; x < frame.width - margin; x += 16)
+					if (bare(x, y)) return { x, y };
+			throw new Error(`No free canvas point ${margin}px away from the graph`);
+		}, margin);
+	}
+
+	/** Closes any action list with a click on empty canvas. */
 	async clickBackground() {
-		const box = (await this.editor.canvas.boundingBox())!;
-		await this.editor.canvas.click({ position: { x: box.width - 12, y: 12 } });
+		await this.editor.canvas.click({ position: await this.freePoint(4) });
 		await expect(this.menu).toBeHidden();
 		await expect(this.page.locator('#edge-action-menu')).toBeHidden();
+	}
+
+	/** Drags a node by hand to empty canvas (nodes from Add value filter start next to their variable). */
+	async placeAside(id: string) {
+		const to = await this.freePoint(70);
+		const from = await this.editor.nodeCanvasPosition(id);
+		await this.editor.dragNode(id, { x: to.x - from.x, y: to.y - from.y });
 	}
 
 	async openNodeMenu(id: string) {
@@ -106,7 +135,7 @@ class Drawing {
 	}
 
 	/** Explore relationships on `from` and add the `predicate` row; returns the new node id. */
-	async explore(from: string, predicate: string, by: Offset) {
+	async explore(from: string, predicate: string) {
 		const before = await this.nodeIds();
 		await this.openNodeMenu(from);
 		await this.menu.getByRole('button', { name: 'Explore relationships' }).click();
@@ -115,9 +144,7 @@ class Drawing {
 			.filter({ has: this.page.getByRole('cell', { name: predicate, exact: true }) })
 			.click();
 		await expect.poll(async () => (await this.nodeIds()).length).toBe(before.length + 1);
-		const added = (await this.nodeIds()).find((id) => !before.includes(id))!;
-		await this.editor.dragNode(added, by);
-		return added;
+		return (await this.nodeIds()).find((id) => !before.includes(id))!;
 	}
 
 	/** Convert to variable; returns the variable's id. */
@@ -147,13 +174,7 @@ class Drawing {
 	}
 
 	/** Add value filter on a variable: a value variable on `relation` with the filter; returns its id. */
-	async addValueFilter(
-		variable: string,
-		relation: string,
-		type: string,
-		value: string,
-		by: Offset
-	) {
+	async addValueFilter(variable: string, relation: string, type: string, value: string) {
 		const before = await this.nodeIds();
 		await this.openNodeMenu(variable);
 		await this.menu.getByRole('button', { name: 'Add value filter' }).click();
@@ -161,7 +182,7 @@ class Drawing {
 		await expect(this.filterEditor).toBeVisible();
 		await this.applyFilter(type, value);
 		const added = (await this.nodeIds()).find((id) => !before.includes(id))!;
-		await this.editor.dragNode(added, by);
+		await this.placeAside(added);
 		return added;
 	}
 
@@ -236,38 +257,31 @@ type Q1 = { pokemon: string; pre: string; level: string; speed: string; category
  */
 async function drawQ1(draw: Drawing, fish = true): Promise<Q1> {
 	const tentacruel = iri('Tentacruel');
-	await draw.search('Tentacruel', /^Tentacruel /, tentacruel, { x: 0, y: 0 });
-	await draw.search('Water', /^Water </, iri('WaterType'), { x: 260, y: -120 });
-	await draw.search('Level', /^Level up /, iri('LevelUp'), { x: 260, y: 120 });
+	await draw.search('Tentacruel', /^Tentacruel /);
+	await draw.search('Water', /^Water </);
+	await draw.search('Level', /^Level up /);
 	expect((await draw.edges()).map((edge) => edge.predicate).sort()).toEqual([
 		iri('evolutionTrigger'),
 		iri('hasType')
 	]);
-	await draw.explore(tentacruel, iri('evolvesFrom'), { x: -40, y: 220 });
-	await draw.explore(tentacruel, '<http://www.w3.org/1999/02/22-rdf-syntax-ns#type>', {
-		x: -200,
-		y: 40
-	});
+	await draw.explore(tentacruel, iri('evolvesFrom'));
+	await draw.explore(tentacruel, '<http://www.w3.org/1999/02/22-rdf-syntax-ns#type>');
 	const pokemon = await draw.convert(tentacruel);
 	const pre = await draw.convert(iri('Tentacool'));
 	const level = await draw.addValueFilter(
 		pokemon,
 		'evolution level',
 		'Between (min..max, e.g. 40..80)',
-		'25..35',
-		{ x: 120, y: -230 }
+		'25..35'
 	);
-	const speed = await draw.addValueFilter(pre, 'Speed', 'At least (≥)', '60', {
-		x: 200,
-		y: 160
-	});
+	const speed = await draw.addValueFilter(pre, 'Speed', 'At least (≥)', '60');
 	const result: Q1 = { pokemon, pre, level, speed };
 	if (fish) result.category = await addFish(draw, pokemon);
 	return result;
 }
 
 const addFish = (draw: Drawing, pokemon: string) =>
-	draw.addValueFilter(pokemon, 'category', 'Contains', 'fish', { x: -260, y: 160 });
+	draw.addValueFilter(pokemon, 'category', 'Contains', 'fish');
 
 type Q2 = { pokemon: string; hp: string; relation: string };
 
@@ -280,13 +294,13 @@ async function drawQ2(draw: Drawing, hp: 'MAX' | 'MIN'): Promise<Q2> {
 	const arcanine = iri('Arcanine');
 	const fire = iri('FireType');
 	const rock = iri('RockType');
-	await draw.search('Arcanine', /^Arcanine /, arcanine, { x: 0, y: 0 });
-	await draw.search('Fire', /^Fire </, fire, { x: 280, y: -120 });
-	await draw.search('Rock', /^Rock </, rock, { x: 280, y: 140 });
+	await draw.search('Arcanine', /^Arcanine /);
+	await draw.search('Fire', /^Fire </);
+	await draw.search('Rock', /^Rock </);
 	for (const edge of await draw.edges())
 		if (edge.source !== arcanine || edge.target === fire) await draw.removeEdge(edge.id);
 	await draw.connect(arcanine, 'has type', fire);
-	const value = await draw.explore(arcanine, iri('hp'), { x: -200, y: 160 });
+	const value = await draw.explore(arcanine, iri('hp'));
 	// Edit value (with MAX and MIN) is offered once the value hangs off a variable.
 	const pokemon = await draw.convert(arcanine);
 	const hpNode = await draw.editValue(value, hp, '');
@@ -682,7 +696,6 @@ test('two proposed queries drawn in the UI are stored, checked and reported', as
 		'',
 		'- Drawn queries run as `SELECT DISTINCT` on the answer variable, so Moltres appears once although two',
 		'  relations (weak to, four times weak to) link it to Rock: `multiset` sees no duplicates (DEC-019).',
-		'- Nodes added by search or Explore relationships land on the first node; the test drags them apart (BUG-009).',
 		'- The funnel lists rdf:type by its IRI because the dataset gives it no label.'
 	].join('\n');
 	mkdirSync(REPORT_DIR, { recursive: true });

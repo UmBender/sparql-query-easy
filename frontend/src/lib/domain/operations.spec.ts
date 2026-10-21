@@ -509,9 +509,17 @@ describe('other edits', () => {
 			filterValue: ''
 		});
 		graph = addEntity(graph, '<https://e/a>', 'A');
-		expect(nodeById(graph, '<https://e/a>')).toMatchObject({
+		// BUG-009: no fixed spot, so the canvas places it instead of stacking it on others.
+		expect(nodeById(graph, '<https://e/a>')).toEqual({
 			kind: 'entity',
-			position: { x: 200, y: 200 }
+			id: '<https://e/a>',
+			value: '<https://e/a>',
+			label: 'A'
+		});
+		expect(
+			nodeById(addEntity(graph, '<https://e/b>', 'B', { x: 5, y: 6 }), '<https://e/b>')
+		).toMatchObject({
+			position: { x: 5, y: 6 }
 		});
 		expect(clearGraph()).toEqual(emptyGraph);
 		expect(() => addEntity(graph, '<https://e/a>', 'again')).toThrow(/Duplicate/);
@@ -560,6 +568,8 @@ describe('other edits', () => {
 			['<https://e/img>0', '<https://e/a>', 'https://e/x.png'],
 			['<https://e/p>0_1', '<https://e/b>', '<https://e/a>']
 		]);
+		// BUG-009: added values carry no position, so the canvas places them.
+		expect(nodeById(graph, '<https://e/b>')).not.toHaveProperty('position');
 	});
 
 	it('connections, Alt+drag, predicate variables and relation conversion', () => {
