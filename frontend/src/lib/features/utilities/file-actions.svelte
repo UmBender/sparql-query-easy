@@ -98,9 +98,21 @@
 		<UploadIcon />Upload Triples
 	</Button>
 {/if}
-<Button variant="ghost" class={className} title="Load a saved query" onclick={() => query?.click()}>
+<Button
+	id="load-query-btn"
+	variant="ghost"
+	class={className}
+	title="Load a saved query"
+	onclick={() => query?.click()}
+>
 	<FileUpIcon />Upload Query
 </Button>
-<Button variant="ghost" class={className} title="Export the current query" onclick={exportQuery}>
+<Button
+	id="export-query-btn"
+	variant="ghost"
+	class={className}
+	title="Export the current query"
+	onclick={exportQuery}
+>
 	<DownloadIcon />Export Query
 </Button>

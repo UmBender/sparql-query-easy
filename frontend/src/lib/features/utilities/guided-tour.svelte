@@ -1,6 +1,6 @@
 <!--
-	Guided tour (legacy Intro.js tour, FE-048): nine steps over the toolbar and
-	canvas, shown on the first visit (the legacy page showed it on every load).
+	Guided tour (FE-048, texts FE-054): steps over the toolbar and canvas,
+	shown on the first visit (the legacy page showed it on every load).
 	Next, Back, Skip; Escape closes; the highlighted control gets a ring.
 -->
 <script lang="ts">

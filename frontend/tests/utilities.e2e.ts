@@ -1,6 +1,6 @@
 /**
  * FE-048 parity: Auto Layout (P-08), Upload Triples (P-09), Upload/Export
- * Query (P-10) and the guided tour with the first-node hint (P-12).
+ * Query (P-10) and the guided tour (texts FE-054) with the first-node hint (P-12).
  * The API is mocked; no external request is allowed.
  */
 import { readFile } from 'node:fs/promises';
@@ -9,6 +9,7 @@ import { expect, test, type Page } from '@playwright/test';
 import { guardOffline } from './support/offline';
 import { mockApi, type MockApi } from './support/mock-api';
 import { addGraph, expectCanvasMatchesStore, graphOf, openEditor } from './support/editor';
+import { TOUR_STEPS } from '../src/lib/features/utilities/tour-steps';
 
 let unexpected: string[];
 let api: MockApi;
@@ -144,17 +145,21 @@ test('P-10 a file exported by the old page is refused with an explanation', asyn
 	expect((await graphOf(page)).nodes).toEqual([]);
 });
 
-test('P-12 the guided tour shows nine steps on the first visit only', async ({ page }) => {
+test('P-12 the guided tour walks every step on the first visit only', async ({ page }) => {
+	const total = TOUR_STEPS.length;
 	await openEditor(page, { tour: true });
-	const tour = page.getByRole('dialog', { name: /Step 1 of 9/ });
-	await expect(tour).toBeVisible();
-	await expect(page.getByTestId('tour-text')).toContainText(/search/i);
-	for (let step = 2; step <= 9; step++) {
-		await page.getByRole('button', { name: 'Next' }).click();
-		await expect(page.locator('#guided-tour-title')).toHaveText(`Step ${step} of 9`);
+	await expect(page.getByRole('dialog', { name: `Step 1 of ${total}` })).toBeVisible();
+	for (const [index, step] of TOUR_STEPS.entries()) {
+		await expect(page.locator('#guided-tour-title')).toHaveText(
+			`Step ${index + 1} of ${total}`
+		);
+		await expect(page.getByTestId('tour-text')).toHaveText(step.text);
+		// FE-054: every step highlights an element that exists on the editor page.
+		await expect(page.locator(step.target), step.target).toBeVisible();
+		if (index < total - 1) await page.getByRole('button', { name: 'Next' }).click();
 	}
 	await page.getByRole('button', { name: 'Back' }).click();
-	await expect(page.locator('#guided-tour-title')).toHaveText('Step 8 of 9');
+	await expect(page.locator('#guided-tour-title')).toHaveText(`Step ${total - 1} of ${total}`);
 	await page.getByRole('button', { name: 'Next' }).click();
 	await page.getByRole('button', { name: 'Done' }).click();
 	await expect(page.locator('#guided-tour')).toHaveCount(0);

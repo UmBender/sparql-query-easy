@@ -14,7 +14,6 @@
 	import RefreshCwIcon from '@lucide/svelte/icons/refresh-cw';
 	import PlusIcon from '@lucide/svelte/icons/plus';
 	import SearchIcon from '@lucide/svelte/icons/search';
-	import CircleHelpIcon from '@lucide/svelte/icons/circle-help';
 	import { Button } from '#lib/components/ui/button/index.js';
 	import { IconButton } from '#lib/components/ui/icon-button/index.js';
 	import { Input } from '#lib/components/ui/input/index.js';
@@ -125,21 +124,12 @@
 		</a>
 		{@render fileActions?.()}
 		<Button
+			id="view-sparql-btn"
 			variant="ghost"
 			class="text-brand-foreground hover:bg-brand-foreground/15 hover:text-brand-foreground"
 			onclick={() => controller.viewSparql()}
 		>
 			<CodeIcon />View SPARQL
-		</Button>
-		<Button
-			variant="ghost"
-			class="text-brand-foreground hover:bg-brand-foreground/15 hover:text-brand-foreground"
-			id="demo-link"
-			href="https://youtu.be/6vh7bccR-Ow"
-			target="_blank"
-			rel="noopener noreferrer"
-		>
-			<CircleHelpIcon />Demo
 		</Button>
 		<IconButton
 			label="Undo"
@@ -244,6 +234,7 @@
 			><PlusIcon />Add Variable</Button
 		>
 		<Button
+			id="add-value-variable-btn"
 			variant="secondary"
 			title="Add a value variable: a variable for literal values (numbers, text, dates) that can hold a filter"
 			onclick={() => store.addValueVariable()}
