@@ -126,7 +126,7 @@ changed PNG in the diff before committing.
 | Job | Push to another branch | Pull request, push to `main`, nightly, manual |
 |---|---|---|
 | `kotlin` (Kotlin gate with the OpenAPI snapshot contract) | yes | yes |
-| `frontend-fast` (check, lint, `test:coverage`, component tests) | yes | yes |
+| `frontend-fast` (legacy-free check, check, lint, `test:coverage`, component tests) | yes | yes |
 | `frontend-browser` (`test:e2e`, `test:screens`, `test:stack`) | no | yes |
 | `compose-smoke` (`test:compose`) | no | push to `main`, nightly and manual only |
 

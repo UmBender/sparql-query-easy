@@ -45,6 +45,7 @@ These are configured versions, not claims about a fresh successful build.
 | New frontend dev server | `npm --prefix frontend run dev` (port 5173, proxies `/api`, `/health`, `/openapi.json` to Ktor on 8080) |
 | Distribution | `GRADLE_USER_HOME=/tmp/sparql-query-easy-gradle ./gradlew installDist --no-daemon` |
 | Run | `./gradlew run` or `./build/install/sparql-query-easy-kotlin/bin/sparql-query-easy-kotlin` |
+| Legacy-free check (QUAL-018) | `node --test scripts/check-legacy-free.test.mjs && node scripts/check-legacy-free.mjs` (fails on a tracked `sparql/` or `frontend-tests/` path, `index2.html`/`login.html`, CSS outside `frontend/src/`, a jQuery/Materialize/Intro.js dependency, or `jquery`/`$.ajax` in source; allows `tcc/`, `MIGRATION*.md`, `fixtures/legacy/` and the DEC-018 Q2 oracles in `frontend/src/lib/domain/legacy/`; runs in the CI `frontend-fast` job) |
 | Docs/skills | `node scripts/check-project-docs.mjs`; `git diff --check` |
 | Task index text | `node scripts/check-project-docs.mjs --index` (stdout only; review/apply to TASKS.md) |
 | Verify Codex discovery | `node scripts/check-skill-discovery.mjs` (local CLI diagnostic; no model request) |

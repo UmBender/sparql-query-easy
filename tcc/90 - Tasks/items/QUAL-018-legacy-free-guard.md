@@ -1,13 +1,13 @@
 ---
 id: QUAL-018
 title: Fail CI if jQuery or legacy page files come back, and confirm every test layer is green
-status: BACKLOG
+status: DONE
 priority: P2
 type: quality
 depends_on: [DEC-018, FE-054, DOC-006, DOC-007]
 human_gate: false
 created: 2026-10-20
-updated: 2026-10-20
+updated: 2026-10-21
 ---
 # Fail CI if jQuery or legacy page files come back, and confirm every test layer is green
 
@@ -34,12 +34,31 @@ but nothing stops them regressing. Skill: `tcc-test`.
 
 ## Acceptance criteria
 
-- [ ] The check passes on the final tree and fails when a test fixture adds
+- [x] The check passes on the final tree and fails when a test fixture adds
   `jquery` to a `package.json` or a file under `sparql/`.
-- [ ] Kotlin gate, new frontend gate, `test:screens`, `test:stack` and
+- [x] Kotlin gate, new frontend gate, `test:screens`, `test:stack` and
   `test:compose` pass on the final state (results in the log).
 
 ## Validation
 
 The check's own test; the CI gate from the Operational Map (workflow
 changed), plus the five layers above.
+
+## Execution log
+
+- 2026-10-21: `scripts/check-legacy-free.mjs` (pure `findLegacy(files, read)`
+  over `git ls-files`) and `scripts/check-legacy-free.test.mjs` (`node
+  --test`, 4 cases: a clean tree with history and oracles passes; a `jquery`
+  devDependency, a `materialize-css` lockfile package, a file under
+  `sparql/`, an `index2.html`, CSS outside `frontend/src/` and `$.ajax` in
+  source each fail). Allow-list: `tcc/`, `MIGRATION*.md`,
+  `fixtures/legacy/`, `frontend/src/lib/domain/legacy/` (DEC-018 Q2) and the
+  check itself. CI: first step of `frontend-fast`. Operational Map row and
+  Testing Guide CI table updated.
+- Checks: the tree passes (939 tracked files); an intent-to-add
+  `sparql/x.js` with `$.ajax` made the CLI exit 1 with both problems, then
+  was removed. CI YAML parses (step order checked).
+- All layers on the final state (2026-10-21): Kotlin `ktlintCheck detekt
+  test` BUILD SUCCESSFUL (289 tests, 0 failures); `npm test` (240 server,
+  25 component, 115 Playwright); `test:screens` 22; `test:stack` 20;
+  `test:compose` 4. All exit 0.
