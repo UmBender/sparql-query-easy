@@ -1,15 +1,16 @@
 # Docker Compose Stack — OPS-006
 
 Stack of three services on one origin. HTTPS is a setting (OPS-008, below);
-the production domain and CORS policy stay in OPS-002, server deployment in
-OPS-005.
+the production domain and CORS policy stay in OPS-002. Installing and
+updating the server: [[Server Deploy Runbook]] (OPS-011); deploy automation
+is OPS-005.
 
 | Service | Image | Role |
 |---|---|---|
 | `db` | `postgres:17-alpine` | Accounts and sessions; data in the named volume `easyquery_db-data`; `pg_isready` health check |
-| `backend` | `easyquery-backend:local` (root `Dockerfile`, OPS-001) | Ktor on 8080, not published; Flyway migrations at startup (BE-005); waits for a healthy `db` |
-| `backup` | `easyquery-backup:local` (`deploy/backup.Dockerfile`: `postgres:17-alpine` + `age`) | `pg_dump` on `BACKUP_SCHEDULE` into `BACKUP_DIR`, retention, encrypted off-host copies (OPS-009, below); no port |
-| `web` | `easyquery-web:local` (`deploy/web.Dockerfile`) | Caddy on port 80 (and 443 in mode `auto`), published on `${WEB_BIND:-127.0.0.1}:${WEB_PORT:-8080}`: serves the SvelteKit build (`index.html` fallback) and proxies `/api/*`, `/health`, `/openapi.json` and `/swagger` to `backend` (`deploy/caddy/site.caddy`); certificates in the volume `easyquery_caddy-data` |
+| `backend` | `easyquery-backend:${EASYQUERY_VERSION}` (root `Dockerfile`, OPS-001) | Ktor on 8080, not published; Flyway migrations at startup (BE-005); waits for a healthy `db` |
+| `backup` | `easyquery-backup:${EASYQUERY_VERSION}` (`deploy/backup.Dockerfile`: `postgres:17-alpine` + `age`) | `pg_dump` on `BACKUP_SCHEDULE` into `BACKUP_DIR`, retention, encrypted off-host copies (OPS-009, below); no port |
+| `web` | `easyquery-web:${EASYQUERY_VERSION}` (`deploy/web.Dockerfile`) | Caddy on port 80 (and 443 in mode `auto`), published on `${WEB_BIND:-127.0.0.1}:${WEB_PORT:-8080}`: serves the SvelteKit build (`index.html` fallback) and proxies `/api/*`, `/health`, `/openapi.json` and `/swagger` to `backend` (`deploy/caddy/site.caddy`); certificates in the volume `easyquery_caddy-data` |
 
 Caddy keeps the `Host` header, which the backend's same-origin check on
 account routes compares with `Origin`, and sets `X-Forwarded-For` to the one
@@ -17,6 +18,9 @@ client address it determined (`{client_ip}`); the backend runs with
 `EASYQUERY_TRUST_PROXY=true`, so the login rate limit applies per client. Nothing but `web` is reachable from the host.
 `EASYQUERY_ADMIN_USERNAMES` (comma-separated, default empty) names the
 accounts with the admin role (AUTH-005); set it in the server's `.env`.
+`EASYQUERY_VERSION` (default `local`) tags the three built images; on the
+server it is the deployed git tag, so the previous version's images stay for
+a rollback (OPS-011, [[Server Deploy Runbook]]).
 
 ## Configuration
 

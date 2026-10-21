@@ -4,6 +4,9 @@
 # Runbook: tcc/07 - Operations/Docker Compose Stack.md.
 name: easyquery
 
+# OPS-011: images are tagged EASYQUERY_VERSION (the git tag being deployed;
+# default `local`), so the previous version's images stay for a rollback.
+
 # OPS-010: rotate every container's log (docker compose logs reads it).
 x-logging: &logging
   driver: json-file
@@ -38,7 +41,7 @@ services:
 
   backend:
     build: .
-    image: easyquery-backend:local
+    image: easyquery-backend:${EASYQUERY_VERSION:-local}
     environment:
       EASYQUERY_ENVIRONMENT: ${EASYQUERY_ENVIRONMENT:-production}
       EASYQUERY_DB_URL: jdbc:postgresql://db:5432/${POSTGRES_DB:-easyquery}
@@ -79,7 +82,7 @@ services:
     build:
       context: .
       dockerfile: deploy/backup.Dockerfile
-    image: easyquery-backup:local
+    image: easyquery-backup:${EASYQUERY_VERSION:-local}
     environment:
       POSTGRES_DB: ${POSTGRES_DB:-easyquery}
       POSTGRES_USER: ${POSTGRES_USER:-easyquery}
@@ -107,7 +110,7 @@ services:
     build:
       context: .
       dockerfile: deploy/web.Dockerfile
-    image: easyquery-web:local
+    image: easyquery-web:${EASYQUERY_VERSION:-local}
     # OPS-008: local (deploy/Caddyfile), auto or proxy (deploy/caddy/).
     command: ["caddy", "run", "--config", "/etc/caddy/${EASYQUERY_HTTPS_MODE:-local}.Caddyfile", "--adapter", "caddyfile"]
     # Unset, these defaults make Caddy refuse to start in the mode that needs
