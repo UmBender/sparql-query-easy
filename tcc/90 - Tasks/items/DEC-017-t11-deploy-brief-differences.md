@@ -1,7 +1,7 @@
 ---
 id: DEC-017
 title: Decide how the T11 brief changes the deployment contract of OPS-001 and OPS-006
-status: BLOCKED
+status: DONE
 priority: P1
 type: decision
 depends_on: [OPS-006]
@@ -101,6 +101,25 @@ fact only the user has. Nothing is changed until the user answers.
   256 MiB, backup 256 MiB) and log rotation (10 MB × 3) (recommended: harmless
   on a dedicated machine, needed on a shared one). B: rotation only, no limits.
 
+## Decision
+
+- 2026-10-20: The user accepted every recommendation ("DO the
+  recommendations for T11"), after an explanation of Q3 and Q4, and asked
+  to implement T11.
+- **Q1 C.** OPS-008 builds the switch with modes `local`, `auto` and
+  `proxy`; the server's mode is chosen at go-live from the DOC-005 answers.
+- **Q2 A.** Keep the OPS-001 image (`installDist` on the Temurin 21 JRE).
+- **Q3 A.** OPS-009 implements backups now, depending on OPS-006 only; OPS-004
+  keeps monitoring and alerting and points to OPS-009 for backups.
+- **Q4 A.** Dumps `0600`; off-host copies encrypted with `age` (public key on
+  the server, private key off it, kept in two places, tested by the restore
+  drill); retention 7 daily + 4 weekly.
+- **Q5 A.** Build on the server from a git tag; image tags from one `.env`
+  variable; rollback = start the previous tag (restore the pre-update backup
+  when a migration prevents it). OPS-005 may automate it later.
+- **Q6 A.** Memory/CPU limits per service from `.env` with defaults, JVM
+  sized from the container, log rotation 10 MB × 3.
+
 ## Effects once answered
 
 OPS-008 to OPS-011 and DOC-005 stay BACKLOG until this card is DONE (DOC-005
@@ -112,3 +131,5 @@ answer.
 
 - 2026-10-20: Created from the T11 brief with the coverage table above. Stops
   for the user's answers to Q1–Q6.
+- 2026-10-20: Answered (all recommendations). OPS-002 and OPS-004 received
+  the proposed amendments as dated notes; their status is unchanged.

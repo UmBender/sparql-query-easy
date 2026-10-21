@@ -7,7 +7,7 @@ type: operations
 depends_on: [OPS-001]
 human_gate: true
 created: 2026-09-16
-updated: 2026-10-16
+updated: 2026-10-20
 ---
 # Define DNS TLS reverse-proxy and production CORS policy
 
@@ -44,3 +44,7 @@ Origin mistakes can break browser access or expose APIs.
   (OPS-006 builds the stack locally). Still `BLOCKED` on server facts: public
   80/443 reachability, DNS name and TLS issuer, deploy access, off-host backup
   location (see BLOCKERS).
+- 2026-10-20: DEC-017 Q1 C. OPS-008 implements the HTTPS mechanism (Caddy
+  modes `local`, `auto`, `proxy`); this card keeps the policy: production
+  domain, chosen mode, CORS and redirects. Still `BLOCKED` on the DOC-005
+  answers.

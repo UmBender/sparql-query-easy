@@ -7,7 +7,7 @@ type: operations
 depends_on: [OPS-001, SEC-001]
 human_gate: true
 created: 2026-09-16
-updated: 2026-10-16
+updated: 2026-10-20
 ---
 # Define monitoring backup and recovery plan
 
@@ -49,3 +49,7 @@ Uploaded graphs are process-local and may not be backup candidates; confirm prod
   (OPS-006 builds the stack locally). Still `BLOCKED` on server facts: public
   80/443 reachability, DNS name and TLS issuer, deploy access, off-host backup
   location (see BLOCKERS).
+- 2026-10-20: DEC-017 Q3 A. Backups (scheduled `pg_dump`, retention, restore
+  drill) move to OPS-009, which does not wait for SEC-001; OPS-010 adds the
+  logging backend found missing above. This card keeps monitoring, alerting
+  (including on a failed backup) and recovery objectives.

@@ -49,15 +49,3 @@ blocked until these are known:
 name, and who issues its TLS certificate (Let's Encrypt or the university)?
 How can a deploy reach it (SSH, VPN, nothing from GitHub)? Where can off-host
 database backups be stored?
-
-## DEC-017 — T11 deployment choices
-
-OPS-008 to OPS-011 wait for the user's answers in DEC-017. DOC-005 (IT
-checklist) does not.
-
-**Questions:** Q1 which HTTPS mode applies on the server (Caddy certificates,
-university proxy, or not known yet)? Q2 keep the OPS-001 `installDist`/JRE
-image or switch to a fat JAR? Q3 do backups now, before OPS-004/SEC-001?
-Q4 encrypt off-host dumps and keep 7 daily + 4 weekly? Q5 build on the server
-from a git tag, or pull from a registry? Q6 is the server shared (resource
-limits)?
