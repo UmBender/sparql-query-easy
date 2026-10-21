@@ -1,7 +1,7 @@
 ---
 id: STUDY-012
 title: Build two feature-rich proposed queries in the editor end to end and show what the database stored and returned
-status: REVIEW
+status: DONE
 priority: P1
 type: fullstack
 depends_on: [STUDY-001]
@@ -236,5 +236,5 @@ on the spec, focused spec passing on a reused stack, and the closing gate
 `npm --prefix frontend run test:stack`: 21 passed (3.1 min, fresh stack). Test-only:
 there is no product change, so the Kotlin gate is not needed.
 
-Left for human review: read the report and the rows, and confirm
-they look right. Then this card goes to DONE.
+Human review (2026-10-21): the user read the report and the stored rows
+and accepted them ("It looks fine"). Implementation commit `c7fbefe`.

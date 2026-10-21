@@ -127,7 +127,7 @@ Ordered by dependencies, then priority among selection candidates. See [worker r
 | STUDY-010 | DONE | P1 | fullstack | [Submit a questionnaire once, validated on the server, with progress kept per page](<items/STUDY-010-submit-form-response.md>) |
 | STUDY-011 | DONE | P1 | fullstack | [Let admins export questionnaire responses as CSV and cover the whole T9 flow end to end](<items/STUDY-011-questionnaire-export-and-e2e.md>) |
 | STUDY-002 | DONE | P1 | fullstack | [Show two questionnaires to logged-in users and store their answers](<items/STUDY-002-questionnaires.md>) |
-| STUDY-012 | REVIEW | P1 | fullstack | [Build two feature-rich proposed queries in the editor end to end and show what the database stored and returned](<items/STUDY-012-query-creation-test.md>) |
+| STUDY-012 | DONE | P1 | fullstack | [Build two feature-rich proposed queries in the editor end to end and show what the database stored and returned](<items/STUDY-012-query-creation-test.md>) |
 | DEC-019 | BACKLOG | P1 | decision | [Decide what multiset comparison means when drawn answers run as SELECT DISTINCT](<items/DEC-019-multiset-and-distinct-answers.md>) |
 | BUG-009 | BACKLOG | P1 | bug | [Nodes added by search or Explore relationships land on top of the first node](<items/BUG-009-new-nodes-stack-on-first-node.md>) |
 | BUG-010 | BACKLOG | P2 | bug | [A MAX or MIN value applied with an empty value field reopens with text filters only](<items/BUG-010-max-min-reopens-as-text.md>) |
