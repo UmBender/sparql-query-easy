@@ -147,3 +147,56 @@ test('the profile questionnaire shows a field error before sending its answers',
 		}
 	]);
 });
+
+test('DEC-019 only a legacy multiset task offers the comparison, to move it to set', async ({
+	page
+}) => {
+	const admin: Schemas['SessionUserHttpResponse'] = { username: 'ana', role: 'admin' };
+	api.override('/api/auth/session', () => ({ data: admin }));
+	const comparison = page.getByRole('group', { name: 'Comparison' });
+
+	await page.addInitScript(() => window.localStorage.setItem('easyquery-tour-seen', 'true'));
+	await page.goto('/admin/tasks/new');
+	await expect(page.getByRole('button', { name: 'Save task' })).toBeVisible();
+	await expect(comparison).toHaveCount(0);
+
+	const legacy: Schemas['AdminTaskHttpResponse'] = {
+		key: 'fire-legacy',
+		title: 'Fast Fire-type Pokémon',
+		statement: 'Find every Fire-type Pokémon with a speed of at least 90.',
+		endpoint: 'PokemonGen1',
+		startingGraph: null,
+		referenceGraph: FIRE_SPEED,
+		referenceQuery: {
+			variableName: '?pokemon',
+			where: [],
+			variableFilters: []
+		} as unknown as Schemas['AnswerQueryHttpRequest'],
+		referenceSparql: 'SELECT DISTINCT ?pokemon WHERE {}',
+		expected: [],
+		comparison: 'multiset',
+		maxResults: 1000,
+		revision: 1,
+		active: true,
+		createdAt: '2026-10-20T12:00:00Z',
+		updatedAt: '2026-10-20T12:00:00Z'
+	};
+	// GET returns the stored task; the PUT that saves it returns the new revision.
+	api.override('/api/admin/tasks/fire-legacy', (body) =>
+		body ? { data: { ...legacy, comparison: 'set', revision: 2 } } : { data: legacy }
+	);
+	await page.goto('/admin/tasks/fire-legacy');
+	await expect(comparison).toBeVisible();
+	await expect(
+		comparison.getByRole('radio', { name: 'Every result row (multiset)' })
+	).toBeChecked();
+	await comparison.getByRole('radio', { name: 'Set of answer values' }).check();
+	await page.getByRole('button', { name: 'Save task' }).click();
+	await expect
+		.poll(() =>
+			(api.bodies('/api/admin/tasks/fire-legacy') as ({ comparison?: string } | null)[])
+				.filter((body) => body)
+				.map((body) => body!.comparison)
+		)
+		.toEqual(['set']);
+});

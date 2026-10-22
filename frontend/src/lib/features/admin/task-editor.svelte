@@ -273,29 +273,33 @@
 						</p>
 					{/each}
 				</fieldset>
-				<fieldset class="flex flex-col gap-1.5">
-					<legend class="mb-1 text-sm font-medium">Comparison</legend>
-					<label class="flex items-center gap-2 text-sm">
-						<input
-							type="radio"
-							name="task-comparison"
-							value="set"
-							bind:group={comparison}
-							class="size-4 accent-primary"
-						/>
-						Set of answer values
-					</label>
-					<label class="flex items-center gap-2 text-sm">
-						<input
-							type="radio"
-							name="task-comparison"
-							value="multiset"
-							bind:group={comparison}
-							class="size-4 accent-primary"
-						/>
-						Every result row (multiset)
-					</label>
-				</fieldset>
+				<!-- DEC-019: answers run as SELECT DISTINCT, so every task compares a set of answer values; only a
+				legacy multiset task offers the choice, to move it to set. -->
+				{#if start?.comparison === 'multiset'}
+					<fieldset class="flex flex-col gap-1.5">
+						<legend class="mb-1 text-sm font-medium">Comparison</legend>
+						<label class="flex items-center gap-2 text-sm">
+							<input
+								type="radio"
+								name="task-comparison"
+								value="set"
+								bind:group={comparison}
+								class="size-4 accent-primary"
+							/>
+							Set of answer values
+						</label>
+						<label class="flex items-center gap-2 text-sm">
+							<input
+								type="radio"
+								name="task-comparison"
+								value="multiset"
+								bind:group={comparison}
+								class="size-4 accent-primary"
+							/>
+							Every result row (multiset)
+						</label>
+					</fieldset>
+				{/if}
 				<Field
 					id="task-max-results"
 					label="Result cap"

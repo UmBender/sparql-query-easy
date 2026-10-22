@@ -556,7 +556,12 @@ a session cookie gets `503 {"error":"Accounts are temporarily unavailable"}`.
   variable, one per result row in result order, computed and stored by the
   server; a result with more than `maxResults` rows is rejected (`400`), so a
   stored expected result is never cut. `set` compares the distinct values,
-  `multiset` the values with their repetitions (STUDY-004).
+  `multiset` the values with their repetitions (STUDY-004). Drawn queries run
+  as `SELECT DISTINCT` on the answer variable, so a value never repeats and
+  `multiset` gives the same verdict as `set` (DEC-019). The API still
+  accepts `multiset` for compatibility, but the admin form no longer offers
+  it for new tasks; only a stored multiset task shows the choice, so it can
+  be moved to `set`.
 - Revision: an update reruns the reference only when its request (compared as
   JSON values), the endpoint or `maxResults` changed; changing those, the
   statement or the comparison increments `revision`. A title, layout-only

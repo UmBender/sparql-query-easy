@@ -5,8 +5,9 @@
  *
  * Q1 (set): Water-type Pokémon that evolve by level-up at a level in 25..35,
  * whose pre-evolution has speed ≥ 60 and whose category contains "fish"
- * → Tentacruel, Seaking. Q2 (multiset): the Fire-type Pokémon with the
- * highest HP, linked to Rock by any relation → Arcanine, Moltres.
+ * → Tentacruel, Seaking. Q2 (set): the Fire-type Pokémon with the highest
+ * HP, linked to Rock by any relation → Arcanine, Moltres. New tasks always
+ * compare a set (DEC-019), so the form offers no comparison choice.
  *
  * Writes test-results/study-query-creation/report.md (also attached to the
  * Playwright report) with the SPARQL, each attempt and the stored rows.
@@ -379,14 +380,13 @@ async function saveTask(
 	page: Page,
 	task: { key: string; title: string; statement: string },
 	answer: string,
-	comparison: 'set' | 'multiset',
 	expected: string[]
 ) {
 	await page.getByLabel('Key').fill(task.key);
 	await page.getByLabel('Title').fill(task.title);
 	await page.getByLabel('Statement').fill(task.statement);
 	await page.locator(`input[name="task-answer"][value="${answer}"]`).check();
-	await page.locator(`input[name="task-comparison"][value="${comparison}"]`).check();
+	await expect(page.getByRole('group', { name: 'Comparison' })).toHaveCount(0);
 	await expect(page.locator('[data-sonner-toast]')).toHaveCount(0, { timeout: 15_000 });
 	await page.getByRole('button', { name: 'Preview expected result' }).click();
 	const preview = page.getByRole('region', { name: 'Expected result' });
@@ -434,7 +434,7 @@ test('two proposed queries drawn in the UI are stored, checked and reported', as
 			key: `fire-hp-rock-${stamp}`,
 			title: 'Toughest Fire Pokémon and how Rock hits them',
 			statement:
-				'Among the Fire-type Pokémon with the highest HP, list each one once per relation that links it to the Rock type.'
+				'Find the Fire-type Pokémon with the highest HP that are linked to the Rock type by any relation.'
 		}
 	};
 	const participant = `creator-${stamp}`;
@@ -508,17 +508,14 @@ test('two proposed queries drawn in the UI are stored, checked and reported', as
 	await editor.uploadQuery('q1.query.json', JSON.parse(exported));
 	await expect.poll(() => editor.graph()).toEqual(before);
 
-	const q1Preview = await saveTask(page, tasks.q1, q1.pokemon, 'set', ['Tentacruel', 'Seaking']);
+	const q1Preview = await saveTask(page, tasks.q1, q1.pokemon, ['Tentacruel', 'Seaking']);
 
 	// Admin, Q2.
 	await page.goto('/admin/tasks/new');
 	await editor.ready();
 	const q2 = await drawQ2(draw, 'MAX');
 	expect(await draw.sparql()).toContain(`${q2.pokemon} ${q2.relation} <${PK}RockType>`);
-	const q2Preview = await saveTask(page, tasks.q2, q2.pokemon, 'multiset', [
-		'Arcanine',
-		'Moltres'
-	]);
+	const q2Preview = await saveTask(page, tasks.q2, q2.pokemon, ['Arcanine', 'Moltres']);
 
 	// Admin: a group with both tasks and the participant, through the groups page.
 	await page.goto('/admin/groups');
@@ -573,7 +570,7 @@ test('two proposed queries drawn in the UI are stored, checked and reported', as
 	const stored1 = storedTask(tasks.q1.key);
 	const stored2 = storedTask(tasks.q2.key);
 	expect(stored1.comparison).toBe('set');
-	expect(stored2.comparison).toBe('multiset');
+	expect(stored2.comparison).toBe('set');
 	expect(stored1.expected_result).toEqual(
 		expect.arrayContaining(pokemon('Tentacruel', 'Seaking'))
 	);
@@ -695,7 +692,7 @@ test('two proposed queries drawn in the UI are stored, checked and reported', as
 		'## Notes',
 		'',
 		'- Drawn queries run as `SELECT DISTINCT` on the answer variable, so Moltres appears once although two',
-		'  relations (weak to, four times weak to) link it to Rock: `multiset` sees no duplicates (DEC-019).',
+		'  relations (weak to, four times weak to) link it to Rock; every new task compares a set (DEC-019).',
 		'- The funnel lists rdf:type by its IRI because the dataset gives it no label.'
 	].join('\n');
 	mkdirSync(REPORT_DIR, { recursive: true });
