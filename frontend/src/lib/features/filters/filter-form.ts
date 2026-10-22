@@ -39,9 +39,15 @@ export const FILTER_OPTIONS: Record<EditorMode, { value: FilterChoice; label: st
 	]
 };
 
-/** A value variable offers every type but MAX/MIN; a numeric or MAX/MIN/between value the numeric ones. */
+/**
+ * A value variable offers every type but MAX/MIN; a numeric or MAX/MIN/between value the numeric ones,
+ * and so does a value whose stored filter only exists for numbers (≥, ≤, MAX, MIN, between), whatever its
+ * text: MAX applied with an empty field must reopen with MAX (BUG-010).
+ */
 export function editorMode(node: QueryNode, text: string): EditorMode {
 	if (node.kind === 'valueVariable') return 'variable';
+	const stored = filterTypeOf(nodeData(node).filterType);
+	if (stored !== null && stored >= 2) return 'numeric';
 	const numericOrSpecial =
 		(text !== '' && !Number.isNaN(Number(text))) ||
 		text === 'MAX' ||

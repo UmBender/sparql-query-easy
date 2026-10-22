@@ -28,6 +28,17 @@ describe('filter editor form', () => {
 		expect(editorMode(value('MAX', 4), 'MAX')).toBe('numeric');
 		expect(editorMode(value('40..80', 6), '40..80')).toBe('numeric');
 		expect(editorMode(value('Pikachu'), 'Pikachu')).toBe('text');
+		// BUG-010: MAX/MIN applied with an empty field keep the numeric choices.
+		for (const [code, label] of [
+			[4, 'MAX'],
+			[5, 'MIN']
+		] as const) {
+			const empty = value('', code, label);
+			expect(editorStart(empty)).toEqual({ value: '', filterType: String(code) });
+			expect(editorMode(empty, editorStart(empty).value)).toBe('numeric');
+		}
+		expect(editorMode(value('', 2, '≥ '), '')).toBe('numeric');
+		expect(editorMode(value('fish', 1, 'contains fish'), 'fish')).toBe('text');
 		expect(FILTER_OPTIONS.variable.map((option) => option.value)).toEqual([
 			'any',
 			'',

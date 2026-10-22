@@ -355,6 +355,27 @@ test('F-04 previous, next and play cycle the kept entities five at a time; MIN t
 	await expect(cyclePosition(page)).toHaveText('');
 });
 
+test('BUG-010 MAX applied with an empty field reopens with the numeric choices and can become MIN', async ({
+	page
+}) => {
+	await speedGraph(page);
+	api.override('/api/query/numeric-profile', () => speedProfile(twelveSpeeds));
+	await openValueEditor(page);
+	await choose(page, 'MAX');
+	await valueInput(page).fill('');
+	await page.locator('#apply-filter-btn').click();
+	await expect(editor(page)).toBeHidden();
+	expect(await filterNode(page)).toMatchObject({ label: 'MAX', filterType: 4 });
+
+	await openValueEditor(page);
+	await expect(editor(page).getByLabel('MIN', { exact: true })).toBeVisible();
+	expect(await checked(page)).toBe('MAX');
+	await choose(page, 'MIN');
+	await page.locator('#apply-filter-btn').click();
+	await expect(editor(page)).toBeHidden();
+	expect(await filterNode(page)).toMatchObject({ label: 'MIN', filterType: 5 });
+});
+
 test('F-02 Add value filter lists datatype relations and opens the editor on a seeded value variable', async ({
 	page
 }) => {
