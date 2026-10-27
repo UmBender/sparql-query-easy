@@ -1,6 +1,6 @@
 <!--
 	Edit Filter Value (FE-045; legacy #modal-change-value): one editor for a
-	value node (Edit value) and a value variable (Edit filter, Add value
+	literal value node (Edit literal value) and a literal value variable (Edit filter, Add value
 	filter). Superforms validates the Zod schema before Apply changes the graph.
 -->
 <script lang="ts">

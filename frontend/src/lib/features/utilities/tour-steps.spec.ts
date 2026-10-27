@@ -5,10 +5,14 @@ import { TOUR_STEPS } from './tour-steps.js';
 describe('TOUR_STEPS', () => {
 	const text = TOUR_STEPS.map((step) => step.text).join('\n');
 
-	it.each(['filter', 'funnel', 'Run the query', 'View SPARQL', 'Export Query', 'value variable'])(
-		'mentions %s',
-		(feature) => expect(text).toContain(feature)
-	);
+	it.each([
+		'filter',
+		'funnel',
+		'Run the query',
+		'View SPARQL',
+		'Export Query',
+		'literal value variable'
+	])('mentions %s', (feature) => expect(text).toContain(feature));
 
 	it('targets one element id per step, each once', () => {
 		const targets = TOUR_STEPS.map((step) => step.target);

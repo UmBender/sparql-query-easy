@@ -85,7 +85,7 @@ async function openValueEditor(page: Page) {
 	await clickNode(page, id);
 	await page
 		.locator('#node-action-menu')
-		.getByRole('button', { name: 'Edit value', exact: true })
+		.getByRole('button', { name: 'Edit literal value', exact: true })
 		.click();
 	await expect(editor(page)).toBeVisible();
 }
@@ -181,7 +181,7 @@ test('F-01 an exact numeric match sends no filterType; a text value offers exact
 	await clickNode(page, 'Rio');
 	await page
 		.locator('#node-action-menu')
-		.getByRole('button', { name: 'Edit value', exact: true })
+		.getByRole('button', { name: 'Edit literal value', exact: true })
 		.click();
 	expect(
 		await editor(page)
@@ -547,7 +547,7 @@ test('F-05 Edit value on a value node suggests values containing the text throug
 	await clickNode(page, 'Seed Pokémon');
 	await page
 		.locator('#node-action-menu')
-		.getByRole('button', { name: 'Edit value', exact: true })
+		.getByRole('button', { name: 'Edit literal value', exact: true })
 		.click();
 	await choose(page, 'Contains');
 	await valueInput(page).fill('Flame');

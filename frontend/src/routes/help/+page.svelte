@@ -140,14 +140,15 @@
 			Question: <em>which Fire-type Pokémon have a speed of at least 90?</em> On
 			<code>PokemonGen1</code>: add a variable (the Pokémon we look for), search for
 			<strong>Fire</strong> and connect the variable to it with the relation
-			<em>has type</em>, add a value variable and connect the variable to it with
-			<em>speed</em>, then give the value variable the filter <em>at least 90</em>. The badge
+			<em>has type</em>, add a literal value variable and connect the variable to it with
+			<em>speed</em>, then give the literal value variable the filter <em>at least 90</em>.
+			The badge
 			<strong>7 / 12</strong> says that 7 of the 12 Fire-type Pokémon pass the filter. Run Query
 			lists them.
 		</p>
 		{@render figure(
 			'editor',
-			'The editor with a variable connected to the entity Fire by has type and to a value variable at least 90 by speed; a badge 7 / 12 above the value variable.',
+			'The editor with a variable connected to the entity Fire by has type and to a literal value variable at least 90 by speed; a badge 7 / 12 above the literal value variable.',
 			'The question drawn as a graph. The numbered names next to Run Query give the order in which the variables are explored.'
 		)}
 	</section>
@@ -164,8 +165,8 @@
 			{/each}
 		</ul>
 		<p class="text-sm">
-			A grey node stands for a result with many values. The <em>Node types</em> legend in the corner
-			of the canvas repeats these colors.
+			A grey node, <em>Multiple results</em>, stands for more than one result. The
+			<em>Node types</em> legend in the corner of the canvas repeats these colors.
 		</p>
 	</section>
 
@@ -176,12 +177,13 @@
 			<em>speed</em>). Every arrow is one condition of the query. Click a node to open its
 			<strong>action list</strong>. On an entity, <em>Explore relationships</em> lists its
 			properties so you can add one to the graph; on a variable, <em>Run query</em> and
-			<em>Add value filter</em>; on a value variable, <em>Edit filter</em>; on a value,
-			<em>Edit value</em>. Every node can be connected to another one with a defined predicate
-			(you choose the property from a list) or a variable predicate (any property), converted
-			to a variable, or removed. Click an arrow to convert the relation to a variable or
-			remove it. Alt+drag from one node to another draws a new relation. Click the background
-			to close the list.
+			<em>Add value filter</em>; on a literal value variable, <em>Edit filter</em>; on a
+			literal value,
+			<em>Edit literal value</em>. Every node can be connected to another one with a defined
+			predicate (you choose the property from a list) or a variable predicate (any property),
+			converted to a variable, or removed. Click an arrow to convert the relation to a
+			variable or remove it. Alt+drag from one node to another draws a new relation. Click the
+			background to close the list.
 		</p>
 		{@render figure(
 			'action-list',
@@ -193,7 +195,10 @@
 	<section id="filters" aria-labelledby="filters-title" class="flex flex-col gap-3">
 		<h2 id="filters-title" class="text-lg font-semibold">Filters</h2>
 		<p class="text-sm">
-			Values and value variables can hold a filter. Choose <em>Add value filter</em> or
+			Literal values and literal value variables can hold a filter. Choose <em
+				>Add value filter</em
+			>
+			or
 			<em>Edit filter</em> in the action list. The filter editor shows the real values found in
 			the data: a histogram for numbers, with the kept part highlighted, and the entities that would
 			be kept; for text it suggests matching values while you type.

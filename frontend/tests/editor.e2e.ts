@@ -152,7 +152,7 @@ test('P-04 P-05 the limit and endpoint fields feed requests', async ({ page }) =
 
 test('P-06 P-07 P-14 add, count and clear nodes; undo and redo edits', async ({ page }) => {
 	await page.getByRole('button', { name: 'Add Variable' }).click();
-	await page.getByRole('button', { name: 'Add Value Variable' }).click();
+	await page.getByRole('button', { name: 'Add Literal Value Variable' }).click();
 	await expect(page.locator('#status-nodes')).toHaveText('Nodes: 2');
 	expect((await graphOf(page)).nodes.map((node) => node.split('|')[1]).sort()).toEqual([
 		'valueVariable',
@@ -292,8 +292,8 @@ test('G-03 each node kind offers exactly its legacy actions', async ({ page }) =
 	const expected: [string, string[]][] = [
 		['?mon', ['Run query', 'Add value filter', ...COMMON]],
 		[kindIri('Electric'), ['Explore relationships', ...COMMON]],
-		['true', ['Toggle Boolean value', 'Edit value', ...COMMON]],
-		['Pikachu', ['Edit value', ...COMMON]],
+		['true', ['Toggle Boolean value', 'Edit literal value', ...COMMON]],
+		['Pikachu', ['Edit literal value', ...COMMON]],
 		['?hp', ['Edit filter', ...COMMON]],
 		['cls', ['Explore values', ...COMMON]]
 	];

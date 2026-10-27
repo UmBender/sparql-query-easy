@@ -45,7 +45,7 @@ export function nodeActions(
 		actions.push({ id: 'toggle-boolean', label: 'Toggle Boolean value' });
 	}
 	if (hasVariableSource && isEditableValue(data)) {
-		actions.push({ id: 'edit-value', label: 'Edit value' });
+		actions.push({ id: 'edit-value', label: 'Edit literal value' });
 	}
 
 	actions.push({ id: 'connect-variable-predicate', label: 'Connect with variable predicate' });

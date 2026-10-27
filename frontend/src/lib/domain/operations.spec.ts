@@ -140,10 +140,10 @@ const NODE_KINDS: [string, string[]][] = [
 	['results', VARIABLE_ACTIONS],
 	['iri', ['Explore relationships', ...COMMON]],
 	['class', ['Explore values', ...COMMON]],
-	['literal', ['Edit value', ...COMMON]],
-	['boolean', ['Toggle Boolean value', 'Edit value', ...COMMON]],
-	['filtered', ['Edit value', ...COMMON]],
-	['link', ['Open link', 'Edit value', ...COMMON]],
+	['literal', ['Edit literal value', ...COMMON]],
+	['boolean', ['Toggle Boolean value', 'Edit literal value', ...COMMON]],
+	['filtered', ['Edit literal value', ...COMMON]],
+	['link', ['Open link', 'Edit literal value', ...COMMON]],
 	['fixedValue', COMMON],
 	['valueVariable', ['Edit filter', ...COMMON]]
 ];

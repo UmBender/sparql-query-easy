@@ -1,6 +1,6 @@
 <!--
 	App bar and toolbar (legacy navbar and toolbar panel): search, limit,
-	endpoint, Auto Layout, New Query, Add Variable, Add Value Variable, undo
+	endpoint, Auto Layout, New Query, Add Variable, Add Literal Value Variable, undo
 	and redo, View SPARQL, Help (DOC-006). Feature cards add their controls through snippets.
 -->
 <script lang="ts">
@@ -246,10 +246,10 @@
 		<Button
 			id="add-value-variable-btn"
 			variant="secondary"
-			title="Add a value variable: a variable for literal values (numbers, text, dates) that can hold a filter"
+			title="Add a literal value variable: a variable for literal values (numbers, text, dates) that can hold a filter"
 			onclick={() => store.addValueVariable()}
 		>
-			<PlusIcon />Add Value Variable
+			<PlusIcon />Add Literal Value Variable
 		</Button>
 		<div class="ml-auto flex flex-wrap items-center gap-2">
 			{@render runActions?.()}

@@ -63,7 +63,7 @@ export function addVariable(
 	return { graph: addElements(graph, [node]), id };
 }
 
-/** Add Value Variable (`addNewValueVariable`, FE-037): `?value_<now>` with any value. */
+/** Add Literal Value Variable (`addNewValueVariable`, FE-037): `?value_<now>` with any value. */
 export function addValueVariable(
 	graph: QueryGraph,
 	now: number,

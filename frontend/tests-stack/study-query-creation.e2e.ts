@@ -187,10 +187,10 @@ class Drawing {
 		return added;
 	}
 
-	/** Edit value on a literal node (numeric mode offers MAX and MIN); returns its new id. */
+	/** Edit literal value on a literal node (numeric mode offers MAX and MIN); returns its new id. */
 	async editValue(id: string, type: string, value: string) {
 		await this.openNodeMenu(id);
-		await this.menu.getByRole('button', { name: 'Edit value', exact: true }).click();
+		await this.menu.getByRole('button', { name: 'Edit literal value', exact: true }).click();
 		await expect(this.filterEditor).toBeVisible();
 		const before = await this.nodeIds();
 		await this.applyFilter(type, value);
@@ -302,7 +302,7 @@ async function drawQ2(draw: Drawing, hp: 'MAX' | 'MIN'): Promise<Q2> {
 		if (edge.source !== arcanine || edge.target === fire) await draw.removeEdge(edge.id);
 	await draw.connect(arcanine, 'has type', fire);
 	const value = await draw.explore(arcanine, iri('hp'));
-	// Edit value (with MAX and MIN) is offered once the value hangs off a variable.
+	// Edit literal value (with MAX and MIN) is offered once the value hangs off a variable.
 	const pokemon = await draw.convert(arcanine);
 	const hpNode = await draw.editValue(value, hp, '');
 	const weak = await draw.edgeBetween(pokemon, rock);
