@@ -1,7 +1,7 @@
 ---
 id: BUG-011
 title: Searching a team name on a built-in dataset lists goals and matches but not the team
-status: BACKLOG
+status: READY
 priority: P2
 type: bug
 depends_on: []
@@ -43,10 +43,29 @@ labels contain a short name. Skill: `tcc-backend`.
 - Wikidata search (MediaWiki client) unchanged.
 - Record the order in the API v1 search section and Current Contracts.
 
-## Decision note
+## Decision
 
-This deliberately departs from the C# `take(20)` row order. If C# search
-parity must be kept, this needs a decision before READY.
+User approved 2026-10-27: rank exact, then prefix, then contains, departing
+from the C# `take(20)` row order.
+
+## Plan
+
+1. `ResultFilteringService.search` (local branch): after the existing
+   contains + `objetoClasse` filter, sort stably by rank (0 label equals the
+   text ignoring case, 1 starts with it, 2 contains it), then by label
+   (case-insensitive), then `propertyId`; then `take(20)`. Same
+   `Locale.getDefault()` lowercasing as today. Remote branch untouched.
+2. Tests: `ResultFilteringServiceTest` (25 contains-matches with the exact
+   one last in row order → first; prefix before contains; deterministic
+   order); `QueryRoutesTest` or `PokemonDatasetRoutesTest`-style route test
+   on `CampeonatoBrasileiro2023` for "Santos", "Palmeiras", "Grêmio" (team
+   IRI in the result) and PokemonGen1 "Fire" still present.
+3. If `CaptureDrivenCompatibilityTest`/`RetirementSuccessCompatibilityTest`
+   pin the old order for a local search, keep the capture untouched and
+   record the approved deviation in the comparison for that case only.
+4. Docs: API v1 search section (order), Current Contracts row, DOC-009 note
+   "Cuidados" (search by team name now works).
+5. Kotlin closing gate; commit `BUG-011 …`.
 
 ## Validation
 
