@@ -9,6 +9,7 @@
 	import { graphStylesheet } from '#lib/design/cytoscape.js';
 	import { freeSpots, viewElements, type ViewState } from './graph-view.js';
 	import type { CanvasView } from './canvas-view.svelte.js';
+	import { installWheelZoom } from './wheel-zoom.js';
 	import type { EditorController } from './editor-controller.svelte.js';
 
 	let {
@@ -104,13 +105,13 @@
 			container,
 			elements: [],
 			style: graphStylesheet() as cytoscape.StylesheetJson,
-			// FE-014: one wheel notch zooms ~1.2x instead of ~2.5x.
-			wheelSensitivity: 0.2,
 			minZoom: 0.15,
 			maxZoom: 3,
 			layout: { name: 'preset' }
 		});
 		view.cy = cy;
+		// FE-060: the app zooms on wheel events (~1.45x per mouse notch).
+		const removeWheelZoom = installWheelZoom(cy, container);
 
 		// ── Alt+drag: a variable relation to a node, or a new variable (graph-menus.js) ──
 		let drag: { source: NodeSingular; origin: { x: number; y: number } } | null = null;
@@ -182,6 +183,7 @@
 		resize.observe(container);
 		return () => {
 			resize.disconnect();
+			removeWheelZoom();
 			view.cy = null;
 			cy.destroy();
 		};

@@ -168,7 +168,7 @@ test('P-06 P-07 P-14 add, count and clear nodes; undo and redo edits', async ({ 
 	await expect(page.getByRole('button', { name: 'Undo' })).toBeDisabled();
 });
 
-test('P-13 zoom buttons zoom by 1.25 and 0.8 and fit; one wheel notch zooms gently', async ({
+test('P-13 zoom buttons zoom by 1.25 and 0.8 and fit; one wheel notch zooms about 1.45x', async ({
 	page
 }) => {
 	await addGraph(page, [{ kind: 'variable', id: '?a', x: 200, y: 200 }]);
@@ -183,9 +183,15 @@ test('P-13 zoom buttons zoom by 1.25 and 0.8 and fit; one wheel notch zooms gent
 	await page.getByRole('button', { name: 'Zoom out' }).click();
 	expect(await zoom()).toBeCloseTo(1, 5);
 	await page.locator('#cy').hover({ position: { x: 300, y: 200 } });
+	// FE-060: Cytoscape's own handler zoomed ~1.01x per notch; the app's is 10^0.16.
 	await page.mouse.wheel(0, -100);
-	await expect.poll(zoom).toBeGreaterThan(1);
+	await expect.poll(zoom).toBeGreaterThan(1.4);
 	expect(await zoom()).toBeLessThan(1.5);
+	await page.mouse.wheel(0, 100);
+	await expect.poll(zoom).toBeCloseTo(1, 5);
+	await page.mouse.wheel(0, -4);
+	await expect.poll(zoom).toBeGreaterThan(1);
+	expect(await zoom()).toBeLessThan(1.02);
 	await page.getByRole('button', { name: 'Fit graph' }).click();
 	await expect.poll(zoom).toBe(3);
 });
