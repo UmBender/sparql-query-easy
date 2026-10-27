@@ -150,6 +150,9 @@ Ordered by dependencies, then priority among selection candidates. See [worker r
 | FE-055 | DONE | P2 | frontend | [Open the editor on the PokemonGen1 dataset by default](<items/FE-055-default-endpoint-pokemon.md>) |
 | DOC-008 | DONE | P2 | documentation | [Rewrite the README around the application and its features](<items/DOC-008-readme-application-focus.md>) |
 | FE-056 | DONE | P1 | frontend | [Show variables with readable names and make the exploration order clearer](<items/FE-056-readable-variable-names-and-order.md>) |
+| FE-057 | READY | P1 | frontend | [Show node and predicate kinds with one colour rule and a three-column legend](<items/FE-057-node-and-predicate-notation-legend.md>) |
+| FE-059 | READY | P1 | frontend | [Name value nodes "Literal value" and "Literal value variable" and say "Multiple results"](<items/FE-059-literal-value-terminology.md>) |
+| FE-060 | READY | P1 | frontend | [Zoom the graph at a comfortable speed with the mouse wheel and trackpad](<items/FE-060-wheel-zoom-speed.md>) |
 | BE-004 | DONE | P1 | fullstack | [Make MAX and MIN keep every entity with the extreme value, capped by a configurable limit](<items/BE-004-max-min-all-ties.md>) |
 | INV-001 | DONE | P1 | investigation | [Investigate Ktor HTTP-client and runtime resource lifecycle](<items/INV-001-runtime-resource-lifecycle.md>) |
 | LEARN-001 | REVIEW | P1 | learning | [Learn the Linux shell and networking needed to debug a web app](<items/LEARN-001-linux-shell-networking.md>) |
