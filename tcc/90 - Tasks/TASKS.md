@@ -150,6 +150,11 @@ Ordered by dependencies, then priority among selection candidates. See [worker r
 | FE-054 | DONE | P2 | frontend | [Rewrite the guided tour for the current editor's features](<items/FE-054-tour-for-current-editor.md>) |
 | DOC-006 | DONE | P2 | frontend | [Add an in-app /help page with screenshots one command can regenerate](<items/DOC-006-user-guide-with-screenshots.md>) |
 | QUAL-018 | DONE | P2 | quality | [Fail CI if jQuery or legacy page files come back, and confirm every test layer is green](<items/QUAL-018-legacy-free-guard.md>) |
+| QUAL-019 | BACKLOG | P1 | quality | [Prove no route or trick reaches admin or another participant's data](<items/QUAL-019-access-control-matrix.md>) |
+| QUAL-020 | BACKLOG | P1 | quality | [Prove client input cannot inject SPARQL into generated queries](<items/QUAL-020-sparql-injection-suite.md>) |
+| QUAL-021 | BACKLOG | P1 | quality | [Stop remote endpoints from reaching internal hosts and bound uploads](<items/QUAL-021-ssrf-and-uploads.md>) |
+| QUAL-022 | BACKLOG | P1 | quality | [Prove errors, logs and exports leak nothing and rendered data cannot run script](<items/QUAL-022-leaks-xss-headers.md>) |
+| QUAL-023 | BACKLOG | P2 | quality | [Prove oversized or slow requests cannot exhaust the server](<items/QUAL-023-resource-limits.md>) |
 | BUG-007 | DONE | P1 | bug | [A click that moves a little still ends a pending connection](<items/BUG-007-connection-click-with-small-move.md>) |
 | BUG-008 | DONE | P1 | bug | [Edges can be added when the app is opened over plain HTTP on a LAN address](<items/BUG-008-edges-over-plain-http-lan.md>) |
 | FE-055 | DONE | P2 | frontend | [Open the editor on the PokemonGen1 dataset by default](<items/FE-055-default-endpoint-pokemon.md>) |
