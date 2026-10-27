@@ -130,6 +130,8 @@ Ordered by dependencies, then priority among selection candidates. See [worker r
 | STUDY-012 | DONE | P1 | fullstack | [Build two feature-rich proposed queries in the editor end to end and show what the database stored and returned](<items/STUDY-012-query-creation-test.md>) |
 | DOC-009 | REVIEW | P1 | documentation | [Write the base note for the presentation video on the Brasileirão 2023 dataset](<items/DOC-009-video-presentation-base.md>) |
 | STUDY-013 | DONE | P1 | fullstack | [Offer the Brasileirão 2023 example questions as proposed tasks the user can solve like a tester](<items/STUDY-013-brasileirao-practice-tasks.md>) |
+| STUDY-014 | READY | P1 | fullstack | [Mark on the task list whether each task was already attempted or solved](<items/STUDY-014-task-done-markers.md>) |
+| STUDY-015 | READY | P1 | fullstack | [Replace the placeholder questionnaires with the dissertation's evaluation questionnaire](<items/STUDY-015-dissertation-questionnaire.md>) |
 | DEC-019 | DONE | P1 | decision | [Decide what multiset comparison means when drawn answers run as SELECT DISTINCT](<items/DEC-019-multiset-and-distinct-answers.md>) |
 | BUG-009 | DONE | P1 | bug | [Nodes added by search or Explore relationships land on top of the first node](<items/BUG-009-new-nodes-stack-on-first-node.md>) |
 | BUG-010 | DONE | P2 | bug | [A MAX or MIN value applied with an empty value field reopens with text filters only](<items/BUG-010-max-min-reopens-as-text.md>) |
@@ -156,6 +158,7 @@ Ordered by dependencies, then priority among selection candidates. See [worker r
 | FE-057 | DONE | P1 | frontend | [Show node and predicate kinds with one colour rule and a three-column legend](<items/FE-057-node-and-predicate-notation-legend.md>) |
 | FE-059 | DONE | P1 | frontend | [Name value nodes "Literal value" and "Literal value variable" and say "Multiple results"](<items/FE-059-literal-value-terminology.md>) |
 | FE-060 | DONE | P1 | frontend | [Zoom the graph at a comfortable speed with the mouse wheel and trackpad](<items/FE-060-wheel-zoom-speed.md>) |
+| FE-061 | READY | P1 | frontend | [Link the editor to the study and give the task page an obvious way back to the task list](<items/FE-061-study-navigation.md>) |
 | BE-004 | DONE | P1 | fullstack | [Make MAX and MIN keep every entity with the extreme value, capped by a configurable limit](<items/BE-004-max-min-all-ties.md>) |
 | INV-001 | DONE | P1 | investigation | [Investigate Ktor HTTP-client and runtime resource lifecycle](<items/INV-001-runtime-resource-lifecycle.md>) |
 | LEARN-001 | REVIEW | P1 | learning | [Learn the Linux shell and networking needed to debug a web app](<items/LEARN-001-linux-shell-networking.md>) |
