@@ -168,18 +168,18 @@ Ordered by dependencies, then priority among selection candidates. See [worker r
 | INV-001 | DONE | P1 | investigation | [Investigate Ktor HTTP-client and runtime resource lifecycle](<items/INV-001-runtime-resource-lifecycle.md>) |
 | LEARN-001 | REVIEW | P1 | learning | [Learn the Linux shell and networking needed to debug a web app](<items/LEARN-001-linux-shell-networking.md>) |
 | LEARN-002 | REVIEW | P1 | learning | [Learn containers by running and inspecting the app image](<items/LEARN-002-containers-docker.md>) |
-| LEARN-003 | READY | P1 | learning | [Learn to set up an AWS account safely with IAM, MFA, CLI and cost alarms](<items/LEARN-003-aws-account-iam-cost.md>) |
-| LEARN-004 | READY | P1 | learning | [Learn AWS networking: VPC, subnets, routes and security groups](<items/LEARN-004-aws-networking-vpc.md>) |
-| LEARN-005 | READY | P1 | learning | [Learn to run the app on an EC2 server by hand](<items/LEARN-005-ec2-server-by-hand.md>) |
-| LEARN-006 | READY | P1 | learning | [Learn to publish and pull the app image with Amazon ECR](<items/LEARN-006-ecr-image-registry.md>) |
-| LEARN-007 | READY | P1 | learning | [Learn PostgreSQL by hand, then run it on Amazon RDS](<items/LEARN-007-postgresql-and-rds.md>) |
+| LEARN-003 | READY | P1 | learning | [Learn to reach the university server safely with SSH keys, least privilege and updates](<items/LEARN-003-server-access-hardening.md>) |
+| LEARN-004 | READY | P1 | learning | [Learn the university server's network: open ports, firewall, proxies and reachability](<items/LEARN-004-server-network-firewall.md>) |
+| LEARN-005 | READY | P1 | learning | [Learn to install and run the Docker Compose stack on the university server by hand](<items/LEARN-005-compose-stack-on-server.md>) |
+| LEARN-006 | READY | P1 | learning | [Learn to release a version by git tag, build its images on the server and roll back](<items/LEARN-006-releases-tags-images.md>) |
+| LEARN-007 | READY | P1 | learning | [Learn PostgreSQL by hand in the stack's db container: psql, roles, migrations and restores](<items/LEARN-007-postgresql-in-compose.md>) |
 | LEARN-008 | READY | P1 | learning | [Learn secure password storage, sessions and login protection](<items/LEARN-008-passwords-sessions-auth.md>) |
-| LEARN-009 | READY | P1 | learning | [Learn configuration and secret management for the app on AWS](<items/LEARN-009-configuration-secrets.md>) |
-| LEARN-010 | READY | P1 | learning | [Learn domains and DNS by putting the app behind your own name with Route 53](<items/LEARN-010-domain-dns-route53.md>) |
-| LEARN-011 | READY | P1 | learning | [Learn HTTPS and reverse proxying with Caddy and Let's Encrypt](<items/LEARN-011-https-reverse-proxy.md>) |
-| LEARN-012 | READY | P1 | learning | [Learn CI/CD with GitHub Actions deploying to AWS without stored keys](<items/LEARN-012-github-actions-cicd.md>) |
-| LEARN-013 | READY | P1 | learning | [Learn monitoring, logs, backups and incident runbooks for the running app](<items/LEARN-013-observability-backups-runbooks.md>) |
-| LEARN-014 | READY | P1 | learning | [Learn the go-live checklist for a safe, legal and affordable user test](<items/LEARN-014-go-live-user-testing.md>) |
+| LEARN-009 | READY | P1 | learning | [Learn configuration and secret management for the app on the university server](<items/LEARN-009-configuration-secrets.md>) |
+| LEARN-010 | READY | P1 | learning | [Learn domains and DNS by getting the app its university name and checking it with dig](<items/LEARN-010-university-dns-name.md>) |
+| LEARN-011 | READY | P1 | learning | [Learn HTTPS and reverse proxying with Caddy, either with its own certificates or behind the university proxy](<items/LEARN-011-https-reverse-proxy.md>) |
+| LEARN-012 | READY | P1 | learning | [Learn CI/CD with GitHub Actions and a safe deploy path to the university server](<items/LEARN-012-github-actions-cicd.md>) |
+| LEARN-013 | READY | P1 | learning | [Learn monitoring, logs, backups and incident runbooks for the app on the university server](<items/LEARN-013-observability-backups-runbooks.md>) |
+| LEARN-014 | READY | P1 | learning | [Learn the go-live checklist for a safe and legal user test on the university server](<items/LEARN-014-go-live-user-testing.md>) |
 | QUAL-001 | DONE | P1 | quality | [Replay recorded Wikidata success and controlled error route fixtures](<items/QUAL-001-recorded-wikidata-routes.md>) |
 | MIG-002 | DONE | P1 | migration | [Retire the C# project after compatibility and operations gates](<items/MIG-002-retire-csharp-project.md>) |
 | QUAL-002 | DONE | P1 | quality | [Verify ordered query exploration end to end offline](<items/QUAL-002-ordered-query-end-to-end-regressions.md>) |

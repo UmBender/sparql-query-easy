@@ -7,7 +7,7 @@ type: learning
 depends_on: [LEARN-001]
 human_gate: true
 created: 2026-10-07
-updated: 2026-10-07
+updated: 2026-10-27
 ---
 # Learn secure password storage, sessions and login protection
 
@@ -28,13 +28,14 @@ You chose PostgreSQL for login data. Before approving the login contract (AUTH-0
    them, and ends with a short quiz. It cites official documentation, and
    for commands it cannot run in the repository it marks the output as
    expected rather than observed.
-2. **You do the lab by hand** in your own terminal/AWS account, run every
+2. **You do the lab by hand** in your own terminal and on the university
+   server, run every
    self-check, and record results and questions in the tracker.
 3. **Review together:** open questions go back into the lesson. The task
    is DONE when you tick every "Done when" item in the tracker (human gate).
 
-No AWS resource is created, and nothing is pushed or deployed, by Claude
-without your explicit request in the session.
+Nothing is installed on the server, pushed or deployed by Claude without
+your explicit request in the session; university rules come first.
 
 ## Learning objectives — after this you can
 

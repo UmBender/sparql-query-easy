@@ -1,23 +1,23 @@
 ---
 id: LEARN-013
-title: Learn monitoring, logs, backups and incident runbooks for the running app
+title: Learn monitoring, logs, backups and incident runbooks for the app on the university server
 status: READY
 priority: P1
 type: learning
 depends_on: [LEARN-007, LEARN-012]
 human_gate: true
 created: 2026-10-07
-updated: 2026-10-07
+updated: 2026-10-27
 ---
-# Learn monitoring, logs, backups and incident runbooks for the running app
+# Learn monitoring, logs, backups and incident runbooks for the app on the university server
 
 Part of the [[../../07 - Operations/Deployment Learning Path/00 - Deployment Roadmap|Deployment Roadmap]];
 progress goes in the [[../../07 - Operations/Deployment Learning Path/Deployment Learning Tracker|Deployment Learning Tracker]].
-Prepares: OPS-004.
+Prepares: OPS-004, OPS-009, OPS-010 (checklist D1, D3, O1, O2). Target: the university server (DEC-003); rewritten from the earlier AWS version on 2026-10-27.
 
 ## Why this matters for the deployment
 
-During user testing you need to know the app is down before testers tell you, find the error in the logs quickly, and be sure you can restore the login database.
+During a study session someone must notice quickly when the app is down, and data must survive losing the server. The stack already writes readable logs, rotates them and backs up the database; you need to read them, alert on failure and keep one copy off the server.
 
 ## How this task is executed
 
@@ -28,96 +28,73 @@ During user testing you need to know the app is down before testers tell you, fi
    them, and ends with a short quiz. It cites official documentation, and
    for commands it cannot run in the repository it marks the output as
    expected rather than observed.
-2. **You do the lab by hand** in your own terminal/AWS account, run every
-   self-check, and record results and questions in the tracker.
+2. **You do the lab by hand** in your own terminal and on the university
+   server, run every self-check, and record results and questions in the tracker.
 3. **Review together:** open questions go back into the lesson. The task
    is DONE when you tick every "Done when" item in the tracker (human gate).
 
-No AWS resource is created, and nothing is pushed or deployed, by Claude
-without your explicit request in the session.
+Nothing is installed on the server, pushed or deployed by Claude without
+your explicit request in the session; university rules come first.
 
 ## Learning objectives — after this you can
 
-- Ship container logs to CloudWatch Logs with a retention period and search them.
-- Create alarms (public health check, instance status, disk/memory, monthly cost) that email you.
-- Define RPO/RTO for the database and prove them with a restore drill.
-- Write short runbooks for the most likely incidents.
+- Read and search the backend and Caddy logs (`docker compose logs`, request ids, levels).
+- Set up an external uptime check on `/health` (a free monitor, or the university's) that alerts you.
+- Copy encrypted backups off the server (D1) and run a restore drill from that copy.
+- Write short runbooks: site down, deploy broke, disk full, database restore.
 
 ## Concepts to study
 
-- Logs vs metrics vs traces; structured logs.
-- Docker `awslogs` log driver; log groups/streams; retention; Logs Insights queries.
-- CloudWatch alarms and SNS email notifications; Route 53 health checks; EC2 status checks and auto-recovery.
-- CloudWatch agent for memory and disk (not collected by default).
-- RDS automated backups, manual snapshots, point-in-time restore; optional logical dumps.
-- Incident basics: detect, mitigate (rollback), communicate, write down what happened.
+- Logs vs metrics vs alerts; log rotation and retention (OPS-010).
+- RPO/RTO for a study: how much data you can lose and how long you can be down.
+- Off-host copies, encryption keys kept separately, restore tests as the only proof a backup works.
 
 ## Hands-on lab
 
-1. Run the app container with `--log-driver awslogs` to log group `/easyquery/app` (14-day retention).
-2. Create an SNS topic with your email; a Route 53 health check on `https://app.<domain>/health` with an alarm; an EC2 status-check alarm; a disk-usage alarm via the CloudWatch agent.
-3. Do a full restore drill of RDS into a temporary instance, connect, count users, delete it; write the time it took.
-4. Write runbooks: "site down", "deploy broke", "database unreachable", "disk full", "certificate problem".
+1. Stop `backend` during a quiet time and time how long until you are alerted.
+2. Restore yesterday's off-host dump into a throwaway stack and compare counts.
 
 ## Check it yourself (CLI)
 
-Replace `<…>` placeholders with your values.
+Replace `<…>` placeholders with your values; `easyquery` is your `~/.ssh/config` host.
 
 ```sh
-aws logs tail /easyquery/app --follow --since 10m
+ssh easyquery 'cd easyquery && docker compose logs --since 1h backend | grep -c " ERROR "'
 ```
-Look for: live application logs from your laptop
+Look for: errors in the last hour (ideally 0)
 
 ```sh
-aws logs filter-log-events --log-group-name /easyquery/app --filter-pattern "?ERROR ?Exception" --max-items 20
+ssh easyquery 'df -h /; docker system df'
 ```
-Look for: recent errors
+Look for: free disk; what Docker uses
 
 ```sh
-aws logs describe-log-groups --log-group-name-prefix /easyquery --query "logGroups[].{name:logGroupName,days:retentionInDays,bytes:storedBytes}"
+ssh easyquery 'ls -lt "$BACKUP_DIR" | head'
 ```
-Look for: retention set, size
+Look for: a dump from today
 
 ```sh
-aws cloudwatch describe-alarms --query "MetricAlarms[].{name:AlarmName,state:StateValue}" --output table
+curl -sS https://<server-name>/health
 ```
-Look for: all alarms `OK`
-
-```sh
-aws cloudwatch set-alarm-state --alarm-name <name> --state-value ALARM --state-reason "drill"
-```
-Look for: a test email arrives — your alerting works
-
-```sh
-aws sns list-subscriptions --query "Subscriptions[].{topic:TopicArn,endpoint:Endpoint,arn:SubscriptionArn}"
-```
-Look for: your confirmed email subscription (not `PendingConfirmation`)
-
-```sh
-aws rds restore-db-instance-to-point-in-time --source-db-instance-identifier <id> --target-db-instance-identifier easyquery-restore-drill --use-latest-restorable-time
-```
-Look for: a new instance being created — measure until `available`
+Look for: healthy, as the monitor sees it
 
 ## Exercises — break it, then fix it
 
-- Stop the app container on purpose and measure how long until you get the email.
-- Fill the disk with old images in a test and practise the "disk full" runbook (`docker image prune`).
-- Write one short post-incident note for a drill.
+- Write the "site is down during a study session" runbook in five steps, and test it once.
 
 ## Done when
 
-- You get an email within minutes when the site is down, and you know your measured RTO for the database.
-- Runbooks exist and you have practised at least two.
+- An alert reaches you when `/health` fails; off-host backups exist and a restore from them worked.
+- Runbooks are written next to the Server Deploy Runbook.
 
 ## Reading list
 
-- Amazon CloudWatch Logs User Guide — Log groups, Logs Insights: https://docs.aws.amazon.com/AmazonCloudWatch/latest/logs/
-- Docker docs — Amazon CloudWatch Logs logging driver
-- Amazon Route 53 — Health checks; Amazon CloudWatch — Using alarms
-- Amazon RDS — Restoring a DB instance to a specified time
-- Google SRE Book (free online) — chapters on monitoring and postmortems: https://sre.google/books/
+- [[../../07 - Operations/Docker Compose Stack]] (Backups, Logs and limits), [[../../07 - Operations/Server Deploy Runbook]]
+- Google SRE Book — Monitoring Distributed Systems (chapter 6), Being On-Call (concepts only)
 
 ## Execution log
 
 - 2026-10-07: Created from the user's request for a hands-on deployment learning
-  path (DOC-003).
+  path (DOC-003), first written for AWS.
+- 2026-10-27: Rewritten for the university server (user: "replaneje para o servidor
+  da faculdade"); AWS content is in git history.

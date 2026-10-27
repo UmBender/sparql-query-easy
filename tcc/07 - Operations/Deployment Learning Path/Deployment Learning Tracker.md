@@ -20,37 +20,37 @@ full objectives, lab, CLI self-checks and reading list.
 |---|---|---|---|---|---|---|
 | L01 - Linux Shell and Networking | [[../../90 - Tasks/items/LEARN-001-linux-shell-networking]] | todo | | | | |
 | L02 - Containers with Docker | [[../../90 - Tasks/items/LEARN-002-containers-docker]] | todo | | | | |
-| L03 - AWS Account, IAM and Cost Guardrails | [[../../90 - Tasks/items/LEARN-003-aws-account-iam-cost]] | todo | | | | |
-| L04 - AWS Networking (VPC and Security Groups) | [[../../90 - Tasks/items/LEARN-004-aws-networking-vpc]] | todo | | | | |
-| L05 - EC2 Server by Hand | [[../../90 - Tasks/items/LEARN-005-ec2-server-by-hand]] | todo | | | | |
-| L06 - Image Registry with ECR | [[../../90 - Tasks/items/LEARN-006-ecr-image-registry]] | todo | | | | |
-| L07 - PostgreSQL and Amazon RDS | [[../../90 - Tasks/items/LEARN-007-postgresql-and-rds]] | todo | | | | |
+| L03 - Server Access and Hardening | [[../../90 - Tasks/items/LEARN-003-server-access-hardening]] | todo | | | | |
+| L04 - The Server's Network: Ports, Firewall and Proxies | [[../../90 - Tasks/items/LEARN-004-server-network-firewall]] | todo | | | | |
+| L05 - The Compose Stack on the Server by Hand | [[../../90 - Tasks/items/LEARN-005-compose-stack-on-server]] | todo | | | | |
+| L06 - Releases: Tags, Image Builds and Rollback | [[../../90 - Tasks/items/LEARN-006-releases-tags-images]] | todo | | | | |
+| L07 - PostgreSQL in the Compose Stack | [[../../90 - Tasks/items/LEARN-007-postgresql-in-compose]] | todo | | | | |
 | L08 - Passwords, Sessions and Login Security | [[../../90 - Tasks/items/LEARN-008-passwords-sessions-auth]] | todo | | | | |
-| L09 - Configuration and Secrets | [[../../90 - Tasks/items/LEARN-009-configuration-secrets]] | todo | | | | |
-| L10 - Domain and DNS with Route 53 | [[../../90 - Tasks/items/LEARN-010-domain-dns-route53]] | todo | | | | |
+| L09 - Configuration and Secrets on the Server | [[../../90 - Tasks/items/LEARN-009-configuration-secrets]] | todo | | | | |
+| L10 - The App's Name at the University (DNS) | [[../../90 - Tasks/items/LEARN-010-university-dns-name]] | todo | | | | |
 | L11 - HTTPS and Reverse Proxy | [[../../90 - Tasks/items/LEARN-011-https-reverse-proxy]] | todo | | | | |
-| L12 - CI/CD with GitHub Actions and AWS OIDC | [[../../90 - Tasks/items/LEARN-012-github-actions-cicd]] | todo | | | | |
+| L12 - CI/CD with GitHub Actions to the University Server | [[../../90 - Tasks/items/LEARN-012-github-actions-cicd]] | todo | | | | |
 | L13 - Observability, Backups and Runbooks | [[../../90 - Tasks/items/LEARN-013-observability-backups-runbooks]] | todo | | | | |
-| L14 - Go-Live Checklist for User Testing | [[../../90 - Tasks/items/LEARN-014-go-live-user-testing]] | todo | | | | |
+| L14 - Go-Live Checklist for the User Test | [[../../90 - Tasks/items/LEARN-014-go-live-user-testing]] | todo | | | | |
 
 ## Deployment milestones (the real thing)
 
-Tick these when they exist in your account, not just in a lab.
+Tick these when they exist on the university server, not just in a lab.
 
-- [ ] M1 — AWS account secured (root MFA, no root keys, admin via SSO) and budget alert active
-- [ ] M2 — Project VPC with public/private subnets and the three security groups
-- [ ] M3 — ECR repository with an image pushed for a known commit
-- [ ] M4 — EC2 instance running the app from ECR, reachable through Session Manager, survives reboot
-- [ ] M5 — RDS PostgreSQL private, TLS-only, backups on, restore drill done
-- [ ] M6 — Secrets in Parameter Store, app reads them at start, nothing secret in Git/image/logs
-- [ ] M7 — Domain delegated to Route 53, `app.<domain>` resolves to the Elastic IP
-- [ ] M8 — HTTPS with a trusted certificate, HTTP redirects, app port private
-- [ ] M9 — CI on pull requests; deploy on `main` through OIDC with approval; rollback practised
-- [ ] M10 — Logs in CloudWatch, alarms emailing you, runbooks written
-- [ ] M11 — Login implemented (AUTH-001) against PostgreSQL and verified over HTTPS
-- [ ] M12 — Go-live checklist done (SEC-001 limits, privacy notice, load test, shutdown plan)
-- [ ] M13 — First real tester used the app
-- [ ] M14 — Test finished: data handled as promised, resources stopped/deleted, final bill checked
+- [ ] M1 — Key-based SSH access agreed with IT; checklist Access and Machine answered
+- [ ] M2 — Network answers recorded (N1–N5, H2); only the web entry point exposed; HTTPS mode chosen
+- [ ] M3 — Compose stack installed from a tag, healthy after a reboot
+- [ ] M4 — A release updated and rolled back once by the runbook
+- [ ] M5 — Database inspected read-only; restore drill done
+- [ ] M6 — Production `.env` with generated secrets (600); one rotation practised
+- [ ] M7 — The app's university name resolves where participants will be
+- [ ] M8 — Trusted HTTPS on that name; HTTP redirects; `Secure` cookie
+- [ ] M9 — CI green on `main`; deploy option chosen (OPS-005)
+- [ ] M10 — Uptime alert reaches you; off-host encrypted backups; runbooks written
+- [ ] M11 — Security suite (QUAL-019…023) passing on the released version
+- [ ] M12 — Go-live checklist and dress rehearsal done
+- [ ] M13 — First real participant used the app
+- [ ] M14 — Test finished: data exported/kept/deleted as promised in the consent text
 
 ## Decision log
 
@@ -59,22 +59,14 @@ formally recorded.
 
 | Date | Decision | Choice | Why | Card |
 |---|---|---|---|---|
-| | AWS region | | | OPS-003 |
-| | Monthly budget limit | | | OPS-003 |
-| | Instance type / architecture | | | OPS-003 |
-| | Domain name and registrar | | | OPS-002 |
+| | HTTPS mode (`auto` or `proxy`) | | | OPS-008 |
+| | The app's university DNS name | | | OPS-002 |
 | | Login contract (users, anonymous access, protected routes) | | | AUTH-000 |
 | | Password hash algorithm and parameters | | | AUTH-000 |
 | | Release approval and rollback method | | | OPS-005 |
 | | Log retention, alarms, backup retention (RPO/RTO) | | | OPS-004 |
-| | Upload and remote-endpoint limits | | | SEC-001 |
+| | Upload limit (remote endpoints: allowlist, 2026-10-27) | | | QUAL-021 |
 | | Test period and shutdown date | | | — |
-
-## Cost log
-
-| Month | Forecast (USD) | Actual (USD) | Biggest item | Notes |
-|---|---|---|---|---|
-| | | | | |
 
 ## L01 - Linux Shell and Networking
 
@@ -160,9 +152,9 @@ Status: todo · Started: · Finished: · Hours: · Confidence:
 
 - 
 
-## L03 - AWS Account, IAM and Cost Guardrails
+## L03 - Server Access and Hardening
 
-Card: [[../../90 - Tasks/items/LEARN-003-aws-account-iam-cost|LEARN-003]] — Learn to set up an AWS account safely with IAM, MFA, CLI and cost alarms. Needs: LEARN-001.
+Card: [[../../90 - Tasks/items/LEARN-003-server-access-hardening|LEARN-003]] — Learn to reach the university server safely with SSH keys, least privilege and updates. Needs: LEARN-001.
 
 Status: todo · Started: · Finished: · Hours: · Confidence:
 
@@ -174,19 +166,18 @@ Status: todo · Started: · Finished: · Hours: · Confidence:
 
 **Lab**
 
-- [ ] Create the account; enable MFA on root; confirm there are no root access keys.
-- [ ] Enable IAM Identity Center, create your admin user and permission set, enable MFA; log in through the access portal.
-- [ ] Install AWS CLI v2 and configure an SSO profile (`aws configure sso`).
-- [ ] Create a monthly cost budget (e.g. a small USD amount) with alerts at 50%, 80% and 100% to your email.
-- [ ] Write (on paper first) a policy that only allows reading one S3 bucket, then test it with the IAM policy simulator.
+- [ ] Generate an ed25519 key with a passphrase; send only the `.pub` to IT; add a `Host easyquery` block to `~/.ssh/config`.
+- [ ] Log in, compare the host key fingerprint with the one IT gives you, and note the OS, CPU, RAM and disk (M1, M3).
+- [ ] Check whether you are in `sudo`/`docker` groups and what that allows; write the answer to A2 in the checklist.
+- [ ] Check automatic updates and NTP; ask IT about maintenance windows if unclear.
 - [ ] Every command in "Check it yourself" run and understood
 - [ ] Exercises done (break it, then fix it)
 
 **Done when**
 
-- [ ] Root has MFA and no keys; daily work uses an MFA-protected non-root identity.
-- [ ] The CLI works with a named profile and short-lived credentials.
-- [ ] A budget alert exists before any paid resource is created.
+- [ ] You log in with a passphrase-protected key; no shared password is used.
+- [ ] Checklist answers A1–A3 and M1–M4 are recorded with dates.
+- [ ] You can explain the privilege you have on the server and its risks.
 
 **Evidence**
 
@@ -202,9 +193,9 @@ Status: todo · Started: · Finished: · Hours: · Confidence:
 
 - 
 
-## L04 - AWS Networking (VPC and Security Groups)
+## L04 - The Server's Network: Ports, Firewall and Proxies
 
-Card: [[../../90 - Tasks/items/LEARN-004-aws-networking-vpc|LEARN-004]] — Learn AWS networking: VPC, subnets, routes and security groups. Needs: LEARN-003.
+Card: [[../../90 - Tasks/items/LEARN-004-server-network-firewall|LEARN-004]] — Learn the university server's network: open ports, firewall, proxies and reachability. Needs: LEARN-003.
 
 Status: todo · Started: · Finished: · Hours: · Confidence:
 
@@ -216,16 +207,17 @@ Status: todo · Started: · Finished: · Hours: · Confidence:
 
 **Lab**
 
-- [ ] Inspect the default VPC first; then create a dedicated VPC for the project with 2 public and 2 private subnets (VPC wizard "VPC and more", no NAT gateway).
-- [ ] Create three security groups: `easyquery-web` (80/443 from anywhere), `easyquery-app` (no inbound from internet), `easyquery-db` (5432 only from `easyquery-web` SG).
-- [ ] Tag everything with `Project=easyquery`.
+- [ ] On the server, list listening sockets before and after `docker compose up` and explain each line.
+- [ ] From your laptop on campus/VPN and from a phone on mobile data, `curl -I` the server; record what works.
+- [ ] From the server, `curl -I https://query.wikidata.org/sparql` and the registries; note any proxy needed.
+- [ ] Write the N1–N5 and H2 answers into the checklist and pick the OPS-008 mode.
 - [ ] Every command in "Check it yourself" run and understood
 - [ ] Exercises done (break it, then fix it)
 
 **Done when**
 
-- [ ] You can draw the network from memory and explain each route and rule.
-- [ ] No security group allows SSH (22) or PostgreSQL (5432) from the internet.
+- [ ] You know which ports are reachable from where, and only the web entry point is exposed.
+- [ ] Checklist N1–N5 and H2 are answered and the OPS-008 mode is chosen.
 
 **Evidence**
 
@@ -241,9 +233,9 @@ Status: todo · Started: · Finished: · Hours: · Confidence:
 
 - 
 
-## L05 - EC2 Server by Hand
+## L05 - The Compose Stack on the Server by Hand
 
-Card: [[../../90 - Tasks/items/LEARN-005-ec2-server-by-hand|LEARN-005]] — Learn to run the app on an EC2 server by hand. Needs: LEARN-002, LEARN-004.
+Card: [[../../90 - Tasks/items/LEARN-005-compose-stack-on-server|LEARN-005]] — Learn to install and run the Docker Compose stack on the university server by hand. Needs: LEARN-002, LEARN-004.
 
 Status: todo · Started: · Finished: · Hours: · Confidence:
 
@@ -255,17 +247,17 @@ Status: todo · Started: · Finished: · Hours: · Confidence:
 
 **Lab**
 
-- [ ] Create role `easyquery-ec2` with `AmazonSSMManagedInstanceCore`, ECR read-only and CloudWatch Logs write.
-- [ ] Launch a small instance in a public subnet with `easyquery-web` SG, the role, IMDSv2 required, and user data that installs and enables Docker.
-- [ ] Connect with `aws ssm start-session`; run the image (from ECR after LEARN-006, or a locally built tag for the first try) with `--restart unless-stopped`, publishing 8080 only on 127.0.0.1 for now.
-- [ ] Allocate and associate an Elastic IP; reboot and confirm the app comes back.
+- [ ] Do the runbook's First install on the server with a test `.env` (no real participants yet).
+- [ ] Open the app from your laptop; register a test account; run a query on PokemonGen1.
+- [ ] Reboot the server (in an agreed window) and confirm the stack comes back healthy.
+- [ ] Stop `backend`, watch `/health` and Caddy's response, start it again.
 - [ ] Every command in "Check it yourself" run and understood
 - [ ] Exercises done (break it, then fix it)
 
 **Done when**
 
-- [ ] The app runs on EC2, restarts on reboot, and you never opened port 22.
-- [ ] You can explain every permission in the instance role.
+- [ ] The stack runs on the server from a tag, healthy after a reboot.
+- [ ] You did each runbook step yourself and noted anything unclear in the runbook.
 
 **Evidence**
 
@@ -281,9 +273,9 @@ Status: todo · Started: · Finished: · Hours: · Confidence:
 
 - 
 
-## L06 - Image Registry with ECR
+## L06 - Releases: Tags, Image Builds and Rollback
 
-Card: [[../../90 - Tasks/items/LEARN-006-ecr-image-registry|LEARN-006]] — Learn to publish and pull the app image with Amazon ECR. Needs: LEARN-002, LEARN-003.
+Card: [[../../90 - Tasks/items/LEARN-006-releases-tags-images|LEARN-006]] — Learn to release a version by git tag, build its images on the server and roll back. Needs: LEARN-005.
 
 Status: todo · Started: · Finished: · Hours: · Confidence:
 
@@ -295,17 +287,14 @@ Status: todo · Started: · Finished: · Hours: · Confidence:
 
 **Lab**
 
-- [ ] Create repository `sparql-query-easy` (immutable tags, scan on push).
-- [ ] Tag the local image as `<account>.dkr.ecr.<region>.amazonaws.com/sparql-query-easy:<git-short-sha>` and push it.
-- [ ] On EC2, log in with the instance role, pull by tag and by digest, and run it.
-- [ ] Add a lifecycle policy that keeps the last 10 images.
+- [ ] Tag a test release, update the server to it, then roll back to the previous tag.
+- [ ] Record the time each step took; that is your rollback budget before a study session.
 - [ ] Every command in "Check it yourself" run and understood
 - [ ] Exercises done (break it, then fix it)
 
 **Done when**
 
-- [ ] You can push and pull images, and you deploy a specific commit by tag or digest.
-- [ ] A lifecycle policy keeps the repository small.
+- [ ] You released and rolled back once, following the runbook, with the times written down.
 
 **Evidence**
 
@@ -321,9 +310,9 @@ Status: todo · Started: · Finished: · Hours: · Confidence:
 
 - 
 
-## L07 - PostgreSQL and Amazon RDS
+## L07 - PostgreSQL in the Compose Stack
 
-Card: [[../../90 - Tasks/items/LEARN-007-postgresql-and-rds|LEARN-007]] — Learn PostgreSQL by hand, then run it on Amazon RDS. Needs: LEARN-002, LEARN-004.
+Card: [[../../90 - Tasks/items/LEARN-007-postgresql-in-compose|LEARN-007]] — Learn PostgreSQL by hand in the stack's db container: psql, roles, migrations and restores. Needs: LEARN-005.
 
 Status: todo · Started: · Finished: · Hours: · Confidence:
 
@@ -335,18 +324,15 @@ Status: todo · Started: · Finished: · Hours: · Confidence:
 
 **Lab**
 
-- [ ] Local: `docker run --name pg -e POSTGRES_PASSWORD=<local-only> -p 127.0.0.1:5432:5432 -d postgres:17` (or the current major); create role `easyquery_app` and database `easyquery` owned by an owner role; create a `users` table draft.
-- [ ] Dump and restore the local database into a second database.
-- [ ] AWS: create a DB subnet group (2 private subnets), an RDS PostgreSQL instance (smallest class, not publicly accessible, `easyquery-db` SG, automated backups on, deletion protection on).
-- [ ] From the EC2 instance, connect with `psql` over TLS using the RDS CA bundle and create the application role.
-- [ ] Take a manual snapshot and do a point-in-time restore into a temporary instance; delete it afterwards.
+- [ ] Open `psql`, list tables, count rows per study table, read `flyway_schema_history`.
+- [ ] Run a manual backup, restore it into a throwaway project, compare counts, remove it.
 - [ ] Every command in "Check it yourself" run and understood
 - [ ] Exercises done (break it, then fix it)
 
 **Done when**
 
-- [ ] You can create, secure, connect to, back up and restore PostgreSQL locally and on RDS.
-- [ ] The RDS instance is private, encrypted in transit, backed up, and has deletion protection.
+- [ ] You can inspect the database read-only and explain each table's purpose.
+- [ ] A restore drill succeeded and its time is recorded.
 
 **Evidence**
 
@@ -403,9 +389,9 @@ Status: todo · Started: · Finished: · Hours: · Confidence:
 
 - 
 
-## L09 - Configuration and Secrets
+## L09 - Configuration and Secrets on the Server
 
-Card: [[../../90 - Tasks/items/LEARN-009-configuration-secrets|LEARN-009]] — Learn configuration and secret management for the app on AWS. Needs: LEARN-005, LEARN-007.
+Card: [[../../90 - Tasks/items/LEARN-009-configuration-secrets|LEARN-009]] — Learn configuration and secret management for the app on the university server. Needs: LEARN-005, LEARN-007.
 
 Status: todo · Started: · Finished: · Hours: · Confidence:
 
@@ -417,18 +403,14 @@ Status: todo · Started: · Finished: · Hours: · Confidence:
 
 **Lab**
 
-- [ ] Add (in a lab branch) an optional env override for one setting and run the app with and without it.
-- [ ] Create `/easyquery/prod/db/url`, `/easyquery/prod/db/user` (String) and `/easyquery/prod/db/password`, `/easyquery/prod/session/key` (SecureString).
-- [ ] Attach a policy to the EC2 role allowing `ssm:GetParametersByPath` on `/easyquery/prod/*` only.
-- [ ] On EC2, write a small script that reads the parameters into a root-only env file (`chmod 600`) and starts the container with `--env-file`.
-- [ ] Rotate the DB password and restart; confirm the old one no longer works.
+- [ ] Write the production `.env` from the example with generated secrets; set `chmod 600`.
+- [ ] Rotate the DB password once in a test window and confirm the app reconnects.
 - [ ] Every command in "Check it yourself" run and understood
 - [ ] Exercises done (break it, then fix it)
 
 **Done when**
 
-- [ ] No secret exists in Git, the image or CI logs; the app gets secrets at start time only.
-- [ ] You can rotate a secret and prove the old one stopped working.
+- [ ] Production secrets exist only in `.env` (600) and your offline copy; a rotation was practised.
 
 **Evidence**
 
@@ -444,9 +426,9 @@ Status: todo · Started: · Finished: · Hours: · Confidence:
 
 - 
 
-## L10 - Domain and DNS with Route 53
+## L10 - The App's Name at the University (DNS)
 
-Card: [[../../90 - Tasks/items/LEARN-010-domain-dns-route53|LEARN-010]] — Learn domains and DNS by putting the app behind your own name with Route 53. Needs: LEARN-003.
+Card: [[../../90 - Tasks/items/LEARN-010-university-dns-name|LEARN-010]] — Learn domains and DNS by getting the app its university name and checking it with dig. Needs: LEARN-004.
 
 Status: todo · Started: · Finished: · Hours: · Confidence:
 
@@ -458,17 +440,14 @@ Status: todo · Started: · Finished: · Hours: · Confidence:
 
 **Lab**
 
-- [ ] Choose and buy a domain (decision recorded in OPS-002).
-- [ ] Create the hosted zone; copy its four NS servers to the registrar; wait and verify delegation.
-- [ ] Create `app.<domain>` A record → the Elastic IP (TTL 300) and a CAA record allowing `letsencrypt.org`.
-- [ ] Change the TTL and watch cached answers expire on different public resolvers.
+- [ ] Trace the university domain with `dig +trace` and find who is authoritative.
+- [ ] After IT creates the record, check it from campus/VPN and from mobile data.
 - [ ] Every command in "Check it yourself" run and understood
 - [ ] Exercises done (break it, then fix it)
 
 **Done when**
 
-- [ ] `app.<domain>` resolves to the server from any resolver, and you can show the delegation chain.
-- [ ] You can predict how long a DNS change takes to be seen.
+- [ ] The app's name is decided, recorded in the checklist (H1) and resolves where participants will be.
 
 **Evidence**
 
@@ -486,7 +465,7 @@ Status: todo · Started: · Finished: · Hours: · Confidence:
 
 ## L11 - HTTPS and Reverse Proxy
 
-Card: [[../../90 - Tasks/items/LEARN-011-https-reverse-proxy|LEARN-011]] — Learn HTTPS and reverse proxying with Caddy and Let's Encrypt. Needs: LEARN-005, LEARN-010.
+Card: [[../../90 - Tasks/items/LEARN-011-https-reverse-proxy|LEARN-011]] — Learn HTTPS and reverse proxying with Caddy, either with its own certificates or behind the university proxy. Needs: LEARN-005, LEARN-010.
 
 Status: todo · Started: · Finished: · Hours: · Confidence:
 
@@ -498,17 +477,14 @@ Status: todo · Started: · Finished: · Hours: · Confidence:
 
 **Lab**
 
-- [ ] On EC2, create a Docker network; run the app without published ports and Caddy publishing 80 and 443 with a Caddyfile `app.<domain> { reverse_proxy app:8080 }`.
-- [ ] First use the Let's Encrypt staging CA, check the (untrusted) certificate, then switch to production.
-- [ ] Add HSTS and other headers; check the HTTP→HTTPS redirect.
-- [ ] Restart Caddy and confirm it reuses the stored certificate.
+- [ ] Set the mode chosen in LEARN-004, restart `web`, and verify HTTPS from your laptop.
+- [ ] Read Caddy's logs during a certificate issuance or a proxied request.
 - [ ] Every command in "Check it yourself" run and understood
 - [ ] Exercises done (break it, then fix it)
 
 **Done when**
 
-- [ ] `https://app.<domain>` works with a trusted certificate, HTTP redirects, the app port is private.
-- [ ] You can read a certificate and diagnose TLS errors from the command line.
+- [ ] The app is served over trusted HTTPS on its name; HTTP redirects; the cookie is `Secure`.
 
 **Evidence**
 
@@ -524,9 +500,9 @@ Status: todo · Started: · Finished: · Hours: · Confidence:
 
 - 
 
-## L12 - CI/CD with GitHub Actions and AWS OIDC
+## L12 - CI/CD with GitHub Actions to the University Server
 
-Card: [[../../90 - Tasks/items/LEARN-012-github-actions-cicd|LEARN-012]] — Learn CI/CD with GitHub Actions deploying to AWS without stored keys. Needs: LEARN-006, LEARN-009, LEARN-011.
+Card: [[../../90 - Tasks/items/LEARN-012-github-actions-cicd|LEARN-012]] — Learn CI/CD with GitHub Actions and a safe deploy path to the university server. Needs: LEARN-006, LEARN-009, LEARN-011.
 
 Status: todo · Started: · Finished: · Hours: · Confidence:
 
@@ -538,18 +514,14 @@ Status: todo · Started: · Finished: · Hours: · Confidence:
 
 **Lab**
 
-- [ ] Workflow 1 `ci.yml` on pull requests: Java 21 setup, `./gradlew ktlintCheck detekt test`, Node + Playwright browser suite.
-- [ ] In AWS: add the GitHub OIDC identity provider; create role `easyquery-github-deploy` trusted only for `repo:<owner>/sparql-query-easy:environment:production`, allowed to push to the ECR repo and send SSM commands to instances tagged `Project=easyquery`.
-- [ ] Workflow 2 `deploy.yml` on push to `main` (environment `production`): assume the role, build and push `:<sha>`, `aws ssm send-command` a script that pulls, restarts and checks `/health`, then `curl` the public URL.
-- [ ] Add a `workflow_dispatch` input to redeploy a previous SHA (rollback) and practise it.
-- [ ] Require the CI check before merging to `main`.
+- [ ] Open a PR that breaks a test and watch CI fail; fix it.
+- [ ] Write (not enable) a deploy job for the chosen option and review it against the runbook.
 - [ ] Every command in "Check it yourself" run and understood
 - [ ] Exercises done (break it, then fix it)
 
 **Done when**
 
-- [ ] Every merge to `main` deploys automatically after approval, with no AWS keys stored in GitHub.
-- [ ] You have rolled back at least once and know how long it takes.
+- [ ] The deploy option is chosen and recorded in OPS-005; a dry run follows the runbook.
 
 **Evidence**
 
@@ -567,7 +539,7 @@ Status: todo · Started: · Finished: · Hours: · Confidence:
 
 ## L13 - Observability, Backups and Runbooks
 
-Card: [[../../90 - Tasks/items/LEARN-013-observability-backups-runbooks|LEARN-013]] — Learn monitoring, logs, backups and incident runbooks for the running app. Needs: LEARN-007, LEARN-012.
+Card: [[../../90 - Tasks/items/LEARN-013-observability-backups-runbooks|LEARN-013]] — Learn monitoring, logs, backups and incident runbooks for the app on the university server. Needs: LEARN-007, LEARN-012.
 
 Status: todo · Started: · Finished: · Hours: · Confidence:
 
@@ -579,17 +551,15 @@ Status: todo · Started: · Finished: · Hours: · Confidence:
 
 **Lab**
 
-- [ ] Run the app container with `--log-driver awslogs` to log group `/easyquery/app` (14-day retention).
-- [ ] Create an SNS topic with your email; a Route 53 health check on `https://app.<domain>/health` with an alarm; an EC2 status-check alarm; a disk-usage alarm via the CloudWatch agent.
-- [ ] Do a full restore drill of RDS into a temporary instance, connect, count users, delete it; write the time it took.
-- [ ] Write runbooks: "site down", "deploy broke", "database unreachable", "disk full", "certificate problem".
+- [ ] Stop `backend` during a quiet time and time how long until you are alerted.
+- [ ] Restore yesterday's off-host dump into a throwaway stack and compare counts.
 - [ ] Every command in "Check it yourself" run and understood
 - [ ] Exercises done (break it, then fix it)
 
 **Done when**
 
-- [ ] You get an email within minutes when the site is down, and you know your measured RTO for the database.
-- [ ] Runbooks exist and you have practised at least two.
+- [ ] An alert reaches you when `/health` fails; off-host backups exist and a restore from them worked.
+- [ ] Runbooks are written next to the Server Deploy Runbook.
 
 **Evidence**
 
@@ -605,9 +575,9 @@ Status: todo · Started: · Finished: · Hours: · Confidence:
 
 - 
 
-## L14 - Go-Live Checklist for User Testing
+## L14 - Go-Live Checklist for the User Test
 
-Card: [[../../90 - Tasks/items/LEARN-014-go-live-user-testing|LEARN-014]] — Learn the go-live checklist for a safe, legal and affordable user test. Needs: LEARN-008, LEARN-013.
+Card: [[../../90 - Tasks/items/LEARN-014-go-live-user-testing|LEARN-014]] — Learn the go-live checklist for a safe and legal user test on the university server. Needs: LEARN-008, LEARN-013.
 
 Status: todo · Started: · Finished: · Hours: · Confidence:
 
@@ -619,19 +589,15 @@ Status: todo · Started: · Finished: · Hours: · Confidence:
 
 **Lab**
 
-- [ ] Walk through every route in Swagger (`/swagger`) as an attacker and list what a malicious user could do; turn the list into SEC-001 decisions.
-- [ ] Try a SPARQL endpoint URL pointing at `http://169.254.169.254/` or `http://127.0.0.1:8080/` against your own deployment and record what happens; then verify the mitigation.
-- [ ] Write the privacy notice and the test-account procedure.
-- [ ] Load test `/health` and one query with a small tool (e.g. `hey` or `ab`) and watch `docker stats`.
-- [ ] Write the shutdown checklist and put a calendar reminder for the end of the test.
+- [ ] Do a dress rehearsal with two or three colleagues on the real name: consent, tasks, questionnaires, export.
+- [ ] Fill the go-live checklist in the tracker and get the open items closed or accepted.
 - [ ] Every command in "Check it yourself" run and understood
 - [ ] Exercises done (break it, then fix it)
 
 **Done when**
 
-- [ ] SEC-001 decisions are made and implemented before inviting testers.
-- [ ] Participants get a clear privacy notice; you know how to delete their data.
-- [ ] A dated shutdown plan exists.
+- [ ] The go-live checklist is complete and the dress rehearsal passed.
+- [ ] The end-of-test plan (export, retention, shutdown) is written and agreed.
 
 **Evidence**
 

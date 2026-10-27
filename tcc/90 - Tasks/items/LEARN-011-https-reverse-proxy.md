@@ -1,23 +1,23 @@
 ---
 id: LEARN-011
-title: Learn HTTPS and reverse proxying with Caddy and Let's Encrypt
+title: Learn HTTPS and reverse proxying with Caddy, either with its own certificates or behind the university proxy
 status: READY
 priority: P1
 type: learning
 depends_on: [LEARN-005, LEARN-010]
 human_gate: true
 created: 2026-10-07
-updated: 2026-10-07
+updated: 2026-10-27
 ---
-# Learn HTTPS and reverse proxying with Caddy and Let's Encrypt
+# Learn HTTPS and reverse proxying with Caddy, either with its own certificates or behind the university proxy
 
 Part of the [[../../07 - Operations/Deployment Learning Path/00 - Deployment Roadmap|Deployment Roadmap]];
 progress goes in the [[../../07 - Operations/Deployment Learning Path/Deployment Learning Tracker|Deployment Learning Tracker]].
-Prepares: OPS-002.
+Prepares: OPS-008, OPS-002. Target: the university server (DEC-003); rewritten from the earlier AWS version on 2026-10-27.
 
 ## Why this matters for the deployment
 
-Passwords must only travel over HTTPS, cookies must be `Secure`, and browsers warn on plain HTTP. A reverse proxy terminates TLS, renews certificates and keeps the app port private.
+Passwords must only travel over HTTPS, the session cookie is `Secure`, and browsers warn on plain HTTP. The stack's Caddy either obtains certificates itself (mode `auto`) or sits behind a university proxy that terminates TLS (mode `proxy`); you need to understand both.
 
 ## How this task is executed
 
@@ -28,96 +28,72 @@ Passwords must only travel over HTTPS, cookies must be `Secure`, and browsers wa
    them, and ends with a short quiz. It cites official documentation, and
    for commands it cannot run in the repository it marks the output as
    expected rather than observed.
-2. **You do the lab by hand** in your own terminal/AWS account, run every
-   self-check, and record results and questions in the tracker.
+2. **You do the lab by hand** in your own terminal and on the university
+   server, run every self-check, and record results and questions in the tracker.
 3. **Review together:** open questions go back into the lesson. The task
    is DONE when you tick every "Done when" item in the tracker (human gate).
 
-No AWS resource is created, and nothing is pushed or deployed, by Claude
-without your explicit request in the session.
+Nothing is installed on the server, pushed or deployed by Claude without
+your explicit request in the session; university rules come first.
 
 ## Learning objectives — after this you can
 
-- Explain the TLS handshake, certificates, chain of trust and the ACME HTTP-01 challenge.
-- Run Caddy in front of the app on the same Docker network, with automatic Let's Encrypt certificates and an HTTP→HTTPS redirect.
-- Configure forwarded headers so the app knows the original scheme and client IP, and add security headers (HSTS).
-- Verify certificates, redirects and headers from the command line and with an external scanner.
+- Explain TLS certificates, chains, ACME HTTP-01 and why port 80 must be reachable for `auto`.
+- Configure the stack's `EASYQUERY_HTTPS_MODE` for the server and verify the certificate.
+- In `proxy` mode, explain which forwarded headers Caddy trusts and from which address.
+- Check security headers and the cookie flags through the real name.
 
 ## Concepts to study
 
-- Reverse proxy vs load balancer; why only the proxy publishes ports 80/443.
-- ACME, Let's Encrypt rate limits and the staging environment.
-- Persisting Caddy's data directory so certificates survive restarts.
-- `X-Forwarded-For`/`X-Forwarded-Proto` and Ktor's ForwardedHeaders/XForwardedHeaders plugin (trust only the proxy).
-- HSTS, `Content-Security-Policy` basics, `X-Content-Type-Options`.
-- Same-origin frontend and API: why CORS stays closed (OPS-002).
-- Alternative: Application Load Balancer + ACM certificate (managed, but hourly cost).
+- TLS handshake, SNI, certificate validity and renewal; Let's Encrypt rate limits.
+- Reverse proxy chains: university proxy → Caddy → backend; `X-Forwarded-*`; trusted proxies.
+- HSTS, redirects, `Secure`/`HttpOnly`/`SameSite` cookies (security plan QUAL-022).
 
 ## Hands-on lab
 
-1. On EC2, create a Docker network; run the app without published ports and Caddy publishing 80 and 443 with a Caddyfile `app.<domain> { reverse_proxy app:8080 }`.
-2. First use the Let's Encrypt staging CA, check the (untrusted) certificate, then switch to production.
-3. Add HSTS and other headers; check the HTTP→HTTPS redirect.
-4. Restart Caddy and confirm it reuses the stored certificate.
+1. Set the mode chosen in LEARN-004, restart `web`, and verify HTTPS from your laptop.
+2. Read Caddy's logs during a certificate issuance or a proxied request.
 
 ## Check it yourself (CLI)
 
-Replace `<…>` placeholders with your values.
+Replace `<…>` placeholders with your values; `easyquery` is your `~/.ssh/config` host.
 
 ```sh
-curl -sI http://app.<domain>/
+curl -sSI https://<server-name>/
 ```
-Look for: a `308 Permanent Redirect` with `Location: https://app.<domain>/`
+Look for: `HTTP/2 200` and the security headers
 
 ```sh
-curl -sv https://app.<domain>/health -o /dev/null 2>&1 | grep -E "SSL connection|subject:|issuer:|expire date|HTTP/"
+openssl s_client -connect <server-name>:443 -servername <server-name> </dev/null | openssl x509 -noout -issuer -dates
 ```
-Look for: TLS version, certificate subject/issuer/expiry and `HTTP/2 200`
+Look for: a trusted issuer and future expiry
 
 ```sh
-openssl s_client -connect app.<domain>:443 -servername app.<domain> </dev/null 2>/dev/null | openssl x509 -noout -issuer -subject -dates -ext subjectAltName
+curl -sSI http://<server-name>/
 ```
-Look for: issued by Let's Encrypt for your name, about 90 days validity
+Look for: a redirect to HTTPS
 
 ```sh
-curl -sI https://app.<domain>/ | grep -i -E "strict-transport|x-content-type|server"
+ssh easyquery 'cd easyquery && docker compose logs web --since 1h | tail'
 ```
-Look for: your security headers
-
-```sh
-docker logs caddy 2>&1 | grep -i -E "certificate obtained|challenge|error"
-```
-Look for: the ACME challenge and certificate events
-
-```sh
-nc -vz -w 5 <elastic-ip> 8080
-```
-Look for: times out — the app port is not public
-
-```sh
-nmap --script ssl-enum-ciphers -p 443 app.<domain>
-```
-Look for: only modern TLS versions and ciphers
+Look for: certificate obtained/renewed or proxied requests, no errors
 
 ## Exercises — break it, then fix it
 
-- Close port 80 in the security group and explain why renewal (HTTP-01) would fail.
-- Make the app log the client IP with and without forwarded-header handling and compare.
-- Run an external test (e.g. SSL Labs) and explain every point it deducts.
+- Explain what breaks if the university proxy does not forward `X-Forwarded-Proto` (cookie, redirects).
 
 ## Done when
 
-- `https://app.<domain>` works with a trusted certificate, HTTP redirects, the app port is private.
-- You can read a certificate and diagnose TLS errors from the command line.
+- The app is served over trusted HTTPS on its name; HTTP redirects; the cookie is `Secure`.
 
 ## Reading list
 
-- Caddy documentation — Automatic HTTPS, reverse_proxy, Caddyfile concepts: https://caddyserver.com/docs/
-- Let's Encrypt documentation — How it works, Challenge types, Rate limits, Staging environment: https://letsencrypt.org/docs/
-- Ktor documentation — Forwarded headers
-- MDN — Strict-Transport-Security; Mozilla Server Side TLS guidelines
+- Caddy docs — Automatic HTTPS, reverse_proxy, trusted_proxies
+- [[../../07 - Operations/Docker Compose Stack]] (HTTPS modes)
 
 ## Execution log
 
 - 2026-10-07: Created from the user's request for a hands-on deployment learning
-  path (DOC-003).
+  path (DOC-003), first written for AWS.
+- 2026-10-27: Rewritten for the university server (user: "replaneje para o servidor
+  da faculdade"); AWS content is in git history.
