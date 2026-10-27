@@ -134,14 +134,43 @@
 		<div class="flex flex-wrap gap-2 text-sm">
 			<span class="rounded-full bg-node-entity px-3 py-1 text-node-entity-text">Entity</span>
 			<span class="rounded-full bg-node-variable px-3 py-1 text-node-variable-text"
-				>Variable</span
-			>
-			<span class="rounded-sm bg-node-value px-3 py-1 text-node-value-text">Value</span>
-			<span
-				class="rounded-sm border-4 border-node-value-variable-border bg-node-value-variable px-3 py-1 text-node-variable-text"
-				>Value variable</span
+				>Node variable</span
 			>
 			<span class="rounded-full bg-node-class px-3 py-1 text-node-class-text">Class</span>
+			<!-- White on the grey fill is below AA at chip size: a swatch with the label beside it. -->
+			<span class="flex items-center gap-2 px-3 py-1"
+				><span class="size-3 rounded-full bg-node-many"></span>Multiple results</span
+			>
+			<span class="rounded-sm bg-node-value px-3 py-1 text-node-value-text"
+				>Literal value</span
+			>
+			<span class="rounded-sm bg-node-value-variable px-3 py-1 text-node-variable-text"
+				>Literal value variable</span
+			>
+			<span class="flex items-center gap-2 px-3 py-1 text-edge-line"
+				><svg viewBox="0 0 24 8" aria-hidden="true" class="h-2 w-6"
+					><line
+						x1="0"
+						y1="4"
+						x2="18"
+						y2="4"
+						stroke="currentColor"
+						stroke-width="2"
+					/><path d="M17 0 L24 4 L17 8 Z" fill="currentColor" /></svg
+				><span class="text-foreground">Defined predicate</span></span
+			>
+			<span class="flex items-center gap-2 px-3 py-1 text-edge-variable-line"
+				><svg viewBox="0 0 24 8" aria-hidden="true" class="h-2 w-6"
+					><line
+						x1="0"
+						y1="4"
+						x2="18"
+						y2="4"
+						stroke="currentColor"
+						stroke-width="2"
+					/><path d="M17 0 L24 4 L17 8 Z" fill="currentColor" /></svg
+				><span class="text-foreground">Variable predicate</span></span
+			>
 		</div>
 	</section>
 

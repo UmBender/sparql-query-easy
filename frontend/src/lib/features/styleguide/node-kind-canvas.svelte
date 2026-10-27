@@ -11,7 +11,7 @@
 	const nodes = [
 		{ id: 'entity', kind: 'entity', label: 'Entity' },
 		{ id: 'variable', kind: 'variable', label: '?' },
-		{ id: 'value', kind: 'value', label: 'Value' },
+		{ id: 'value', kind: 'value', label: 'Literal value' },
 		{ id: 'valueVariable', kind: 'valueVariable', label: '? ≥ 90' },
 		{ id: 'class', kind: 'class', label: 'Class' },
 		{ id: 'many', kind: 'many', label: '12 results' }
@@ -74,6 +74,6 @@
 	bind:this={container}
 	data-testid="node-kind-canvas"
 	role="img"
-	aria-label="Node kinds: entity (selected), variable, value (rejected), value variable, class, N results; fixed, variable and emphasized relations"
+	aria-label="Node kinds: entity (selected), node variable, literal value (rejected), literal value variable, class, multiple results; defined, variable and emphasized predicates"
 	class="h-80 w-full rounded-md border bg-canvas"
 ></div>

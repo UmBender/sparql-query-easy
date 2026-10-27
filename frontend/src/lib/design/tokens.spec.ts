@@ -55,6 +55,24 @@ describe('design tokens', () => {
 		);
 	});
 
+	it('a variable predicate changes only the colour of a defined predicate (FE-057)', () => {
+		const sheets = [graphStylesheet(), possibleGraphStylesheet()];
+		const [editor, possible] = sheets.map((sheet) =>
+			sheet.find(
+				(rule) =>
+					rule.selector === 'edge[kind = "variable"]' || rule.selector === 'edge.open'
+			)
+		);
+		for (const rule of [editor, possible]) {
+			expect(rule?.style).toEqual({
+				'line-color': tokens.graph.variableEdge.line,
+				'target-arrow-color': tokens.graph.variableEdge.line,
+				color: tokens.graph.variableEdge.label
+			});
+		}
+		expect(tokenCss()).toContain(`--edge-variable-line: ${tokens.graph.variableEdge.line};`);
+	});
+
 	it('node-kind colors equal the legacy page values', async () => {
 		// The verbatim port of sparql/graph-model.js (FE-042), checked by its own oracle suite.
 		const legacy = await import('#lib/domain/legacy/graph-model.js');
@@ -67,10 +85,13 @@ describe('design tokens', () => {
 		expect(nodes.class.fill).toBe(color({ type: 'default' }));
 		expect(nodes.many.fill).toBe(color({ type: 'variable', color: 'gray' }));
 		expect(nodes.legacyFilter.fill).toBe(color({ type: 'label-filter' }));
-		const border = legacy.nodeBorder({ type: 'value-variable' });
-		expect([nodes.valueVariable.borderWidth, nodes.valueVariable.border]).toEqual([
-			border.width,
-			border.color.toLowerCase()
+		// FE-057 drops the legacy pink border: a literal value variable is the value box in variable green.
+		expect(legacy.nodeBorder({ type: 'value-variable' }).width).toBe(4);
+		expect(nodes.valueVariable.borderWidth).toBe(0);
+		expect(nodes.valueVariable.shape).toBe(nodes.value.shape);
+		expect([nodes.valueVariable.width, nodes.valueVariable.height]).toEqual([
+			nodes.value.width,
+			nodes.value.height
 		]);
 		expect(legacy.nodeShape({ type: 'label' }).shape).toBe(nodes.value.shape);
 		expect(legacy.nodeShape({ type: 'node' }).shape).toBe(nodes.entity.shape);

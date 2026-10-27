@@ -49,8 +49,8 @@ export function sharedVariables(tokens: Tokens): Record<string, string> {
 	}
 	variables['--edge-line'] = tokens.graph.edge.line;
 	variables['--edge-label'] = tokens.graph.edge.label;
+	variables['--edge-variable-line'] = tokens.graph.variableEdge.line;
 	variables['--edge-variable-label'] = tokens.graph.variableEdge.label;
-	variables['--edge-variable-background'] = tokens.graph.variableEdge.labelBackground;
 	variables['--graph-selected'] = tokens.graph.selected;
 	variables['--graph-rejected'] = tokens.graph.rejected;
 	variables['--possible-assumed'] = tokens.graph.possible.assumed;

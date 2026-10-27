@@ -11,7 +11,7 @@
 	--node-value-border: #f48fb1;
 	--node-value-text: #212121;
 	--node-value-variable-fill: #a9d18e;
-	--node-value-variable-border: #f48fb1;
+	--node-value-variable-border: #a9d18e;
 	--node-value-variable-text: #1b3b0f;
 	--node-class-fill: #fdd835;
 	--node-class-border: #fdd835;
@@ -24,8 +24,8 @@
 	--node-legacy-filter-text: #ffffff;
 	--edge-line: #4472c4;
 	--edge-label: #2f5597;
-	--edge-variable-label: #1b3b0f;
-	--edge-variable-background: #a9d18e;
+	--edge-variable-line: #6a9141;
+	--edge-variable-label: #3b6e22;
 	--graph-selected: #1565c0;
 	--graph-rejected: #c62828;
 	--possible-assumed: #ff6f00;

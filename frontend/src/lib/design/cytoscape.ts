@@ -67,10 +67,12 @@ export function graphStylesheet(tokens: Tokens = defaultTokens): StyleRule[] {
 			}
 		},
 		{
+			// FE-057: same look as a defined predicate, only the colour is the variable green.
 			selector: 'edge[kind = "variable"]',
 			style: {
-				color: graph.variableEdge.label,
-				'text-background-color': graph.variableEdge.labelBackground
+				'line-color': graph.variableEdge.line,
+				'target-arrow-color': graph.variableEdge.line,
+				color: graph.variableEdge.label
 			}
 		},
 		{
@@ -173,10 +175,12 @@ export function possibleGraphStylesheet(tokens: Tokens = defaultTokens): StyleRu
 			}
 		},
 		{
+			// FE-057: an open (variable) predicate is drawn like the editor's variable predicate.
 			selector: 'edge.open',
 			style: {
-				color: graph.possible.openText,
-				'text-background-color': graph.nodes.variable.fill
+				'line-color': graph.variableEdge.line,
+				'target-arrow-color': graph.variableEdge.line,
+				color: graph.variableEdge.label
 			}
 		},
 		{

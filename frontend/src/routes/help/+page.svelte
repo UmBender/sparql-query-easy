@@ -36,23 +36,40 @@
 		},
 		{
 			swatch: 'rounded-full bg-node-variable',
-			name: 'Variable (?)',
+			name: 'Node variable (?)',
 			text: 'An unknown entity the query looks for. Add one with Add Variable.'
-		},
-		{
-			swatch: 'rounded-sm bg-node-value',
-			name: 'Value',
-			text: 'A fixed number, text or date, such as a speed of 90.'
-		},
-		{
-			swatch: 'rounded-sm border-2 border-node-value-variable-border bg-node-value-variable',
-			name: 'Value variable',
-			text: 'An unknown number, text or date. It can hold a filter. Add one with Add Value Variable.'
 		},
 		{
 			swatch: 'rounded-full bg-node-class',
 			name: 'Class',
 			text: 'A kind of thing, such as Pokémon. Use Explore values on it to see its members.'
+		},
+		{
+			swatch: 'rounded-full bg-node-many',
+			name: 'Multiple results',
+			text: 'A node that stands for more than one result, drawn grey.'
+		},
+		{
+			swatch: 'rounded-sm bg-node-value',
+			name: 'Literal value',
+			text: 'A fixed number, text or date, such as a speed of 90.'
+		},
+		{
+			swatch: 'rounded-sm bg-node-value-variable',
+			name: 'Literal value variable',
+			text: 'An unknown number, text or date. It can hold a filter. Add one with Add Literal Value Variable.'
+		},
+		{
+			swatch: 'text-edge-line',
+			arrow: true,
+			name: 'Defined predicate',
+			text: 'A fixed relation between two nodes, drawn as a blue arrow.'
+		},
+		{
+			swatch: 'text-edge-variable-line',
+			arrow: true,
+			name: 'Variable predicate',
+			text: 'An unknown relation the query looks for, drawn as a green arrow.'
 		}
 	];
 
@@ -159,14 +176,33 @@
 		<ul class="flex flex-col gap-2 text-sm">
 			{#each nodeKinds as kind (kind.name)}
 				<li class="flex items-start gap-3">
-					<span aria-hidden="true" class="mt-0.5 size-4 shrink-0 {kind.swatch}"></span>
+					{#if kind.arrow}
+						<svg
+							viewBox="0 0 24 8"
+							aria-hidden="true"
+							class="mt-1.5 h-2 w-6 shrink-0 {kind.swatch}"
+						>
+							<line
+								x1="0"
+								y1="4"
+								x2="18"
+								y2="4"
+								stroke="currentColor"
+								stroke-width="2"
+							/>
+							<path d="M17 0 L24 4 L17 8 Z" fill="currentColor" />
+						</svg>
+					{:else}
+						<span aria-hidden="true" class="mt-0.5 size-4 shrink-0 {kind.swatch}"
+						></span>
+					{/if}
 					<span><strong>{kind.name}.</strong> {kind.text}</span>
 				</li>
 			{/each}
 		</ul>
 		<p class="text-sm">
-			A grey node, <em>Multiple results</em>, stands for more than one result. The
-			<em>Node types</em> legend in the corner of the canvas repeats these colors.
+			Fixed nodes and predicates keep their own color; variables are green. The legend in the
+			corner of the canvas repeats these colors.
 		</p>
 	</section>
 

@@ -220,24 +220,29 @@ test('G-01 G-12 node kinds and variable relations use the token colors', async (
 			cy.getElementById(id).style('background-color'),
 			cy.getElementById(id).style('shape')
 		];
+		// FE-057: a variable predicate differs from a defined one only in colour.
+		const edge = (id: string) =>
+			['line-color', 'target-arrow-color', 'color', 'text-background-color'].map((property) =>
+				cy.getElementById(id).style(property)
+			);
 		return {
 			entity: node('<https://e/a>'),
 			variable: node('?v'),
 			value: node('90'),
-			valueVariable: [...node('?w'), cy.getElementById('?w').style('border-color')],
+			valueVariable: [...node('?w'), cy.getElementById('?w').style('border-width')],
 			class: node('c'),
-			variableEdge: cy.getElementById('var').style('text-background-color'),
-			fixedEdge: cy.getElementById('fixed').style('text-background-color')
+			variableEdge: edge('var'),
+			fixedEdge: edge('fixed')
 		};
 	});
 	expect(styles).toEqual({
 		entity: ['rgb(68,114,196)', 'ellipse'],
 		variable: ['rgb(169,209,142)', 'ellipse'],
 		value: ['rgb(244,143,177)', 'rectangle'],
-		valueVariable: ['rgb(169,209,142)', 'rectangle', 'rgb(244,143,177)'],
+		valueVariable: ['rgb(169,209,142)', 'rectangle', '0px'],
 		class: ['rgb(253,216,53)', 'ellipse'],
-		variableEdge: 'rgb(169,209,142)',
-		fixedEdge: 'rgb(255,255,255)'
+		variableEdge: ['rgb(106,145,65)', 'rgb(106,145,65)', 'rgb(59,110,34)', 'rgb(255,255,255)'],
+		fixedEdge: ['rgb(68,114,196)', 'rgb(68,114,196)', 'rgb(47,85,151)', 'rgb(255,255,255)']
 	});
 });
 

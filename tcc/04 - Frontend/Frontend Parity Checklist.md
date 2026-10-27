@@ -51,7 +51,7 @@ check that passes (Playwright files in `frontend/tests/`, Vitest specs in
 | G-09 | Convert to variable (literal → value variable, others → variable) keeps relations | `convert retargets the menu and rewires edges …`, `QUAL-005 Convert to variable turns a … node into …`, `FE-034 Convert to variable on a value …` | FE-042/FE-044 | — | new: `editor.e2e.ts` G-09 G-10 G-11; `operations.spec.ts` |
 | G-10 | Remove node (with its relations) / Remove relation (only that edge, red) | `QUAL-005 Remove deletes only the chosen node …`, `Remove relation deletes only the chosen edge`, `QUAL-005 Remove relation deletes only …` | FE-044 | — | new: `editor.e2e.ts` G-09 G-10 G-11; `operations.spec.ts` |
 | G-11 | Edge action: Convert relation to variable (predicate variable, FE-003) | `edge action menu converts only a relation predicate …` | FE-044 | `predicate-variable-edge` | new: `editor.e2e.ts` G-09 G-10 G-11 |
-| G-12 | Variable relations render green however created | `variable relations render the green label however they were created` | FE-041/FE-044 | — | new: `editor.e2e.ts` G-01 G-12 |
+| G-12 | Variable relations render green however created (FE-057: green line, arrow and label text) | `variable relations render the green label however they were created` | FE-041/FE-044 | — | new: `editor.e2e.ts` G-01 G-12 |
 | G-13 | Toggle Boolean value, Edit literal value (FE-059 name; value fed by a variable) | `QUAL-005 type-specific node actions change only their node …` | FE-045 | — | new: `filters.e2e.ts` G-13; `operations.spec.ts` |
 | G-14 | The node-kind graph sends one filter per relation | `QUAL-005 the node-kind graph sends one filter per relation` | FE-042 | all | new: `operations.spec.ts` QUAL-005 graph; `request-parity.spec.ts` |
 

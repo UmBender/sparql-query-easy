@@ -51,10 +51,11 @@
 	--color-node-value: var(--node-value-fill);
 	--color-node-value-text: var(--node-value-text);
 	--color-node-value-variable: var(--node-value-variable-fill);
-	--color-node-value-variable-border: var(--node-value-variable-border);
 	--color-node-class: var(--node-class-fill);
 	--color-node-class-text: var(--node-class-text);
 	--color-node-many: var(--node-many-fill);
+	--color-edge-line: var(--edge-line);
+	--color-edge-variable-line: var(--edge-variable-line);
 	--color-graph-selected: var(--graph-selected);
 	--color-graph-rejected: var(--graph-rejected);
 	--color-possible-assumed: var(--possible-assumed);

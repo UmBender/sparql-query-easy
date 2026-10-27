@@ -1,4 +1,4 @@
-<!-- Node-type legend and zoom controls (legacy #legend, #zoom-controls). -->
+<!-- Graph legend and zoom controls (legacy #legend, #zoom-controls). -->
 <script lang="ts">
 	import ZoomInIcon from '@lucide/svelte/icons/zoom-in';
 	import ZoomOutIcon from '@lucide/svelte/icons/zoom-out';
@@ -9,32 +9,57 @@
 	let { view }: { view: CanvasView } = $props();
 </script>
 
+<!--
+	FE-057: one colour rule — fixed elements keep their own colour, variables
+	are green — shown in three columns: nodes, literals and predicates.
+-->
+{#snippet arrow(colour: string)}
+	<svg viewBox="0 0 24 8" aria-hidden="true" class="h-2 w-6 shrink-0 {colour}">
+		<line x1="0" y1="4" x2="18" y2="4" stroke="currentColor" stroke-width="2" />
+		<path d="M17 0 L24 4 L17 8 Z" fill="currentColor" />
+	</svg>
+{/snippet}
+
 <div
 	id="legend"
-	aria-label="Node type legend"
-	class="absolute bottom-3 left-3 z-(--z-overlay) flex flex-col gap-1 rounded-md border bg-surface/90 p-2 text-xs shadow-sm"
+	role="group"
+	aria-label="Graph legend"
+	class="absolute bottom-3 left-3 z-(--z-overlay) grid max-w-[calc(100%-5rem)] grid-cols-2 gap-x-3 gap-y-1 rounded-md border bg-surface/90 p-2 text-xs shadow-sm sm:grid-cols-3"
 >
-	<strong class="font-semibold">Node types</strong>
-	<span class="flex items-center gap-2"
-		><span class="size-3 rounded-full bg-node-entity"></span>Entity</span
-	>
-	<span class="flex items-center gap-2"
-		><span class="size-3 rounded-full bg-node-variable"></span>Variable</span
-	>
-	<span class="flex items-center gap-2"
-		><span class="h-3 w-4 rounded-sm bg-node-value"></span>Value</span
-	>
-	<span class="flex items-center gap-2"
-		><span
-			class="h-3 w-4 rounded-sm border-2 border-node-value-variable-border bg-node-value-variable"
-		></span>Value variable</span
-	>
-	<span class="flex items-center gap-2"
-		><span class="size-3 rounded-full bg-node-class"></span>Class</span
-	>
-	<span class="flex items-center gap-2"
-		><span class="size-3 rounded-full bg-node-many"></span>Many results</span
-	>
+	<div class="flex flex-col gap-1">
+		<strong class="font-semibold">Nodes</strong>
+		<span class="flex items-center gap-2"
+			><span class="size-3 shrink-0 rounded-full bg-node-entity"></span>Entity</span
+		>
+		<span class="flex items-center gap-2"
+			><span class="size-3 shrink-0 rounded-full bg-node-variable"></span>Node variable</span
+		>
+		<span class="flex items-center gap-2"
+			><span class="size-3 shrink-0 rounded-full bg-node-class"></span>Class</span
+		>
+		<span class="flex items-center gap-2"
+			><span class="size-3 shrink-0 rounded-full bg-node-many"></span>Multiple results</span
+		>
+	</div>
+	<div class="flex flex-col gap-1">
+		<strong class="font-semibold">Literals</strong>
+		<span class="flex items-center gap-2"
+			><span class="h-3 w-4 shrink-0 rounded-sm bg-node-value"></span>Literal value</span
+		>
+		<span class="flex items-center gap-2"
+			><span class="h-3 w-4 shrink-0 rounded-sm bg-node-value-variable"></span>Literal value
+			variable</span
+		>
+	</div>
+	<div class="flex flex-col gap-1">
+		<strong class="font-semibold">Predicates</strong>
+		<span class="flex items-center gap-2"
+			>{@render arrow('text-edge-line')}Defined predicate</span
+		>
+		<span class="flex items-center gap-2"
+			>{@render arrow('text-edge-variable-line')}Variable predicate</span
+		>
+	</div>
 </div>
 
 <div

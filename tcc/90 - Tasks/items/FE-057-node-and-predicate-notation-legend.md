@@ -1,7 +1,7 @@
 ---
 id: FE-057
 title: Show node and predicate kinds with one colour rule and a three-column legend
-status: READY
+status: DONE
 priority: P1
 type: frontend
 depends_on: []
@@ -57,3 +57,25 @@ the legend must be split by element type. Skills: `tcc-frontend`,
   only refreshed for this intended change, PNG diffs reviewed.
 
 ## Conclusion
+
+Done 2026-10-27. Rule: fixed elements keep their own colour, variables are
+green. Tokens: `graph.nodes.valueVariable` has no border (width 0);
+`graph.variableEdge` is now `{ line: #6a9141, label: #3b6e22 }` (label text
+AA on the white label background), replacing the green label box. The
+editor (`edge[kind = "variable"]`) and the possible-graph preview
+(`edge.open`) change only line, arrow and label colour. Legend
+(`graph-overlays.svelte`): three columns Nodes (Entity, Node variable, Class,
+Multiple results) / Literals (Literal value, Literal value variable) /
+Predicates (defined and variable arrows), two columns under `sm` so it fits
+at 360 px (checked by screenshot). Help `nodeKinds`, styleguide chips (the
+Multiple results chip is a swatch + text: white on the grey fill fails AA)
+and node-kind canvas use the new names. Docs: Current Contracts (Value
+variables, Menus/predicates), Predicate Variable Edge Contract, Parity G-12.
+Tests: `tokens.spec.ts` (variable predicate = colour-only change, no
+border), `editor.e2e.ts` G-01 G-12 (line/arrow/label/background colours,
+border width). Gate: check 0 errors, lint clean, Vitest 253 + 25,
+Playwright 120 passed; visual baselines (node kinds, selected) and
+`test:screens` (editor, help, study task, admin new task, styleguide, both
+themes) refreshed and reviewed — only the border, the variable predicate
+colour, the legend and the help/styleguide lists changed; re-run 22 passed.
+Help images regenerated with `help:screens`.

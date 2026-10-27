@@ -68,9 +68,13 @@ export type NodeKindName =
 
 export type GraphTokens = {
 	nodes: Record<NodeKindName, NodeKindStyle>;
-	/** Relations: line, label text and label background for fixed and variable predicates. */
+	/** Relations: line, label text and label background of a defined (fixed) predicate. */
 	edge: { line: string; width: number; label: string; labelBackground: string };
-	variableEdge: { label: string; labelBackground: string };
+	/**
+	 * A variable predicate (FE-057): the same look as a defined one, with the
+	 * variable green on the line, arrowhead and label text instead of blue.
+	 */
+	variableEdge: { line: string; label: string };
 	filterEdge: { label: string; labelBackground: string };
 	/** Selected node/edge (action list open), connection source. */
 	selected: string;
@@ -199,8 +203,8 @@ export const tokens: Tokens = {
 			},
 			valueVariable: {
 				fill: '#a9d18e',
-				border: '#f48fb1',
-				borderWidth: 4,
+				border: '#a9d18e',
+				borderWidth: 0,
 				text: '#1b3b0f',
 				shape: 'rectangle',
 				width: 120,
@@ -235,7 +239,7 @@ export const tokens: Tokens = {
 			}
 		},
 		edge: { line: '#4472c4', width: 3, label: '#2f5597', labelBackground: '#ffffff' },
-		variableEdge: { label: '#1b3b0f', labelBackground: '#a9d18e' },
+		variableEdge: { line: '#6a9141', label: '#3b6e22' },
 		filterEdge: { label: '#1a2433', labelBackground: '#8497b0' },
 		selected: '#1565c0',
 		rejected: '#c62828',

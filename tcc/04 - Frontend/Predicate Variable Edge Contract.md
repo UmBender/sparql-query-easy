@@ -50,7 +50,9 @@ that stale result does not recreate it or create a node.
 The relation label style follows the predicate, not a stored `type` flag
 (`relationLabelKind` in `sparql/query-calculations.js`, rendered by
 `edgeLabelHtml`). A whole valid variable `nodeId`, or no `nodeId` (queried
-through a fallback variable), shows the green variable box. A fixed predicate
+through a fallback variable), shows the variable style (since FE-057 the
+defined predicate's look with a green line, arrow and label text, no green
+label box). A fixed predicate
 shows the plain label, even with a stale `type: 'variable'`. `type: 'filter'`
 keeps the filter box. Node conversion and result-table replacement rebuild
 edges with all their data (including `type` and `filterType`).
