@@ -18,6 +18,7 @@
 		"tokens": "UPDATE_TOKENS=1 vitest run src/lib/design/css.spec.ts",
 		"test:coverage": "vitest run --project server --coverage",
 		"api:types": "node scripts/generate-api-types.mjs",
+		"demo:seed": "node scripts/seed-demo-study.mjs",
 		"test:stack": "playwright test --config playwright.stack.config.ts",
 		"test:screens": "node scripts/test-screens.mjs",
 		"test:compose": "node scripts/test-compose.mjs",

@@ -1,0 +1,817 @@
+{
+	"group": "Demo Brasileirão 2023",
+	"note": "STUDY-013: the DOC-009 example questions as practice tasks; `query` is derived from `graph` by answerQuery (checked by demo-study.spec.ts); `answers` are the labels the reference must return.",
+	"tasks": [
+		{
+			"key": "br23-p1-rebaixados",
+			"title": "Times rebaixados",
+			"statement": "Quais times foram rebaixados no Brasileirão 2023?\n\nResponda com a variável que representa o time.",
+			"answerVariable": "?equipe",
+			"graph": {
+				"formatVersion": 1,
+				"endpoint": {
+					"kind": "builtIn",
+					"id": "CampeonatoBrasileiro2023"
+				},
+				"limit": 150,
+				"order": [],
+				"nodes": [
+					{
+						"id": "?classificacao",
+						"kind": "variable",
+						"label": "classificacao",
+						"name": "?classificacao",
+						"position": {
+							"x": 200,
+							"y": 200
+						}
+					},
+					{
+						"id": "v-true",
+						"kind": "value",
+						"label": "true",
+						"term": {
+							"type": "literal",
+							"value": "true",
+							"datatype": "http://www.w3.org/2001/XMLSchema#boolean"
+						},
+						"filter": null,
+						"position": {
+							"x": 450,
+							"y": 100
+						}
+					},
+					{
+						"id": "?equipe",
+						"kind": "variable",
+						"label": "equipe",
+						"name": "?equipe",
+						"position": {
+							"x": 450,
+							"y": 300
+						}
+					}
+				],
+				"edges": [
+					{
+						"id": "e1",
+						"source": "?classificacao",
+						"target": "v-true",
+						"predicate": "<http://futebol.usp.br/#rebaixado>",
+						"label": "rebaixado"
+					},
+					{
+						"id": "e2",
+						"source": "?classificacao",
+						"target": "?equipe",
+						"predicate": "<http://futebol.usp.br/#indicaPosicao>",
+						"label": "indicaPosicao"
+					}
+				]
+			},
+			"answers": ["América-MG", "Coritiba", "Goiás", "Santos"],
+			"endpoint": "CampeonatoBrasileiro2023",
+			"query": {
+				"variableName": "?equipe",
+				"where": [
+					{
+						"subject": "?classificacao",
+						"predicate": "<http://futebol.usp.br/#rebaixado>",
+						"object": "true",
+						"filterType": null
+					},
+					{
+						"subject": "?classificacao",
+						"predicate": "<http://futebol.usp.br/#indicaPosicao>",
+						"object": "?equipe",
+						"filterType": null
+					}
+				]
+			}
+		},
+		{
+			"key": "br23-p2-estadios-arena",
+			"title": "Estádios com \"Arena\" no nome",
+			"statement": "Quais estádios têm a palavra \"Arena\" no nome?\n\nResponda com a variável que representa o estádio.",
+			"answerVariable": "?estadio",
+			"graph": {
+				"formatVersion": 1,
+				"endpoint": {
+					"kind": "builtIn",
+					"id": "CampeonatoBrasileiro2023"
+				},
+				"limit": 150,
+				"order": [],
+				"nodes": [
+					{
+						"id": "?estadio",
+						"kind": "variable",
+						"label": "estadio",
+						"name": "?estadio",
+						"position": {
+							"x": 200,
+							"y": 200
+						}
+					},
+					{
+						"id": "c-estadio",
+						"kind": "class",
+						"label": "Estadio",
+						"value": "<http://futebol.usp.br/#Estadio>",
+						"position": {
+							"x": 450,
+							"y": 100
+						}
+					},
+					{
+						"id": "?nome",
+						"kind": "valueVariable",
+						"label": "? contains Arena",
+						"name": "?nome",
+						"filter": {
+							"code": 1,
+							"value": "Arena"
+						},
+						"position": {
+							"x": 450,
+							"y": 300
+						}
+					}
+				],
+				"edges": [
+					{
+						"id": "e1",
+						"source": "?estadio",
+						"target": "c-estadio",
+						"predicate": "<http://www.w3.org/1999/02/22-rdf-syntax-ns#type>",
+						"label": "type"
+					},
+					{
+						"id": "e2",
+						"source": "?estadio",
+						"target": "?nome",
+						"predicate": "<http://futebol.usp.br/#possuiNome>",
+						"label": "possuiNome"
+					}
+				]
+			},
+			"answers": [
+				"Arena Barueri",
+				"Arena Corinthians",
+				"Arena MRV",
+				"Arena Palmeiras",
+				"Arena Pantanal",
+				"Arena da Baixada",
+				"Arena do Grêmio",
+				"Arena do Jacaré"
+			],
+			"endpoint": "CampeonatoBrasileiro2023",
+			"query": {
+				"variableName": "?estadio",
+				"where": [
+					{
+						"subject": "?estadio",
+						"predicate": "<http://www.w3.org/1999/02/22-rdf-syntax-ns#type>",
+						"object": "<http://futebol.usp.br/#Estadio>",
+						"filterType": null
+					},
+					{
+						"subject": "?estadio",
+						"predicate": "<http://futebol.usp.br/#possuiNome>",
+						"object": "?nome",
+						"filterType": null
+					}
+				],
+				"variableFilters": [
+					{
+						"variableName": "?nome",
+						"filterType": 1,
+						"value": "Arena"
+					}
+				]
+			}
+		},
+		{
+			"key": "br23-p4-quinto-ao-decimo",
+			"title": "Do 5º ao 10º lugar",
+			"statement": "Quais times terminaram o Brasileirão 2023 entre o 5º e o 10º lugar (inclusive)?\n\nResponda com a variável que representa o time.",
+			"answerVariable": "?equipe",
+			"graph": {
+				"formatVersion": 1,
+				"endpoint": {
+					"kind": "builtIn",
+					"id": "CampeonatoBrasileiro2023"
+				},
+				"limit": 150,
+				"order": [],
+				"nodes": [
+					{
+						"id": "?classificacao",
+						"kind": "variable",
+						"label": "classificacao",
+						"name": "?classificacao",
+						"position": {
+							"x": 200,
+							"y": 200
+						}
+					},
+					{
+						"id": "?equipe",
+						"kind": "variable",
+						"label": "equipe",
+						"name": "?equipe",
+						"position": {
+							"x": 450,
+							"y": 100
+						}
+					},
+					{
+						"id": "v-colocacao",
+						"kind": "value",
+						"label": "5–10",
+						"term": {
+							"type": "literal",
+							"value": "5..10",
+							"datatype": "http://www.w3.org/2001/XMLSchema#integer"
+						},
+						"filter": 6,
+						"position": {
+							"x": 450,
+							"y": 300
+						}
+					}
+				],
+				"edges": [
+					{
+						"id": "e1",
+						"source": "?classificacao",
+						"target": "?equipe",
+						"predicate": "<http://futebol.usp.br/#indicaPosicao>",
+						"label": "indicaPosicao"
+					},
+					{
+						"id": "e2",
+						"source": "?classificacao",
+						"target": "v-colocacao",
+						"predicate": "<http://futebol.usp.br/#indicaColocacao>",
+						"label": "indicaColocacao"
+					}
+				]
+			},
+			"answers": [
+				"Botafogo",
+				"Bragantino",
+				"Fluminense",
+				"Athletico-PR",
+				"Internacional",
+				"Fortaleza"
+			],
+			"endpoint": "CampeonatoBrasileiro2023",
+			"query": {
+				"variableName": "?equipe",
+				"where": [
+					{
+						"subject": "?classificacao",
+						"predicate": "<http://futebol.usp.br/#indicaPosicao>",
+						"object": "?equipe",
+						"filterType": null
+					},
+					{
+						"subject": "?classificacao",
+						"predicate": "<http://futebol.usp.br/#indicaColocacao>",
+						"object": "5..10",
+						"filterType": 6
+					}
+				]
+			}
+		},
+		{
+			"key": "br23-p5-libertadores-menos-60",
+			"title": "Libertadores com menos de 60 pontos",
+			"statement": "Quais times se classificaram para a Libertadores com menos de 60 pontos?\n\nResponda com a variável que representa o time.",
+			"answerVariable": "?equipe",
+			"graph": {
+				"formatVersion": 1,
+				"endpoint": {
+					"kind": "builtIn",
+					"id": "CampeonatoBrasileiro2023"
+				},
+				"limit": 150,
+				"order": [],
+				"nodes": [
+					{
+						"id": "?classificacao",
+						"kind": "variable",
+						"label": "classificacao",
+						"name": "?classificacao",
+						"position": {
+							"x": 200,
+							"y": 200
+						}
+					},
+					{
+						"id": "?equipe",
+						"kind": "variable",
+						"label": "equipe",
+						"name": "?equipe",
+						"position": {
+							"x": 450,
+							"y": 80
+						}
+					},
+					{
+						"id": "v-true",
+						"kind": "value",
+						"label": "true",
+						"term": {
+							"type": "literal",
+							"value": "true",
+							"datatype": "http://www.w3.org/2001/XMLSchema#boolean"
+						},
+						"filter": null,
+						"position": {
+							"x": 450,
+							"y": 200
+						}
+					},
+					{
+						"id": "v-pontos",
+						"kind": "value",
+						"label": "≤ 59",
+						"term": {
+							"type": "literal",
+							"value": "59",
+							"datatype": "http://www.w3.org/2001/XMLSchema#integer"
+						},
+						"filter": 3,
+						"position": {
+							"x": 450,
+							"y": 320
+						}
+					}
+				],
+				"edges": [
+					{
+						"id": "e1",
+						"source": "?classificacao",
+						"target": "?equipe",
+						"predicate": "<http://futebol.usp.br/#indicaPosicao>",
+						"label": "indicaPosicao"
+					},
+					{
+						"id": "e2",
+						"source": "?classificacao",
+						"target": "v-true",
+						"predicate": "<http://futebol.usp.br/#classificadoLibertadores>",
+						"label": "classificadoLibertadores"
+					},
+					{
+						"id": "e3",
+						"source": "?classificacao",
+						"target": "v-pontos",
+						"predicate": "<http://futebol.usp.br/#incluiPontuacao>",
+						"label": "incluiPontuacao"
+					}
+				]
+			},
+			"answers": ["Fluminense", "São Paulo"],
+			"endpoint": "CampeonatoBrasileiro2023",
+			"query": {
+				"variableName": "?equipe",
+				"where": [
+					{
+						"subject": "?classificacao",
+						"predicate": "<http://futebol.usp.br/#indicaPosicao>",
+						"object": "?equipe",
+						"filterType": null
+					},
+					{
+						"subject": "?classificacao",
+						"predicate": "<http://futebol.usp.br/#classificadoLibertadores>",
+						"object": "true",
+						"filterType": null
+					},
+					{
+						"subject": "?classificacao",
+						"predicate": "<http://futebol.usp.br/#incluiPontuacao>",
+						"object": "59",
+						"filterType": 3
+					}
+				]
+			}
+		},
+		{
+			"key": "br23-p6-mais-empates",
+			"title": "Times com mais empates",
+			"statement": "Quais times empataram mais vezes no Brasileirão 2023? Se houver empate no número de empates, todos contam.\n\nResponda com a variável que representa o time.",
+			"answerVariable": "?equipe",
+			"graph": {
+				"formatVersion": 1,
+				"endpoint": {
+					"kind": "builtIn",
+					"id": "CampeonatoBrasileiro2023"
+				},
+				"limit": 150,
+				"order": [],
+				"nodes": [
+					{
+						"id": "?classificacao",
+						"kind": "variable",
+						"label": "classificacao",
+						"name": "?classificacao",
+						"position": {
+							"x": 200,
+							"y": 200
+						}
+					},
+					{
+						"id": "?equipe",
+						"kind": "variable",
+						"label": "equipe",
+						"name": "?equipe",
+						"position": {
+							"x": 450,
+							"y": 100
+						}
+					},
+					{
+						"id": "v-empates",
+						"kind": "value",
+						"label": "MAX",
+						"term": {
+							"type": "literal",
+							"value": "14",
+							"datatype": "http://www.w3.org/2001/XMLSchema#integer"
+						},
+						"filter": 4,
+						"position": {
+							"x": 450,
+							"y": 300
+						}
+					}
+				],
+				"edges": [
+					{
+						"id": "e1",
+						"source": "?classificacao",
+						"target": "?equipe",
+						"predicate": "<http://futebol.usp.br/#indicaPosicao>",
+						"label": "indicaPosicao"
+					},
+					{
+						"id": "e2",
+						"source": "?classificacao",
+						"target": "v-empates",
+						"predicate": "<http://futebol.usp.br/#incluiEmpates>",
+						"label": "incluiEmpates"
+					}
+				]
+			},
+			"answers": ["Athletico-PR", "Corinthians", "Cruzeiro"],
+			"endpoint": "CampeonatoBrasileiro2023",
+			"query": {
+				"variableName": "?equipe",
+				"where": [
+					{
+						"subject": "?classificacao",
+						"predicate": "<http://futebol.usp.br/#indicaPosicao>",
+						"object": "?equipe",
+						"filterType": null
+					},
+					{
+						"subject": "?classificacao",
+						"predicate": "<http://futebol.usp.br/#incluiEmpates>",
+						"object": "14",
+						"filterType": 4
+					}
+				]
+			}
+		},
+		{
+			"key": "br23-p8-flamengo-derrotas-casa",
+			"title": "Derrotas do Flamengo em casa",
+			"statement": "Em quais jogos o Flamengo, jogando como mandante, perdeu?\n\nResponda com a variável que representa o jogo.",
+			"answerVariable": "?partida",
+			"graph": {
+				"formatVersion": 1,
+				"endpoint": {
+					"kind": "builtIn",
+					"id": "CampeonatoBrasileiro2023"
+				},
+				"limit": 150,
+				"order": [],
+				"nodes": [
+					{
+						"id": "flamengo",
+						"kind": "entity",
+						"label": "Flamengo",
+						"value": "<http://futebol.usp.br/#EquipeFLA>",
+						"position": {
+							"x": 200,
+							"y": 200
+						}
+					},
+					{
+						"id": "?partida",
+						"kind": "variable",
+						"label": "partida",
+						"name": "?partida",
+						"position": {
+							"x": 450,
+							"y": 200
+						}
+					},
+					{
+						"id": "?vitoria",
+						"kind": "valueVariable",
+						"label": "? = true",
+						"name": "?vitoria",
+						"filter": {
+							"code": null,
+							"value": "true"
+						},
+						"position": {
+							"x": 700,
+							"y": 200
+						}
+					}
+				],
+				"edges": [
+					{
+						"id": "e1",
+						"source": "flamengo",
+						"target": "?partida",
+						"predicate": "<http://futebol.usp.br/#eMandante>",
+						"label": "eMandante"
+					},
+					{
+						"id": "e2",
+						"source": "?partida",
+						"target": "?vitoria",
+						"predicate": "<http://futebol.usp.br/#vitoriaVisitante>",
+						"label": "vitoriaVisitante"
+					}
+				]
+			},
+			"answers": [
+				"Flamengo x Athletico-PR",
+				"Flamengo x Atlético-MG",
+				"Flamengo x Botafogo",
+				"Flamengo x Santos"
+			],
+			"endpoint": "CampeonatoBrasileiro2023",
+			"query": {
+				"variableName": "?partida",
+				"where": [
+					{
+						"subject": "<http://futebol.usp.br/#EquipeFLA>",
+						"predicate": "<http://futebol.usp.br/#eMandante>",
+						"object": "?partida",
+						"filterType": null
+					},
+					{
+						"subject": "?partida",
+						"predicate": "<http://futebol.usp.br/#vitoriaVisitante>",
+						"object": "?vitoria",
+						"filterType": null
+					}
+				],
+				"variableFilters": [
+					{
+						"variableName": "?vitoria",
+						"filterType": null,
+						"value": "true"
+					}
+				]
+			}
+		},
+		{
+			"key": "br23-p9-palmeiras-vitorias-fora",
+			"title": "Estádios das vitórias do Palmeiras fora de casa",
+			"statement": "Em quais estádios o Palmeiras venceu jogando como visitante?\n\nResponda com a variável que representa o estádio.",
+			"answerVariable": "?estadio",
+			"graph": {
+				"formatVersion": 1,
+				"endpoint": {
+					"kind": "builtIn",
+					"id": "CampeonatoBrasileiro2023"
+				},
+				"limit": 150,
+				"order": [],
+				"nodes": [
+					{
+						"id": "palmeiras",
+						"kind": "entity",
+						"label": "Palmeiras",
+						"value": "<http://futebol.usp.br/#EquipePAL>",
+						"position": {
+							"x": 200,
+							"y": 200
+						}
+					},
+					{
+						"id": "?partida",
+						"kind": "variable",
+						"label": "partida",
+						"name": "?partida",
+						"position": {
+							"x": 450,
+							"y": 200
+						}
+					},
+					{
+						"id": "?vitoria",
+						"kind": "valueVariable",
+						"label": "? = true",
+						"name": "?vitoria",
+						"filter": {
+							"code": null,
+							"value": "true"
+						},
+						"position": {
+							"x": 700,
+							"y": 100
+						}
+					},
+					{
+						"id": "?estadio",
+						"kind": "variable",
+						"label": "estadio",
+						"name": "?estadio",
+						"position": {
+							"x": 700,
+							"y": 300
+						}
+					}
+				],
+				"edges": [
+					{
+						"id": "e1",
+						"source": "palmeiras",
+						"target": "?partida",
+						"predicate": "<http://futebol.usp.br/#eVisitante>",
+						"label": "eVisitante"
+					},
+					{
+						"id": "e2",
+						"source": "?partida",
+						"target": "?vitoria",
+						"predicate": "<http://futebol.usp.br/#vitoriaVisitante>",
+						"label": "vitoriaVisitante"
+					},
+					{
+						"id": "e3",
+						"source": "?partida",
+						"target": "?estadio",
+						"predicate": "<http://futebol.usp.br/#realizadaEm>",
+						"label": "realizadaEm"
+					}
+				]
+			},
+			"answers": [
+				"Arena Pantanal",
+				"Couto Pereira",
+				"Independência",
+				"Morumbi",
+				"Nilton Santos (Engenhão)",
+				"Serrinha"
+			],
+			"endpoint": "CampeonatoBrasileiro2023",
+			"query": {
+				"variableName": "?estadio",
+				"where": [
+					{
+						"subject": "<http://futebol.usp.br/#EquipePAL>",
+						"predicate": "<http://futebol.usp.br/#eVisitante>",
+						"object": "?partida",
+						"filterType": null
+					},
+					{
+						"subject": "?partida",
+						"predicate": "<http://futebol.usp.br/#vitoriaVisitante>",
+						"object": "?vitoria",
+						"filterType": null
+					},
+					{
+						"subject": "?partida",
+						"predicate": "<http://futebol.usp.br/#realizadaEm>",
+						"object": "?estadio",
+						"filterType": null
+					}
+				],
+				"variableFilters": [
+					{
+						"variableName": "?vitoria",
+						"filterType": null,
+						"value": "true"
+					}
+				]
+			}
+		},
+		{
+			"key": "br23-p10-santos-empates",
+			"title": "Empates do Santos",
+			"statement": "Quais jogos do Santos terminaram empatados, com o Santos jogando em casa ou fora?\n\nResponda com a variável que representa o jogo.",
+			"answerVariable": "?partida",
+			"graph": {
+				"formatVersion": 1,
+				"endpoint": {
+					"kind": "builtIn",
+					"id": "CampeonatoBrasileiro2023"
+				},
+				"limit": 150,
+				"order": [],
+				"nodes": [
+					{
+						"id": "?partida",
+						"kind": "variable",
+						"label": "partida",
+						"name": "?partida",
+						"position": {
+							"x": 200,
+							"y": 200
+						}
+					},
+					{
+						"id": "santos",
+						"kind": "entity",
+						"label": "Santos",
+						"value": "<http://futebol.usp.br/#EquipeSAN>",
+						"position": {
+							"x": 450,
+							"y": 100
+						}
+					},
+					{
+						"id": "?empate",
+						"kind": "valueVariable",
+						"label": "? = true",
+						"name": "?empate",
+						"filter": {
+							"code": null,
+							"value": "true"
+						},
+						"position": {
+							"x": 450,
+							"y": 300
+						}
+					}
+				],
+				"edges": [
+					{
+						"id": "e1",
+						"source": "?partida",
+						"target": "santos",
+						"predicate": "?predicate_1",
+						"label": "?",
+						"variableMark": true
+					},
+					{
+						"id": "e2",
+						"source": "?partida",
+						"target": "?empate",
+						"predicate": "<http://futebol.usp.br/#empate>",
+						"label": "empate"
+					}
+				]
+			},
+			"answers": [
+				"Botafogo x Santos",
+				"Corinthians x Santos",
+				"Coritiba x Santos",
+				"Santos x Athletico-PR",
+				"Santos x Atlético-MG",
+				"Santos x Botafogo",
+				"Santos x Cuiabá",
+				"Santos x Internacional",
+				"Santos x Palmeiras",
+				"Santos x São Paulo"
+			],
+			"endpoint": "CampeonatoBrasileiro2023",
+			"query": {
+				"variableName": "?partida",
+				"where": [
+					{
+						"subject": "?partida",
+						"predicate": "?predicate_1",
+						"object": "<http://futebol.usp.br/#EquipeSAN>",
+						"filterType": null
+					},
+					{
+						"subject": "?partida",
+						"predicate": "<http://futebol.usp.br/#empate>",
+						"object": "?empate",
+						"filterType": null
+					}
+				],
+				"variableFilters": [
+					{
+						"variableName": "?empate",
+						"filterType": null,
+						"value": "true"
+					}
+				]
+			}
+		}
+	]
+}

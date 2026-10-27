@@ -256,6 +256,13 @@ O que fica gravado por tentativa: grafo, consulta, SPARQL gerado, variável de
 resposta, termos retornados e contagens, veredito, revisão da tarefa e tempo
 gasto.
 
+### 6.1.1 Tarefas de treino na stack local (STUDY-013)
+
+As perguntas P1, P2, P4, P5, P6, P8, P9 e P10 existem como tarefas no grupo
+**Demo Brasileirão 2023**. Para usá-las como um testador, na stack Compose
+local: [[../07 - Operations/Docker Compose Stack#Brasileirão demo tasks (STUDY-013)]]
+(`npm --prefix frontend run demo:seed`, depois login e `/study`).
+
 ### 6.2 Pesquisador (administrador), opcional no vídeo
 
 - Contas de administrador são definidas na configuração do servidor

@@ -1,7 +1,7 @@
 ---
 id: STUDY-013
 title: Offer the Brasileirão 2023 example questions as proposed tasks the user can solve like a tester
-status: READY
+status: DONE
 priority: P1
 type: fullstack
 depends_on: [DOC-009]
@@ -96,3 +96,26 @@ Focused: the new spec. Closing gate per the Operational Map (`test:stack`
 for the study flow; the Kotlin gate only if backend code changes).
 
 ## Conclusion
+
+Done 2026-10-27. Task data
+`frontend/src/lib/domain/fixtures/demo-study/brasileirao-2023.json`: 8 tasks
+`br23-p1-rebaixados` … `br23-p10-santos-empates` (Portuguese title and
+statement, drawn graph, answer variable, derived request, the note's answer
+labels). Each request was also run on a local backend (`POST /api/query`)
+and returned exactly the note's answers (4, 8, 6, 2, 3, 4, 6, 10).
+`src/lib/domain/demo-study.spec.ts` checks keys, order and that each stored
+request equals `answerQuery(graph, answerVariable)`. Seeder
+`frontend/scripts/seed-demo-study.mjs` (`npm --prefix frontend run
+demo:seed`, env `EASYQUERY_DEMO_ADMIN[_PASSWORD]`,
+`EASYQUERY_DEMO_PARTICIPANT[_PASSWORD]`, `--base-url`): registers or logs in
+both accounts, creates or updates and reactivates the tasks, fails when a
+stored `expectedCount` differs from the note, reuses the group "Demo
+Brasileirão 2023", sets its tasks and adds the participant. Real stack:
+`tests-stack/demo-study.e2e.ts` seeds twice (same result), the participant
+sees the 8 titles in order, P1's own reference is `Correct: all 4 expected
+results.`, the same answer to P2 is `Incorrect: 0 of 8 expected results; 4
+extra.`, and the task page shows the statement on the Brasileirão endpoint.
+Docs: Docker Compose Stack "Brasileirão demo tasks", Operational Map row,
+DOC-009 note §6.1.1. Gates: check 0 errors, lint clean, Vitest 262 + 25,
+Playwright 120 passed; `test:stack` 22 passed. Not run against the user's
+own Compose database (by decision); no Kotlin change.

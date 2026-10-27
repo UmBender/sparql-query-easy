@@ -198,6 +198,39 @@ restarts (unchanged from OPS-001).
 - `down` then `up`: the earlier session and login still work (volume kept);
   `down -v` removes the volume and the login fails.
 
+## Brasileirão demo tasks (STUDY-013)
+
+Loads the DOC-009 practice tasks (P1, P2, P4, P5, P6, P8, P9, P10 on
+`CampeonatoBrasileiro2023`) into the local stack and puts one participant
+account in the group **Demo Brasileirão 2023**, so the tool can be used as a
+tester uses it. Only for the local stack: on production the attempts would be
+stored with the research data. PokemonGen1 tasks and groups are untouched.
+
+1. In `.env`, list a demo admin: `EASYQUERY_ADMIN_USERNAMES=demo-admin` (add
+   it to any names already there), then `docker compose up -d --build --wait`
+   (or `docker compose restart backend` if the stack is up).
+2. From the repository root (accounts are registered on first run, logged in
+   afterwards; passwords 8–128 characters):
+
+   ```sh
+   EASYQUERY_DEMO_ADMIN=demo-admin EASYQUERY_DEMO_ADMIN_PASSWORD='…' \
+   EASYQUERY_DEMO_PARTICIPANT=gustavo EASYQUERY_DEMO_PARTICIPANT_PASSWORD='…' \
+   npm --prefix frontend run demo:seed
+   ```
+
+   `--base-url=http://127.0.0.1:<WEB_PORT>` when `WEB_PORT` is not 8080
+   (`npm … run demo:seed -- --base-url=…`). The script prints each task with
+   its expected count and fails if one differs from the note.
+3. Open `http://localhost:8080/login`, log in as the participant, open
+   `/study`: consent, profile questionnaire, then the 8 tasks in order.
+
+Running it again updates the tasks (same keys `br23-p…`), keeps the group and
+the participant's earlier attempts. To start over as a new tester, use
+another participant name; to wipe everything, `docker compose down -v`.
+Task data: `frontend/src/lib/domain/fixtures/demo-study/brasileirao-2023.json`
+(checked by `demo-study.spec.ts`; `tests-stack/demo-study.e2e.ts` seeds it
+on the real stack).
+
 ## Automated smoke (QUAL-017)
 
 `npm --prefix frontend run test:compose` builds both images and starts the
