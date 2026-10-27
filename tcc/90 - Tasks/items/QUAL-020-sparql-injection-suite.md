@@ -1,7 +1,7 @@
 ---
 id: QUAL-020
 title: Prove client input cannot inject SPARQL into generated queries
-status: BACKLOG
+status: READY
 priority: P1
 type: quality
 depends_on: []

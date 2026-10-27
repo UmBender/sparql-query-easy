@@ -16,9 +16,13 @@ updated: 2026-10-27
 Security plan threats 7–8 ([[../../08 - Quality/Security Test Plan]]).
 `RemoteSparqlEndpoint.parse` accepts any http(s) host, so a request can
 make the server call `localhost`, the `db` container or cloud metadata
-(`169.254.169.254`) once deployed on AWS. Skills: `tcc-backend`, `tcc-test`.
+(`169.254.169.254`), or hosts of the university network where the app will be deployed (user, 2026-10-27). Skills: `tcc-backend`, `tcc-test`.
 
-## Decision needed (before READY)
+## Decision (user, 2026-10-27): A, allowlist
+
+Still open before READY: the upload size limit and the uploaded-graph id question below.
+
+## Options considered
 
 - A: allowlist (Wikidata query service and built-in graphs; other remote
   endpoints only with a later decision, consistent with DEC-004), or

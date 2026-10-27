@@ -1,7 +1,7 @@
 ---
 id: QUAL-019
 title: Prove no route or trick reaches admin or another participant's data
-status: BACKLOG
+status: READY
 priority: P1
 type: quality
 depends_on: []

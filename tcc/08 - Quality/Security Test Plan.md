@@ -28,7 +28,7 @@ QUAL-023; implementation cards are BACKLOG until authorized.
 | 4 | Cross-site requests (CSRF) on every state-changing route | Origin + JSON rule on auth/study/admin | QUAL-019 |
 | 5 | SPARQL injection through any client field that reaches the generator | Typed generator: `IriTerm` (java.net.URI), variable regex, escaped literals, numeric regex | QUAL-020 |
 | 6 | SPARQL features that escape the query's scope: `SERVICE`, `FROM`, updates, extra patterns | Generator never emits them; no test proves it | QUAL-020 |
-| 7 | SSRF: a remote `endpointUrl` pointing at internal hosts (`localhost`, `db`, `169.254.169.254` on AWS) | Any http(s) host accepted | QUAL-021 (decision) |
+| 7 | SSRF: a remote `endpointUrl` pointing at internal hosts (`localhost`, `db`, the university network the app will run in, cloud metadata) | Any http(s) host accepted | QUAL-021 (decision A: allowlist) |
 | 8 | Uploads: oversized or malicious Turtle, another user's uploaded graph by id | No explicit size limit seen; ids are GUIDs | QUAL-021 |
 | 9 | Leaks in errors, logs and exports: stack traces, SQL, paths, passwords, session ids; CSV formula injection in the admin export | Not systematically tested | QUAL-022 |
 | 10 | XSS: labels from an uploaded graph or a task statement rendered as HTML | Svelte escapes by default; not tested | QUAL-022 |
@@ -44,10 +44,9 @@ compose smoke as noted on the card; CI already runs all three.
 
 ## Open decisions
 
-- SSRF policy for remote endpoints (QUAL-021): allowlist (e.g. only the
-  Wikidata endpoint and the built-in graphs, matching DEC-004's deferral of
-  remote study endpoints), or block private/link-local/loopback addresses
-  after DNS resolution.
+- SSRF policy for remote endpoints (QUAL-021): decided 2026-10-27, A —
+  allowlist (the Wikidata endpoint and the built-in graphs). Deployment
+  target: the user's university server.
 - CSP strictness (QUAL-022): what the SPA and Cytoscape need (inline styles).
 - Upload size limit and whether uploaded graphs stay readable by anyone who
   knows the id (QUAL-021).
