@@ -123,6 +123,34 @@ class ResultFilteringServiceTest {
     }
 
     @Test
+    fun `BUG-011 ranks an exact label then a prefix before the twenty-row cap keeping row order per rank`() {
+        fun entry(
+            id: String,
+            label: String,
+        ) = row(
+            "property" to Iri("https://example.test/$id"),
+            "propertyLabel" to Literal(label, Literal.RDF_LANG_STRING, "en"),
+            "propertyParentType" to Literal("objetoClasse"),
+        )
+        val contains = (1..25).map { index -> entry("goal$index", "Gol de Fulano (Palmeiras x Santos) $index") }
+        val results =
+            result(
+                listOf("property", "propertyLabel", "propertyParentType"),
+                *(
+                    contains + entry("prefix2", "Santos x Grêmio") + entry("prefix1", "santos FC") +
+                        entry("team", "Santos")
+                ).toTypedArray(),
+            )
+
+        val found = service.search(results, "SANTOS", isLocal = true).map(PropertyResult::propertyId)
+
+        found.size shouldBe 20
+        found.take(3) shouldBe
+            listOf("team", "prefix2", "prefix1").map { id -> "<https://example.test/$id>" }
+        found.drop(3) shouldBe (1..17).map { index -> "<https://example.test/goal$index>" }
+    }
+
+    @Test
     fun `QUERY-EMPTY-WHERE-001 falls back only on empty labels then filters exact parent type`() {
         val results =
             result(

@@ -87,6 +87,15 @@ class ResultFilteringService {
             relationships.filter { relationship ->
                 relationship.propertyLabel.lowercase(Locale.getDefault()).contains(normalizedSearch) &&
                     relationship.propertyType == "objetoClasse"
+            }.sortedBy { relationship ->
+                // BUG-011: an exact label, then a prefix, before the cap; sortedBy is stable,
+                // so each rank keeps the endpoint's row order (C# took the first twenty rows).
+                val label = relationship.propertyLabel.lowercase(Locale.getDefault())
+                when {
+                    label == normalizedSearch -> 0
+                    label.startsWith(normalizedSearch) -> 1
+                    else -> 2
+                }
             }.take(20)
         } else {
             relationships

@@ -692,13 +692,12 @@ P8, P9 e P10.
 
 ## 9. Cuidados ao gravar
 
-- **Busca com limite de 20:** no conjunto embutido, **Search nodes** traz no
-  máximo 20 entidades, sem ordem fixa, cujo rótulo contém o texto. Para a
-  maioria dos times, o nome sozinho ("Santos", "Palmeiras", "Grêmio") só traz
-  gols e jogos. Use **"Classificação do <time>"** e depois `indicaPosicao`,
-  ou um jogo ("Palmeiras x Santos") e depois `temMandante`/`temVisitante`.
-  Funcionaram pelo nome: Flamengo, Internacional, Corinthians, Maracanã, Hulk,
-  Luis Suárez, Endrick, "Brasileirão", "38a" (rodada).
+- **Busca com limite de 20:** **Search nodes** traz no máximo 20 entidades
+  cujo rótulo contém o texto. Desde o BUG-011 o rótulo igual ao texto vem
+  primeiro, depois os que começam com ele: "Santos", "Palmeiras" e "Grêmio"
+  trazem o time no topo. Antes da correção só vinham gols e jogos; se gravar
+  numa versão anterior, use "Classificação do <time>" ou um jogo
+  ("Palmeiras x Santos").
 - **Classes não aparecem na busca:** chega-se a elas por `…#type` em
   **Explore relationships**. Essa linha não tem rótulo; use a caixa
   *Filter…*.

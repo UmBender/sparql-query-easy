@@ -283,7 +283,9 @@ Success (`200 OK`):
 ```
 
 An empty search returns `{"data":[]}`. Local graph results are filtered to
-`objetoClasse` and capped at 20; a Wikidata endpoint uses its separate entity
+`objetoClasse` (label contains the text, ignoring case), ranked label equal
+to the text, then starting with it, then containing it (BUG-011; each rank
+keeps the endpoint's row order) and capped at 20; a Wikidata endpoint uses its separate entity
 search client. Failures use the shared `400`, `404`, or `502` response.
 
 ### `POST /api/query`

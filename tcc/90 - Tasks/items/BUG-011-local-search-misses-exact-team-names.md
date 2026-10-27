@@ -1,7 +1,7 @@
 ---
 id: BUG-011
 title: Searching a team name on a built-in dataset lists goals and matches but not the team
-status: READY
+status: DONE
 priority: P2
 type: bug
 depends_on: []
@@ -53,7 +53,9 @@ from the C# `take(20)` row order.
 1. `ResultFilteringService.search` (local branch): after the existing
    contains + `objetoClasse` filter, sort stably by rank (0 label equals the
    text ignoring case, 1 starts with it, 2 contains it), then by label
-   (case-insensitive), then `propertyId`; then `take(20)`. Same
+   (case-insensitive), then `propertyId`; then `take(20)`. (Implemented
+   with the endpoint's row order inside each rank instead of a label sort:
+   it keeps the C# capture SEARCH-LOCAL-001 unchanged.) Same
    `Locale.getDefault()` lowercasing as today. Remote branch untouched.
 2. Tests: `ResultFilteringServiceTest` (25 contains-matches with the exact
    one last in row order → first; prefix before contains; deterministic
@@ -76,3 +78,15 @@ from the C# `take(20)` row order.
   if the frontend changes.
 
 ## Conclusion
+
+Done 2026-10-27. `ResultFilteringService.search` (local) sorts the matches
+stably by rank (equal, prefix, contains; current-culture lowercase) before
+`take(20)`; remote search unchanged. Tests: `ResultFilteringServiceTest`
+BUG-011 (25 contains-matches, the exact label last in row order → first,
+prefixes next, rest in row order) with SEARCH-LOCAL-001 unchanged;
+`BuiltInSearchRoutesTest` (Santos, Palmeiras, Grêmio → their `Equipe*` IRI
+first on `CampeonatoBrasileiro2023`; PokemonGen1 "Fire" → `FireType` first).
+No capture needed changing. Docs: API v1 search, Current Contracts
+(Built-in graph), DOC-009 note "Cuidados". Gate:
+`GRADLE_USER_HOME=/tmp/sparql-query-easy-gradle ./gradlew ktlintCheck detekt
+test --no-daemon` passed (292 tests, 0 failures).
