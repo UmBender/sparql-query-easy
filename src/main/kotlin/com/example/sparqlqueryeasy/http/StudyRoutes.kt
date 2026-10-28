@@ -100,7 +100,15 @@ private fun Route.participantTaskRoutes(
             }
         }.documentStudyGetTask()
         post("{key}/submissions") {
-            sameOriginJson { studyOpen(auth, dependencies) { user -> validRequest { submit(study, user) } } }
+            sameOriginJson {
+                studyOpen(auth, dependencies) { user ->
+                    if (dependencies.submissionLimiter.tryAcquire("user:${user.id}")) {
+                        validRequest { submit(study, user) }
+                    } else {
+                        call.respond(HttpStatusCode.TooManyRequests, ErrorResponse(TOO_MANY_SUBMISSIONS))
+                    }
+                }
+            }
         }.documentStudySubmit()
     }
     get("/api/study/submissions") {
@@ -124,6 +132,8 @@ private fun Route.participantTaskRoutes(
         }
     }.documentStudyFinish()
 }
+
+internal const val TOO_MANY_SUBMISSIONS = "Too many attempts; try again in a minute"
 
 private suspend fun RoutingContext.submit(
     study: StudyService,

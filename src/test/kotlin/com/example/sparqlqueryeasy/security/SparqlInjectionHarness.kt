@@ -24,6 +24,7 @@ import com.example.sparqlqueryeasy.application.search.SearchService
 import com.example.sparqlqueryeasy.application.search.WikidataEntitySearchClient
 import com.example.sparqlqueryeasy.application.search.WikidataEntitySearchRecord
 import com.example.sparqlqueryeasy.application.search.WikidataEntitySearchRequest
+import com.example.sparqlqueryeasy.domain.model.RdfGraph
 import com.example.sparqlqueryeasy.domain.model.SparqlSelectResult
 import com.example.sparqlqueryeasy.domain.model.SparqlVariable
 import com.example.sparqlqueryeasy.http.HttpDependencies
@@ -97,15 +98,21 @@ internal val pokemon: BuiltInGraphProvider by lazy {
     ParsedBuiltInGraphProvider(ClasspathTurtleTextSource(POKEMON_RESOURCE_NAME), parser)
 }
 
-/** The production query wiring (defaultHttpDependencies) with recording executions and no network. */
-internal fun recordingQueryDependencies(recorder: QueryRecorder): QueryHttpDependencies {
+/**
+ * The production query wiring (defaultHttpDependencies) with recording executions and no network;
+ * [local] runs a built-in graph's queries (QUAL-023 passes a short timeout).
+ */
+internal fun recordingQueryDependencies(
+    recorder: QueryRecorder,
+    local: (RdfGraph) -> EndpointExecution = { JenaGraphEndpointExecution(it) },
+): QueryHttpDependencies {
     val generator = CSharpCompatibleWikidataQueryGenerator()
     val filtering = ResultFilteringService()
     val resolver =
         EndpointContextResolver(
             InMemoryLocalGraphCache(),
             brasileirao,
-            { graph -> RecordingLocalExecution(JenaGraphEndpointExecution(graph), recorder) },
+            { graph -> RecordingLocalExecution(local(graph), recorder) },
             { _, isWikidata -> RecordingRemoteExecution(isWikidata, recorder) },
             mapOf(POKEMON_ENDPOINT_ID to pokemon),
         )

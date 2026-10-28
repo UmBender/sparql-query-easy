@@ -6,7 +6,7 @@ when the task crosses that responsibility. This is the canonical command map.
 | Responsibility | Entry point |
 |---|---|
 | Ktor bootstrap/config | `src/main/kotlin/com/example/sparqlqueryeasy/Application.kt`; `src/main/resources/application.conf`; logging `src/main/resources/logback.xml` and `http/RequestLogging.kt` (OPS-010, test `RequestLoggingTest`; tests use `src/test/resources/logback-test.xml`); settings from env/`.env` in `config/AppSettings.kt` (`.env.example`) |
-| HTTP/JSON/OpenAPI | `src/main/kotlin/com/example/sparqlqueryeasy/http/{HttpModule,QueryHttpModels,OpenApiModule}.kt` |
+| HTTP/JSON/OpenAPI | `src/main/kotlin/com/example/sparqlqueryeasy/http/{HttpModule,QueryHttpModels,OpenApiModule}.kt`; request limits (QUAL-023: body size plugin and caps in `http/RequestLimits.kt`, JSON depth and U+0000 in `receiveLenient`, `http/StudyHttpModels.kt`; tests `security/RequestLimitsRoutesTest`, `http/StudyRequestLimitsRoutesTest`) |
 | Services and endpoint/cache state | `src/main/kotlin/com/example/sparqlqueryeasy/application/` |
 | RDF domain/ports/Jena | `src/main/kotlin/com/example/sparqlqueryeasy/{domain/model,rdf,rdf/jena}/` |
 | SPARQL/remote and Wikidata search | `src/main/kotlin/com/example/sparqlqueryeasy/wikidata/{query,client,entitysearch}/` |

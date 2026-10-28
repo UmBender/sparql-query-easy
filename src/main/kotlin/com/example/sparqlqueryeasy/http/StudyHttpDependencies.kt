@@ -1,5 +1,6 @@
 package com.example.sparqlqueryeasy.http
 
+import com.example.sparqlqueryeasy.application.auth.AttemptLimiter
 import com.example.sparqlqueryeasy.application.study.ConsentService
 import com.example.sparqlqueryeasy.application.study.QuestionnaireService
 import com.example.sparqlqueryeasy.application.study.StudyGroupService
@@ -24,7 +25,12 @@ data class StudyHttpDependencies(
     val study: StudyService,
     val consent: ConsentService,
     val questionnaires: QuestionnaireService,
+    // QUAL-023: each attempt runs a query, so attempts are limited per user, not only per address.
+    val submissionLimiter: AttemptLimiter = AttemptLimiter(SUBMISSIONS_PER_MINUTE),
 )
+
+/** QUAL-023: one attempt every two seconds on average; checking an answer by hand is far slower. */
+const val SUBMISSIONS_PER_MINUTE = 30
 
 /** The study services on [database]; tests build them on their own database and endpoints. */
 fun studyHttpDependencies(

@@ -251,12 +251,32 @@ internal fun GeneralQueryHttpRequest.toVariable(): QueryVariable =
     QueryVariable(requireValue(variableName, "variableName").removePrefix("?"))
 
 internal fun GeneralQueryHttpRequest.toPatterns(): List<TriplePattern> =
-    requireNotNull(where) { "Missing required field: where" }.map(WhereHttpRequest::toPattern)
+    requireNotNull(where) { "Missing required field: where" }.toPatterns()
 
-internal fun GeneralQueryHttpRequest.toVariableFilters(): List<VariableFilter> =
-    variableFilters.map(
-        VariableFilterHttpRequest::toVariableFilter,
-    )
+internal fun GeneralQueryHttpRequest.toVariableFilters(): List<VariableFilter> = variableFilters.toVariableFilters()
+
+/** QUAL-023: `limit` of a general or SPARQL request; a negative value still fails in the generator. */
+internal fun GeneralQueryHttpRequest.checkedLimit(): Int = limit.checkedLimit()
+
+internal fun SearchHttpRequest.checkedLimit(): Int = limit.checkedLimit()
+
+private fun Int.checkedLimit(): Int {
+    if (this > MAX_REQUEST_LIMIT) throw HttpRequestValidationFailure("limit must not exceed $MAX_REQUEST_LIMIT")
+    return this
+}
+
+/** QUAL-023: at most [MAX_WHERE_PATTERNS] patterns, checked before any is parsed. */
+private fun List<WhereHttpRequest>.toPatterns(): List<TriplePattern> {
+    if (size > MAX_WHERE_PATTERNS) throw HttpRequestValidationFailure("where must have at most $MAX_WHERE_PATTERNS patterns")
+    return map(WhereHttpRequest::toPattern)
+}
+
+private fun List<VariableFilterHttpRequest>.toVariableFilters(): List<VariableFilter> {
+    if (size > MAX_VARIABLE_FILTERS) {
+        throw HttpRequestValidationFailure("variableFilters must have at most $MAX_VARIABLE_FILTERS filters")
+    }
+    return map(VariableFilterHttpRequest::toVariableFilter)
+}
 
 internal fun VariableFilterHttpRequest.toVariableFilter(): VariableFilter {
     val variable = requireValue(variableName, "variableFilters.variableName")
@@ -362,9 +382,9 @@ internal fun NumericProfileHttpRequest.toProfileRequest(): NumericProfileRequest
         predicate =
             predicate.toQueryTerm("predicate") as? IriTerm
                 ?: throw HttpRequestValidationFailure("predicate must be a single IRI"),
-        patterns = where.map(WhereHttpRequest::toPattern),
+        patterns = where.toPatterns(),
         limit = limit,
-        variableFilters = variableFilters.map(VariableFilterHttpRequest::toVariableFilter),
+        variableFilters = variableFilters.toVariableFilters(),
     )
 
 internal fun NumericProfile.toResponse() =
@@ -390,18 +410,18 @@ internal fun NumericProfile.toResponse() =
 internal fun ResultCountHttpRequest.toCountRequest(): ResultCountRequest =
     ResultCountRequest(
         variable = QueryVariable(requireValue(variableName, "variableName").removePrefix("?")),
-        patterns = requireNotNull(where) { "Missing required field: where" }.map(WhereHttpRequest::toPattern),
-        variableFilters = variableFilters.map(VariableFilterHttpRequest::toVariableFilter),
+        patterns = requireNotNull(where) { "Missing required field: where" }.toPatterns(),
+        variableFilters = variableFilters.toVariableFilters(),
     )
 
 internal fun StageQueryHttpRequest.toStageRequest(): StageQueryRequest =
     StageQueryRequest(
         variable = QueryVariable(requireValue(variableName, "variableName").removePrefix("?")),
-        patterns = requireNotNull(where) { "Missing required field: where" }.map(WhereHttpRequest::toPattern),
+        patterns = requireNotNull(where) { "Missing required field: where" }.toPatterns(),
         bindings = bindings.map(StageBindingHttpRequest::toBinding),
         limit = limit,
         offset = offset,
-        variableFilters = variableFilters.map(VariableFilterHttpRequest::toVariableFilter),
+        variableFilters = variableFilters.toVariableFilters(),
     )
 
 private fun StageBindingHttpRequest.toBinding(): StageBinding =

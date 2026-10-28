@@ -10,10 +10,10 @@ import io.ktor.openapi.JsonSchema
 import io.ktor.server.request.receiveText
 import io.ktor.server.routing.RoutingContext
 import kotlinx.serialization.Serializable
-import kotlinx.serialization.SerializationException
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.JsonPrimitive
+import kotlinx.serialization.json.decodeFromJsonElement
 import kotlinx.serialization.json.intOrNull
 
 /** The request a drawn query derives with the Run Query mapping (DEC-014 Q5); the server sets endpoint and limit. */
@@ -107,15 +107,30 @@ internal val lenientJson =
         explicitNulls = true
     }
 
-/** Decodes the body leniently; malformed JSON becomes [HttpRequestValidationFailure]. */
+/**
+ * Decodes the body leniently; malformed JSON becomes [HttpRequestValidationFailure]. QUAL-023: these
+ * bodies are stored, and PostgreSQL text and jsonb cannot hold U+0000, so a string with it is refused
+ * here, before anything runs or is saved.
+ */
 internal suspend inline fun <reified T> RoutingContext.receiveLenient(): T {
     val text = call.receiveText()
-    return try {
-        lenientJson.decodeFromString<T>(text.ifBlank { "{}" })
-    } catch (failure: SerializationException) {
-        throw HttpRequestValidationFailure("Malformed request body: ${failure.message}", failure)
-    } catch (failure: IllegalArgumentException) {
-        throw HttpRequestValidationFailure("Malformed request body: ${failure.message}", failure)
+    requireShallowJson(text)
+    val element = malformedAsValidation { lenientJson.parseToJsonElement(text.ifBlank { "{}" }) }
+    if (element.containsNul()) throw HttpRequestValidationFailure(NUL_REFUSED)
+    return malformedAsValidation { lenientJson.decodeFromJsonElement<T>(element) }
+}
+
+/** QUAL-023: `study_submission.answer_variable` is VARCHAR(64) and holds the variable with its `?`. */
+internal const val MAX_ANSWER_VARIABLE_LENGTH = 64
+
+private fun requireStorableVariable(
+    request: GeneralQueryRequest,
+    field: String,
+) {
+    if (request.variable.render().length > MAX_ANSWER_VARIABLE_LENGTH) {
+        throw HttpRequestValidationFailure(
+            "$field.query.variableName must have at most ${MAX_ANSWER_VARIABLE_LENGTH - 1} characters after the ?",
+        )
     }
 }
 
@@ -145,7 +160,8 @@ internal fun DrawnQueryHttpRequest?.toDrawnQuery(field: String): DrawnQuery {
     val drawn = this ?: throw HttpRequestValidationFailure("Missing required field: $field")
     val graph = requireSavedGraph(drawn.graph, "$field.graph")
     val query = drawn.query ?: throw HttpRequestValidationFailure("Missing required field: $field.query")
-    return DrawnQuery(graph.toString(), lenientJson.encodeToString(query), query.toGeneralRequest())
+    val request = query.toGeneralRequest().also { requireStorableVariable(it, field) }
+    return DrawnQuery(graph.toString(), lenientJson.encodeToString(query), request)
 }
 
 internal fun AdminTaskHttpRequest.toDraft(): TaskDraft =

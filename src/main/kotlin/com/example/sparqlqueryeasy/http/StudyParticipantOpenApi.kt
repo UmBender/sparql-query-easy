@@ -57,7 +57,8 @@ internal fun Route.documentStudySubmit(): Route =
             "The body is the drawn graph (formatVersion 1) and the request derived from it, whose variableName is " +
             "the answer variable. The server runs it on the task's endpoint with the task's result cap, compares " +
             "with the stored expected result (set or multiset) and stores the attempt with the task revision and " +
-            "the time since the first open. Attempts are unlimited. Unknown fields such as `correct` are ignored. " +
+            "the time since the first open. Attempts have no total limit, but at most $SUBMISSIONS_PER_MINUTE a " +
+            "minute per user (429, QUAL-023). Unknown fields such as `correct` are ignored. " +
             "A query that cannot run is stored as an invalid attempt (201, invalid true). The response never " +
             "contains expected values. Same origin only (403) and JSON only (415). $SESSION_NOTE"
         tag("Study")
@@ -71,7 +72,14 @@ internal fun Route.documentStudySubmit(): Route =
                 schema = jsonSchema<DataResponse<StudySubmissionHttpResponse>>()
             }
             HttpStatusCode.BadRequest {
-                description = "Malformed body: missing graph or query, or a request that is not a query."
+                description =
+                    "Malformed body: missing graph or query, or a request that is not a query; text with U+0000, an " +
+                    "answer variable over ${MAX_ANSWER_VARIABLE_LENGTH - 1} characters or JSON nested deeper than " +
+                    "$MAX_JSON_DEPTH levels (QUAL-023)."
+                schema = jsonSchema<ErrorResponse>()
+            }
+            HttpStatusCode.TooManyRequests {
+                description = "More than $SUBMISSIONS_PER_MINUTE attempts by this user in the last minute."
                 schema = jsonSchema<ErrorResponse>()
             }
             HttpStatusCode.NotFound {

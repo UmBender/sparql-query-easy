@@ -58,7 +58,10 @@ class StudySparqlInjectionRoutesTest {
                 AttemptLimiter(1_000_000, clock = clock),
                 secureCookies = false,
             )
-        val study = studyHttpDependencies(connector, StudyQueryRunner(query.generalQueryService, query.endpointContextResolver), clock)
+        // Hundreds of attempts in one test: the QUAL-023 per-user attempt limit is lifted here.
+        val study =
+            studyHttpDependencies(connector, StudyQueryRunner(query.generalQueryService, query.endpointContextResolver), clock)
+                .copy(submissionLimiter = AttemptLimiter(1_000_000, clock = clock))
         application {
             configureSerialization()
             configureErrorHandling()
@@ -103,17 +106,12 @@ class StudySparqlInjectionRoutesTest {
                 }
             val submit = slots("/api/study/tasks/fire-fast/submissions") { """{"graph":$graph,"query":$it}""" }
 
-            // Open findings, not injections (QUAL-020 Conclusion): PostgreSQL cannot store U+0000, so saving a
-            // task or attempt holding it answers 503, and an attempt's answer variable over 64 characters
-            // answers 500. Preview, which saves nothing, keeps every payload.
-            val storable = sparqlPayloads.filterNot { '\u0000' in it.value }
+            // QUAL-023 closed the QUAL-020 findings: U+0000 and an answer variable over 63 characters are
+            // 400 before anything is stored, so every payload goes into every field.
             val findings =
                 preview.flatMap { admin.findInjections(it, recorder) } +
-                    create.flatMap { admin.findInjections(it, recorder, storable) } +
-                    submit.flatMap { slot ->
-                        val payloads = if (" variableName" in slot.name) storable.filter { it.value.length <= 64 } else storable
-                        ada.findInjections(slot, recorder, payloads)
-                    }
+                    create.flatMap { admin.findInjections(it, recorder) } +
+                    submit.flatMap { ada.findInjections(it, recorder) }
             withClue(findings.joinToString("\n")) { findings.shouldBeEmpty() }
         }
 }

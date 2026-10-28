@@ -23,8 +23,11 @@ import com.example.sparqlqueryeasy.rdf.RdfValueMapper
 import com.example.sparqlqueryeasy.rdf.SparqlSyntaxValidation
 import com.example.sparqlqueryeasy.rdf.SparqlSyntaxValidator
 import com.example.sparqlqueryeasy.rdf.TurtleParser
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 import org.apache.jena.query.ARQ
 import org.apache.jena.query.Query
+import org.apache.jena.query.QueryCancelledException
 import org.apache.jena.query.QueryException
 import org.apache.jena.query.QueryExecution
 import org.apache.jena.query.QueryFactory
@@ -42,6 +45,9 @@ import org.apache.jena.sparql.algebra.op.OpService
 import org.apache.jena.sparql.algebra.walker.Walker
 import org.apache.jena.sparql.expr.ExprVisitorBase
 import java.net.URI
+import java.util.concurrent.TimeUnit
+import kotlin.time.Duration
+import kotlin.time.Duration.Companion.seconds
 
 /** Maps Jena nodes at the RDF infrastructure boundary into application-owned values. */
 class JenaRdfValueMapper : RdfValueMapper<RDFNode> {
@@ -115,10 +121,20 @@ class JenaSparqlSyntaxValidator : SparqlSyntaxValidator {
         }
 }
 
+/** QUAL-023: a local query stops after this long, like a remote request (WikidataHttpClient). */
+val LOCAL_QUERY_TIMEOUT: Duration = 30.seconds
+
 class JenaLocalSparqlExecutor(
     private val mapper: JenaRdfValueMapper = JenaRdfValueMapper(),
+    private val timeout: Duration = LOCAL_QUERY_TIMEOUT,
 ) : LocalSparqlExecutor {
+    // QUAL-023: Jena blocks, so it runs off the request thread, and its overall timeout stops it.
     override suspend fun execute(
+        graph: RdfGraph,
+        query: String,
+    ): SparqlResult = withContext(Dispatchers.IO) { executeBlocking(graph, query) }
+
+    private fun executeBlocking(
         graph: RdfGraph,
         query: String,
     ): SparqlResult =
@@ -127,7 +143,12 @@ class JenaLocalSparqlExecutor(
             require(!jenaQuery.usesService()) { SERVICE_REFUSED }
             val model = graph.toJenaModel()
             // Defense in depth: ARQ itself refuses SERVICE in this execution.
-            val localOnly = QueryExecution.create().query(jenaQuery).model(model).set(ARQ.httpServiceAllowed, false)
+            val localOnly =
+                QueryExecution.create()
+                    .query(jenaQuery)
+                    .model(model)
+                    .set(ARQ.httpServiceAllowed, false)
+                    .timeout(timeout.inWholeMilliseconds, TimeUnit.MILLISECONDS)
             localOnly.build().use { execution ->
                 when {
                     jenaQuery.isSelectType -> {
@@ -161,6 +182,8 @@ class JenaLocalSparqlExecutor(
             }
         } catch (exception: SparqlQueryExecutionFailure) {
             throw exception
+        } catch (exception: QueryCancelledException) {
+            throw SparqlQueryExecutionFailure(query, "Query timed out after $timeout", exception)
         } catch (exception: QueryException) {
             throw queryFailure(query, exception)
         } catch (exception: ARQException) {

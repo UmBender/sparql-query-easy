@@ -33,7 +33,7 @@ QUAL-023; implementation cards are BACKLOG until authorized.
 | 9 | Leaks in errors, logs and exports: stack traces, SQL, paths, passwords, session ids; CSV formula injection in the admin export | Not systematically tested | QUAL-022 |
 | 10 | XSS: labels from an uploaded graph or a task statement rendered as HTML | Svelte escapes by default; not tested | QUAL-022 |
 | 11 | Missing security headers (CSP, frame-ancestors, cookie flags through Caddy) | Only nosniff and Referrer-Policy | QUAL-022 |
-| 12 | Resource exhaustion: huge `limit`/`offset`, slow queries, big bodies, login flooding | Login rate limit exists; other caps partly | QUAL-023 |
+| 12 | Resource exhaustion: huge `limit`/`offset`, slow queries, big bodies, login flooding | Tested (QUAL-023): body 1 MiB (413), `limit` ≤ 10,000, 100 patterns/filters, JSON depth 32, 30 s local query timeout, 30 attempts a minute per user | QUAL-023 |
 
 ## Order
 
@@ -64,7 +64,25 @@ compose smoke as noted on the card; CI already runs all three.
   execution off). Not SPARQL injection, left for QUAL-022/023: saving a task
   or attempt whose text holds U+0000 answers 503 "Accounts are temporarily
   unavailable" (PostgreSQL cannot store it), and an attempt whose answer
-  variable exceeds 64 characters answers 500.
+  variable exceeds 64 characters answers 500. Fixed by QUAL-023: both are 400
+  before anything is stored, and the QUAL-020 study test runs every payload.
+- QUAL-023 (2026-10-28): a study or admin body with an ignored field nested
+  about 1,000 levels deep made kotlinx's recursive JSON parser overflow the
+  stack (500); fixed by a depth cap of 32 checked before parsing. Local graph
+  queries had no time limit and ran on the request thread; a query over
+  three unrelated patterns never ended. They now run on the IO dispatcher
+  and Jena stops them after 30 s (502).
+
+## QUAL-023 results (2026-10-28)
+
+Tests: `security/RequestLimitsRoutesTest` (query routes on PokemonGen1:
+`limit`, stage and profile caps, 100 patterns/filters, declared and
+streamed bodies over 1 MiB and one at exactly 1 MiB, deep JSON, a cube query
+stopped by a 2 s timeout while another request is answered, the executor
+timeout) and `http/StudyRequestLimitsRoutesTest` (U+0000 in a task title,
+statement, answer literal and graph; a 64-character answer variable refused
+and a 63-character one stored; the 31st attempt in a minute 429 for that user
+only; JSON depth). Values: [[../03 - Backend/API v1#Request limits (QUAL-023)]].
 
 ## Open decisions
 

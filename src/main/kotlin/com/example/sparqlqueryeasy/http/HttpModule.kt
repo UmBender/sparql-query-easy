@@ -64,6 +64,7 @@ import io.ktor.server.application.ApplicationStopped
 import io.ktor.server.application.install
 import io.ktor.server.plugins.BadRequestException
 import io.ktor.server.plugins.ContentTransformationException
+import io.ktor.server.plugins.PayloadTooLargeException
 import io.ktor.server.plugins.contentnegotiation.ContentNegotiation
 import io.ktor.server.plugins.statuspages.StatusPages
 import io.ktor.server.request.receive
@@ -178,13 +179,24 @@ fun Application.configureErrorHandling() {
             call.respond(HttpStatusCode.BadRequest, ErrorResponse(cause.message ?: "Malformed request body"))
         }
         exception<BadRequestException> { call, cause ->
-            call.respond(HttpStatusCode.BadRequest, ErrorResponse(cause.message ?: "Malformed request body"))
+            // QUAL-023: a streamed body over the limit fails while ContentNegotiation reads it.
+            val tooLarge = generateSequence<Throwable>(cause) { it.cause }.filterIsInstance<PayloadTooLargeException>().firstOrNull()
+            if (tooLarge != null) {
+                call.respond(HttpStatusCode.PayloadTooLarge, ErrorResponse(tooLarge.message ?: "Request body is too large"))
+            } else {
+                call.respond(HttpStatusCode.BadRequest, ErrorResponse(cause.message ?: "Malformed request body"))
+            }
+        }
+        // QUAL-023: more specific than ContentTransformationException, so a body over the limit is 413.
+        exception<PayloadTooLargeException> { call, cause ->
+            call.respond(HttpStatusCode.PayloadTooLarge, ErrorResponse(cause.message ?: "Request body is too large"))
         }
     }
 }
 
 fun Application.configureRouting(dependencies: HttpDependencies = defaultHttpDependencies()) {
     environment.monitor.subscribe(ApplicationStopped) { dependencies.close() }
+    install(RequestBodyLimit)
     routing {
         // FE-049: the API only. The SvelteKit app is served by the web service (deploy/Caddyfile)
         // or the Vite dev server, which proxy these routes on the same origin.
@@ -254,7 +266,7 @@ private fun Route.queryRoutes(dependencies: QueryHttpDependencies) {
                 when (
                     val result =
                         dependencies.searchService.search(
-                            SearchRequest(request.search.orEmpty(), request.limit),
+                            SearchRequest(request.search.orEmpty(), request.checkedLimit()),
                             dependencies.endpointContextResolver.resolve(request.endpointUrl),
                         )
                 ) {
@@ -275,7 +287,7 @@ private fun Route.queryRoutes(dependencies: QueryHttpDependencies) {
                             GeneralQueryRequest(
                                 request.toVariable(),
                                 request.toPatterns(),
-                                request.limit,
+                                request.checkedLimit(),
                                 request.ignoreWikidata,
                                 request.toVariableFilters(),
                             ),
@@ -360,7 +372,7 @@ private fun Route.queryRoutes(dependencies: QueryHttpDependencies) {
                                     SparqlQueryGenerationRequest(
                                         request.toVariable(),
                                         request.toPatterns(),
-                                        request.limit,
+                                        request.checkedLimit(),
                                         request.toVariableFilters(),
                                     ),
                                     endpoint.context,

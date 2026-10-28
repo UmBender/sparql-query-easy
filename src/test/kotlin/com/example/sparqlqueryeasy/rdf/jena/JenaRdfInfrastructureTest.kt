@@ -12,10 +12,8 @@ import com.example.sparqlqueryeasy.domain.model.TurtleParsingFailure
 import com.example.sparqlqueryeasy.domain.model.UnboundSparqlBinding
 import io.kotest.matchers.collections.shouldContainExactlyInAnyOrder
 import io.kotest.matchers.shouldBe
+import kotlinx.coroutines.runBlocking
 import org.junit.jupiter.api.Test
-import kotlin.coroutines.Continuation
-import kotlin.coroutines.EmptyCoroutineContext
-import kotlin.coroutines.startCoroutine
 import kotlin.test.assertFailsWith
 
 class JenaRdfInfrastructureTest {
@@ -223,16 +221,5 @@ class JenaRdfInfrastructureTest {
     ): com.example.sparqlqueryeasy.domain.model.SparqlResult = runSuspend { executor.execute(graph, query) }
 }
 
-private fun <T> runSuspend(block: suspend () -> T): T {
-    var result: Result<T>? = null
-    block.startCoroutine(
-        object : Continuation<T> {
-            override val context = EmptyCoroutineContext
-
-            override fun resumeWith(resumeResult: Result<T>) {
-                result = resumeResult
-            }
-        },
-    )
-    return requireNotNull(result).getOrThrow()
-}
+// QUAL-023: the executor moves to the IO dispatcher, so it suspends; wait for it on this thread.
+private fun <T> runSuspend(block: suspend () -> T): T = runBlocking { block() }

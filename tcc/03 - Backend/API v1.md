@@ -49,6 +49,31 @@ text, or invalid generated SPARQL. `404` represents a missing or expired local
 RDF graph. `502` represents an upstream SPARQL/endpoint execution failure.
 Unexpected failures have no separately versioned application error envelope.
 
+### Request limits (QUAL-023)
+
+Every limit is checked before a query is generated or anything is stored.
+
+| Limit | Value | Over it |
+|---|---|---|
+| Request body (every route but the Turtle upload, which has its own, QUAL-021) | 1 MiB (1,048,576 bytes), declared `Content-Length` or counted while a chunked body is read | `413 {"error":"Request is larger than the limit of 1048576 bytes"}` |
+| `limit` of `POST /api/query`, `/api/query/sparql`, `/api/query/search` | 10,000 (the study's result cap `MAX_MAX_RESULTS`); negative stays `400` | `400 limit must not exceed 10000` |
+| `limit`/`offset` of `POST /api/query/stage` | 1–50 / 0–10,000 (API-002) | `400` |
+| `limit` of `POST /api/query/numeric-profile` | 1–1,000 (BE-003) | `400` |
+| Task `maxResults` (admin) | 1–10,000 (STUDY-006) | `400` |
+| `where` patterns / `variableFilters` per request (every query route and drawn queries) | 100 each | `400 where must have at most 100 patterns` |
+| Stage `bindings` | 16 (API-002) | `400` |
+| JSON nesting of study and admin bodies | 32 levels, counted before parsing | `400 JSON must not nest deeper than 32 levels` |
+| Text in study and admin bodies | no U+0000 (PostgreSQL `text`/`jsonb` cannot store it) | `400 Text must not contain the NUL character (U+0000)` |
+| Answer variable of a drawn query | 63 characters after `?` (`study_submission.answer_variable` is `VARCHAR(64)`) | `400` |
+| Local graph query time | 30 s, as a remote request (`WikidataHttpClient`); Jena stops the query and the request thread is not held | `502 {"error":"Query timed out after 30s"}` |
+| Attempts at proposed tasks | 30 a minute per user (fixed window, in memory); the total stays unlimited (DEC-014 Q1 A) | `429 {"error":"Too many attempts; try again in a minute"}` |
+| Login and registration | `EASYQUERY_AUTH_ATTEMPTS_PER_MINUTE` per client address (default 10, AUTH-001) | `429` |
+
+`limit` of `relationships` and `relationship-value` is accepted but not
+used, so it has no cap. Before QUAL-023, U+0000 in a stored body answered
+`503` and an answer variable over 63 characters `500`; a body nested about
+1,000 levels deep in an ignored field overflowed the JSON parser (`500`).
+
 ### Query terms and filters
 
 Values used as query `subject`/`predicate`, relationship `id`, and relationship
@@ -655,7 +680,7 @@ tasks of their group (STUDY-007).
 
 | Route | Body | Success | Errors |
 |---|---|---|---|
-| `POST /api/study/tasks/{key}/submissions` | a drawn query `{"graph","query"}` (as for task references) | `201` the attempt | `400` malformed body (not stored), `404` task not open to the caller, `403`/`415` CSRF |
+| `POST /api/study/tasks/{key}/submissions` | a drawn query `{"graph","query"}` (as for task references) | `201` the attempt | `400` malformed body or a [request limit](#Request limits (QUAL-023)) (not stored), `404` task not open to the caller, `403`/`415` CSRF, `429` more than 30 attempts a minute |
 | `GET /api/study/submissions?task={key}` | — | `200` the caller's attempts at the task, oldest first | `400` no `task`, `404 {"error":"Task not found"}` for an unknown or inactive task or one outside the caller's group (QUAL-019) |
 
 - An attempt is `{"attempt","correct","invalid","feedback","matched","missing",
@@ -668,7 +693,8 @@ tasks of their group (STUDY-007).
   SPARQL, answer variable, the result terms and counts, the verdict, the task
   revision and the time since the first open (`study_submission`,
   `V7__study_submissions.sql`). Body fields such as `correct` or `expected`
-  are ignored. Attempts are unlimited (Q1 A).
+  are ignored. Attempts are unlimited in total (Q1 A), at most 30 a minute
+  per user (QUAL-023).
 - Comparison (Q4): typed terms (IRI; literal by lexical form, datatype and
   language, the tag regardless of case). `set`: distinct values; `multiset`:
   values with repetitions. `matched` + `missing` = `expectedCount`; `extra`
