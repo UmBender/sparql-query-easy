@@ -1,7 +1,7 @@
 ---
 id: STUDY-015
 title: Replace the placeholder questionnaires with the dissertation's evaluation questionnaire
-status: READY
+status: REVIEW
 priority: P1
 type: fullstack
 depends_on: []
@@ -69,3 +69,45 @@ Questions 1, 2 and 4 are context only.
   questionnaire screens are captured.
 
 ## Conclusion
+
+REVIEW (2026-10-27, human gate). New versions `profile.v2.json` (question 1,
+"Conhecimento prévio", before the tasks) and `usability.v2.json` (questions
+2–15, "Questionário de Avaliação", pages "Uso da ferramenta" 2–10 and
+"Notação gráfica" 11–15, after the final submission), listed in
+`study/study.json` next to the v1 placeholders. No form-engine change: the
+existing `likert` and `number` types cover every question.
+
+Defaults applied (confirm or change):
+- Texts verbatim from §4.5, prefixed with their number ("1. " … "15. "), the
+  (+)/(–) markers left out (they are for scoring only), "video" in question 4
+  kept as the dissertation writes it; every question required; ids
+  `q01_sparql_knowledge` … `q15_layout_helps`.
+- Likert 1–5 with the end labels of the dissertation's Appendix A answer
+  options (the dissertation names every point; the engine shows only the
+  ends): 1 "Nenhum conhecimento"/"Conhecimento avançado"; 3 "Muito
+  difícil"/"Muito fácil"; 4 "Pouco útil"/"Muito útil"; 5–12 "Discordo
+  fortemente"/"Concordo fortemente"; 13 "Pouco adequada"/"Muito adequada";
+  14 "Pouco consistente"/"Muito consistente"; 15 "Facilita muito
+  pouco"/"Facilita muito".
+- Question 2 is a whole number from 0 to 5 (Appendix A: "0 consultas" …
+  "5 consultas"), not a 1–5 Likert, so 0 can be answered; a study with more
+  than 5 proposed tasks needs a larger `max`.
+- Form titles, page titles and descriptions in Portuguese (my wording).
+- v1 placeholder files kept: v1 responses stay stored, count as answered (a
+  v1 participant is not asked v2) and stay in the CSV after the v2 columns.
+- Scores not added to the CSV (the generic export has no per-form formulas);
+  follow-up if wanted. Formulas recorded in API v1.
+
+Tests: `FormDefinitionsTest` (questions 1–15 in order, types, labels, v1
+kept), `StudyFormResponseRoutesTest` (v2 answers, v1 refused as not
+current, out-of-range question 2), `AdminFormExportRoutesTest` (a v1 and a
+v2 response in one export), `forms.spec.ts`, `tests/study.e2e.ts`,
+`tests-stack/study-participant.e2e.ts` and `study-questionnaires.e2e.ts`
+(whole flow with the new forms, rows found by `submitted_at`),
+`tests-stack/support.ts` (`PROFILE_ANSWERS`, `answerPage`),
+`scripts/check-backup-restore.mjs`. Gates: `./gradlew ktlintCheck detekt
+test` (293 tests) passed; frontend check 0 errors, lint clean, Vitest 263 +
+25, Playwright 120 passed; `test:stack` 22 passed. `test:screens` not run:
+no screen captures a questionnaire and no UI code changed. Docs: Current
+Contracts "Study" row, API v1 "Questionnaires" and export sections,
+Operational Map T9 row.

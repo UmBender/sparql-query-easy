@@ -22,7 +22,7 @@ const FIRE_SPEED = JSON.parse(
 );
 const PROFILE: Schemas['FormDefinition'] = JSON.parse(
 	readFileSync(
-		new URL('../../src/main/resources/study/forms/profile.v1.json', import.meta.url),
+		new URL('../../src/main/resources/study/forms/profile.v2.json', import.meta.url),
 		'utf8'
 	)
 );
@@ -250,14 +250,14 @@ test('the profile questionnaire shows a field error before sending its answers',
 		{
 			slug: 'profile',
 			title: PROFILE.title,
-			version: 1,
+			version: PROFILE.version,
 			phase: 'before_tasks',
 			submittedAt: null
 		},
 		{
 			slug: 'usability',
-			title: 'Using the editor',
-			version: 1,
+			title: 'Questionário de Avaliação',
+			version: 2,
 			phase: 'after_finish',
 			submittedAt: null
 		}
@@ -268,7 +268,7 @@ test('the profile questionnaire shows a field error before sending its answers',
 		forms[0].submittedAt = '2026-10-20T12:00:00Z';
 		const sent: Schemas['StudyFormSubmittedHttpResponse'] = {
 			slug: 'profile',
-			version: 1,
+			version: PROFILE.version,
 			submittedAt: '2026-10-20T12:00:00Z'
 		};
 		return { data: sent };
@@ -279,28 +279,14 @@ test('the profile questionnaire shows a field error before sending its answers',
 	const questionnaire = new QuestionnairePage(page);
 	await expect(questionnaire.form).toBeVisible();
 	expect(await questionnaire.slug()).toBe('profile');
-	await questionnaire.choose('I have heard of it');
-	await questionnaire.check('SQL');
-	await questionnaire.fill('PLACEHOLDER How many years have you programmed?', '99');
-	await questionnaire.rate('PLACEHOLDER I am comfortable exploring data in tables.', 4);
 	await questionnaire.send();
-	await expect(questionnaire.form.getByText('Enter a number from 0 to 60.')).toBeVisible();
+	await expect(questionnaire.form.getByText('Answer this question.')).toBeVisible();
 	expect(api.bodies('/api/study/forms/profile/responses')).toEqual([]);
-	await questionnaire.fill('PLACEHOLDER How many years have you programmed?', '4');
+	await questionnaire.rate('1. Qual é o seu nível de conhecimento sobre SPARQL/RDF?', 2);
 	await questionnaire.send();
 	await expect(page.getByTestId('no-tasks')).toBeVisible();
 	expect(api.bodies('/api/study/forms/profile/responses')).toEqual([
-		{
-			version: 1,
-			answers: {
-				sparql_familiarity: 'heard_of',
-				query_languages: ['sql'],
-				programming_years: 4,
-				data_comfort: 4,
-				// Optional and unanswered: sent empty, stored as no answer (STUDY-009 rules).
-				role: ''
-			}
-		}
+		{ version: 2, answers: { q01_sparql_knowledge: 2 } }
 	]);
 });
 

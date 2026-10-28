@@ -121,16 +121,43 @@ describe('questionnaire schema for Superforms', () => {
 	});
 });
 
-describe('shipped placeholder questionnaires', () => {
-	it.each(['profile.v1.json', 'usability.v1.json'])('%s is a marked placeholder', (name) => {
-		const form = shipped(name);
-		expect(form.title).toMatch(/^PLACEHOLDER/);
-		for (const question of questionsOf(form)) expect(question.text).toMatch(/^PLACEHOLDER/);
+describe('shipped questionnaires (STUDY-015: the dissertation questionnaire)', () => {
+	const current = [shipped('profile.v2.json'), shipped('usability.v2.json')];
+	const questions = current.flatMap(questionsOf);
+
+	it('ask questions 1 to 15 in order: 1 before the tasks, 2 to 15 after', () => {
+		expect(current.map((form) => [form.slug, form.version])).toEqual([
+			['profile', 2],
+			['usability', 2]
+		]);
+		expect(questions.map((question) => question.text.split('. ')[0])).toEqual(
+			Array.from({ length: 15 }, (_, index) => String(index + 1))
+		);
+		expect(questionsOf(current[0])).toHaveLength(1);
+		for (const question of questions) {
+			expect(question.required).toBe(true);
+			expect(question.text).not.toMatch(/PLACEHOLDER/);
+		}
 	});
 
-	it('rejects the invalid programming years the e2e uses', () => {
-		const profile = shipped('profile.v1.json');
-		const years = questionsOf(profile).find((question) => question.id === 'programming_years')!;
-		expect(checkAnswer(years, 99)).toEqual({ error: 'Enter a number from 0 to 60.' });
+	it('rate every question but 2 from 1 to 5 with both end labels', () => {
+		for (const question of questions.filter((item) => item.id !== 'q02_queries_done')) {
+			expect(question).toMatchObject({ type: 'likert', scaleMax: 5 });
+			expect(question.minLabel).toBeTruthy();
+			expect(question.maxLabel).toBeTruthy();
+			expect(checkAnswer(question, 6)).toEqual({ error: 'Choose a value from 1 to 5.' });
+		}
+	});
+
+	it('count the queries of question 2 as a whole number from 0 to 5', () => {
+		const queries = questions.find((question) => question.id === 'q02_queries_done')!;
+		expect(checkAnswer(queries, 0)).toEqual({ value: 0 });
+		expect(checkAnswer(queries, 6)).toEqual({ error: 'Enter a number from 0 to 5.' });
+		expect(checkAnswer(queries, 2.5)).toEqual({ error: MESSAGES.integer });
+	});
+
+	it('keep the placeholder v1 files so that their responses stay readable', () => {
+		for (const name of ['profile.v1.json', 'usability.v1.json'])
+			expect(shipped(name).version).toBe(1);
 	});
 });

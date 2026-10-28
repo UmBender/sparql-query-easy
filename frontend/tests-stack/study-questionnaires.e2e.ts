@@ -1,15 +1,17 @@
 /**
  * The whole T9 flow on the real stack (STUDY-011): a new participant accepts
- * the consent, answers the profile questionnaire (an invalid number is
- * refused first), finishes the proposed tasks and answers the usability
- * questionnaire; then an admin downloads both CSVs from /admin and finds
- * exactly that participant's answers, under the internal number only.
+ * the consent, answers the profile questionnaire (question 1 of the
+ * dissertation questionnaire, STUDY-015; sending it unanswered is refused
+ * first), finishes the proposed tasks and answers the usability questionnaire
+ * (questions 2 to 15; an out-of-range number of queries is refused first);
+ * then an admin downloads both CSVs from /admin and finds exactly that
+ * participant's answers, under the internal number only.
  */
 import { readFile } from 'node:fs/promises';
 import AxeBuilder from '@axe-core/playwright';
 import { expect, test, type Page } from '@playwright/test';
 import { QuestionnairePage } from '../tests/support/pages/questionnaire-page';
-import { guardOffline, loginAs } from './support.js';
+import { PROFILE_QUESTION, answerPage, guardOffline, loginAs, shippedPages } from './support.js';
 
 let unexpected: string[];
 
@@ -38,10 +40,13 @@ test('a participant answers both questionnaires and the admin finds them in the 
 	page,
 	browser
 }) => {
-	const stamp = Date.now();
-	const participant = `t9-${stamp}`;
-	const hardest = `Choosing the filter ${stamp}`;
+	const participant = `t9-${Date.now()}`;
 	await loginAs(page.request, participant);
+	/** When the participant's response to `slug` was stored, as the server reports and exports it. */
+	const submittedAt = async (slug: string) => {
+		const status = await page.request.get(`/api/study/forms/${slug}/response`);
+		return ((await status.json()) as { data: { submittedAt: string } }).data.submittedAt;
+	};
 
 	await page.goto('/study');
 	await page.getByRole('button', { name: 'I agree to take part' }).click();
@@ -49,29 +54,26 @@ test('a participant answers both questionnaires and the admin finds them in the 
 	const questionnaire = new QuestionnairePage(page);
 	const form = questionnaire.form;
 	await expect(form).toHaveAttribute('data-slug', 'profile');
-	await questionnaire.choose('I have used it a few times');
-	await questionnaire.check('SQL');
-	await questionnaire.check('SPARQL');
-	const years = questionnaire.field('PLACEHOLDER How many years have you programmed?');
-	await years.fill('99');
-	await questionnaire.rate('PLACEHOLDER I am comfortable exploring data in tables.', 5);
 	await questionnaire.send();
-	await expect(form.getByText('Enter a number from 0 to 60.')).toBeVisible();
-	await years.fill('7');
+	await expect(form.getByText('Answer this question.')).toBeVisible();
+	await questionnaire.rate(PROFILE_QUESTION, 3);
 	await questionnaire.send();
 	await expect(page.getByTestId('no-tasks')).toBeVisible();
+	const profileAt = await submittedAt('profile');
 
 	await page.getByRole('button', { name: 'Finish the study' }).click();
 	await page.getByRole('button', { name: 'Finish and submit' }).click();
 	await expect(form).toHaveAttribute('data-slug', 'usability');
-	await questionnaire.rate('PLACEHOLDER The graph editor was easy to use.', 4);
-	await questionnaire.rate('PLACEHOLDER Drawing a query was faster than writing SPARQL.', 3);
-	await questionnaire.rate('PLACEHOLDER I was confident my answers were correct.', 2);
-	await questionnaire.choose('Run Query stages');
+	const [tool, notation] = shippedPages('usability.v2.json');
+	await answerPage(questionnaire, tool, 4, 6);
 	await questionnaire.next();
-	await questionnaire.fill(/PLACEHOLDER In one sentence/, hardest);
+	await expect(form.getByText('Enter a number from 0 to 5.')).toBeVisible();
+	await questionnaire.fill(tool[0].text, '5');
+	await questionnaire.next();
+	await answerPage(questionnaire, notation, 2);
 	await questionnaire.send();
 	await expect(page.getByTestId('study-finished')).toBeVisible();
+	const usabilityAt = await submittedAt('usability');
 
 	const admin = await browser.newContext({ acceptDownloads: true });
 	try {
@@ -85,26 +87,32 @@ test('a participant answers both questionnaires and the admin finds them in the 
 		const participantDenied = await page.request.get('/api/admin/forms/profile/responses.csv');
 		expect(participantDenied.status()).toBe(403);
 
-		const usability = await downloadCsv(adminPage, 'PLACEHOLDER Using the editor');
+		const usability = await downloadCsv(adminPage, 'Questionário de Avaliação');
 		const usabilityHeader = usability[0];
-		const mine = usability.filter((row) => row.includes(hardest));
+		const column = (header: string[], name: string) => header.indexOf(name);
+		const mine = usability.filter(
+			(row) => row[column(usabilityHeader, 'submitted_at')] === usabilityAt
+		);
 		expect(mine).toHaveLength(1);
 		const number = mine[0][1];
 		expect(Number.isInteger(Number(number))).toBe(true);
-		const cell = (row: string[], column: string) => row[usabilityHeader.indexOf(column)];
-		expect(cell(mine[0], 'easy_to_use')).toBe('4');
-		expect(cell(mine[0], 'most_useful')).toBe('run_query_stages');
+		const cell = (name: string) => mine[0][column(usabilityHeader, name)];
+		expect(cell('form_version')).toBe('2');
+		expect(cell('q02_queries_done')).toBe('5');
+		for (const question of tool.slice(1)) expect(cell(question.id)).toBe('4');
+		for (const question of notation) expect(cell(question.id)).toBe('2');
+		// The placeholder v1 columns follow, empty for a v2 response.
+		expect(cell('easy_to_use')).toBe('');
 		expect(usability.flat().join(',')).not.toContain(participant);
 
-		const profile = await downloadCsv(adminPage, 'PLACEHOLDER About you');
+		const profile = await downloadCsv(adminPage, 'Conhecimento prévio');
 		const profileHeader = profile[0];
 		const rows = profile.filter((row) => row[1] === number);
 		expect(rows).toHaveLength(1);
-		const answer = (column: string) => rows[0][profileHeader.indexOf(column)];
-		expect(answer('sparql_familiarity')).toBe('used_few');
-		expect(answer('query_languages')).toBe('sql;sparql');
-		expect(answer('programming_years')).toBe('7');
-		expect(answer('data_comfort')).toBe('5');
+		const answer = (name: string) => rows[0][column(profileHeader, name)];
+		expect(answer('submitted_at')).toBe(profileAt);
+		expect(answer('form_version')).toBe('2');
+		expect(answer('q01_sparql_knowledge')).toBe('3');
 		expect(profile.flat().join(',')).not.toContain(participant);
 	} finally {
 		await admin.close();

@@ -32,7 +32,7 @@ class StudyFormRoutesTest {
             response.status shouldBe HttpStatusCode.OK
             val served = lenient.decodeFromJsonElement<FormDefinition>(response.data())
             served shouldBe StudyResources.fromClasspath().currentForms.getValue("profile")
-            val stored = PostgresFormStore(connector).store("profile", 1, "{}", java.time.Instant.EPOCH)
+            val stored = PostgresFormStore(connector).store("profile", PROFILE_VERSION, "{}", java.time.Instant.EPOCH)
             Json.decodeFromString<FormDefinition>(stored.definitionJson) shouldBe served
         }
 
@@ -63,7 +63,7 @@ class StudyFormRoutesTest {
             val second = QuestionnaireService(shipped.withProfile(edited), store, responses)
 
             second.storedId(edited) shouldBe id
-            val stored = store.store("profile", 1, "{}", java.time.Instant.EPOCH).definitionJson
+            val stored = store.store("profile", PROFILE_VERSION, "{}", java.time.Instant.EPOCH).definitionJson
             Json.decodeFromString<FormDefinition>(stored) shouldBe edited
         }
 }

@@ -92,14 +92,15 @@ internal suspend fun ApplicationTestBuilder.userClient(
         if (profile) it.answerProfile()
     }
 
-/** Valid answers to the shipped placeholder profile questionnaire (v1). */
-internal const val PROFILE_ANSWERS =
-    """{"sparql_familiarity":"heard_of","query_languages":["sql","sparql"],"programming_years":4,""" +
-        """"data_comfort":4,"role":""}"""
+/** Valid answers to the shipped profile questionnaire (v2, STUDY-015: the dissertation's question 1). */
+internal const val PROFILE_ANSWERS = """{"q01_sparql_knowledge":2}"""
+
+/** The current version of the shipped profile questionnaire. */
+internal const val PROFILE_VERSION = 2
 
 /** Answers the profile questionnaire; an already answered one answers 409, which is fine here. */
 internal suspend fun HttpClient.answerProfile(answers: String = PROFILE_ANSWERS): HttpResponse =
-    json("/api/study/forms/profile/responses", """{"version":1,"answers":$answers}""")
+    json("/api/study/forms/profile/responses", """{"version":$PROFILE_VERSION,"answers":$answers}""")
 
 /** Accepts the current consent text: the version GET /api/study/consent names. */
 internal suspend fun HttpClient.acceptConsent(): HttpResponse {
@@ -192,7 +193,7 @@ internal suspend fun HttpClient.createGroup(
     return id
 }
 
-/** The shipped questionnaires with [profile] in place of the profile questionnaire. */
+/** The shipped questionnaires with [profile] in place of the profile questionnaire of its version. */
 internal fun com.example.sparqlqueryeasy.application.study.StudyResources.withProfile(
     profile: com.example.sparqlqueryeasy.application.study.FormDefinition,
-) = copy(forms = forms.map { if (it.slug == profile.slug) profile else it })
+) = copy(forms = forms.map { if (it.slug == profile.slug && it.version == profile.version) profile else it })

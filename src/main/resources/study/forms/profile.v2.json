@@ -1,0 +1,23 @@
+{
+  "slug": "profile",
+  "version": 2,
+  "title": "Conhecimento prévio",
+  "description": "Questionário de Avaliação: a pergunta 1, antes das consultas propostas. As perguntas 2 a 15 vêm depois da submissão final.",
+  "pages": [
+    {
+      "id": "conhecimento",
+      "title": "Seu conhecimento",
+      "questions": [
+        {
+          "id": "q01_sparql_knowledge",
+          "type": "likert",
+          "text": "1. Qual é o seu nível de conhecimento sobre SPARQL/RDF?",
+          "required": true,
+          "scaleMax": 5,
+          "minLabel": "Nenhum conhecimento",
+          "maxLabel": "Conhecimento avançado"
+        }
+      ]
+    }
+  ]
+}

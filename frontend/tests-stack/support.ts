@@ -1,6 +1,7 @@
 /** Shared steps of the real-stack suites (STUDY-003…007). */
 import { readFileSync } from 'node:fs';
 import { expect, type APIRequestContext, type Browser, type Page } from '@playwright/test';
+import type { QuestionnairePage } from '../tests/support/pages/questionnaire-page';
 
 export const PASSWORD = 'correct horse';
 
@@ -16,13 +17,42 @@ export async function loginAs(request: APIRequestContext, username: string): Pro
 	}
 }
 
-/** Valid answers to the shipped placeholder profile questionnaire (v1). */
-export const PROFILE_ANSWERS = {
-	sparql_familiarity: 'heard_of',
-	query_languages: ['sql'],
-	programming_years: 4,
-	data_comfort: 4
-};
+/** The current version of the shipped profile questionnaire (STUDY-015: the dissertation's question 1). */
+export const PROFILE_VERSION = 2;
+
+/** Valid answers to the shipped profile questionnaire (v2). */
+export const PROFILE_ANSWERS = { q01_sparql_knowledge: 2 };
+
+/** The text of question 1, the profile questionnaire's only question (v2). */
+export const PROFILE_QUESTION = '1. Qual é o seu nível de conhecimento sobre SPARQL/RDF?';
+
+type ShippedQuestion = { id: string; type: string; text: string };
+
+/** The pages of a shipped questionnaire file, e.g. `usability.v2.json`, as lists of its questions. */
+export function shippedPages(name: string): ShippedQuestion[][] {
+	const url = new URL(`../../src/main/resources/study/forms/${name}`, import.meta.url);
+	const form = JSON.parse(readFileSync(url, 'utf8')) as {
+		pages: { questions: ShippedQuestion[] }[];
+	};
+	return form.pages.map((page) => page.questions);
+}
+
+/**
+ * Answers one page of questions shown by `questionnaire`: every rating with `rating`, every number
+ * (question 2, the number of queries) with `count`.
+ */
+export async function answerPage(
+	questionnaire: QuestionnairePage,
+	questions: ShippedQuestion[],
+	rating: number,
+	count = 4
+): Promise<void> {
+	for (const question of questions) {
+		if (question.type === 'likert') await questionnaire.rate(question.text, rating);
+		else if (question.type === 'number') await questionnaire.fill(question.text, String(count));
+		else throw new Error(`answerPage: no step for ${question.type} question ${question.id}`);
+	}
+}
 
 /**
  * What every participant does before the proposed tasks open, through the API: accept the current consent text
@@ -37,7 +67,7 @@ export async function joinStudy(request: APIRequestContext, profile = true): Pro
 	expect(accepted.status(), 'accept consent').toBe(200);
 	if (!profile) return;
 	const answered = await request.post('/api/study/forms/profile/responses', {
-		data: { version: 1, answers: PROFILE_ANSWERS }
+		data: { version: PROFILE_VERSION, answers: PROFILE_ANSWERS }
 	});
 	expect(answered.status(), 'answer the profile').toBe(201);
 }

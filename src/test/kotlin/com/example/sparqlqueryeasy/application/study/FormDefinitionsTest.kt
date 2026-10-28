@@ -2,8 +2,10 @@ package com.example.sparqlqueryeasy.application.study
 
 import io.kotest.assertions.throwables.shouldThrow
 import io.kotest.matchers.collections.shouldContain
+import io.kotest.matchers.nulls.shouldNotBeNull
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.string.shouldContain
+import io.kotest.matchers.string.shouldNotContain
 import io.kotest.matchers.string.shouldStartWith
 import org.junit.jupiter.api.Test
 
@@ -25,13 +27,33 @@ class FormDefinitionsTest {
         FormDefinitions.problems(kotlinx.serialization.json.Json.decodeFromString<FormDefinition>(text))
 
     @Test
-    fun `the shipped profile and usability questionnaires are marked placeholders`() {
-        val forms = StudyResources.fromClasspath().currentForms
+    fun `the current questionnaires are the dissertation's questions 1 to 15 in order (STUDY-015)`() {
+        val resources = StudyResources.fromClasspath()
+        val forms = resources.currentForms
         forms.keys shouldBe setOf("profile", "usability")
-        forms.values.forEach { it.title shouldStartWith "PLACEHOLDER" }
-        forms.getValue("profile").questions.map { it.type }.toSet() shouldBe
-            setOf(QuestionType.SINGLE_CHOICE, QuestionType.MULTIPLE_CHOICE, QuestionType.NUMBER, QuestionType.LIKERT)
-        forms.getValue("usability").pages.size shouldBe 2
+        forms.values.forEach { it.version shouldBe 2 }
+        val profile = forms.getValue("profile").questions
+        val usability = forms.getValue("usability").questions
+        (profile + usability).map { it.text.substringBefore(". ") } shouldBe (1..15).map { it.toString() }
+        (profile + usability).map { it.id.take(3) } shouldBe (1..15).map { "q%02d".format(it) }
+        (profile + usability).forEach { question ->
+            question.required shouldBe true
+            question.text shouldNotContain "PLACEHOLDER"
+        }
+        profile.single().text shouldBe "1. Qual é o seu nível de conhecimento sobre SPARQL/RDF?"
+        val queries = usability.first()
+        queries.type shouldBe QuestionType.NUMBER
+        listOf(queries.min, queries.max, queries.integer) shouldBe listOf(0.0, 5.0, true)
+        usability.drop(1).forEach { question ->
+            question.type shouldBe QuestionType.LIKERT
+            question.scaleMax shouldBe 5
+            question.minLabel.shouldNotBeNull()
+            question.maxLabel.shouldNotBeNull()
+        }
+        forms.getValue("usability").pages.map { page -> page.questions.size } shouldBe listOf(9, 5)
+        // The placeholder v1 files stay so that responses to them are still read and exported.
+        resources.forms.map { it.slug to it.version }.toSet() shouldBe
+            setOf("profile" to 1, "profile" to 2, "usability" to 1, "usability" to 2)
     }
 
     @Test

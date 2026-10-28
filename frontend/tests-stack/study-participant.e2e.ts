@@ -16,10 +16,14 @@ import { TaskPage } from '../tests/support/pages/task-page';
 import {
 	FIRE_SPEED,
 	PROFILE_ANSWERS,
+	PROFILE_QUESTION,
+	PROFILE_VERSION,
+	answerPage,
 	guardOffline,
 	joinStudy,
 	loginAs,
-	seedStudy
+	seedStudy,
+	shippedPages
 } from './support.js';
 
 let unexpected: string[];
@@ -169,21 +173,16 @@ test('a new participant sees the consent screen first and the tasks only after a
 	expect(await tasksBefore.json()).toEqual({ error: 'profile_required' });
 	const axe = await new AxeBuilder({ page }).include('[data-testid="questionnaire"]').analyze();
 	expect(axe.violations.map((violation) => violation.id)).toEqual([]);
-	await questionnaire.choose('I have heard of it');
-	await questionnaire.check('SQL');
-	const years = questionnaire.field('PLACEHOLDER How many years have you programmed?');
-	await years.fill('99');
-	await questionnaire.rate('PLACEHOLDER I am comfortable exploring data in tables.', 4);
 	await questionnaire.send();
-	await expect(form.getByText('Enter a number from 0 to 60.')).toBeVisible();
+	await expect(form.getByText('Answer this question.')).toBeVisible();
 	const bypass = await page.request.post('/api/study/forms/profile/responses', {
-		data: { version: 1, answers: { ...PROFILE_ANSWERS, programming_years: 99 } }
+		data: { version: PROFILE_VERSION, answers: { ...PROFILE_ANSWERS, q01_sparql_knowledge: 6 } }
 	});
 	expect(bypass.status()).toBe(400);
 	expect((await bypass.json()).errors).toEqual({
-		programming_years: 'Enter a number from 0 to 60.'
+		q01_sparql_knowledge: 'Choose a value from 1 to 5.'
 	});
-	await years.fill('4');
+	await questionnaire.rate(PROFILE_QUESTION, 2);
 	await questionnaire.send();
 	await expect(page.getByTestId('no-tasks')).toBeVisible();
 
@@ -211,20 +210,17 @@ test('the usability questionnaire keeps its first page across a reload until log
 	const form = questionnaire.form;
 	await expect(form).toHaveAttribute('data-slug', 'usability');
 	await expect(questionnaire.pageLabel).toHaveText('Page 1 of 2');
-	for (const text of [
-		'PLACEHOLDER The graph editor was easy to use.',
-		'PLACEHOLDER Drawing a query was faster than writing SPARQL.',
-		'PLACEHOLDER I was confident my answers were correct.'
-	])
-		await questionnaire.rate(text, 4);
-	await questionnaire.choose('The filter funnel');
+	const [tool, notation] = shippedPages('usability.v2.json');
+	const ease = form.getByRole('group', { name: tool[1].text }).getByRole('radio', { name: '4' });
+	await answerPage(questionnaire, tool, 4, 3);
 	await questionnaire.next();
 	await expect(questionnaire.pageLabel).toHaveText('Page 2 of 2');
 
 	await page.reload();
 	await expect(questionnaire.pageLabel).toHaveText('Page 2 of 2');
 	await questionnaire.back();
-	await expect(form.getByRole('radio', { name: 'The filter funnel' })).toBeChecked();
+	await expect(ease).toBeChecked();
+	await expect(questionnaire.field(tool[0].text)).toHaveValue('3');
 
 	await page.getByRole('button', { name: 'Log out' }).click();
 	await expect(page).toHaveURL(/\/login/);
@@ -236,16 +232,10 @@ test('the usability questionnaire keeps its first page across a reload until log
 	await loginAs(page.request, participant);
 	await page.goto('/study');
 	await expect(questionnaire.pageLabel).toHaveText('Page 1 of 2');
-	await expect(form.getByRole('radio', { name: 'The filter funnel' })).not.toBeChecked();
-	for (const text of [
-		'PLACEHOLDER The graph editor was easy to use.',
-		'PLACEHOLDER Drawing a query was faster than writing SPARQL.',
-		'PLACEHOLDER I was confident my answers were correct.'
-	])
-		await questionnaire.rate(text, 5);
-	await questionnaire.choose('Search nodes');
+	await expect(ease).not.toBeChecked();
+	await answerPage(questionnaire, tool, 5);
 	await questionnaire.next();
-	await questionnaire.fill(/PLACEHOLDER In one sentence/, '  Choosing the filter type  ');
+	await answerPage(questionnaire, notation, 5);
 	await questionnaire.send();
 	await expect(page.getByTestId('study-finished')).toBeVisible();
 	const status = await page.request.get('/api/study/forms/usability/response');

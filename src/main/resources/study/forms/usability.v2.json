@@ -1,0 +1,146 @@
+{
+  "slug": "usability",
+  "version": 2,
+  "title": "Questionário de Avaliação",
+  "description": "As perguntas 2 a 15, depois da submissão final.",
+  "pages": [
+    {
+      "id": "ferramenta",
+      "title": "Uso da ferramenta",
+      "questions": [
+        {
+          "id": "q02_queries_done",
+          "type": "number",
+          "text": "2. Qual foi a quantidade de consultas que você conseguiu realizar?",
+          "required": true,
+          "min": 0,
+          "max": 5,
+          "integer": true
+        },
+        {
+          "id": "q03_ease_of_use",
+          "type": "likert",
+          "text": "3. Quão fácil foi usar a ferramenta para a construção de uma consulta SPARQL?",
+          "required": true,
+          "scaleMax": 5,
+          "minLabel": "Muito difícil",
+          "maxLabel": "Muito fácil"
+        },
+        {
+          "id": "q04_video_usefulness",
+          "type": "likert",
+          "text": "4. Quão útil foi o video de demonstração para aprender a usar a ferramenta SPARQL EasyQuery?",
+          "required": true,
+          "scaleMax": 5,
+          "minLabel": "Pouco útil",
+          "maxLabel": "Muito útil"
+        },
+        {
+          "id": "q05_needs_support",
+          "type": "likert",
+          "text": "5. Como você avaliaria a afirmação de que você precisaria de suporte técnico para conseguir usar plenamente o sistema?",
+          "required": true,
+          "scaleMax": 5,
+          "minLabel": "Discordo fortemente",
+          "maxLabel": "Concordo fortemente"
+        },
+        {
+          "id": "q06_well_integrated",
+          "type": "likert",
+          "text": "6. Como você avaliaria a afirmação de que as diferentes funcionalidades do sistema estão bem integradas?",
+          "required": true,
+          "scaleMax": 5,
+          "minLabel": "Discordo fortemente",
+          "maxLabel": "Concordo fortemente"
+        },
+        {
+          "id": "q07_inconsistencies",
+          "type": "likert",
+          "text": "7. Como você avaliaria a afirmação de que existem muitas inconsistências no sistema?",
+          "required": true,
+          "scaleMax": 5,
+          "minLabel": "Discordo fortemente",
+          "maxLabel": "Concordo fortemente"
+        },
+        {
+          "id": "q08_learn_quickly",
+          "type": "likert",
+          "text": "8. Como você avaliaria a afirmação de que a maioria das pessoas aprenderia a usar este sistema rapidamente?",
+          "required": true,
+          "scaleMax": 5,
+          "minLabel": "Discordo fortemente",
+          "maxLabel": "Concordo fortemente"
+        },
+        {
+          "id": "q09_confident",
+          "type": "likert",
+          "text": "9. Como você avaliaria a afirmação de que você se sentiu muito confiante usando o sistema?",
+          "required": true,
+          "scaleMax": 5,
+          "minLabel": "Discordo fortemente",
+          "maxLabel": "Concordo fortemente"
+        },
+        {
+          "id": "q10_learn_before",
+          "type": "likert",
+          "text": "10. Como você avaliaria a afirmação de que você precisou aprender muitas coisas antes de começar a usar o sistema?",
+          "required": true,
+          "scaleMax": 5,
+          "minLabel": "Discordo fortemente",
+          "maxLabel": "Concordo fortemente"
+        }
+      ]
+    },
+    {
+      "id": "notacao",
+      "title": "Notação gráfica",
+      "questions": [
+        {
+          "id": "q11_symbols_clear",
+          "type": "likert",
+          "text": "11. Como você avaliaria a afirmação de que os símbolos gráficos são claros e distintos entre si?",
+          "required": true,
+          "scaleMax": 5,
+          "minLabel": "Discordo fortemente",
+          "maxLabel": "Concordo fortemente"
+        },
+        {
+          "id": "q12_symbols_intuitive",
+          "type": "likert",
+          "text": "12. Como você avaliaria a afirmação de que a aparência dos símbolos gráficos é intuitiva e sugere o significado esperado?",
+          "required": true,
+          "scaleMax": 5,
+          "minLabel": "Discordo fortemente",
+          "maxLabel": "Concordo fortemente"
+        },
+        {
+          "id": "q13_symbol_count",
+          "type": "likert",
+          "text": "13. Você acredita que a quantidade de símbolos gráficos utilizados é adequada e não torna a visualização sobrecarregada?",
+          "required": true,
+          "scaleMax": 5,
+          "minLabel": "Pouco adequada",
+          "maxLabel": "Muito adequada"
+        },
+        {
+          "id": "q14_notation_consistent",
+          "type": "likert",
+          "text": "14. Você acredita que a notação para a construção de uma consulta é consistente e não apresenta redundância ou ambiguidade?",
+          "required": true,
+          "scaleMax": 5,
+          "minLabel": "Pouco consistente",
+          "maxLabel": "Muito consistente"
+        },
+        {
+          "id": "q15_layout_helps",
+          "type": "likert",
+          "text": "15. Você acredita que o suporte à disposição automática/manual dos elementos gráficos facilita a compreensão de uma consulta construída?",
+          "required": true,
+          "scaleMax": 5,
+          "minLabel": "Facilita muito pouco",
+          "maxLabel": "Facilita muito"
+        }
+      ]
+    }
+  ]
+}

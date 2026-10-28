@@ -691,7 +691,7 @@ routes (go-live, LEARN-014).
 ## Questionnaires (participant, STUDY-009)
 
 DEC-015 Q2. Each questionnaire version is a JSON file listed in
-`study/study.json` (`forms`), e.g. `study/forms/profile.v1.json`; the highest
+`study/study.json` (`forms`), e.g. `study/forms/profile.v2.json`; the highest
 version of a slug is current. Definitions are checked at startup (strict
 fields, unique page and question ids, the type rules below) and a malformed
 file stops the application with a message naming it. A version is stored in
@@ -715,8 +715,37 @@ frontend's `validateAnswers`):
 `null` is unanswered; a required unanswered question is "Answer this
 question."; a wrong JSON type is "Invalid answer."; an unknown question id is
 "Unknown question.". The shared cases are
-`frontend/src/lib/domain/fixtures/forms/parity.json`. The shipped `profile`
-and `usability` v1 are placeholders (every text starts with `PLACEHOLDER`).
+`frontend/src/lib/domain/fixtures/forms/parity.json`.
+
+Shipped questionnaires (STUDY-015): the current `profile` v2 and `usability`
+v2 are the dissertation's evaluation questionnaire (§4.5, texts verbatim in
+Portuguese, numbered 1–15 in the question text, every question required, no
+other question). `profile` v2 ("Conhecimento prévio", before the tasks) is
+question 1, `q01_sparql_knowledge`. `usability` v2 ("Questionário de
+Avaliação", after the final submission) is questions 2–15 on two pages: "Uso
+da ferramenta" (`q02_queries_done` … `q10_learn_before`) and "Notação
+gráfica" (`q11_symbols_clear` … `q15_layout_helps`). Question 2 is a `number`
+(integer 0–5, the dissertation's "0 consultas" … "5 consultas"); the others
+are `likert` 1–5 with the end labels of the dissertation's Appendix A answer
+options:
+
+| Questions | `minLabel` (1) | `maxLabel` (5) |
+|---|---|---|
+| 1 | Nenhum conhecimento | Conhecimento avançado |
+| 3 | Muito difícil | Muito fácil |
+| 4 | Pouco útil | Muito útil |
+| 5–12 | Discordo fortemente | Concordo fortemente |
+| 13 | Pouco adequada | Muito adequada |
+| 14 | Pouco consistente | Muito consistente |
+| 15 | Facilita muito pouco | Facilita muito |
+
+The dissertation's scores are computed from the export, not by the app:
+usability = 2.5 · (Σ_{5,7,10}(5 − q) + Σ_{3,6,8,9}(q − 1)), 0–70, acceptable
+≥ 47.6; notation = Σ_{11–15}(q − 1), 0–20, acceptable > 10; questions 1, 2
+and 4 are context only. The placeholder `profile` v1 and `usability` v1
+stay listed in `study.json` so that responses to them remain valid stored
+rows and stay in the export; a user who answered v1 is not asked v2 (one
+response per user and slug).
 
 ## Questionnaire responses (participant, STUDY-010)
 
@@ -730,7 +759,7 @@ routes need a session (401) and the consent (403 `consent_required`).
   `after_finish` or `null`, and the caller's `submittedAt` or `null`.
 - `GET /api/study/forms/{slug}/response` answers `200 {"data":{answered,
   submittedAt}}` for the caller only, never answers; unknown slug 404.
-- `POST /api/study/forms/{slug}/responses` with `{"version":1,"answers":{…}}`
+- `POST /api/study/forms/{slug}/responses` with `{"version":2,"answers":{…}}`
   (same origin, JSON; 403 cross-site, 415 not JSON) checks the answers with
   `FormAnswerValidator` and answers `201 {"data":{slug, version,
   submittedAt}}`. Invalid answers (unknown question ids included) answer
@@ -767,7 +796,8 @@ response, oldest first:
 `response_id, participant, group, form_version, consent_version,
 submitted_at`, then one column per question id: the union over every version
 of the questionnaire in `study.json`, the newest version's order first, then
-ids only older versions had.
+ids only older versions had (for `profile` and `usability`: the v2 question
+ids, then the placeholder v1 ids, empty on v2 rows and vice versa).
 
 - `participant` is the internal user id; no username, password hash or
   session data is in the file. `group` is the participant's group at export

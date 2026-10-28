@@ -80,8 +80,8 @@ async function seed() {
 	await expectStatus(participant('POST', '/api/study/consent', { version }), 200, 'accept consent');
 	await expectStatus(
 		participant('POST', '/api/study/forms/profile/responses', {
-			version: 1,
-			answers: { sparql_familiarity: 'heard_of', query_languages: ['sql'], programming_years: 4, data_comfort: 4 }
+			version: 2,
+			answers: { q01_sparql_knowledge: 2 }
 		}),
 		201,
 		'answer the profile'
