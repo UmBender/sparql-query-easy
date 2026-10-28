@@ -26,7 +26,9 @@ data class ExportedResponse(
  * [versions], newest version first and its definition order, then ids only older versions had. Multiple
  * choice values are joined with `;`; an unanswered question is empty. Text cells that a spreadsheet would read
  * as a formula (starting with `=`, `+`, `-`, `@`, tab or carriage return) get a leading `'`; numbers are
- * written as stored.
+ * written as stored. When the versions hold the dissertation questionnaire (STUDY-015), two computed columns
+ * follow: `usability_score` and `notation_score` ([DissertationScores]), empty for a response without those
+ * answers.
  */
 object FormResponsesCsv {
     val fixedColumns =
@@ -40,6 +42,7 @@ object FormResponsesCsv {
         responses: List<ExportedResponse>,
     ): String {
         val questions = questionColumns(versions)
+        val scored = DissertationScores.appliesTo(questions)
         val rows =
             responses.map { response ->
                 val answers = Json.parseToJsonElement(response.answersJson).jsonObject
@@ -50,9 +53,11 @@ object FormResponsesCsv {
                     response.version.toString(),
                     response.consentVersion.toString(),
                     response.submittedAt.toString(),
-                ) + questions.map { cell(answers, it) }
+                ) + questions.map { cell(answers, it) } +
+                    if (scored) DissertationScores.cells(answers) else emptyList()
             }
-        return (listOf(fixedColumns + questions) + rows).joinToString("") { row ->
+        val header = fixedColumns + questions + if (scored) DissertationScores.columns else emptyList()
+        return (listOf(header) + rows).joinToString("") { row ->
             row.joinToString(",") { quote(it) } + "\r\n"
         }
     }
@@ -79,4 +84,52 @@ object FormResponsesCsv {
 
     private val FORMULA_STARTS = setOf('=', '+', '-', '@', '\t', '\r')
     private val QUOTED = setOf(',', '"', '\n', '\r')
+}
+
+/**
+ * The dissertation's scores (§4.5) over the `usability` v2 answers, Likert 1–5:
+ * usability = 2.5 · (Σ (5 − q) over the negative questions 5, 7, 10 + Σ (q − 1) over the positive 3, 6, 8, 9),
+ * 0–70; notation = Σ (q − 1) over questions 11–15, 0–20. Questions 1, 2 and 4 are context only.
+ */
+object DissertationScores {
+    val columns = listOf("usability_score", "notation_score")
+
+    private val negative = listOf("q05_needs_support", "q07_inconsistencies", "q10_learn_before")
+    private val positive = listOf("q03_ease_of_use", "q06_well_integrated", "q08_learn_quickly", "q09_confident")
+    private val notation =
+        listOf(
+            "q11_symbols_clear",
+            "q12_symbols_intuitive",
+            "q13_symbol_count",
+            "q14_notation_consistent",
+            "q15_layout_helps",
+        )
+
+    fun appliesTo(questionIds: List<String>): Boolean = questionIds.containsAll(negative + positive + notation)
+
+    /** The two score cells; a score is empty when one of its answers is missing or not a number. */
+    fun cells(answers: JsonObject): List<String> {
+        val negatives = values(answers, negative)
+        val positives = values(answers, positive)
+        val usability =
+            if (negatives != null && positives != null) {
+                (negatives.sumOf { 5 - it } + positives.sumOf { it - 1 }).toBigDecimal() * USABILITY_FACTOR
+            } else {
+                null
+            }
+        return listOf(
+            usability?.stripTrailingZeros()?.toPlainString().orEmpty(),
+            values(answers, notation)?.sumOf { it - 1 }?.toString().orEmpty(),
+        )
+    }
+
+    private fun values(
+        answers: JsonObject,
+        ids: List<String>,
+    ): List<Int>? =
+        ids.map { id ->
+            (answers[id] as? JsonPrimitive)?.content?.toIntOrNull() ?: return null
+        }
+
+    private val USABILITY_FACTOR = "2.5".toBigDecimal()
 }

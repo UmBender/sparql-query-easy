@@ -149,10 +149,11 @@ describe('shipped questionnaires (STUDY-015: the dissertation questionnaire)', (
 		}
 	});
 
-	it('count the queries of question 2 as a whole number from 0 to 5', () => {
+	it('count the queries of question 2 as a whole number from 0 to 20', () => {
 		const queries = questions.find((question) => question.id === 'q02_queries_done')!;
 		expect(checkAnswer(queries, 0)).toEqual({ value: 0 });
-		expect(checkAnswer(queries, 6)).toEqual({ error: 'Enter a number from 0 to 5.' });
+		expect(checkAnswer(queries, 20)).toEqual({ value: 20 });
+		expect(checkAnswer(queries, 21)).toEqual({ error: 'Enter a number from 0 to 20.' });
 		expect(checkAnswer(queries, 2.5)).toEqual({ error: MESSAGES.integer });
 	});
 

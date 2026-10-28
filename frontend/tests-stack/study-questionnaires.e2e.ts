@@ -65,9 +65,9 @@ test('a participant answers both questionnaires and the admin finds them in the 
 	await page.getByRole('button', { name: 'Finish and submit' }).click();
 	await expect(form).toHaveAttribute('data-slug', 'usability');
 	const [tool, notation] = shippedPages('usability.v2.json');
-	await answerPage(questionnaire, tool, 4, 6);
+	await answerPage(questionnaire, tool, 4, 21);
 	await questionnaire.next();
-	await expect(form.getByText('Enter a number from 0 to 5.')).toBeVisible();
+	await expect(form.getByText('Enter a number from 0 to 20.')).toBeVisible();
 	await questionnaire.fill(tool[0].text, '5');
 	await questionnaire.next();
 	await answerPage(questionnaire, notation, 2);
@@ -101,6 +101,8 @@ test('a participant answers both questionnaires and the admin finds them in the 
 		expect(cell('q02_queries_done')).toBe('5');
 		for (const question of tool.slice(1)) expect(cell(question.id)).toBe('4');
 		for (const question of notation) expect(cell(question.id)).toBe('2');
+		// STUDY-015 scores: usability 2.5 · (3 · (5 − 4) + 4 · (4 − 1)) = 37.5, notation 5 · (2 − 1) = 5.
+		expect([cell('usability_score'), cell('notation_score')]).toEqual(['37.5', '5']);
 		// The placeholder v1 columns follow, empty for a v2 response.
 		expect(cell('easy_to_use')).toBe('');
 		expect(usability.flat().join(',')).not.toContain(participant);

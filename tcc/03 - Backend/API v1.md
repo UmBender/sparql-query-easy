@@ -725,7 +725,8 @@ question 1, `q01_sparql_knowledge`. `usability` v2 ("Questionário de
 Avaliação", after the final submission) is questions 2–15 on two pages: "Uso
 da ferramenta" (`q02_queries_done` … `q10_learn_before`) and "Notação
 gráfica" (`q11_symbols_clear` … `q15_layout_helps`). Question 2 is a `number`
-(integer 0–5, the dissertation's "0 consultas" … "5 consultas"); the others
+(integer 0–20; the dissertation asked 0–5 for its five queries, raised by
+the user on 2026-10-27 because the study has more tasks); the others
 are `likert` 1–5 with the end labels of the dissertation's Appendix A answer
 options:
 
@@ -739,7 +740,9 @@ options:
 | 14 | Pouco consistente | Muito consistente |
 | 15 | Facilita muito pouco | Facilita muito |
 
-The dissertation's scores are computed from the export, not by the app:
+The usability export adds two computed columns after the question columns,
+`usability_score` and `notation_score` (`DissertationScores`, empty for a
+response without those answers, e.g. v1):
 usability = 2.5 · (Σ_{5,7,10}(5 − q) + Σ_{3,6,8,9}(q − 1)), 0–70, acceptable
 ≥ 47.6; notation = Σ_{11–15}(q − 1), 0–20, acceptable > 10; questions 1, 2
 and 4 are context only. The placeholder `profile` v1 and `usability` v1

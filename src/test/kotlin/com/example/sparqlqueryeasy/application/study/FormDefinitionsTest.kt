@@ -43,7 +43,7 @@ class FormDefinitionsTest {
         profile.single().text shouldBe "1. Qual é o seu nível de conhecimento sobre SPARQL/RDF?"
         val queries = usability.first()
         queries.type shouldBe QuestionType.NUMBER
-        listOf(queries.min, queries.max, queries.integer) shouldBe listOf(0.0, 5.0, true)
+        listOf(queries.min, queries.max, queries.integer) shouldBe listOf(0.0, 20.0, true)
         usability.drop(1).forEach { question ->
             question.type shouldBe QuestionType.LIKERT
             question.scaleMax shouldBe 5

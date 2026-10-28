@@ -14,7 +14,7 @@
           "text": "2. Qual foi a quantidade de consultas que você conseguiu realizar?",
           "required": true,
           "min": 0,
-          "max": 5,
+          "max": 20,
           "integer": true
         },
         {

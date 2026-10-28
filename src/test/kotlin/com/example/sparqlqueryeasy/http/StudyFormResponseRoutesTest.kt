@@ -143,10 +143,10 @@ class StudyFormResponseRoutesTest {
             ada.answerProfile().status shouldBe HttpStatusCode.Created
             ada.get("/api/study/tasks").status shouldBe HttpStatusCode.OK
             ada.json("/api/study/finish").status shouldBe HttpStatusCode.OK
-            ada.answer("usability", """{"q02_queries_done":6}""").let { refused ->
+            ada.answer("usability", """{"q02_queries_done":21}""").let { refused ->
                 refused.status shouldBe HttpStatusCode.BadRequest
                 val errors = Json.parseToJsonElement(refused.bodyAsText()).jsonObject.getValue("errors").jsonObject
-                errors.getValue("q02_queries_done").jsonPrimitive.content shouldBe "Enter a number from 0 to 5."
+                errors.getValue("q02_queries_done").jsonPrimitive.content shouldBe "Enter a number from 0 to 20."
                 errors.keys shouldBe (listOf("q02_queries_done") + USABILITY_LIKERT).toSet()
             }
             ada.answer("usability", usability).status shouldBe HttpStatusCode.Created

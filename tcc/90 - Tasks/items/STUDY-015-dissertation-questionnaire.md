@@ -1,7 +1,7 @@
 ---
 id: STUDY-015
 title: Replace the placeholder questionnaires with the dissertation's evaluation questionnaire
-status: REVIEW
+status: DONE
 priority: P1
 type: fullstack
 depends_on: []
@@ -89,14 +89,14 @@ Defaults applied (confirm or change):
   fortemente"/"Concordo fortemente"; 13 "Pouco adequada"/"Muito adequada";
   14 "Pouco consistente"/"Muito consistente"; 15 "Facilita muito
   pouco"/"Facilita muito".
-- Question 2 is a whole number from 0 to 5 (Appendix A: "0 consultas" …
-  "5 consultas"), not a 1–5 Likert, so 0 can be answered; a study with more
-  than 5 proposed tasks needs a larger `max`.
+- Question 2 is a whole number, not a 1–5 Likert, so 0 can be answered;
+  Appendix A allows 0–5, raised to 0–20 by the user (2026-10-27).
 - Form titles, page titles and descriptions in Portuguese (my wording).
 - v1 placeholder files kept: v1 responses stay stored, count as answered (a
   v1 participant is not asked v2) and stay in the CSV after the v2 columns.
-- Scores not added to the CSV (the generic export has no per-form formulas);
-  follow-up if wanted. Formulas recorded in API v1.
+- Scores: added at the user's request (2026-10-27) as the CSV columns
+  `usability_score` and `notation_score` (`DissertationScores` in
+  `FormResponsesCsv.kt`), empty for a response without those answers.
 
 Tests: `FormDefinitionsTest` (questions 1–15 in order, types, labels, v1
 kept), `StudyFormResponseRoutesTest` (v2 answers, v1 refused as not
@@ -111,3 +111,13 @@ test` (293 tests) passed; frontend check 0 errors, lint clean, Vitest 263 +
 no screen captures a questionnaire and no UI code changed. Docs: Current
 Contracts "Study" row, API v1 "Questionnaires" and export sections,
 Operational Map T9 row.
+
+Human review 2026-10-27: the user confirmed the Likert end labels and the
+titles, set question 2 to 0–20 and asked for the scores in the CSV. Done in
+the follow-up commit: `usability.v2.json` max 20 (no v2 response stored
+yet, so the stored copy updates in place); `DissertationScores` with
+`FormResponsesCsvTest` (best answers 70/20, a mixed response 65 and an
+empty notation score, no score columns on a non-dissertation form) and the
+stack questionnaire spec (37.5 and 5; 21 refused). Gates: Kotlin gate
+passed; `forms.spec.ts` 17 passed; `tests-stack/study-questionnaires.e2e.ts`
+passed.

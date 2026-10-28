@@ -75,4 +75,48 @@ class FormResponsesCsvTest {
     fun `no responses gives the header only`() {
         FormResponsesCsv.render(listOf(form(1, "a")), emptyList()) shouldBe "$header,a\r\n"
     }
+
+    @Test
+    fun `the dissertation questionnaire gets its usability and notation scores (STUDY-015)`() {
+        val ids =
+            listOf(
+                "q03_ease_of_use",
+                "q05_needs_support",
+                "q06_well_integrated",
+                "q07_inconsistencies",
+                "q08_learn_quickly",
+                "q09_confident",
+                "q10_learn_before",
+                "q11_symbols_clear",
+                "q12_symbols_intuitive",
+                "q13_symbol_count",
+                "q14_notation_consistent",
+                "q15_layout_helps",
+            )
+        // Best answers: positives 5, negatives 1 -> usability 2.5 * (3 * 4 + 4 * 4) = 70, notation 5 * 4 = 20.
+        val best = ids.joinToString(",", "{", "}") { id -> "\"$id\":" + if (id in NEGATIVE) 1 else 5 }
+        // Q3 = 4 and Q5 = 2 change usability by -2.5 each; Q11 missing leaves the notation score empty.
+        val mixed =
+            ids.filter { it != "q11_symbols_clear" }.joinToString(",", "{", "}") { id ->
+                "\"$id\":" +
+                    when (id) {
+                        "q03_ease_of_use" -> 4
+                        "q05_needs_support" -> 2
+                        in NEGATIVE -> 1
+                        else -> 5
+                    }
+            }
+        val csv =
+            FormResponsesCsv.render(listOf(form(2, *ids.toTypedArray())), listOf(response(best, 2), response(mixed, 2)))
+        val lines = csv.split("\r\n")
+        lines[0] shouldBe "$header,${ids.joinToString(",")},usability_score,notation_score"
+        lines[1].split(",").takeLast(2) shouldBe listOf("70", "20")
+        lines[2].split(",").takeLast(2) shouldBe listOf("65", "")
+        val unscored = FormResponsesCsv.render(listOf(form(1, "comment")), listOf(response("{}")))
+        unscored.lines().first() shouldBe "$header,comment"
+    }
+
+    private companion object {
+        val NEGATIVE = setOf("q05_needs_support", "q07_inconsistencies", "q10_learn_before")
+    }
 }
