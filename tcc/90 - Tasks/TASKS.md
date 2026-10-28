@@ -155,7 +155,7 @@ Ordered by dependencies, then priority among selection candidates. See [worker r
 | QUAL-018 | DONE | P2 | quality | [Fail CI if jQuery or legacy page files come back, and confirm every test layer is green](<items/QUAL-018-legacy-free-guard.md>) |
 | QUAL-019 | DONE | P1 | quality | [Prove no route or trick reaches admin or another participant's data](<items/QUAL-019-access-control-matrix.md>) |
 | QUAL-020 | DONE | P1 | quality | [Prove client input cannot inject SPARQL into generated queries](<items/QUAL-020-sparql-injection-suite.md>) |
-| QUAL-021 | BACKLOG | P1 | quality | [Stop remote endpoints from reaching internal hosts and bound uploads](<items/QUAL-021-ssrf-and-uploads.md>) |
+| QUAL-021 | DONE | P1 | quality | [Stop remote endpoints from reaching internal hosts and bound uploads](<items/QUAL-021-ssrf-and-uploads.md>) |
 | QUAL-022 | DONE | P1 | quality | [Prove errors, logs and exports leak nothing and rendered data cannot run script](<items/QUAL-022-leaks-xss-headers.md>) |
 | QUAL-023 | DONE | P2 | quality | [Prove oversized or slow requests cannot exhaust the server](<items/QUAL-023-resource-limits.md>) |
 | BUG-007 | DONE | P1 | bug | [A click that moves a little still ends a pending connection](<items/BUG-007-connection-click-with-small-move.md>) |
@@ -188,7 +188,7 @@ Ordered by dependencies, then priority among selection candidates. See [worker r
 | MIG-002 | DONE | P1 | migration | [Retire the C# project after compatibility and operations gates](<items/MIG-002-retire-csharp-project.md>) |
 | QUAL-002 | DONE | P1 | quality | [Verify ordered query exploration end to end offline](<items/QUAL-002-ordered-query-end-to-end-regressions.md>) |
 | QUAL-004 | DONE | P1 | quality | [Make browser tests wait for the startup layout before setting the viewport](<items/QUAL-004-startup-layout-viewport-race.md>) |
-| SEC-001 | BACKLOG | P1 | security | [Decide and implement production endpoint, upload, and cache boundaries](<items/SEC-001-production-boundaries.md>) |
+| SEC-001 | CANCELLED | P1 | security | [Decide and implement production endpoint, upload, and cache boundaries](<items/SEC-001-production-boundaries.md>) |
 | DOC-002 | DONE | P2 | documentation | [Reconcile migration and compatibility documentation](<items/DOC-002-reconcile-migration-docs.md>) |
 | INV-003 | DONE | P2 | analysis | [Propose other query types the tool could support](<items/INV-003-query-types-proposal.md>) |
 | OPS-002 | BLOCKED | P2 | operations | [Define DNS TLS reverse-proxy and production CORS policy](<items/OPS-002-dns-tls-cors.md>) |

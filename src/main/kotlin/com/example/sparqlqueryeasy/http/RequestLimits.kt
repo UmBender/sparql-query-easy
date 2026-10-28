@@ -27,22 +27,26 @@ internal const val MAX_REQUEST_LIMIT = 10_000
 internal const val MAX_WHERE_PATTERNS = 100
 internal const val MAX_VARIABLE_FILTERS = 100
 
+/** QUAL-021: the largest Turtle upload request (multipart, 5 MiB); the built-in graphs are far smaller. */
+internal const val MAX_UPLOAD_BODY_BYTES = 5L * 1024 * 1024
+
 /** The Turtle upload is multipart and has its own limit (QUAL-021). */
 private const val UPLOAD_PATH = "/api/local-database"
 
 /**
- * QUAL-023: a body above [MAX_REQUEST_BODY_BYTES] answers 413 before any route reads it. A declared
+ * QUAL-023: a body above [MAX_REQUEST_BODY_BYTES] (the Turtle upload: [MAX_UPLOAD_BODY_BYTES], QUAL-021)
+ * answers 413 before any route reads it, so an oversized upload is never parsed. A declared
  * Content-Length is checked first; a chunked body is counted while it is read.
  */
 internal val RequestBodyLimit =
     createApplicationPlugin("RequestBodyLimit") {
         on(ReceiveRequestBytes) { call, body ->
-            if (call.request.path() == UPLOAD_PATH) return@on body
+            val limit = if (call.request.path() == UPLOAD_PATH) MAX_UPLOAD_BODY_BYTES else MAX_REQUEST_BODY_BYTES
             val declared = call.request.contentLength()
-            if (declared != null && declared > MAX_REQUEST_BODY_BYTES) {
-                throw PayloadTooLargeException(MAX_REQUEST_BODY_BYTES)
+            if (declared != null && declared > limit) {
+                throw PayloadTooLargeException(limit)
             }
-            call.limited(body, MAX_REQUEST_BODY_BYTES)
+            call.limited(body, limit)
         }
     }
 

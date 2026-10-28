@@ -63,7 +63,7 @@ Every limit is checked before a query is generated or anything is stored.
 
 | Limit | Value | Over it |
 |---|---|---|
-| Request body (every route but the Turtle upload, which has its own, QUAL-021) | 1 MiB (1,048,576 bytes), declared `Content-Length` or counted while a chunked body is read | `413 {"error":"Request is larger than the limit of 1048576 bytes"}` |
+| Request body (every route but the Turtle upload, which has 5 MiB, QUAL-021) | 1 MiB (1,048,576 bytes), declared `Content-Length` or counted while a chunked body is read | `413 {"error":"Request is larger than the limit of 1048576 bytes"}` |
 | `limit` of `POST /api/query`, `/api/query/sparql`, `/api/query/search` | 10,000 (the study's result cap `MAX_MAX_RESULTS`); negative stays `400` | `400 limit must not exceed 10000` |
 | `limit`/`offset` of `POST /api/query/stage` | 1–50 / 0–10,000 (API-002) | `400` |
 | `limit` of `POST /api/query/numeric-profile` | 1–1,000 (BE-003) | `400` |
@@ -215,6 +215,15 @@ Failures (`400 Bad Request`):
 
 An invalid Turtle document also returns `400` with its parser diagnostic (or
 `Invalid Turtle` when no diagnostic is available). It is not cached.
+
+QUAL-021 (2026-10-28): the request body is at most 5 MiB (5,242,880 bytes,
+the multipart envelope included); above it the answer is
+`413 {"error":"Request is larger than the limit of 5242880 bytes"}` before the
+parser reads anything, whether `Content-Length` is declared or the body is
+streamed. The diagnostic of invalid Turtle is the parser's line and column
+message, never a stack trace. An uploaded graph is readable by anyone who
+has its id (a random UUID, the only key; there is no owner check) until the
+cache drops it. Tests: `security/UploadRoutesTest`.
 
 ### `POST /api/query/relationships`
 
@@ -878,10 +887,20 @@ without consent) with one download link each (`formResponsesCsvPath`).
 ## Endpoint selection
 
 `endpointUrl` accepts the built-in identifiers `CampeonatoBrasileiro2023` and
-`PokemonGen1`, an uploaded graph handle, or a remote absolute HTTP(S) endpoint with a host. The
-Wikidata behavior is selected when the endpoint contains the documented
-Wikidata marker. An invalid remote endpoint produces `400`; a syntactically
-valid but unavailable local handle produces `404`.
+`PokemonGen1`, an uploaded graph handle, or exactly
+`https://query.wikidata.org/sparql`, which selects the Wikidata behavior. A
+syntactically valid but unavailable local handle produces `404`.
+
+QUAL-021 (2026-10-28, decision A, allowlist): any other value is
+`400 {"error":"Remote endpoint is not allowed: use https://query.wikidata.org/sparql, a built-in graph or an uploaded graph id"}`
+before any request is made, so the server never calls a host the client
+chose (`localhost`, `db`, cloud metadata, the university network). The
+comparison is an exact string: a trailing slash, another case, port, path,
+query, scheme or userinfo is refused. Before, any HTTP(S) URL with a host was
+accepted, and any URL containing `query.wikidata.org/sparql` got the Wikidata
+behavior. The Wikidata client does not follow redirects; a `3xx` answers like
+any non-2xx status (`502`). Tests: `security/RemoteEndpointAllowlistRoutesTest`,
+`EndpointContextResolverTest`.
 
 The built-in identifier resolves the approved C# baseline bytes from the
 Kotlin-owned `src/main/resources/futebol_completo.ttl`; the

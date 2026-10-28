@@ -7,6 +7,7 @@ import com.example.sparqlqueryeasy.application.endpoints.BuiltInGraphProvider
 import com.example.sparqlqueryeasy.application.endpoints.EndpointContextResolver
 import com.example.sparqlqueryeasy.application.endpoints.EndpointExecutionResolverAdapter
 import com.example.sparqlqueryeasy.application.endpoints.LocalEndpointExecutorFactory
+import com.example.sparqlqueryeasy.application.endpoints.REMOTE_ENDPOINT_ALLOWLIST
 import com.example.sparqlqueryeasy.application.endpoints.RemoteEndpointExecutorFactory
 import com.example.sparqlqueryeasy.application.localdatabase.InMemoryLocalGraphCache
 import com.example.sparqlqueryeasy.application.localdatabase.LocalDatabaseUploadService
@@ -280,6 +281,7 @@ class QueryRoutesTest {
                 },
                 LocalEndpointExecutorFactory { execution },
                 RemoteEndpointExecutorFactory { _, _ -> execution },
+                remoteAllowlist = REMOTE_ENDPOINT_ALLOWLIST + "https://example.test/sparql",
             )
         val generator = CSharpCompatibleWikidataQueryGenerator()
         val filtering = ResultFilteringService()

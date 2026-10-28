@@ -28,8 +28,8 @@ QUAL-023; implementation cards are BACKLOG until authorized.
 | 4 | Cross-site requests (CSRF) on every state-changing route | Tested (QUAL-019): foreign `Origin` 403 and non-JSON 415 for every auth/study/admin write, state unchanged | QUAL-019 DONE |
 | 5 | SPARQL injection through any client field that reaches the generator | Tested (QUAL-020): no injection found; every payload is rejected with 400 before execution or stays one term of an unchanged query | QUAL-020 |
 | 6 | SPARQL features that escape the query's scope: `SERVICE`, `FROM`, updates, extra patterns | Tested (QUAL-020); local graphs now refuse `SERVICE` (they used to fetch it) | QUAL-020 |
-| 7 | SSRF: a remote `endpointUrl` pointing at internal hosts (`localhost`, `db`, the university network the app will run in, cloud metadata) | Any http(s) host accepted | QUAL-021 (decision A: allowlist) |
-| 8 | Uploads: oversized or malicious Turtle, another user's uploaded graph by id | No explicit size limit seen; ids are GUIDs | QUAL-021 |
+| 7 | SSRF: a remote `endpointUrl` pointing at internal hosts (`localhost`, `db`, the university network the app will run in, cloud metadata) | Tested (QUAL-021): only `https://query.wikidata.org/sparql`, exact string, and local graphs; anything else 400 before any request; no redirects followed | QUAL-021 |
+| 8 | Uploads: oversized or malicious Turtle, another user's uploaded graph by id | Tested (QUAL-021): 5 MiB (413 before parsing), malformed Turtle 400 without stack trace; ids stay random GUIDs readable by whoever has one (decided) | QUAL-021 |
 | 9 | Leaks in errors, logs and exports: stack traces, SQL, paths, passwords, session ids; CSV formula injection in the admin export | Tested (QUAL-022); malformed-body errors named Kotlin classes, fixed | QUAL-022 |
 | 10 | XSS: labels from an uploaded graph or a task statement rendered as HTML | Tested (QUAL-022): every API text renders as text; the CSP also blocks inline handlers | QUAL-022 |
 | 11 | Missing security headers (CSP, frame-ancestors, cookie flags through Caddy) | Tested (QUAL-022): CSP (header + SvelteKit meta), `frame-ancestors 'none'`, `X-Frame-Options`, `Permissions-Policy`, cookie `HttpOnly; Secure; SameSite=Lax` | QUAL-022 |
@@ -112,11 +112,39 @@ statement, answer literal and graph; a 64-character answer variable refused
 and a 63-character one stored; the 31st attempt in a minute 429 for that user
 only; JSON depth). Values: [[../03 - Backend/API v1#Request limits (QUAL-023)]].
 
+## QUAL-021 results (2026-10-28)
+
+- SSRF (`security/RemoteEndpointAllowlistRoutesTest`,
+  `EndpointContextResolverTest`): `localhost`, `127.0.0.1`, `db`,
+  `backend`, `169.254.169.254`, `[::1]`, `[::ffff:127.0.0.1]`, `[fd00::1]`,
+  private IPv4, decimal (`2130706433`), octal (`0177.0.0.1`) and hex IPs,
+  userinfo (`https://query.wikidata.org@127.0.0.1/sparql`), another port,
+  path, query, fragment, case, `http`, a lookalike host, `file:`, `gopher:`,
+  `ftp:` and surrounding whitespace answer 400 on `query`, `sparql`,
+  `count`, `relationships` and `search`, and no query reaches an execution.
+  Because only one exact URL is accepted, no client-chosen host is ever
+  resolved, so DNS rebinding and IP-encoding tricks have nothing to act on.
+- Redirects: the shared Ktor client followed `GET` redirects (it already
+  refused an https→http downgrade); it now follows none, and a `3xx` from
+  Wikidata is 502. A test sends a 302 to `https://169.254.169.254/` and
+  checks only the Wikidata URL is requested (fails with redirects on).
+- Uploads (`security/UploadRoutesTest`): over 5 MiB, declared or streamed,
+  is 413 and the parser is never called; a file of one ~5 MiB literal is
+  parsed; 2 MiB passes (the 1 MiB body limit does not apply); malformed
+  Turtle is 400 without exception names or stack frames. Caddy sets no
+  `request_body` limit, so 5 MiB reaches the backend (not run through the
+  compose stack in this task).
+- Changed: `EndpointContextResolverTest` cases for the old behavior (any
+  URL containing `query.wikidata.org/sparql` was Wikidata; `dbpedia.org`
+  was a generic remote) now assert the refusal; tests with a fake remote
+  endpoint (`QueryRoutesTest`, `RetirementSuccessCompatibilityTest`) inject
+  it into the resolver's allowlist; captures are unchanged.
+
 ## Open decisions
 
 - SSRF policy for remote endpoints (QUAL-021): decided 2026-10-27, A —
-  allowlist (the Wikidata endpoint and the built-in graphs). Deployment
-  target: the user's university server.
+  allowlist (the Wikidata endpoint and the built-in graphs), implemented
+  2026-10-28. Deployment target: the user's university server.
 - CSP strictness (QUAL-022): resolved 2026-10-28, see QUAL-022 results.
-- Upload size limit and whether uploaded graphs stay readable by anyone who
-  knows the id (QUAL-021).
+- Upload size limit and uploaded-graph access (QUAL-021): decided
+  2026-10-28, 5 MiB; a graph stays readable by anyone who has its id.

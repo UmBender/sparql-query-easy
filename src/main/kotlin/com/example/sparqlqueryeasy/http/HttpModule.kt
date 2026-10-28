@@ -51,6 +51,7 @@ import com.example.sparqlqueryeasy.rdf.jena.JenaSparqlSyntaxValidator
 import com.example.sparqlqueryeasy.rdf.jena.JenaTurtleParser
 import com.example.sparqlqueryeasy.security.Argon2PasswordHasher
 import com.example.sparqlqueryeasy.wikidata.client.RemoteSparqlEndpointExecution
+import com.example.sparqlqueryeasy.wikidata.client.remoteClientPolicy
 import com.example.sparqlqueryeasy.wikidata.entitysearch.KtorWikidataEntitySearchClient
 import com.example.sparqlqueryeasy.wikidata.query.CSharpCompatibleWikidataQueryGenerator
 import io.ktor.client.HttpClient
@@ -120,7 +121,7 @@ data class HttpDependencies(
 fun defaultHttpDependencies(settings: AppSettings = AppSettings.load()): HttpDependencies {
     val cache = InMemoryLocalGraphCache()
     val parser = JenaTurtleParser()
-    val httpClient = HttpClient(CIO)
+    val httpClient = HttpClient(CIO) { remoteClientPolicy() }
     val generator = CSharpCompatibleWikidataQueryGenerator(settings.extremeResultLimit)
     val filtering = ResultFilteringService()
     val endpointResolver =

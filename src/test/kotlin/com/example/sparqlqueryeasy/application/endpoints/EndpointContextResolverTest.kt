@@ -82,7 +82,7 @@ class EndpointContextResolverTest {
     }
 
     @Test
-    fun `WIKIDATA-GENERATION-001 preserves raw case-sensitive Wikidata substring detection`() {
+    fun `WIKIDATA-GENERATION-001 QUAL-021 only the exact Wikidata URL is a remote endpoint`() {
         val remoteFactory = RecordingRemoteFactory()
         val resolver =
             resolver(
@@ -91,61 +91,54 @@ class EndpointContextResolverTest {
                 RecordingLocalFactory(),
                 remoteFactory,
             )
-        val variants =
-            listOf(
-                "https://query.wikidata.org/sparql",
-                "https://query.wikidata.org/sparql/",
-                "https://example.test/query.wikidata.org/sparql",
-            )
 
-        variants.forEach { endpoint ->
-            val context = resolved(resolver.resolve(endpoint)).shouldBeInstanceOf<WikidataEndpointContext>()
-            context.endpointUrl shouldBe endpoint
-            context.isLocal shouldBe false
-            context.isWikidata shouldBe true
-        }
-        remoteFactory.endpoints.map(RemoteSparqlEndpoint::value) shouldBe variants
+        val context =
+            resolved(resolver.resolve(WIKIDATA_ENDPOINT_URL)).shouldBeInstanceOf<WikidataEndpointContext>()
+        context.endpointUrl shouldBe WIKIDATA_ENDPOINT_URL
+        context.isLocal shouldBe false
+        context.isWikidata shouldBe true
+        remoteFactory.endpoints.map(RemoteSparqlEndpoint::value) shouldBe listOf(WIKIDATA_ENDPOINT_URL)
     }
 
     @Test
-    fun `case variants and trailing slash preserve C sharp classification without URL normalization`() {
+    fun `QUAL-021 variants of the Wikidata URL and other hosts are refused without normalization`() {
+        val remoteFactory = RecordingRemoteFactory()
         val resolver =
             resolver(
                 InMemoryLocalGraphCache(),
                 CountingBuiltInGraphProvider(RdfGraph()),
                 RecordingLocalFactory(),
-                RecordingRemoteFactory(),
+                remoteFactory,
             )
 
-        resolved(
-            resolver.resolve("https://query.wikidata.org/sparql/"),
-        ).shouldBeInstanceOf<WikidataEndpointContext>()
-        resolved(
-            resolver.resolve("https://query.wikidata.org/SPARQL"),
-        ).shouldBeInstanceOf<RemoteSparqlEndpointContext>()
-        resolved(
-            resolver.resolve("HTTPS://QUERY.WIKIDATA.ORG/SPARQL"),
-        ).shouldBeInstanceOf<RemoteSparqlEndpointContext>()
-        resolver.resolve(
+        listOf(
+            "https://query.wikidata.org/sparql/",
+            "https://query.wikidata.org/SPARQL",
+            "HTTPS://QUERY.WIKIDATA.ORG/SPARQL",
+            "https://example.test/query.wikidata.org/sparql",
+            "https://dbpedia.org/sparql",
             "CampeonatoBrasileiro2023/",
-        ).shouldBeInstanceOf<EndpointContextResolution.InvalidRemoteEndpoint>()
+        ).forEach { endpoint ->
+            resolver.resolve(endpoint) shouldBe
+                EndpointContextResolution.InvalidRemoteEndpoint(endpoint, REMOTE_ENDPOINT_REFUSED)
+        }
+        remoteFactory.endpoints shouldBe emptyList()
     }
 
     @Test
-    fun `generic HTTP remote endpoint is selected without opening a query`() {
+    fun `an injected allowlist admits a test endpoint as a generic remote without opening a query`() {
         val remoteFactory = RecordingRemoteFactory()
         val resolver =
-            resolver(
+            EndpointContextResolver(
                 InMemoryLocalGraphCache(),
                 CountingBuiltInGraphProvider(RdfGraph()),
                 RecordingLocalFactory(),
                 remoteFactory,
+                remoteAllowlist = setOf("https://example.test/sparql"),
             )
 
-        val context = resolved(resolver.resolve("https://dbpedia.org/sparql"))
-
-        val remote = context.shouldBeInstanceOf<RemoteSparqlEndpointContext>()
-        remote.endpoint.value shouldBe "https://dbpedia.org/sparql"
+        val remote =
+            resolved(resolver.resolve("https://example.test/sparql")).shouldBeInstanceOf<RemoteSparqlEndpointContext>()
         remote.isLocal shouldBe false
         remote.isWikidata shouldBe false
         (remote.executor as RecordingExecution).executeCalls shouldBe 0
@@ -204,11 +197,12 @@ class EndpointContextResolverTest {
         val localFactory = RecordingLocalFactory()
         val remoteFactory = RecordingRemoteFactory()
         val resolver =
-            resolver(
+            EndpointContextResolver(
                 cache,
                 CountingBuiltInGraphProvider(RdfGraph()),
                 localFactory,
                 remoteFactory,
+                remoteAllowlist = REMOTE_ENDPOINT_ALLOWLIST + "https://dbpedia.org/sparql",
             )
 
         val local =

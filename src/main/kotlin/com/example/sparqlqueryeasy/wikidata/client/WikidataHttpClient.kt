@@ -10,6 +10,7 @@ import com.example.sparqlqueryeasy.domain.model.SparqlVariable
 import com.example.sparqlqueryeasy.domain.model.UnboundSparqlBinding
 import com.example.sparqlqueryeasy.domain.model.WikidataHttpFailure
 import io.ktor.client.HttpClient
+import io.ktor.client.HttpClientConfig
 import io.ktor.client.engine.cio.CIO
 import io.ktor.client.plugins.HttpRequestTimeoutException
 import io.ktor.client.plugins.HttpTimeout
@@ -159,6 +160,14 @@ class KtorWikidataHttpClient(
             return endpoint
         }
     }
+}
+
+/**
+ * QUAL-021: the shared client for Wikidata never follows a redirect, so a 3xx from the allowed endpoint
+ * cannot send the server to another host; the redirect answers like any non-2xx status (502).
+ */
+fun HttpClientConfig<*>.remoteClientPolicy() {
+    followRedirects = false
 }
 
 fun createWikidataHttpClient(

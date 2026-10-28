@@ -12,7 +12,12 @@ const val BRASILEIRAO_ENDPOINT_ID = "CampeonatoBrasileiro2023"
 const val POKEMON_ENDPOINT_ID = "PokemonGen1"
 const val POKEMON_RESOURCE_NAME = "pokemon_gen1.ttl"
 const val WIKIDATA_ENDPOINT_URL = "https://query.wikidata.org/sparql"
-private const val WIKIDATA_ENDPOINT_MARKER = "query.wikidata.org/sparql"
+
+/** QUAL-021: the remote endpoints a request may name, compared as exact strings. */
+val REMOTE_ENDPOINT_ALLOWLIST: Set<String> = setOf(WIKIDATA_ENDPOINT_URL)
+
+const val REMOTE_ENDPOINT_REFUSED =
+    "Remote endpoint is not allowed: use $WIKIDATA_ENDPOINT_URL, a built-in graph or an uploaded graph id"
 
 enum class SelectableEndpointKind { LOCAL, REMOTE }
 
@@ -161,6 +166,7 @@ class EndpointContextResolver(
     private val localExecutorFactory: LocalEndpointExecutorFactory,
     private val remoteExecutorFactory: RemoteEndpointExecutorFactory,
     private val additionalBuiltInGraphs: Map<String, BuiltInGraphProvider> = emptyMap(),
+    private val remoteAllowlist: Set<String> = REMOTE_ENDPOINT_ALLOWLIST,
 ) {
     init {
         require(BRASILEIRAO_ENDPOINT_ID !in additionalBuiltInGraphs) {
@@ -197,17 +203,19 @@ class EndpointContextResolver(
         )
     }
 
+    /**
+     * QUAL-021 (decision A, 2026-10-27): the only remote endpoint is the Wikidata query service, matched
+     * exactly. Any other URL — another host, an internal address, userinfo, another port, path or scheme —
+     * is refused before a request could be made, so the server never fetches a client-chosen host. Tests
+     * may allow their own fake endpoints through [remoteAllowlist].
+     */
     private fun remoteContext(endpointUrl: String): EndpointContextResolution {
-        val endpoint =
-            try {
-                RemoteSparqlEndpoint.parse(endpointUrl)
-            } catch (exception: IllegalArgumentException) {
-                return EndpointContextResolution.InvalidRemoteEndpoint(
-                    endpointUrl,
-                    exception.message ?: exception.javaClass.simpleName,
-                )
-            }
-        val isWikidata = endpointUrl.contains(WIKIDATA_ENDPOINT_MARKER)
+        if (endpointUrl !in remoteAllowlist) {
+            return EndpointContextResolution.InvalidRemoteEndpoint(endpointUrl, REMOTE_ENDPOINT_REFUSED)
+        }
+        val endpoint = RemoteSparqlEndpoint.parse(endpointUrl)
+        // Only the exact Wikidata URL gets Wikidata prefixes and labels (it used to be any URL containing it).
+        val isWikidata = endpointUrl == WIKIDATA_ENDPOINT_URL
         val execution = remoteExecutorFactory.create(endpoint, isWikidata)
         val context =
             if (isWikidata) {

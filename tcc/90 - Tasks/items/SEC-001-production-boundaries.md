@@ -1,15 +1,20 @@
 ---
 id: SEC-001
 title: Decide and implement production endpoint, upload, and cache boundaries
-status: BACKLOG
+status: CANCELLED
 priority: P1
 type: security
 depends_on: [API-001, DEC-001]
 human_gate: true
 created: 2026-09-16
-updated: 2026-09-16
+updated: 2026-10-28
 ---
 # Decide and implement production endpoint, upload, and cache boundaries
+
+**Superseded by QUAL-021** ([[QUAL-021-ssrf-and-uploads]]), 2026-10-28, at the
+user's request: the endpoint allowlist, the upload limit, the uploaded-graph
+access rule and the cache bound are decided and implemented there. QUAL-023
+covers the request and timeout limits.
 
 ## Objective
 Approve a security contract for remote endpoints, graph uploads, cache ownership, limits, and errors.
@@ -40,3 +45,4 @@ Changes accepted remote/SPARQL behavior and requires compatibility review.
 
 ## Execution log
 - 2026-09-16: Backlog pending policy approval.
+- 2026-10-28: Cancelled, superseded by QUAL-021 (user request).
