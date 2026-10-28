@@ -40,11 +40,6 @@
 			text: 'An unknown entity the query looks for. Add one with Add Variable.'
 		},
 		{
-			swatch: 'rounded-full bg-node-class',
-			name: 'Class',
-			text: 'A kind of thing, such as Pokémon. Use Explore values on it to see its members.'
-		},
-		{
 			swatch: 'rounded-full bg-node-many',
 			name: 'Multiple results',
 			text: 'A node that stands for more than one result, drawn grey.'

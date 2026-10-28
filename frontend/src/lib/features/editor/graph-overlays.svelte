@@ -35,9 +35,6 @@
 			><span class="size-3 shrink-0 rounded-full bg-node-variable"></span>Node variable</span
 		>
 		<span class="flex items-center gap-2"
-			><span class="size-3 shrink-0 rounded-full bg-node-class"></span>Class</span
-		>
-		<span class="flex items-center gap-2"
 			><span class="size-3 shrink-0 rounded-full bg-node-many"></span>Multiple results</span
 		>
 	</div>

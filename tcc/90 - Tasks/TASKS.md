@@ -167,6 +167,7 @@ Ordered by dependencies, then priority among selection candidates. See [worker r
 | FE-059 | DONE | P1 | frontend | [Name value nodes "Literal value" and "Literal value variable" and say "Multiple results"](<items/FE-059-literal-value-terminology.md>) |
 | FE-060 | DONE | P1 | frontend | [Zoom the graph at a comfortable speed with the mouse wheel and trackpad](<items/FE-060-wheel-zoom-speed.md>) |
 | FE-061 | DONE | P1 | frontend | [Link the editor to the study and give the task page an obvious way back to the task list](<items/FE-061-study-navigation.md>) |
+| FE-062 | DONE | P2 | frontend | [Hide the Class node kind from the graph legend and the help page](<items/FE-062-hide-class-from-legend-and-help.md>) |
 | BE-004 | DONE | P1 | fullstack | [Make MAX and MIN keep every entity with the extreme value, capped by a configurable limit](<items/BE-004-max-min-all-ties.md>) |
 | INV-001 | DONE | P1 | investigation | [Investigate Ktor HTTP-client and runtime resource lifecycle](<items/INV-001-runtime-resource-lifecycle.md>) |
 | LEARN-001 | REVIEW | P1 | learning | [Learn the Linux shell and networking needed to debug a web app](<items/LEARN-001-linux-shell-networking.md>) |
