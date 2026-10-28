@@ -5,11 +5,16 @@
 	the drawn graph and the request derived from it for the chosen answer
 	variable; the server decides correctness and answers with a verdict and
 	counts (DEC-014 Q2, Q5). Attempts are unlimited (Q1) and listed below.
+	FE-061: a back link to the proposed queries tops the panel, and a Correct
+	verdict offers Back to the tasks and, when one follows in the group's
+	order, Next task. All are plain links, so browser Back keeps working.
 -->
 <script lang="ts">
 	import { resolve } from '$app/paths';
 	import { createQuery, useQueryClient } from '@tanstack/svelte-query';
 	import SendIcon from '@lucide/svelte/icons/send';
+	import ArrowLeftIcon from '@lucide/svelte/icons/arrow-left';
+	import ArrowRightIcon from '@lucide/svelte/icons/arrow-right';
 	import { api, type StudySubmission, type StudyTask } from '#lib/api/client.js';
 	import { queryKeys } from '#lib/api/queries.js';
 	import { Button } from '#lib/components/ui/button/index.js';
@@ -39,6 +44,18 @@
 		queryFn: ({ signal }) => api.study.submissions(start.key, { signal }),
 		staleTime: 0
 	}));
+
+	// The group's tasks in order (shared with /study), for Next task.
+	const tasks = createQuery(() => ({
+		queryKey: queryKeys.studyTasks,
+		queryFn: ({ signal }) => api.study.tasks({ signal }),
+		staleTime: 0
+	}));
+	const nextTask = $derived.by(() => {
+		const list = tasks.data ?? [];
+		const index = list.findIndex((item) => item.key === start.key);
+		return index >= 0 ? list[index + 1] : undefined;
+	});
 
 	let store = $state<QueryStore | null>(null);
 	let answerVariable = $state('');
@@ -99,12 +116,14 @@
 	{#snippet panel()}
 		<div class="flex flex-col gap-4 p-4">
 			<section class="flex flex-col gap-3" aria-labelledby="task-title">
-				<div class="flex items-center justify-between gap-2">
-					<h1 id="task-title" class="text-lg font-semibold">{start.title}</h1>
-					<Button variant="link" class="h-auto p-0" href={resolve('/study')}
-						>All tasks</Button
-					>
-				</div>
+				<Button
+					id="study-back-link"
+					variant="link"
+					class="h-auto self-start p-0"
+					href={resolve('/study')}
+					><ArrowLeftIcon aria-hidden="true" />Proposed queries</Button
+				>
+				<h1 id="task-title" class="text-lg font-semibold">{start.title}</h1>
 				<p class="text-sm whitespace-pre-line" data-testid="task-statement">
 					{start.statement}
 				</p>
@@ -148,6 +167,16 @@
 					</p>
 				{/if}
 			</div>
+			{#if !problem && latest?.correct}
+				<nav aria-label="After a correct answer" class="flex flex-wrap gap-2">
+					<Button variant="outline" href={resolve('/study')}>Back to the tasks</Button>
+					{#if nextTask}
+						<Button href={resolve('/study/[key]', { key: nextTask.key })}
+							>Next task<ArrowRightIcon aria-hidden="true" /></Button
+						>
+					{/if}
+				</nav>
+			{/if}
 
 			<section class="flex flex-col gap-2" aria-labelledby="attempts-title">
 				<h2 id="attempts-title" class="text-sm font-semibold">Your attempts</h2>

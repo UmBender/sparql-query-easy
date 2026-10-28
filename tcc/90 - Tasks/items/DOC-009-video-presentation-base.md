@@ -67,7 +67,7 @@ answers. Skill: `tcc-plan-task` (documentation only).
   - MAX/MIN are offered only on a literal value, not on a literal value
     variable. The tour step for Add Value Variable lists MAX and MIN.
   - The editor has no link to `/study`. Participants open the `/study` link
-    they are given.
+    they are given. (Resolved by FE-061: the app bar has a Study link.)
   - Dates (`realizadaNaData`) are plain text, so only the text filters work
     on them.
 - Validation: `node scripts/check-project-docs.mjs` and `git diff --check`

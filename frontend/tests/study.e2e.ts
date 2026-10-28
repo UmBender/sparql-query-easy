@@ -9,6 +9,7 @@ import type { components } from '../src/lib/api/schema';
 import { guardOffline } from './support/offline';
 import { mockApi, type MockApi } from './support/mock-api';
 import { QuestionnairePage } from './support/pages/questionnaire-page';
+import { EditorPage } from './support/pages/editor-page';
 import { TaskPage } from './support/pages/task-page';
 
 type Schemas = components['schemas'];
@@ -145,9 +146,101 @@ test('STUDY-014 the task list marks each task and updates after an attempt', asy
 	await expect(taskPage.title).toBeVisible();
 	await taskPage.submit();
 	await expect(taskPage.feedback).toHaveText('Correct: all 7 expected results.');
-	await page.getByRole('link', { name: 'All tasks' }).click();
+	await page.getByRole('link', { name: 'Proposed queries' }).click();
 	await expect(markers.first()).toHaveText('Solved');
 	await expect(markers.first()).toHaveAttribute('data-status', 'solved');
+});
+
+test('FE-061 the app bar links to the study, through login when logged out', async ({ page }) => {
+	const editor = new EditorPage(page);
+	await editor.open('/');
+	const study = page.getByRole('navigation', { name: 'Main navigation' }).getByRole('link', {
+		name: 'Study'
+	});
+	await study.focus();
+	await expect(study).toBeFocused();
+	await page.keyboard.press('Enter');
+	await expect(page).toHaveURL(/\/study$/);
+	await expect(page.getByRole('heading', { name: 'Proposed queries' })).toBeVisible();
+
+	api.override('/api/auth/session', () => ({ status: 401, json: { error: 'Login required' } }));
+	await editor.open('/');
+	await study.click();
+	await expect(page).toHaveURL(/\/login\?next=%2Fstudy$/);
+});
+
+test('FE-061 a task goes back to the list, and a correct answer offers the next task', async ({
+	page
+}) => {
+	const summaries: Schemas['StudyTaskSummaryHttpResponse'][] = [
+		{ key: 'first', title: 'First task', summary: 'One', status: 'not_started' },
+		{ key: 'second', title: 'Second task', summary: 'Two', status: 'not_started' }
+	];
+	const task = (key: string, title: string): Schemas['StudyTaskHttpResponse'] => ({
+		key,
+		title,
+		statement: `Solve ${title}.`,
+		endpoint: 'PokemonGen1',
+		startingGraph: FIRE_SPEED
+	});
+	let correct = false;
+	const attempt = (): Schemas['StudySubmissionHttpResponse'] => ({
+		attempt: 1,
+		correct,
+		invalid: false,
+		feedback: correct
+			? 'Correct: all 7 expected results.'
+			: 'Incorrect: 6 of 7 expected results; 0 extra.',
+		matched: correct ? 7 : 6,
+		missing: correct ? 0 : 1,
+		extra: 0,
+		expectedCount: 7,
+		taskRevision: 1,
+		timeSpentMs: 1_000,
+		createdAt: '2026-10-20T12:00:00Z'
+	});
+	api.override('/api/study/tasks', () => ({ data: summaries }));
+	api.override('/api/study/tasks/first', () => ({ data: task('first', 'First task') }));
+	api.override('/api/study/tasks/second', () => ({ data: task('second', 'Second task') }));
+	api.override('/api/study/tasks/first/submissions', () => ({ data: attempt() }));
+	api.override('/api/study/tasks/second/submissions', () => ({ data: attempt() }));
+	api.override('/api/study/submissions', () => ({ data: [] }));
+
+	await page.addInitScript(() => window.localStorage.setItem('easyquery-tour-seen', 'true'));
+	await page.goto('/study');
+	await page.getByTestId('study-task').first().click();
+	const taskPage = new TaskPage(page);
+	await expect(taskPage.title).toHaveText('First task');
+
+	// The back link at the top returns to the list; browser Back returns to the task.
+	const back = page.getByRole('link', { name: 'Proposed queries' });
+	await expect(back).toBeVisible();
+	await back.click();
+	await expect(page).toHaveURL(/\/study$/);
+	await page.goBack();
+	await expect(taskPage.title).toHaveText('First task');
+
+	// An incorrect verdict offers nothing; a correct one offers back and next.
+	const after = page.getByRole('navigation', { name: 'After a correct answer' });
+	await taskPage.submit();
+	await expect(taskPage.feedback).toContainText('Incorrect');
+	await expect(after).toHaveCount(0);
+	correct = true;
+	await taskPage.submit();
+	await expect(taskPage.feedback).toContainText('Correct');
+	await expect(after.getByRole('link', { name: 'Back to the tasks' })).toBeVisible();
+	await after.getByRole('link', { name: 'Next task' }).click();
+	await expect(page).toHaveURL(/\/study\/second$/);
+	await expect(taskPage.title).toHaveText('Second task');
+
+	// The last task in the group's order has no Next task.
+	await taskPage.submit();
+	await expect(taskPage.feedback).toContainText('Correct');
+	await expect(after.getByRole('link', { name: 'Next task' })).toHaveCount(0);
+	await after.getByRole('link', { name: 'Back to the tasks' }).click();
+	await expect(page).toHaveURL(/\/study$/);
+	await page.goBack();
+	await expect(taskPage.title).toHaveText('Second task');
 });
 
 test('the profile questionnaire shows a field error before sending its answers', async ({

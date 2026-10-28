@@ -56,7 +56,7 @@ test('a participant sees their group tasks in order and opens one in the editor'
 	await expect(page.locator('#input-endpoint-sparql')).toBeDisabled();
 	await expect(page.locator('#input-endpoint-sparql')).toHaveValue(/Pok/);
 
-	await page.getByRole('link', { name: 'All tasks' }).click();
+	await page.getByRole('link', { name: 'Proposed queries' }).click();
 	await tasks.nth(0).click();
 	await expect(page.locator('#status-nodes')).toHaveText('Nodes: 0');
 });
@@ -120,7 +120,7 @@ test('after the final submission the task pages show the finished page', async (
 
 	await page.goto(`/study/${keys[0]}`);
 	await expect(page.getByTestId('task-statement')).toBeVisible();
-	await page.getByRole('link', { name: 'All tasks' }).click();
+	await page.getByRole('link', { name: 'Proposed queries' }).click();
 	await page.getByRole('button', { name: 'Finish the study' }).click();
 	const dialog = page.getByRole('dialog', { name: 'Finish the study?' });
 	await dialog.getByRole('button', { name: 'Keep working' }).click();

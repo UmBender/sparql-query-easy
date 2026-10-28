@@ -209,8 +209,9 @@ seção 7 que mostram cada funcionalidade.
 ### 6.1 Participante
 
 1. **Convite:** o participante recebe o endereço da página de tarefas
-   (`/study`). O editor (`/`) funciona sem conta, mas não tem link para
-   `/study`. Quem abre `/study` sem sessão vai para o login e volta depois.
+   (`/study`). O editor (`/`) funciona sem conta; o link **Study** na barra
+   do editor também abre `/study` (FE-061). Quem abre `/study` sem sessão vai
+   para o login e volta depois.
 2. **Login / criar conta** (`/login`): *Username* e *Password*; **Create an
    account** troca para o cadastro (*Repeat the password*), que já entra na
    conta. Não há recuperação de senha. *Continue without an account* volta
@@ -229,7 +230,8 @@ seção 7 que mostram cada funcionalidade.
 6. **Tela da tarefa** (`/study/<chave>`): à direita, título e enunciado; à
    esquerda, o editor completo, já no endpoint da tarefa (travado) e, se
    houver, com um grafo inicial. O participante desenha a resposta como em
-   qualquer consulta.
+   qualquer consulta. No topo do painel, **← Proposed queries** volta à
+   lista (o Voltar do navegador também funciona).
 7. **Answer variable:** botões de opção com as variáveis de nó (`?`) do
    grafo; escolhe-se a que contém a resposta. Variáveis de valor literal e
    predicados variáveis não podem ser a resposta.
@@ -237,7 +239,8 @@ seção 7 que mostram cada funcionalidade.
    servidor executa a consulta no endpoint da tarefa, compara os valores da
    variável de resposta com o resultado esperado (como conjunto) e responde
    só o veredito e as contagens, nunca a resposta esperada:
-   - `Correct: all N expected results.`
+   - `Correct: all N expected results.` Abaixo aparecem *Back to the tasks*
+     e, se houver uma tarefa seguinte na ordem do grupo, **Next task**.
    - `Incorrect: M of N expected results; X extra.`
    - `The query could not run: …` (tentativa inválida, também registrada).
    Erros de desenho aparecem antes do envio (ex.: *Draw at least one
@@ -719,8 +722,6 @@ P8, P9 e P10.
   contrário.
 - **Datas são texto** (`realizadaNaData`): use *Starts with*/*Contains*.
   *At least*/*Between* não se aplicam a elas.
-- **Sem link para `/study` no editor:** para a cena do estudo, abra o endereço
-  `/study` diretamente.
 - **Predicado variável pega tudo:** sem outro filtro, `?p Santos` traz jogos,
   atletas e a classificação (é o ponto didático de P10).
 - **Respostas são variáveis de nó:** no estudo, a *Answer variable* precisa

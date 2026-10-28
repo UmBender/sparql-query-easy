@@ -343,10 +343,14 @@
 		<h2 id="study-title" class="text-lg font-semibold">Accounts and the study</h2>
 		<p class="text-sm">
 			The editor works without an account. With an account (<strong>Log in</strong>, then
-			create one) you can take part in the study: accept the consent text, answer a short
-			questionnaire, then solve the <strong>proposed queries</strong> by drawing each answer in
-			the editor and submitting it. You may submit as often as you like until you make the final
-			submission; a last questionnaire about using the editor follows it.
+			create one) you can take part in the study: open <strong>Study</strong> in the app bar,
+			accept the consent text, answer a short questionnaire, then solve the
+			<strong>proposed queries</strong> by drawing each answer in the editor and submitting
+			it.
+			<strong>Proposed queries</strong> at the top of a task goes back to the list, and a
+			correct answer offers <strong>Next task</strong>. You may submit as often as you like
+			until you make the final submission; a last questionnaire about using the editor follows
+			it.
 		</p>
 	</section>
 
