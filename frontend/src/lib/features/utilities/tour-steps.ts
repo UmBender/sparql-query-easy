@@ -16,7 +16,7 @@ export const TOUR_STEPS: TourStep[] = [
 	},
 	{
 		target: '#add-value-variable-btn',
-		text: 'Add a literal value variable for numbers, text or dates. Click it to add a filter: exact, starts with, contains, at least, at most, between, MAX or MIN.'
+		text: 'Add a literal value variable for numbers, text or dates. Click it to add a filter: any value, exact, starts with, contains, at least, at most or between. MAX and MIN are on a fixed literal value (Edit literal value).'
 	},
 	{
 		target: '#cy',
