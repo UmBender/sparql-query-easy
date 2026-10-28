@@ -2,6 +2,7 @@
 	The proposed queries (STUDY-003): the active tasks of the participant's
 	group, in the group's order (STUDY-007), or a note that none are assigned,
 	and the final submission (STUDY-005), after which the finished view shows.
+	Each task shows the participant's own status (STUDY-014).
 	The consent screen comes first until the current text is accepted
 	(STUDY-008), then the profile questionnaire until it is answered; after
 	the final submission the usability questionnaire comes before the finished
@@ -20,6 +21,7 @@
 	import FinishStudy from '#lib/features/study/finish-study.svelte';
 	import QuestionnaireStep from '#lib/features/study/questionnaire-step.svelte';
 	import StudyFinished from '#lib/features/study/study-finished.svelte';
+	import TaskStatusMarker from '#lib/features/study/task-status-marker.svelte';
 
 	const consent = createQuery(() => ({
 		queryKey: queryKeys.studyConsent,
@@ -104,10 +106,15 @@
 					<li>
 						<a
 							href={resolve('/study/[key]', { key: task.key })}
-							class="flex flex-col gap-1 rounded-lg border bg-surface px-4 py-3 text-surface-foreground hover:bg-accent hover:text-accent-foreground focus-visible:ring-3 focus-visible:ring-ring/50 focus-visible:outline-none"
+							class="group flex flex-col gap-1 rounded-lg border bg-surface px-4 py-3 text-surface-foreground hover:bg-accent hover:text-accent-foreground focus-visible:ring-3 focus-visible:ring-ring/50 focus-visible:outline-none"
 							data-testid="study-task"
 						>
-							<span class="font-medium">{index + 1}. {task.title}</span>
+							<span
+								class="flex flex-wrap items-baseline justify-between gap-x-3 gap-y-1"
+							>
+								<span class="font-medium">{index + 1}. {task.title}</span>
+								<TaskStatusMarker status={task.status} />
+							</span>
 							<span class="text-sm text-muted-foreground">{task.summary}</span>
 						</a>
 					</li>

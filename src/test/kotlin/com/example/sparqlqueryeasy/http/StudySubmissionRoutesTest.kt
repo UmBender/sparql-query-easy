@@ -139,6 +139,41 @@ class StudySubmissionRoutesTest {
             ada.submit("""{"graph":$fireSpeedGraph}""").status shouldBe HttpStatusCode.BadRequest
         }
 
+    private suspend fun HttpClient.statuses(): Map<String, String> =
+        get("/api/study/tasks").data().jsonArray.associate {
+            it.field("key").jsonPrimitive.content to it.field("status").jsonPrimitive.content
+        }
+
+    @Test
+    fun `the task list shows each task as not started, attempted or solved from the caller's own attempts`() =
+        testApplication {
+            studyApp()
+            val admin = userClient(ADMIN)
+            val ada = userClient("Ada")
+            val bob = userClient("Bob")
+            admin.json("/api/admin/tasks", taskBody()).status shouldBe HttpStatusCode.Created
+            admin.createTypeTask("water", "WaterType")
+            admin.createGroup("A", listOf("fire-fast", "water"), listOf("Ada", "Bob"))
+
+            ada.statuses() shouldBe mapOf("fire-fast" to "not_started", "water" to "not_started")
+            ada.get("/api/study/tasks/fire-fast")
+            ada.statuses().getValue("fire-fast") shouldBe "not_started"
+
+            ada.submit(drawn(fireSpeedQuery(minimumSpeed = null))).data().bool("correct") shouldBe false
+            bob.submit().data().bool("correct") shouldBe true
+            ada.statuses() shouldBe mapOf("fire-fast" to "attempted", "water" to "not_started")
+            bob.statuses() shouldBe mapOf("fire-fast" to "solved", "water" to "not_started")
+
+            ada.submit().data().bool("correct") shouldBe true
+            ada.submit(drawn(fireSpeedQuery(minimumSpeed = null)))
+            ada.statuses().getValue("fire-fast") shouldBe "solved"
+
+            // A correct attempt at an earlier revision still counts as solved.
+            admin.putJson("/api/admin/tasks/fire-fast", taskBody(reference = drawn(fireSpeedQuery(100)))).data().int("revision") shouldBe 2
+            bob.statuses().getValue("fire-fast") shouldBe "solved"
+            listOf("expected", "Charizard", "SELECT").forEach { (it in ada.get("/api/study/tasks").bodyAsText()) shouldBe false }
+        }
+
     @Test
     fun `time spent is measured on the server from the first open`() =
         testApplication {

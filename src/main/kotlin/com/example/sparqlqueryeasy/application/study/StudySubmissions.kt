@@ -45,4 +45,14 @@ interface StudySubmissionStore {
         userId: Long,
         taskId: Long,
     ): List<Submission>
+
+    /** For each task the user attempted: whether at least one attempt, at any task revision, was correct. */
+    suspend fun solvedByTask(userId: Long): Map<Long, Boolean>
+}
+
+/** Where the caller stands on a task, from their own attempts only (STUDY-014). */
+enum class StudyTaskStatus {
+    NOT_STARTED,
+    ATTEMPTED,
+    SOLVED,
 }

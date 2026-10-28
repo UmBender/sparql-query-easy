@@ -3,6 +3,7 @@ package com.example.sparqlqueryeasy.http
 import com.example.sparqlqueryeasy.application.auth.User
 import com.example.sparqlqueryeasy.application.study.StudyService
 import com.example.sparqlqueryeasy.application.study.StudyTask
+import com.example.sparqlqueryeasy.application.study.StudyTaskStatus
 import com.example.sparqlqueryeasy.application.study.Submission
 import io.ktor.http.HttpStatusCode
 import io.ktor.openapi.JsonSchema
@@ -20,6 +21,12 @@ data class StudyTaskSummaryHttpResponse(
     val key: String,
     val title: String,
     val summary: String,
+    @JsonSchema.Description(
+        "The caller's own progress: not_started (no attempt), attempted (attempts, none correct) or solved " +
+            "(at least one correct attempt at any revision of the task). Other users' attempts never count.",
+    )
+    @JsonSchema.Enum("not_started", "attempted", "solved")
+    val status: String,
 )
 
 /** A task as a participant sees it: never the reference query, its SPARQL or the expected result. */
@@ -81,7 +88,9 @@ private fun Route.participantTaskRoutes(
     route("/api/study/tasks") {
         get {
             studyOpen(auth, dependencies) { user ->
-                call.respond(DataResponse(study.tasks(user.id).map { it.toSummary() }))
+                call.respond(
+                    DataResponse(study.tasksWithStatus(user.id).map { (task, status) -> task.toSummary(status) }),
+                )
             }
         }.documentStudyListTasks()
         get("{key}") {
@@ -180,11 +189,11 @@ internal suspend fun RoutingContext.studyTaskNotFound() {
 
 private const val SUMMARY_LENGTH = 160
 
-private fun StudyTask.toSummary(): StudyTaskSummaryHttpResponse {
+private fun StudyTask.toSummary(status: StudyTaskStatus): StudyTaskSummaryHttpResponse {
     val firstParagraph = statement.substringBefore("\n\n").replace(Regex("\\s+"), " ").trim()
     val summary =
         if (firstParagraph.length <= SUMMARY_LENGTH) firstParagraph else firstParagraph.take(SUMMARY_LENGTH - 1) + "…"
-    return StudyTaskSummaryHttpResponse(key, title, summary)
+    return StudyTaskSummaryHttpResponse(key, title, summary, status.name.lowercase())
 }
 
 private fun StudyTask.toParticipantResponse() =

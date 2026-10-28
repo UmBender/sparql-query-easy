@@ -100,6 +100,14 @@ test('a participant submits a correct and a wrong answer and sees the feedback a
 	await expect(history.nth(1)).toContainText('#1 · Correct');
 	await page.reload();
 	await expect(taskPage.attempts).toHaveCount(2);
+
+	// STUDY-014: a correct attempt, even followed by a wrong one, marks the task solved.
+	await page.getByRole('link', { name: 'All tasks' }).click();
+	await expect(page.getByTestId('study-task-status')).toHaveText([
+		'Not started',
+		'Solved',
+		'Not started'
+	]);
 });
 
 test('after the final submission the task pages show the finished page', async ({

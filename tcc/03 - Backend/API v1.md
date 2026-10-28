@@ -606,11 +606,17 @@ tasks of their group (STUDY-007).
 
 | Route | Success | Errors |
 |---|---|---|
-| `GET /api/study/tasks` | `200 {"data":[{"key","title","summary"}]}` in group order; `[]` without a group | — |
+| `GET /api/study/tasks` | `200 {"data":[{"key","title","summary","status"}]}` in group order; `[]` without a group | — |
 | `GET /api/study/tasks/{key}` | `200 {"data":{"key","title","statement","endpoint","startingGraph"}}` (`startingGraph` a saved query or `null`) | `404 {"error":"Task not found"}` for an unknown or inactive task or one outside the caller's group |
 
 - `summary` is the statement's first paragraph, whitespace collapsed, cut to
   160 characters with `…`.
+- `status` (STUDY-014) is the caller's own progress on the task, from their
+  own attempts only: `not_started` (no attempt; opening the task does not
+  count), `attempted` (attempts, none correct; invalid attempts count) or
+  `solved` (at least one correct attempt at any revision of the task; a later
+  wrong attempt or a task edit does not undo it). Other users' attempts never
+  count, and it reveals nothing about the expected answer.
 - Neither route returns the reference graph, its request or SPARQL, or the
   expected result.
 - The first `GET /api/study/tasks/{key}` by a user is recorded in

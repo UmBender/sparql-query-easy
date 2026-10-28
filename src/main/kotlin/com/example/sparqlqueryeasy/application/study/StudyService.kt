@@ -56,6 +56,24 @@ class StudyService(
     /** The user's group's active tasks in group order; none without a group. */
     suspend fun tasks(userId: Long): List<StudyTask> = groups.activeTasksFor(userId)
 
+    /**
+     * [tasks] with the user's own status on each (STUDY-014): solved after a correct attempt at any revision of
+     * the task, attempted after attempts that were all incorrect or invalid, else not started.
+     */
+    suspend fun tasksWithStatus(userId: Long): List<Pair<StudyTask, StudyTaskStatus>> {
+        val tasks = tasks(userId)
+        val solved = if (tasks.isEmpty()) emptyMap() else submissions.solvedByTask(userId)
+        return tasks.map { task ->
+            val status =
+                when (solved[task.id]) {
+                    null -> StudyTaskStatus.NOT_STARTED
+                    true -> StudyTaskStatus.SOLVED
+                    false -> StudyTaskStatus.ATTEMPTED
+                }
+            task to status
+        }
+    }
+
     /** The task when the user may open it (in their group and active), recording the first open; else null. */
     suspend fun open(
         userId: Long,

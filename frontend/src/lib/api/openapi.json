@@ -3058,7 +3058,7 @@
                 "description": "The active tasks of the caller's group, in the group's order; empty without a group. Requires a session (401 otherwise).",
                 "responses": {
                     "200": {
-                        "description": "Key, title and a one-paragraph summary of the statement.",
+                        "description": "Key, title, a one-paragraph summary of the statement and the caller's own status.",
                         "content": {
                             "application/json": {
                                 "schema": {
@@ -4836,7 +4836,8 @@
                 "required": [
                     "key",
                     "title",
-                    "summary"
+                    "summary",
+                    "status"
                 ],
                 "properties": {
                     "key": {
@@ -4847,6 +4848,15 @@
                     },
                     "summary": {
                         "type": "string"
+                    },
+                    "status": {
+                        "type": "string",
+                        "description": "The caller's own progress: not_started (no attempt), attempted (attempts, none correct) or solved (at least one correct attempt at any revision of the task). Other users' attempts never count.",
+                        "enum": [
+                            "not_started",
+                            "attempted",
+                            "solved"
+                        ]
                     }
                 }
             },

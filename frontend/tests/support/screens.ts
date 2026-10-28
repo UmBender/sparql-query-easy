@@ -46,8 +46,24 @@ const tasks: Schemas['AdminTaskSummaryHttpResponse'][] = [
 ];
 
 const studyTasks: Schemas['StudyTaskSummaryHttpResponse'][] = [
-	{ key: 'fire-fast', title: 'Fast Fire-type Pokémon', summary: 'Speed of at least 90.' },
-	{ key: 'charmander-family', title: 'The Charmander family', summary: 'Who evolves from whom.' }
+	{
+		key: 'fire-fast',
+		title: 'Fast Fire-type Pokémon',
+		summary: 'Speed of at least 90.',
+		status: 'solved'
+	},
+	{
+		key: 'charmander-family',
+		title: 'The Charmander family',
+		summary: 'Who evolves from whom.',
+		status: 'attempted'
+	},
+	{
+		key: 'water',
+		title: 'All Water-type Pokémon',
+		summary: 'Every Pokémon of the Water type.',
+		status: 'not_started'
+	}
 ];
 
 const studyTask: Schemas['StudyTaskHttpResponse'] = {

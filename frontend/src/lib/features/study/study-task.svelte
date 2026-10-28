@@ -70,7 +70,11 @@
 		} finally {
 			pending = false;
 		}
-		await queryClient.invalidateQueries({ queryKey: queryKeys.studySubmissions(start.key) });
+		// The task list's status (STUDY-014) changes with each attempt.
+		await Promise.all([
+			queryClient.invalidateQueries({ queryKey: queryKeys.studySubmissions(start.key) }),
+			queryClient.invalidateQueries({ queryKey: queryKeys.studyTasks })
+		]);
 	}
 
 	const verdict = (attempt: StudySubmission) =>

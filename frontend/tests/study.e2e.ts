@@ -87,6 +87,69 @@ test('a task starts from its drawn query, submits it and lists the attempt', asy
 	]);
 });
 
+test('STUDY-014 the task list marks each task and updates after an attempt', async ({ page }) => {
+	const attempts: Schemas['StudySubmissionHttpResponse'][] = [];
+	const summaries = (): Schemas['StudyTaskSummaryHttpResponse'][] => [
+		{
+			key: 'fire-fast',
+			title: 'Fast Fire-type Pokémon',
+			summary: 'Speed of at least 90.',
+			status: attempts.some((attempt) => attempt.correct)
+				? 'solved'
+				: attempts.length
+					? 'attempted'
+					: 'not_started'
+		},
+		{ key: 'water', title: 'Water', summary: 'Every Water type.', status: 'attempted' },
+		{ key: 'grass', title: 'Grass', summary: 'Every Grass type.', status: 'solved' }
+	];
+	api.override('/api/study/tasks', () => ({ data: summaries() }));
+	api.override('/api/study/tasks/fire-fast', () => ({
+		data: {
+			key: 'fire-fast',
+			title: 'Fast Fire-type Pokémon',
+			statement: 'Find every Fire-type Pokémon with a speed of at least 90.',
+			endpoint: 'PokemonGen1',
+			startingGraph: FIRE_SPEED
+		}
+	}));
+	api.override('/api/study/submissions', () => ({ data: attempts }));
+	api.override('/api/study/tasks/fire-fast/submissions', () => {
+		const attempt: Schemas['StudySubmissionHttpResponse'] = {
+			attempt: 1,
+			correct: true,
+			invalid: false,
+			feedback: 'Correct: all 7 expected results.',
+			matched: 7,
+			missing: 0,
+			extra: 0,
+			expectedCount: 7,
+			taskRevision: 1,
+			timeSpentMs: 1_000,
+			createdAt: '2026-10-20T12:00:00Z'
+		};
+		attempts.push(attempt);
+		return { data: attempt };
+	});
+
+	await page.addInitScript(() => window.localStorage.setItem('easyquery-tour-seen', 'true'));
+	await page.goto('/study');
+	const tasks = page.getByTestId('study-task');
+	const markers = page.getByTestId('study-task-status');
+	await expect(tasks).toHaveCount(3);
+	await expect(markers).toHaveText(['Not started', 'Attempted', 'Solved']);
+	await expect(tasks.nth(0)).toHaveAccessibleName(/Fast Fire-type Pokémon.*Not started/);
+
+	const taskPage = new TaskPage(page);
+	await tasks.nth(0).click();
+	await expect(taskPage.title).toBeVisible();
+	await taskPage.submit();
+	await expect(taskPage.feedback).toHaveText('Correct: all 7 expected results.');
+	await page.getByRole('link', { name: 'All tasks' }).click();
+	await expect(markers.first()).toHaveText('Solved');
+	await expect(markers.first()).toHaveAttribute('data-status', 'solved');
+});
+
 test('the profile questionnaire shows a field error before sending its answers', async ({
 	page
 }) => {

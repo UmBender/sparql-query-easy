@@ -20,7 +20,7 @@ internal fun Route.documentStudyListTasks(): Route =
         tag("Study")
         responses {
             HttpStatusCode.OK {
-                description = "Key, title and a one-paragraph summary of the statement."
+                description = "Key, title, a one-paragraph summary of the statement and the caller's own status."
                 schema = jsonSchema<DataResponse<List<StudyTaskSummaryHttpResponse>>>()
             }
             sessionErrors()

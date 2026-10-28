@@ -130,7 +130,7 @@ Ordered by dependencies, then priority among selection candidates. See [worker r
 | STUDY-012 | DONE | P1 | fullstack | [Build two feature-rich proposed queries in the editor end to end and show what the database stored and returned](<items/STUDY-012-query-creation-test.md>) |
 | DOC-009 | REVIEW | P1 | documentation | [Write the base note for the presentation video on the Brasileirão 2023 dataset](<items/DOC-009-video-presentation-base.md>) |
 | STUDY-013 | DONE | P1 | fullstack | [Offer the Brasileirão 2023 example questions as proposed tasks the user can solve like a tester](<items/STUDY-013-brasileirao-practice-tasks.md>) |
-| STUDY-014 | READY | P1 | fullstack | [Mark on the task list whether each task was already attempted or solved](<items/STUDY-014-task-done-markers.md>) |
+| STUDY-014 | DONE | P1 | fullstack | [Mark on the task list whether each task was already attempted or solved](<items/STUDY-014-task-done-markers.md>) |
 | STUDY-015 | READY | P1 | fullstack | [Replace the placeholder questionnaires with the dissertation's evaluation questionnaire](<items/STUDY-015-dissertation-questionnaire.md>) |
 | DEC-019 | DONE | P1 | decision | [Decide what multiset comparison means when drawn answers run as SELECT DISTINCT](<items/DEC-019-multiset-and-distinct-answers.md>) |
 | BUG-009 | DONE | P1 | bug | [Nodes added by search or Explore relationships land on top of the first node](<items/BUG-009-new-nodes-stack-on-first-node.md>) |

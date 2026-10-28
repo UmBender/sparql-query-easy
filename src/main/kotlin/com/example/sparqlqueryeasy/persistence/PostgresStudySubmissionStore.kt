@@ -13,6 +13,7 @@ import org.jetbrains.exposed.v1.core.and
 import org.jetbrains.exposed.v1.core.eq
 import org.jetbrains.exposed.v1.javatime.timestamp
 import org.jetbrains.exposed.v1.jdbc.insert
+import org.jetbrains.exposed.v1.jdbc.select
 import org.jetbrains.exposed.v1.jdbc.selectAll
 
 internal object StudySubmissions : Table("study_submission") {
@@ -77,6 +78,14 @@ class PostgresStudySubmissionStore(private val connector: DatabaseConnector) : S
                 .where { (StudySubmissions.userId eq userId) and (StudySubmissions.taskId eq taskId) }
                 .orderBy(StudySubmissions.createdAt to SortOrder.ASC, StudySubmissions.id to SortOrder.ASC)
                 .map { it.toSubmission() }
+        }
+
+    override suspend fun solvedByTask(userId: Long): Map<Long, Boolean> =
+        connector.inTransaction {
+            StudySubmissions.select(StudySubmissions.taskId, StudySubmissions.correct)
+                .where { StudySubmissions.userId eq userId }
+                .groupBy({ it[StudySubmissions.taskId] }, { it[StudySubmissions.correct] })
+                .mapValues { (_, verdicts) -> verdicts.any { it } }
         }
 
     private fun AttemptResult.stored() =
