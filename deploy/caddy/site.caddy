@@ -22,7 +22,15 @@ handle {
 	file_server
 }
 
+# QUAL-022: on every response. The SPA's script and style rules are the
+# <meta http-equiv="content-security-policy"> SvelteKit writes into index.html
+# with the hash of its one inline script (frontend/vite.config.ts `csp`); this
+# header adds what a meta tag cannot carry (frame-ancestors) and also covers
+# /swagger and the API. Both policies apply.
 header {
 	X-Content-Type-Options nosniff
 	Referrer-Policy strict-origin-when-cross-origin
+	Content-Security-Policy "frame-ancestors 'none'; object-src 'none'; base-uri 'self'; form-action 'self'"
+	X-Frame-Options DENY
+	Permissions-Policy "camera=(), microphone=(), geolocation=(), payment=(), usb=(), display-capture=()"
 }

@@ -1,13 +1,13 @@
 ---
 id: QUAL-022
 title: Prove errors, logs and exports leak nothing and rendered data cannot run script
-status: BACKLOG
+status: DONE
 priority: P1
 type: quality
 depends_on: []
 human_gate: false
 created: 2026-10-27
-updated: 2026-10-27
+updated: 2026-10-28
 ---
 # Prove errors, logs and exports leak nothing and rendered data cannot run script
 
@@ -39,3 +39,23 @@ Skills: `tcc-test`, `tcc-backend`, `tcc-frontend`.
 Kotlin gate, frontend gate, `test:compose` for headers.
 
 ## Conclusion
+
+All acceptance points are met; results in [[../../08 - Quality/Security Test Plan#QUAL-022 results (2026-10-28)]].
+
+- Errors: `security/ErrorLeakTest`; malformed-body messages no longer name
+  Kotlin classes or serial names; an unhandled failure is a fixed `500
+  Internal server error` (logged server-side). Recorded in API v1 and
+  Current Contracts.
+- Logs: no password, session token or digest, answers or query text at the
+  production levels.
+- CSV: formula escape tested for `=`, `+`, `-`, `@`, tab and CR.
+- XSS: `frontend/tests/xss.e2e.ts`; a `{@html}` mutation fails it.
+- Headers/CSP: Caddy headers plus the SvelteKit hash-mode meta CSP;
+  `style-src 'unsafe-inline'` stays (Cytoscape, bits-ui, Svelte `style:`),
+  scripts only `'self'` plus the boot hash, Zod `jitless`. Browser guards fail
+  on any CSP violation; P-17 now expects the CSP `connect-src` report for an
+  external fetch (the CSP blocks it before the route).
+
+## Execution log
+- 2026-10-28: implemented and validated: Kotlin gate, frontend gate, `test:compose`.
+

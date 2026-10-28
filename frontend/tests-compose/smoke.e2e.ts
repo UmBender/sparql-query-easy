@@ -38,7 +38,20 @@ test('Caddy serves the SPA with its fallback and proxies the API to a ready back
 	expect(Object.keys(((await spec.json()) as { paths: object }).paths)).toContain(
 		'/api/query/stage'
 	);
-	expect((await request.get('/')).headers()['x-content-type-options']).toBe('nosniff');
+	// QUAL-022: the security headers on the SPA and on the API, and the SPA's own policy.
+	for (const path of ['/', '/api/endpoints']) {
+		const headers = (await request.get(path)).headers();
+		expect(headers['x-content-type-options'], path).toBe('nosniff');
+		expect(headers['referrer-policy'], path).toBe('strict-origin-when-cross-origin');
+		expect(headers['content-security-policy'], path).toContain("frame-ancestors 'none'");
+		expect(headers['x-frame-options'], path).toBe('DENY');
+		expect(headers['permissions-policy'], path).toContain('camera=()');
+	}
+	const html = await (await request.get('/')).text();
+	const policy =
+		/<meta http-equiv="content-security-policy" content="([^"]+)"/.exec(html)?.[1] ?? '';
+	expect(policy).toMatch(/script-src 'self' 'sha256-[^']+'(;|$)/);
+	expect(policy).toContain("object-src 'none'");
 
 	// A deep link is served by the index.html fallback; the route guard sends it to login.
 	await page.goto('/study/some-task');
@@ -61,7 +74,9 @@ test('a visitor creates an account, is logged in by the session cookie and logs 
 		.click();
 	await expect(page.getByTestId('account-name')).toHaveText(username);
 	const cookies = await page.context().cookies();
-	expect(cookies.find((cookie) => cookie.httpOnly)?.secure).toBe(true);
+	const session = cookies.find((cookie) => cookie.httpOnly);
+	expect(session?.secure).toBe(true);
+	expect(session?.sameSite).toBe('Lax');
 
 	await page.reload();
 	await expect(page.getByTestId('account-name')).toHaveText(username);

@@ -64,15 +64,23 @@ private fun ApplicationCall.limited(
 
 private const val BUFFER_BYTES = 8 * 1024
 
-/** Malformed JSON of a study or admin body becomes [HttpRequestValidationFailure] (400). */
+/**
+ * Malformed JSON of a study or admin body becomes [HttpRequestValidationFailure] (400). QUAL-022: only the
+ * JSON path of the failure is kept (`$.reference.graph`); kotlinx's message names Kotlin classes.
+ */
 internal inline fun <T> malformedAsValidation(block: () -> T): T =
     try {
         block()
     } catch (failure: SerializationException) {
-        throw HttpRequestValidationFailure("Malformed request body: ${failure.message}", failure)
+        throw HttpRequestValidationFailure(malformedMessage(failure), failure)
     } catch (failure: IllegalArgumentException) {
-        throw HttpRequestValidationFailure("Malformed request body: ${failure.message}", failure)
+        throw HttpRequestValidationFailure(malformedMessage(failure), failure)
     }
+
+internal fun malformedMessage(failure: Throwable): String =
+    JSON_PATH.find(failure.message.orEmpty())?.let { "$MALFORMED_BODY at ${it.value}" } ?: MALFORMED_BODY
+
+private val JSON_PATH = Regex("""\$(?:\.[A-Za-z0-9_]+|\[\d+])+""")
 
 /** QUAL-023: PostgreSQL text and jsonb cannot hold U+0000, so stored bodies refuse it (it answered 503). */
 internal const val NUL_REFUSED = "Text must not contain the NUL character (U+0000)"

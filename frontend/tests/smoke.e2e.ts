@@ -20,5 +20,13 @@ test('P-17 unexpected external browser traffic is rejected', async ({ page, base
 	const unexpected = await guardOffline(page, baseURL!);
 	await page.goto('/');
 	await page.evaluate(() => fetch('https://unexpected.example.test/asset.js').catch(() => {}));
-	expect(unexpected).toEqual(['https://unexpected.example.test/asset.js']);
+	// QUAL-022: the CSP (`connect-src 'self'`) blocks the fetch before it reaches the route; the
+	// guard records the violation, which the page reports asynchronously.
+	await expect
+		.poll(() => unexpected)
+		.toEqual([
+			expect.stringMatching(
+				/^CSP connect-src blocked https:\/\/unexpected\.example\.test\/asset\.js/
+			)
+		]);
 });

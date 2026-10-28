@@ -84,6 +84,19 @@ export function guardOffline(page: Page, baseURL: string): string[] {
 		return route.fallback();
 	});
 	void page.addInitScript(() => window.localStorage.setItem('easyquery-tour-seen', 'true'));
+	// QUAL-022: a Content-Security-Policy violation fails the test like an external request.
+	void page.exposeFunction('__reportCspViolation', (violation: string) => {
+		unexpected.push(`CSP ${violation}`);
+	});
+	void page.addInitScript(() => {
+		document.addEventListener('securitypolicyviolation', (event) => {
+			const report = (window as unknown as { __reportCspViolation: (text: string) => void })
+				.__reportCspViolation;
+			report(
+				`${event.effectiveDirective} blocked ${event.blockedURI || 'inline'} at ${event.sourceFile}`
+			);
+		});
+	});
 	return unexpected;
 }
 

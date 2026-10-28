@@ -62,11 +62,14 @@ import io.ktor.serialization.kotlinx.json.json
 import io.ktor.server.application.Application
 import io.ktor.server.application.ApplicationStopped
 import io.ktor.server.application.install
+import io.ktor.server.application.log
 import io.ktor.server.plugins.BadRequestException
 import io.ktor.server.plugins.ContentTransformationException
 import io.ktor.server.plugins.PayloadTooLargeException
 import io.ktor.server.plugins.contentnegotiation.ContentNegotiation
 import io.ktor.server.plugins.statuspages.StatusPages
+import io.ktor.server.request.httpMethod
+import io.ktor.server.request.path
 import io.ktor.server.request.receive
 import io.ktor.server.request.receiveMultipart
 import io.ktor.server.response.respond
@@ -172,11 +175,15 @@ fun Application.configureSerialization() {
     }
 }
 
-/** The approved public error contract also covers malformed JSON before route binding can begin. */
+/**
+ * The approved public error contract also covers malformed JSON before route binding can begin. QUAL-022:
+ * a malformed body answers one fixed message (the converter's names the Kotlin class), and an unexpected
+ * failure answers a fixed 500 body; its details go to the server log only.
+ */
 fun Application.configureErrorHandling() {
     install(StatusPages) {
-        exception<ContentTransformationException> { call, cause ->
-            call.respond(HttpStatusCode.BadRequest, ErrorResponse(cause.message ?: "Malformed request body"))
+        exception<ContentTransformationException> { call, _ ->
+            call.respond(HttpStatusCode.BadRequest, ErrorResponse(MALFORMED_BODY))
         }
         exception<BadRequestException> { call, cause ->
             // QUAL-023: a streamed body over the limit fails while ContentNegotiation reads it.
@@ -184,15 +191,23 @@ fun Application.configureErrorHandling() {
             if (tooLarge != null) {
                 call.respond(HttpStatusCode.PayloadTooLarge, ErrorResponse(tooLarge.message ?: "Request body is too large"))
             } else {
-                call.respond(HttpStatusCode.BadRequest, ErrorResponse(cause.message ?: "Malformed request body"))
+                call.respond(HttpStatusCode.BadRequest, ErrorResponse(MALFORMED_BODY))
             }
         }
         // QUAL-023: more specific than ContentTransformationException, so a body over the limit is 413.
         exception<PayloadTooLargeException> { call, cause ->
             call.respond(HttpStatusCode.PayloadTooLarge, ErrorResponse(cause.message ?: "Request body is too large"))
         }
+        exception<Throwable> { call, cause ->
+            call.application.log.error("Unhandled failure on ${call.request.httpMethod.value} ${call.request.path()}", cause)
+            call.respond(HttpStatusCode.InternalServerError, ErrorResponse(INTERNAL_ERROR))
+        }
     }
 }
+
+/** QUAL-022: the public text of a malformed body and of an unexpected failure. */
+const val MALFORMED_BODY = "Malformed request body"
+const val INTERNAL_ERROR = "Internal server error"
 
 fun Application.configureRouting(dependencies: HttpDependencies = defaultHttpDependencies()) {
     environment.monitor.subscribe(ApplicationStopped) { dependencies.close() }

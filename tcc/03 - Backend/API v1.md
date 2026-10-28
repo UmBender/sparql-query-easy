@@ -47,7 +47,15 @@ Every query result is a `PropertyDtoResponse`. `propertyType` and
 `400` represents malformed JSON, missing/invalid route input, invalid endpoint
 text, or invalid generated SPARQL. `404` represents a missing or expired local
 RDF graph. `502` represents an upstream SPARQL/endpoint execution failure.
-Unexpected failures have no separately versioned application error envelope.
+
+QUAL-022 (2026-10-28): a body that is not valid JSON or does not fit the
+request type answers `400 {"error":"Malformed request body"}` (before, the
+converter's message named the Kotlin request class); a study or admin body
+adds the JSON path when the parser gives one (`Malformed request body at
+$.reference.graph`). An unexpected failure answers `500
+{"error":"Internal server error"}`; its exception goes to the server log
+only. Error bodies carry no stack trace, class name, SQL, file path or
+internal host (`security/ErrorLeakTest`).
 
 ### Request limits (QUAL-023)
 

@@ -53,6 +53,17 @@ right and stops at the first address that is not a trusted proxy
 the login limit. With `EASYQUERY_ENVIRONMENT=production` cookies are
 `Secure`, which browsers accept only over HTTPS or on localhost.
 
+Every mode sends the same security headers (`site.caddy`, QUAL-022):
+`X-Content-Type-Options: nosniff`, `Referrer-Policy:
+strict-origin-when-cross-origin`, `Content-Security-Policy: frame-ancestors
+'none'; object-src 'none'; base-uri 'self'; form-action 'self'`,
+`X-Frame-Options: DENY` and a `Permissions-Policy` that turns off camera,
+microphone, geolocation, payment, USB and screen capture. The SPA's own
+policy (scripts and styles) is the `<meta http-equiv="content-security-policy">`
+SvelteKit writes into `index.html`: `script-src 'self'` plus the hash of its
+one inline boot script, `style-src 'self' 'unsafe-inline'`, everything else
+`'self'` (images also `data:` and `blob:`). Both policies apply.
+
 Check: `node scripts/check-https-modes.mjs` starts `auto` (domain
 `easyquery.localhost`, Caddy's internal CA, 127.0.0.1:18180/18543) and
 `proxy` (behind a stand-in proxy `edge` on 18191, web direct on 18190, three
@@ -242,8 +253,9 @@ tags the images `:test`, so the `easyquery` project, its volume and the
 `:local` images are untouched. Playwright (`tests-compose/`, Firefox) then
 checks through Caddy: `/health` with a ready database, `/api/endpoints`,
 `/openapi.json`, the
-SPA fallback and route guard, registration with the `HttpOnly`/`Secure`
-cookie, logout, a staged PokemonGen1 query from the saved Fire query, and a
+SPA fallback and route guard, the security headers on `/` and the API and
+the SPA's meta policy (QUAL-022), registration with the
+`HttpOnly`/`Secure`/`SameSite=Lax` cookie, logout, a staged PokemonGen1 query from the saved Fire query, and a
 proposed task seeded through the admin API and answered correctly. Finally
 `down --volumes --remove-orphans` removes the project whatever the result;
 on failure the script prints the `web` and `backend` logs. CI runs it on

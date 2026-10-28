@@ -13,7 +13,9 @@ export default defineConfig({
 	reporter: [['list'], ['html', { open: 'never', outputFolder: 'playwright-report/e2e' }]],
 	webServer: {
 		command: 'npx vite build --mode e2e --minify false && npm run preview',
-		port: 4173
+		port: 4173,
+		// The build alone takes about 30 s; 60 s (the default) ran out on a busy machine.
+		timeout: 180_000
 	},
 	use: { baseURL: 'http://localhost:4173', browserName: 'firefox', headless: true }
 });

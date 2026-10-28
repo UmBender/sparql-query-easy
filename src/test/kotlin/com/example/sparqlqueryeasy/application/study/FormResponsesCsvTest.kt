@@ -45,6 +45,16 @@ class FormResponsesCsvTest {
     }
 
     @Test
+    fun `QUAL-022 text starting with a tab or a carriage return is escaped too`() {
+        val csv =
+            FormResponsesCsv.render(
+                listOf(form(1, "t", "r")),
+                listOf(response("""{"t":"\t=1","r":"\r=2"}""")),
+            )
+        csv.split("\r\n")[1] shouldBe "7,42,Group A,1,1,2026-10-20T12:00:00Z,'\t=1,\"'\r=2\""
+    }
+
+    @Test
     fun `multiple choice is joined with semicolons and unanswered questions are empty`() {
         val csv =
             FormResponsesCsv.render(
