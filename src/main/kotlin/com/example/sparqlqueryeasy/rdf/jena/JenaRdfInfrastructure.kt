@@ -23,6 +23,8 @@ import com.example.sparqlqueryeasy.rdf.RdfValueMapper
 import com.example.sparqlqueryeasy.rdf.SparqlSyntaxValidation
 import com.example.sparqlqueryeasy.rdf.SparqlSyntaxValidator
 import com.example.sparqlqueryeasy.rdf.TurtleParser
+import org.apache.jena.query.ARQ
+import org.apache.jena.query.Query
 import org.apache.jena.query.QueryException
 import org.apache.jena.query.QueryExecution
 import org.apache.jena.query.QueryFactory
@@ -34,6 +36,11 @@ import org.apache.jena.riot.Lang
 import org.apache.jena.riot.RDFParser
 import org.apache.jena.riot.RiotException
 import org.apache.jena.sparql.ARQException
+import org.apache.jena.sparql.algebra.Algebra
+import org.apache.jena.sparql.algebra.OpVisitorBase
+import org.apache.jena.sparql.algebra.op.OpService
+import org.apache.jena.sparql.algebra.walker.Walker
+import org.apache.jena.sparql.expr.ExprVisitorBase
 import java.net.URI
 
 /** Maps Jena nodes at the RDF infrastructure boundary into application-owned values. */
@@ -117,8 +124,11 @@ class JenaLocalSparqlExecutor(
     ): SparqlResult =
         try {
             val jenaQuery = QueryFactory.create(query)
+            require(!jenaQuery.usesService()) { SERVICE_REFUSED }
             val model = graph.toJenaModel()
-            QueryExecution.create(jenaQuery, model).use { execution ->
+            // Defense in depth: ARQ itself refuses SERVICE in this execution.
+            val localOnly = QueryExecution.create().query(jenaQuery).model(model).set(ARQ.httpServiceAllowed, false)
+            localOnly.build().use { execution ->
                 when {
                     jenaQuery.isSelectType -> {
                         val resultSet = execution.execSelect()
@@ -158,6 +168,22 @@ class JenaLocalSparqlExecutor(
         } catch (exception: IllegalArgumentException) {
             throw queryFailure(query, exception)
         }
+}
+
+/** QUAL-020: a local graph answers from its own triples only; SERVICE would make the server fetch a URL. */
+internal const val SERVICE_REFUSED = "SERVICE is not allowed on a local graph"
+
+/** True when any part of the query, EXISTS filters and subqueries included, is a SERVICE call. */
+private fun Query.usesService(): Boolean {
+    var found = false
+    val services =
+        object : OpVisitorBase() {
+            override fun visit(opService: OpService) {
+                found = true
+            }
+        }
+    Walker.walk(Algebra.compile(this), services, ExprVisitorBase())
+    return found
 }
 
 private fun queryFailure(

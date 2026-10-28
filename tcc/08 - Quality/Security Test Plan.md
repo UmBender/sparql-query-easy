@@ -26,8 +26,8 @@ QUAL-023; implementation cards are BACKLOG until authorized.
 | 2 | Becoming admin: register an admin username (case, whitespace, Unicode lookalikes), a `role` field in the body, forged/old/other user's session cookie, session after logout | Partly covered by `AuthRoutesTest` | QUAL-019 |
 | 3 | A participant reading another participant's data or another group's tasks (IDOR), the expected answer of a task | Contract says never returned | QUAL-019 |
 | 4 | Cross-site requests (CSRF) on every state-changing route | Origin + JSON rule on auth/study/admin | QUAL-019 |
-| 5 | SPARQL injection through any client field that reaches the generator | Typed generator: `IriTerm` (java.net.URI), variable regex, escaped literals, numeric regex | QUAL-020 |
-| 6 | SPARQL features that escape the query's scope: `SERVICE`, `FROM`, updates, extra patterns | Generator never emits them; no test proves it | QUAL-020 |
+| 5 | SPARQL injection through any client field that reaches the generator | Tested (QUAL-020): no injection found; every payload is rejected with 400 before execution or stays one term of an unchanged query | QUAL-020 |
+| 6 | SPARQL features that escape the query's scope: `SERVICE`, `FROM`, updates, extra patterns | Tested (QUAL-020); local graphs now refuse `SERVICE` (they used to fetch it) | QUAL-020 |
 | 7 | SSRF: a remote `endpointUrl` pointing at internal hosts (`localhost`, `db`, the university network the app will run in, cloud metadata) | Any http(s) host accepted | QUAL-021 (decision A: allowlist) |
 | 8 | Uploads: oversized or malicious Turtle, another user's uploaded graph by id | No explicit size limit seen; ids are GUIDs | QUAL-021 |
 | 9 | Leaks in errors, logs and exports: stack traces, SQL, paths, passwords, session ids; CSV formula injection in the admin export | Not systematically tested | QUAL-022 |
@@ -41,6 +41,15 @@ QUAL-019 (admin and access) → QUAL-020 (SPARQL injection) → QUAL-022
 (leaks, XSS, headers) → QUAL-023 (limits) → QUAL-021 (SSRF and uploads, after
 its decision). Each lands in the Kotlin gate, the frontend gate or the
 compose smoke as noted on the card; CI already runs all three.
+
+## Findings
+
+- QUAL-020 (2026-10-28): local Jena execution ran `SERVICE` and made the
+  outbound HTTP request; fixed (refused before execution, ARQ service
+  execution off). Not SPARQL injection, left for QUAL-022/023: saving a task
+  or attempt whose text holds U+0000 answers 503 "Accounts are temporarily
+  unavailable" (PostgreSQL cannot store it), and an attempt whose answer
+  variable exceeds 64 characters answers 500.
 
 ## Open decisions
 
