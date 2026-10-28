@@ -13,6 +13,7 @@ This vault is the evidence-based working knowledge base for the undergraduate th
 - [[09 - Decisions/Current Contracts|Current development contracts]]
 - [[04 - Frontend/Frontend Evolution Audit|Frontend evolution audit]]
 - [[01 - Project/Query Types Proposal|Proposed future query types]]
+- [[01 - Project/Questões do Estudo de Avaliação|Study questions: dissertation and proposed (preview, filters)]]
 - [[01 - Project/Workspace Inventory|Workspace inventory]]
 - [[02 - Architecture/System Architecture|System architecture]]
 - [[03 - Backend/API Contract|Current API contract]]

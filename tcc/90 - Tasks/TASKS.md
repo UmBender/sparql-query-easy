@@ -129,6 +129,7 @@ Ordered by dependencies, then priority among selection candidates. See [worker r
 | STUDY-002 | DONE | P1 | fullstack | [Show two questionnaires to logged-in users and store their answers](<items/STUDY-002-questionnaires.md>) |
 | STUDY-012 | DONE | P1 | fullstack | [Build two feature-rich proposed queries in the editor end to end and show what the database stored and returned](<items/STUDY-012-query-creation-test.md>) |
 | DOC-009 | REVIEW | P1 | documentation | [Write the base note for the presentation video on the Brasileirão 2023 dataset](<items/DOC-009-video-presentation-base.md>) |
+| DOC-010 | REVIEW | P1 | documentation | [Collect the dissertation's study questions and propose new ones for preview and filters](<items/DOC-010-study-questions-preview-filters.md>) |
 | STUDY-013 | DONE | P1 | fullstack | [Offer the Brasileirão 2023 example questions as proposed tasks the user can solve like a tester](<items/STUDY-013-brasileirao-practice-tasks.md>) |
 | STUDY-014 | DONE | P1 | fullstack | [Mark on the task list whether each task was already attempted or solved](<items/STUDY-014-task-done-markers.md>) |
 | STUDY-015 | DONE | P1 | fullstack | [Replace the placeholder questionnaires with the dissertation's evaluation questionnaire](<items/STUDY-015-dissertation-questionnaire.md>) |
