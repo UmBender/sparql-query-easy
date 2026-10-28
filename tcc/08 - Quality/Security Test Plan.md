@@ -22,10 +22,10 @@ QUAL-023; implementation cards are BACKLOG until authorized.
 
 | # | Threat | Today (inspected) | Card |
 |---|---|---|---|
-| 1 | Reaching `/api/admin/*` or `/admin` without the admin role | Role from `EASYQUERY_ADMIN_USERNAMES` (AUTH-005), 401/403 guard; per-route tests exist | QUAL-019 |
-| 2 | Becoming admin: register an admin username (case, whitespace, Unicode lookalikes), a `role` field in the body, forged/old/other user's session cookie, session after logout | Partly covered by `AuthRoutesTest` | QUAL-019 |
-| 3 | A participant reading another participant's data or another group's tasks (IDOR), the expected answer of a task | Contract says never returned | QUAL-019 |
-| 4 | Cross-site requests (CSRF) on every state-changing route | Origin + JSON rule on auth/study/admin | QUAL-019 |
+| 1 | Reaching `/api/admin/*` or `/admin` without the admin role | Tested (QUAL-019): `AccessControlMatrixTest` over every OpenAPI operation and routing variants; `frontend/tests/admin-access.e2e.ts` | QUAL-019 DONE |
+| 2 | Becoming admin: register an admin username (case, whitespace, Unicode lookalikes), a `role` field in the body, forged/old/other user's session cookie, session after logout | Tested (QUAL-019): `AdminEscalationTest`; open: a listed name nobody registered yet is claimable by the first registrant | QUAL-019 DONE |
+| 3 | A participant reading another participant's data or another group's tasks (IDOR), the expected answer of a task | Tested (QUAL-019): `ParticipantIsolationTest`; fixed the attempt list revealing another group's task keys (200 `[]` → 404) | QUAL-019 DONE |
+| 4 | Cross-site requests (CSRF) on every state-changing route | Tested (QUAL-019): foreign `Origin` 403 and non-JSON 415 for every auth/study/admin write, state unchanged | QUAL-019 DONE |
 | 5 | SPARQL injection through any client field that reaches the generator | Tested (QUAL-020): no injection found; every payload is rejected with 400 before execution or stays one term of an unchanged query | QUAL-020 |
 | 6 | SPARQL features that escape the query's scope: `SERVICE`, `FROM`, updates, extra patterns | Tested (QUAL-020); local graphs now refuse `SERVICE` (they used to fetch it) | QUAL-020 |
 | 7 | SSRF: a remote `endpointUrl` pointing at internal hosts (`localhost`, `db`, the university network the app will run in, cloud metadata) | Any http(s) host accepted | QUAL-021 (decision A: allowlist) |
@@ -41,6 +41,21 @@ QUAL-019 (admin and access) → QUAL-020 (SPARQL injection) → QUAL-022
 (leaks, XSS, headers) → QUAL-023 (limits) → QUAL-021 (SSRF and uploads, after
 its decision). Each lands in the Kotlin gate, the frontend gate or the
 compose smoke as noted on the card; CI already runs all three.
+
+## QUAL-019 results (2026-10-27)
+
+- Matrix: `src/test/kotlin/com/example/sparqlqueryeasy/http/AccessControlRules.kt`
+  is the one table of expected access; `AccessControlMatrixTest` fails for an
+  OpenAPI operation it lacks, a stale entry, an `/api/admin` entry that is not
+  `ADMIN` or an `/api/study` one that is `PUBLIC`. A mutation (the
+  participants list behind a session instead of the admin role) failed it.
+- Fixed: `GET /api/study/submissions?task=` answered `200 []` for another
+  group's or an inactive task and `404` for an unknown one, so a participant
+  could enumerate other groups' task keys; it now answers `404` like the other
+  task routes.
+- Open, not a code fix: AUTH-005 grants admin to whoever registers a listed
+  name first. Register the admin accounts before participants can reach the
+  server (recorded in API v1); a bootstrap secret would be a new decision.
 
 ## Findings
 

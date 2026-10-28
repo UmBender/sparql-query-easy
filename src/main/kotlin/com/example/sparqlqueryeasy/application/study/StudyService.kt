@@ -41,7 +41,6 @@ class StudyService(
     private val groups: StudyGroupStore,
     private val progress: StudyProgressStore,
     private val submissions: StudySubmissionStore,
-    private val taskStore: StudyTaskStore,
     private val runner: StudyQueryRunner,
     private val clock: Clock = Clock.systemUTC(),
 ) {
@@ -117,12 +116,15 @@ class StudyService(
         )
     }
 
-    /** The user's own attempts at the task, oldest first; null when no task has this key. */
+    /**
+     * The user's own attempts at the task, oldest first; null, like [open], unless the task is an active task of
+     * the user's group, so the answer never tells whether another group's task exists (QUAL-019).
+     */
     suspend fun attempts(
         userId: Long,
         key: String,
     ): List<Submission>? {
-        val task = taskStore.find(key) ?: return null
+        val task = tasks(userId).singleOrNull { it.key == key } ?: return null
         return submissions.list(userId, task.id)
     }
 

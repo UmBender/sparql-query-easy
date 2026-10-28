@@ -108,7 +108,7 @@ internal fun Route.documentStudyListSubmissions(): Route =
                 schema = jsonSchema<ErrorResponse>()
             }
             HttpStatusCode.NotFound {
-                description = "No task has this key."
+                description = "No active task with this key in the caller's group (QUAL-019: as for an unknown key)."
                 schema = jsonSchema<ErrorResponse>()
             }
             sessionErrors()

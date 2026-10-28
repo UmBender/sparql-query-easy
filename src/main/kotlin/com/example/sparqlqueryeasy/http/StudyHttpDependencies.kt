@@ -40,7 +40,6 @@ fun studyHttpDependencies(
             PostgresStudyGroupStore(database),
             PostgresStudyProgressStore(database),
             PostgresStudySubmissionStore(database),
-            PostgresStudyStore(database),
             runner,
             clock,
         ),

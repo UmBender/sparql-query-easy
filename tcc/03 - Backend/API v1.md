@@ -496,7 +496,13 @@ unaffected).
 | `GET /api/auth/session` | — | `200 {"data":{"username":"Ada","role":"participant"}}` | `401 {"error":"Login required"}` |
 
 - Usernames: 3–32 letters, digits, `.`, `_`, `-`; unique regardless of case;
-  the registered spelling is returned. Passwords: 8–128 characters, hashed
+  the registered spelling is returned. The name is trimmed (any Unicode
+  whitespace, `\u00a0` included), must then be ASCII only and is compared
+  lower-cased (`Locale.ROOT`): another case or surrounding whitespace is the
+  same account (`409`); a Unicode lookalike (Cyrillic `а`, fullwidth or small
+  capital letters), a zero-width, combining or NUL character, or inner
+  whitespace is `400` (QUAL-019). The account bodies are strict: an unknown
+  field such as `role` or `isAdmin` makes register and login `400`. Passwords: 8–128 characters, hashed
   with Argon2id (PHC string, per-password salt; cost from
   `EASYQUERY_ARGON2_*`).
 - Session: 32 random bytes (base64url) in `easyquery_session`, `HttpOnly`,
@@ -523,6 +529,22 @@ unaffected).
 - Every path under `/api/admin/` requires the admin role: `401 {"error":"Login
   required"}` without a session, `403 {"error":"Admin role required"}` for a
   participant; an admin gets `404` on a path no route serves.
+- The role is read from `app_user` on every request, so a session never
+  carries it: a demoted admin's existing session is a participant's after the
+  restart. Only the `easyquery_session` cookie counts (no header, other
+  cookie or body field); a forged, truncated, padded, expired, logged-out or
+  rotated id, or the stored digest itself, is `401`.
+- A listed name that nobody has registered yet becomes admin for whoever
+  registers it first (AUTH-005 has no other bootstrap): register the admin
+  accounts before participants can reach the server.
+- Access matrix (QUAL-019): `AccessControlMatrixTest` reads every operation of
+  the live `/openapi.json` and calls it as anonymous, two participants of
+  different groups and the admin, against the table in
+  `src/test/kotlin/com/example/sparqlqueryeasy/http/AccessControlRules.kt`
+  (`PUBLIC`, `LOGIN`, `PARTICIPANT_OWN`, `ADMIN`). An operation missing from
+  the table fails the build; every non-GET operation under `/api/auth`,
+  `/api/study` and `/api/admin` is also checked for the `403`/`415` CSRF
+  answers. A new route is classified there.
 
 ## Proposed tasks (admin, STUDY-006)
 
@@ -628,7 +650,7 @@ tasks of their group (STUDY-007).
 | Route | Body | Success | Errors |
 |---|---|---|---|
 | `POST /api/study/tasks/{key}/submissions` | a drawn query `{"graph","query"}` (as for task references) | `201` the attempt | `400` malformed body (not stored), `404` task not open to the caller, `403`/`415` CSRF |
-| `GET /api/study/submissions?task={key}` | — | `200` the caller's attempts at the task, oldest first | `400` no `task`, `404` unknown key |
+| `GET /api/study/submissions?task={key}` | — | `200` the caller's attempts at the task, oldest first | `400` no `task`, `404 {"error":"Task not found"}` for an unknown or inactive task or one outside the caller's group (QUAL-019) |
 
 - An attempt is `{"attempt","correct","invalid","feedback","matched","missing",
   "extra","expectedCount","taskRevision","timeSpentMs","createdAt"}`;

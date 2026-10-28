@@ -3353,7 +3353,7 @@
                         }
                     },
                     "404": {
-                        "description": "No task has this key.",
+                        "description": "No active task with this key in the caller's group (QUAL-019: as for an unknown key).",
                         "content": {
                             "application/json": {
                                 "schema": {

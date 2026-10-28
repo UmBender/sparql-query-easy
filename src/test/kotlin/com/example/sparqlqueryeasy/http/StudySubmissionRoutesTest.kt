@@ -98,7 +98,8 @@ class StudySubmissionRoutesTest {
             ada.get("/api/study/submissions?task=fire-fast").data().jsonArray.map { it.int("attempt") to it.bool("correct") } shouldBe
                 listOf(1 to true, 2 to false)
             bob.get("/api/study/submissions?task=fire-fast").data().jsonArray.map { it.int("attempt") } shouldBe listOf(1)
-            userClient("Cyd").get("/api/study/submissions?task=fire-fast").bodyAsText() shouldBe """{"data":[]}"""
+            // QUAL-019: without the task in their group, Cyd cannot tell that it exists.
+            userClient("Cyd").get("/api/study/submissions?task=fire-fast").bodyAsText() shouldBe """{"error":"Task not found"}"""
             ada.get("/api/study/submissions").status shouldBe HttpStatusCode.BadRequest
             ada.get("/api/study/submissions?task=missing").status shouldBe HttpStatusCode.NotFound
         }
@@ -197,7 +198,7 @@ class StudySubmissionRoutesTest {
             fireTaskFor("Ada")
             val bob = userClient("Bob")
             bob.submit().status shouldBe HttpStatusCode.NotFound
-            bob.get("/api/study/submissions?task=fire-fast").bodyAsText() shouldBe """{"data":[]}"""
+            bob.get("/api/study/submissions?task=fire-fast").bodyAsText() shouldBe """{"error":"Task not found"}"""
         }
 
     @Test

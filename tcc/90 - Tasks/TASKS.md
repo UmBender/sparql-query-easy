@@ -150,7 +150,7 @@ Ordered by dependencies, then priority among selection candidates. See [worker r
 | FE-054 | DONE | P2 | frontend | [Rewrite the guided tour for the current editor's features](<items/FE-054-tour-for-current-editor.md>) |
 | DOC-006 | DONE | P2 | frontend | [Add an in-app /help page with screenshots one command can regenerate](<items/DOC-006-user-guide-with-screenshots.md>) |
 | QUAL-018 | DONE | P2 | quality | [Fail CI if jQuery or legacy page files come back, and confirm every test layer is green](<items/QUAL-018-legacy-free-guard.md>) |
-| QUAL-019 | READY | P1 | quality | [Prove no route or trick reaches admin or another participant's data](<items/QUAL-019-access-control-matrix.md>) |
+| QUAL-019 | DONE | P1 | quality | [Prove no route or trick reaches admin or another participant's data](<items/QUAL-019-access-control-matrix.md>) |
 | QUAL-020 | DONE | P1 | quality | [Prove client input cannot inject SPARQL into generated queries](<items/QUAL-020-sparql-injection-suite.md>) |
 | QUAL-021 | BACKLOG | P1 | quality | [Stop remote endpoints from reaching internal hosts and bound uploads](<items/QUAL-021-ssrf-and-uploads.md>) |
 | QUAL-022 | BACKLOG | P1 | quality | [Prove errors, logs and exports leak nothing and rendered data cannot run script](<items/QUAL-022-leaks-xss-headers.md>) |

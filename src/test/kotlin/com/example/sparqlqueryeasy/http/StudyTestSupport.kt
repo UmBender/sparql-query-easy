@@ -39,6 +39,7 @@ internal fun ApplicationTestBuilder.studyApp(
     database: DatabaseSettings? = TestPostgres.freshDatabase(),
     clock: MutableClock = MutableClock(),
     connector: DatabaseConnector = DatabaseConnector(database).also { it.connect() },
+    admins: Set<String> = setOf(ADMIN),
 ): StudyTestContext {
     val base = defaultHttpDependencies(AppSettings())
     val query = checkNotNull(base.query)
@@ -48,7 +49,7 @@ internal fun ApplicationTestBuilder.studyApp(
                 PostgresAccountStore(connector),
                 Argon2PasswordHasher(Argon2Settings(memoryKib = 1_024, iterations = 1, parallelism = 1)),
                 clock,
-                adminUsernames = setOf(ADMIN),
+                adminUsernames = admins,
             ),
             AttemptLimiter(1_000, clock = clock),
             secureCookies = false,
