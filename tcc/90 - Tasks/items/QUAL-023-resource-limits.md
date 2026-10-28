@@ -27,6 +27,12 @@ Skills: `tcc-test`, `tcc-backend`.
   per-user rate limit if missing (decide value; record).
 - Deeply nested or very large `where` arrays are rejected before
   generation.
+- Found by QUAL-020 (2026-10-28): a task or attempt text containing U+0000
+  answers `503 Accounts are temporarily unavailable` (PostgreSQL cannot
+  store NUL), and an attempt whose answer variable is longer than 64
+  characters answers `500` (column width). Both must become `400` with the
+  contract error, validated before persistence; the QUAL-020 study
+  injection test excludes these two cases until then.
 
 ## Validation
 
