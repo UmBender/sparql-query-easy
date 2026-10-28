@@ -442,8 +442,8 @@ Resposta (3, empatados com 14): **Athletico-PR, Corinthians, Cruzeiro**.
 Variações de uma resposta só: *MAX* em `incluiGolsPro` → **Palmeiras** (64);
 *MIN* em `incluiSaldoGols` → **América-MG** (−39).
 
-> Atenção: **View SPARQL** mostra MAX/MIN como `str(?x) = "14"` (ver
-> "Cuidados"). Não mostre View SPARQL nesta cena.
+> Desde o BUG-012, **View SPARQL** mostra o MAX/MIN real (a subconsulta com
+> `MAX(...)`/`MIN(...)` e `FILTER (?literalValue0 = ?__extreme0)`).
 
 ### P7 — Quais atletas marcaram gol contra? (médio — dois saltos)
 
@@ -711,12 +711,10 @@ P8, P9 e P10.
 - **Classes não aparecem na busca:** chega-se a elas por `…#type` em
   **Explore relationships**. Essa linha não tem rótulo; use a caixa
   *Filter…*.
-- **View SPARQL e MAX/MIN:** num valor literal, **View SPARQL** mostra o
-  filtro como igualdade (`str(?x) = "14"`), porque essa rota ignora o tipo
-  de filtro (comportamento herdado da versão C#). **Run Query**, o funil e a
-  conferência de respostas usam MAX/MIN corretamente. Mostre View SPARQL só em
-  consultas com filtros de variável de valor literal (P2, P3, P5 com
-  *Add value filter*).
+- **View SPARQL e filtros:** corrigido pelo BUG-012 (2026-10-28). Antes,
+  num valor literal, **View SPARQL** mostrava qualquer filtro (MAX/MIN
+  inclusive) como igualdade (`str(?x) = "14"`), herança da versão C#; agora
+  mostra o filtro que **Run Query** aplica.
 - **MAX/MIN** só aparecem no editor de um **valor literal** (via **Edit
   value**), não numa variável de valor literal. O texto atual do tour sugere o
   contrário.

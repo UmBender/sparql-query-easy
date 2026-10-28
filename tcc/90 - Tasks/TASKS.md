@@ -136,6 +136,7 @@ Ordered by dependencies, then priority among selection candidates. See [worker r
 | BUG-009 | DONE | P1 | bug | [Nodes added by search or Explore relationships land on top of the first node](<items/BUG-009-new-nodes-stack-on-first-node.md>) |
 | BUG-010 | DONE | P2 | bug | [A MAX or MIN value applied with an empty value field reopens with text filters only](<items/BUG-010-max-min-reopens-as-text.md>) |
 | BUG-011 | DONE | P2 | bug | [Searching a team name on a built-in dataset lists goals and matches but not the team](<items/BUG-011-local-search-misses-exact-team-names.md>) |
+| BUG-012 | DONE | P1 | bug | [View SPARQL shows a MAX, MIN or other value filter as an exact value](<items/BUG-012-view-sparql-ignores-filters.md>) |
 | OPS-006 | DONE | P1 | operations | [Run db, backend and web together with Docker Compose](<items/OPS-006-docker-compose-stack.md>) |
 | OPS-007 | DONE | P2 | operations | [Start only PostgreSQL for local development and reach it from ./gradlew run](<items/OPS-007-local-dev-database.md>) |
 | DEC-017 | DONE | P1 | decision | [Decide how the T11 brief changes the deployment contract of OPS-001 and OPS-006](<items/DEC-017-t11-deploy-brief-differences.md>) |

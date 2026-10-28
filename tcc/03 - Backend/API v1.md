@@ -72,8 +72,9 @@ and `SELECT-ORDER-MIN-001` keep their captures and still match by result.
 An omitted or `null` `filterType` produces an exact `str()` match; the OpenAPI
 enums of both `filterType` fields list `null` (QUAL-012: the legacy fixtures
 send it, and JSON Schema rejects a value missing from `enum` even when `type`
-allows null). The `/api/query/sparql` display route deliberately ignores a
-provided `filterType`, preserving C# behavior.
+allows null). The `/api/query/sparql` display route renders every
+`filterType` the same way (BUG-012, 2026-10-28; C# ignored it there and showed
+an exact `str()` match, so a MAX/MIN value looked like an exact value).
 
 ### Variable filters (FE-034)
 
@@ -333,7 +334,12 @@ or invalid generated SPARQL return `400`; unavailable local graph returns
 
 Uses exactly the same request structure and validation as `POST /api/query`,
 but generates and returns SPARQL without executing it. `ignoreWikidata` is not
-used by this route and `filterType` is intentionally ignored.
+used by this route. Since BUG-012 (2026-10-28) it applies `filterType` like
+`POST /api/query`: Starts/Contains/≥/≤/Between conditions, and for `4`/`5` the
+BE-004 extreme subquery with `FILTER (?literalValue<n> = ?__extreme<n>)` and
+the `EASYQUERY_EXTREME_RESULT_LIMIT` cap. The displayed query differs from the
+executed one only in projection and type/label patterns. C# ignored
+`filterType` here.
 
 Success (`200 OK`):
 

@@ -111,7 +111,7 @@ class QueryRoutesTest {
         }
 
     @Test
-    fun `POST api query sparql ignores filter type as C sharp does and never executes`() =
+    fun `POST api query sparql shows the filter type unlike C sharp and never executes`() =
         testApplication {
             val execution = RecordingExecution(generalResult())
             application { queryTestModule(execution) }
@@ -125,8 +125,31 @@ class QueryRoutesTest {
                 }
 
             response.status shouldBe HttpStatusCode.OK
-            response.bodyAsText().contains("""str(?literalValue0) = \"value\"""") shouldBe true
+            response.bodyAsText().contains("""FILTER (STRSTARTS(STR(?literalValue0), \"value\"))""") shouldBe true
+            response.bodyAsText().contains("str(?literalValue0)") shouldBe false
             response.bodyAsText().contains("LIMIT 2") shouldBe true
+            execution.queries shouldBe emptyList()
+        }
+
+    @Test
+    fun `BUG-012 POST api query sparql shows a MAX filter as the extreme subquery`() =
+        testApplication {
+            val execution = RecordingExecution(generalResult())
+            application { queryTestModule(execution) }
+
+            val response =
+                client.post("/api/query/sparql") {
+                    jsonBody(
+                        """{"endpointUrl":"$BRASILEIRAO_ENDPOINT_ID","limit":20,"variableName":"?item","where":[""" +
+                            """{"subject":"?item","predicate":"<https://example.test/p>","object":"14","filterType":4}]}""",
+                    )
+                }
+
+            response.status shouldBe HttpStatusCode.OK
+            val body = response.bodyAsText()
+            body.contains("SELECT (MAX(?__extremeValue0_0) AS ?__extreme0)") shouldBe true
+            body.contains("FILTER (?literalValue0 = ?__extreme0)") shouldBe true
+            body.contains("""str(?literalValue0) = \"14\"""") shouldBe false
             execution.queries shouldBe emptyList()
         }
 

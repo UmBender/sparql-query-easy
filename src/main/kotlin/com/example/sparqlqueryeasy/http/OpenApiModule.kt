@@ -231,7 +231,9 @@ internal fun Route.documentSparqlGeneration(): Route =
     describe {
         operationId = "generateSparql"
         summary = "Generate SPARQL without executing it"
-        description = "Uses the general-query request shape. ignoreWikidata and filterType do not affect this route."
+        description =
+            "Uses the general-query request shape. ignoreWikidata does not affect this route; " +
+            "filterType is shown as POST /api/query applies it (BUG-012)."
         tag("Query")
         requestBody {
             required = true

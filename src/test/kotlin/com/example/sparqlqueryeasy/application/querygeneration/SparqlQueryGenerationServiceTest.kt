@@ -8,7 +8,10 @@ import com.example.sparqlqueryeasy.domain.model.SparqlSelectResult
 import com.example.sparqlqueryeasy.rdf.SparqlSyntaxValidation
 import com.example.sparqlqueryeasy.rdf.SparqlSyntaxValidator
 import com.example.sparqlqueryeasy.rdf.jena.JenaSparqlSyntaxValidator
+import com.example.sparqlqueryeasy.wikidata.query.Between
 import com.example.sparqlqueryeasy.wikidata.query.CSharpCompatibleWikidataQueryGenerator
+import com.example.sparqlqueryeasy.wikidata.query.Contains
+import com.example.sparqlqueryeasy.wikidata.query.GeneralSelectQuery
 import com.example.sparqlqueryeasy.wikidata.query.GreaterOrEqual
 import com.example.sparqlqueryeasy.wikidata.query.IriTerm
 import com.example.sparqlqueryeasy.wikidata.query.LessOrEqual
@@ -76,16 +79,77 @@ LIMIT 20
     }
 
     @Test
-    fun `filter fixtures retain CSharp GetSparqlQuery behavior`() {
-        val request =
-            SparqlQueryGenerationRequest(
-                QueryVariable("item"),
-                listOf(pattern().copy(`object` = LiteralObject("A&B"), filter = StartsWith("ignored"))),
+    fun `BUG-012 a MAX filter is shown as the extreme subquery Run Query applies`() {
+        val query = shown(requestWithFilter(Maximum, "14"))
+        assertEquals(
+            """PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
+PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+PREFIX owl: <http://www.w3.org/2002/07/owl#>
+SELECT DISTINCT ?item ?itemLabel
+WHERE {
+?item <https://example.test/type> ?literalValue0 .
+OPTIONAL {
+?item rdfs:label ?itemLabel .
+FILTER (lang(?itemLabel) = "en")
+}
+{
+SELECT (MAX(?__extremeValue0_0) AS ?__extreme0)
+WHERE {
+?item <https://example.test/type> ?__extremeValue0_0 .
+}
+}
+FILTER (?literalValue0 = ?__extreme0)
+}
+LIMIT 20
+""",
+            query,
+        )
+    }
+
+    @Test
+    fun `BUG-012 a MIN filter uses MIN and the extreme row cap`() {
+        val request = requestWithFilter(Minimum, "14").copy(limit = 500)
+        val query = shown(request)
+        assertTrue("SELECT (MIN(?__extremeValue0_0) AS ?__extreme0)" in query)
+        assertTrue("FILTER (?literalValue0 = ?__extreme0)" in query)
+        assertTrue("str(?literalValue0)" !in query)
+        assertTrue(query.endsWith("LIMIT 100\n"))
+    }
+
+    @Test
+    fun `BUG-012 every other filter type is shown as Run Query applies it`() {
+        val expected =
+            mapOf(
+                StartsWith("A&B") to "FILTER (STRSTARTS(STR(?literalValue0), \"A&B\"))",
+                Contains("A") to "FILTER (CONTAINS(STR(?literalValue0), \"A\"))",
+                GreaterOrEqual("2") to "FILTER (?literalValue0 >= 2)",
+                LessOrEqual("2") to "FILTER (?literalValue0 <= 2)",
+                Between("1", "3") to "FILTER (?literalValue0 >= 1 && ?literalValue0 <= 3)",
             )
-        val result = service().generate(request, local) as SparqlQueryGenerationResult.Success
-        assertTrue(result.query.contains("str(?literalValue0) = \"A&B\""))
-        assertTrue("FILTER (STRSTARTS" !in result.query)
-        assertTrue("ORDER BY" !in result.query)
+        expected.forEach { (filter, line) ->
+            val query = shown(requestWithFilter(filter))
+            assertTrue(line in query, "$filter: $query")
+            assertTrue("str(?literalValue0)" !in query, "$filter: $query")
+        }
+    }
+
+    @Test
+    fun `BUG-012 shown filters equal the filters of the executed query`() {
+        listOf(Maximum, Minimum, StartsWith("A"), GreaterOrEqual("2"), Between("1", "3"), null).forEach { filter ->
+            val request = requestWithFilter(filter)
+            val displayed = shown(request)
+            val executed =
+                generator.generate(
+                    GeneralSelectQuery(request.variable, request.patterns, request.limit, useWikidataLabels = false),
+                )
+            assertEquals(filterLines(executed), filterLines(displayed), "$filter")
+        }
+    }
+
+    @Test
+    fun `a literal without a filter type is still an exact match`() {
+        val query = shown(requestWithFilter(null, "A&B"))
+        assertTrue("FILTER (str(?literalValue0) = \"A&B\") ." in query)
     }
 
     @Test
@@ -152,11 +216,23 @@ LIMIT 20
             `object` = TermObject(VariableTerm(QueryVariable("kind"))),
         )
 
-    private fun requestWithFilter(filter: QueryFilter) =
-        SparqlQueryGenerationRequest(
-            QueryVariable("item"),
-            listOf(pattern().copy(`object` = LiteralObject("2"), filter = filter)),
-        )
+    private fun requestWithFilter(
+        filter: QueryFilter?,
+        value: String = "2",
+    ) = SparqlQueryGenerationRequest(
+        QueryVariable("item"),
+        listOf(pattern().copy(`object` = LiteralObject(value), filter = filter)),
+    )
+
+    private fun shown(request: SparqlQueryGenerationRequest) =
+        (service().generate(request, local) as SparqlQueryGenerationResult.Success).query
+
+    /** Value conditions and extreme subqueries; the label language filters are left out. */
+    private fun filterLines(query: String) =
+        query.lines().filter { line ->
+            val condition = line.startsWith("FILTER") && "lang(" !in line
+            condition || "AS ?__extreme" in line
+        }
 
     private fun endpoint(url: String) =
         RemoteSparqlEndpointContext(

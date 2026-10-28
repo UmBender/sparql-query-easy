@@ -24,7 +24,7 @@ sealed interface SparqlQueryGenerationResult {
     data class InvalidGeneratedQuery(val diagnostic: String) : SparqlQueryGenerationResult
 }
 
-/** Generates the C# GetSparqlQuery form without executing it. */
+/** Generates the C# GetSparqlQuery form, with its filters (BUG-012), without executing it. */
 class SparqlQueryGenerationService(
     private val generator: WikidataQueryGenerator,
     private val syntaxValidator: SparqlSyntaxValidator,
@@ -38,10 +38,9 @@ class SparqlQueryGenerationService(
                 generator.generate(
                     DisplaySelectQuery(
                         variable = request.variable,
-                        // GetSparqlQuery passes no FilterType to the builder. Keep that
-                        // observable behavior; the typed generator's filter support is used
-                        // by later use cases.
-                        patterns = request.patterns.map { it.copy(filter = null) },
+                        // BUG-012: unlike C# GetSparqlQuery, the preview keeps each filterType
+                        // (MAX/MIN included), so it shows the filter Run Query applies.
+                        patterns = request.patterns,
                         limit = request.limit,
                         useWikidataPrefixes = endpoint.isWikidata,
                         // FE-034: variable filters are new, so the preview shows them.
