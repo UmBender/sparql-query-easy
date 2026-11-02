@@ -1,7 +1,7 @@
 ---
 id: STUDY-016
 title: Save a drawn answer, with or without variables, and show the participant no correctness
-status: BACKLOG
+status: READY
 priority: P1
 type: fullstack
 depends_on: [DEC-020]

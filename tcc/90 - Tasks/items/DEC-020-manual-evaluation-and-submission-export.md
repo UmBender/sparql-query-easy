@@ -1,7 +1,7 @@
 ---
 id: DEC-020
 title: Decide how saved answers are evaluated by hand and exported with a plain-text diagram
-status: REVIEW
+status: DONE
 priority: P1
 type: decision
 depends_on: [DEC-014]
@@ -103,9 +103,9 @@ researcher and not a grade.
 ## Acceptance criteria
 
 - [x] The user answers points 1–5 (above).
-- [ ] The user accepts or changes C1–C5 and C8–C10.
-- [ ] The decision is recorded in Open Decisions and Current Contracts (Study row).
-- [ ] STUDY-016, STUDY-017 and STUDY-018 match the accepted options before leaving BACKLOG.
+- [x] The user accepts or changes C1–C5 and C8–C10 (accepted as recommended, 2026-11-02).
+- [x] The decision is recorded in Open Decisions and Current Contracts (Study row).
+- [x] STUDY-016, STUDY-017 and STUDY-018 match the accepted options before leaving BACKLOG.
 
 ## Implementation cards
 
@@ -119,3 +119,5 @@ STUDY-016 (save without feedback, variable-free answers) → STUDY-017
 - 2026-11-02: The user replaced Mermaid with plain text ("utilize plain text,
   como foi inicialmente proposto"). C4/C5 rewritten for plain text; C6 (mermaid
   devDependency) and C7 (`.mmd` name) removed.
+- 2026-11-02: The user accepted C1–C5 and C8–C10 as recommended ("Ok"). DONE;
+  STUDY-016 is READY.

@@ -133,8 +133,8 @@ Ordered by dependencies, then priority among selection candidates. See [worker r
 | STUDY-013 | DONE | P1 | fullstack | [Offer the Brasileirão 2023 example questions as proposed tasks the user can solve like a tester](<items/STUDY-013-brasileirao-practice-tasks.md>) |
 | STUDY-014 | DONE | P1 | fullstack | [Mark on the task list whether each task was already attempted or solved](<items/STUDY-014-task-done-markers.md>) |
 | STUDY-015 | DONE | P1 | fullstack | [Replace the placeholder questionnaires with the dissertation's evaluation questionnaire](<items/STUDY-015-dissertation-questionnaire.md>) |
-| DEC-020 | REVIEW | P1 | decision | [Decide how saved answers are evaluated by hand and exported with a plain-text diagram](<items/DEC-020-manual-evaluation-and-submission-export.md>) |
-| STUDY-016 | BACKLOG | P1 | fullstack | [Save a drawn answer, with or without variables, and show the participant no correctness](<items/STUDY-016-save-answer-without-feedback.md>) |
+| DEC-020 | DONE | P1 | decision | [Decide how saved answers are evaluated by hand and exported with a plain-text diagram](<items/DEC-020-manual-evaluation-and-submission-export.md>) |
+| STUDY-016 | READY | P1 | fullstack | [Save a drawn answer, with or without variables, and show the participant no correctness](<items/STUDY-016-save-answer-without-feedback.md>) |
 | STUDY-017 | BACKLOG | P1 | fullstack | [Let an admin review each participant's last saved answer beside the task's reference query](<items/STUDY-017-admin-submission-review.md>) |
 | STUDY-018 | BACKLOG | P1 | fullstack | [Export the last saved answers as a ZIP with plain-text diagrams for manual or AI-assisted grading](<items/STUDY-018-submission-export-plain-text.md>) |
 | DEC-019 | DONE | P1 | decision | [Decide what multiset comparison means when drawn answers run as SELECT DISTINCT](<items/DEC-019-multiset-and-distinct-answers.md>) |
