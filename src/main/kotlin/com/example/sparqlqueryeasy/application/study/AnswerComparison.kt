@@ -2,6 +2,7 @@ package com.example.sparqlqueryeasy.application.study
 
 import com.example.sparqlqueryeasy.domain.model.Literal
 import com.example.sparqlqueryeasy.domain.model.RdfValue
+import com.example.sparqlqueryeasy.wikidata.query.TriplePattern
 import java.util.Locale
 
 /**
@@ -46,6 +47,41 @@ object AnswerComparison {
         val extra = got.values.sum() - matched
         return ComparisonOutcome(missing == 0 && extra == 0, matched, missing, extra, wanted.values.sum())
     }
+
+    /**
+     * DEC-020 C1: an answer without variables against the reference, as sets of drawn triples (subject, predicate,
+     * object and any literal filter). Order and repeated triples never matter; nothing is run.
+     */
+    fun compareStructure(
+        reference: List<TriplePattern>,
+        answer: List<TriplePattern>,
+    ): AnswerCheck.Structural {
+        val wanted = reference.toSet()
+        val got = answer.toSet()
+        return AnswerCheck.Structural(missing = (wanted - got).size, extra = (got - wanted).size)
+    }
+
+    /**
+     * DEC-020 C2: one answer variable's run against the expected values. A cut result (more rows than the task's
+     * cap) is never a match; a failed run keeps its diagnostic.
+     */
+    fun checkVariable(
+        variable: String,
+        run: AnswerRun,
+        expected: List<RdfValue>,
+        comparison: Comparison,
+    ): VariableCheck =
+        when (run) {
+            is AnswerRun.Failed -> VariableCheck(variable, run.sparql, null, run.diagnostic)
+            is AnswerRun.Complete -> {
+                val outcome = compare(expected, run.result.values, comparison)
+                VariableCheck(variable, run.result.sparql, AttemptResult(outcome, run.result.values, false), null)
+            }
+            is AnswerRun.Truncated -> {
+                val outcome = compare(expected, run.values, comparison).copy(correct = false)
+                VariableCheck(variable, run.sparql, AttemptResult(outcome, run.values, truncated = true), null)
+            }
+        }
 
     private fun counts(
         values: List<RdfValue>,

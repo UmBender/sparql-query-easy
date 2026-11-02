@@ -4,6 +4,7 @@ import {
 	answerQuery,
 	answerVariables,
 	emptyGraph,
+	savedAnswerQuery,
 	loadQuery,
 	textBlocks,
 	type QueryGraph
@@ -52,6 +53,84 @@ describe('answer query (STUDY-006, DEC-014 Q5)', () => {
 		});
 		expect(answerQuery(emptyGraph, '?x')).toEqual({
 			message: 'Draw at least one relation before submitting.'
+		});
+	});
+});
+
+describe('saved answer (STUDY-016, DEC-020)', () => {
+	const pk = 'http://easyquery.example.org/pokemon#';
+	const entity = (name: string, x: number) => ({
+		id: `<${pk}${name}>`,
+		kind: 'entity',
+		label: name,
+		value: `<${pk}${name}>`,
+		position: { x, y: 0 }
+	});
+	const relation = (id: string, source: string, target: string) => ({
+		id,
+		label: id,
+		predicate: `<${pk}${id}>`,
+		source: `<${pk}${source}>`,
+		target: `<${pk}${target}>`
+	});
+	const saved = (nodes: unknown[], edges: unknown[]) =>
+		graphOf(
+			JSON.stringify({
+				formatVersion: 1,
+				endpoint: { kind: 'builtIn', id: 'PokemonGen1' },
+				limit: 150,
+				order: [],
+				nodes,
+				edges
+			})
+		);
+
+	it('keeps the variables and filters of a diagram with variables, without an answer variable', () => {
+		expect(savedAnswerQuery(graphOf(fireSpeed))).toEqual({
+			query: { where: captured.where, variableFilters: captured.variableFilters }
+		});
+	});
+
+	it('keeps every relation of an entity-only diagram, even in separate parts', () => {
+		const graph = saved(
+			[
+				entity('Charizard', 0),
+				entity('FireType', 1),
+				entity('Pikachu', 2),
+				entity('ElectricType', 3)
+			],
+			[
+				relation('hasType', 'Charizard', 'FireType'),
+				relation('isType', 'Pikachu', 'ElectricType')
+			]
+		);
+		const result = savedAnswerQuery(graph);
+		expect(result).toEqual({
+			query: {
+				where: [
+					{
+						subject: `<${pk}Charizard>`,
+						predicate: `<${pk}hasType>`,
+						object: `<${pk}FireType>`,
+						filterType: null
+					},
+					{
+						subject: `<${pk}Pikachu>`,
+						predicate: `<${pk}isType>`,
+						object: `<${pk}ElectricType>`,
+						filterType: null
+					}
+				]
+			}
+		});
+	});
+
+	it('saves a single node with an empty where and refuses an empty diagram', () => {
+		expect(savedAnswerQuery(saved([entity('Charizard', 0)], []))).toEqual({
+			query: { where: [] }
+		});
+		expect(savedAnswerQuery(emptyGraph)).toEqual({
+			message: 'Draw your answer before saving.'
 		});
 	});
 });

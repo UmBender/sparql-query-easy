@@ -2,25 +2,25 @@ import { expect, type Locator, type Page } from '@playwright/test';
 import { EditorPage } from './editor-page';
 
 /**
- * QUAL-013: a proposed task (`/study/<key>`, STUDY-003/004): the editor with
- * the task's panel, the answer variable, Submit answer, its feedback and the
- * attempt history (newest first).
+ * QUAL-013: a proposed task (`/study/<key>`, STUDY-003/016): the editor with
+ * the task's panel, Save answer and its status line (the last save time or
+ * why the diagram cannot be saved; never correctness, DEC-020).
  */
 export class TaskPage {
 	readonly editor: EditorPage;
 	readonly title: Locator;
 	readonly statement: Locator;
 	readonly feedback: Locator;
-	readonly attempts: Locator;
-	readonly submitButton: Locator;
+	readonly savedAt: Locator;
+	readonly saveButton: Locator;
 
 	constructor(readonly page: Page) {
 		this.editor = new EditorPage(page);
 		this.title = page.locator('#task-title');
 		this.statement = page.getByTestId('task-statement');
 		this.feedback = page.getByTestId('answer-feedback');
-		this.attempts = page.getByTestId('attempt-history').getByRole('listitem');
-		this.submitButton = page.locator('#submit-answer-btn');
+		this.savedAt = this.feedback.locator('time');
+		this.saveButton = page.locator('#submit-answer-btn');
 	}
 
 	async open(key: string) {
@@ -28,11 +28,7 @@ export class TaskPage {
 		await expect(this.title).toBeVisible();
 	}
 
-	answerVariable(name: string): Locator {
-		return this.page.getByRole('radio', { name, exact: true });
-	}
-
-	async submit() {
-		await this.submitButton.click();
+	async save() {
+		await this.saveButton.click();
 	}
 }

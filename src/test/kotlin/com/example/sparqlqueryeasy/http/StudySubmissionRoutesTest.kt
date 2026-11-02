@@ -3,8 +3,10 @@
 package com.example.sparqlqueryeasy.http
 
 import com.example.sparqlqueryeasy.application.auth.MutableClock
+import com.example.sparqlqueryeasy.application.study.AnswerCheck
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.string.shouldStartWith
+import io.kotest.matchers.types.shouldBeInstanceOf
 import io.ktor.client.HttpClient
 import io.ktor.client.request.cookie
 import io.ktor.client.request.get
@@ -20,7 +22,7 @@ import io.ktor.http.contentType
 import io.ktor.server.testing.ApplicationTestBuilder
 import io.ktor.server.testing.testApplication
 import kotlinx.serialization.json.JsonElement
-import kotlinx.serialization.json.boolean
+import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.int
 import kotlinx.serialization.json.jsonArray
 import kotlinx.serialization.json.jsonPrimitive
@@ -28,7 +30,10 @@ import kotlinx.serialization.json.long
 import org.junit.jupiter.api.Test
 import java.time.Duration
 
-/** STUDY-004: submitting answers, the server-side check and the attempt history (Testcontainers + PokemonGen1). */
+/**
+ * STUDY-004, STUDY-016 (DEC-020): saving answers with or without variables, the admin-only automatic check and the
+ * participant's saves, which never reveal correctness (Testcontainers + PokemonGen1).
+ */
 class StudySubmissionRoutesTest {
     private val submissions = "/api/study/tasks/fire-fast/submissions"
 
@@ -43,51 +48,79 @@ class StudySubmissionRoutesTest {
 
     private suspend fun HttpClient.submit(answer: String = drawn()): HttpResponse = json(submissions, answer)
 
-    private fun JsonElement.bool(name: String) = field(name).jsonPrimitive.boolean
-
     private fun JsonElement.int(name: String) = field(name).jsonPrimitive.int
 
+    /** The automatic check of [username]'s saves, oldest first: below the HTTP layer, as only the admin may see it. */
+    private suspend fun StudyTestContext.checks(username: String): List<AnswerCheck> =
+        checkNotNull(study.study.saves(userId(username), "fire-fast")).map { it.check }
+
+    /** Charizard, an entity-only diagram: two concrete triples and no variable. */
+    private val charizardQuery =
+        """{"where":[{"subject":"<${PK}Charizard>","predicate":"<${PK}hasType>","object":"<${PK}FireType>","filterType":null},""" +
+            """{"subject":"<${PK}Charizard>","predicate":"<${PK}speed>","object":"100","filterType":2}],"variableFilters":[]}"""
+
+    /** A saved answer as its author sees it: nothing about correctness. */
+    private fun JsonElement.shouldRevealNoCorrectness() {
+        (this as JsonObject).keys shouldBe setOf("save", "taskRevision", "timeSpentMs", "savedAt")
+    }
+
     @Test
-    fun `the Fire speed reference graph is correct and a graph without the speed filter is incorrect with feedback`() =
+    fun `a diagram with two variables is saved without any verdict and the admin check finds the matching variable`() =
         testApplication {
-            studyApp()
+            val context = studyApp()
             val (ada) = fireTaskFor("Ada")
 
             val right = ada.submit()
             right.status shouldBe HttpStatusCode.Created
-            val accepted = right.data()
-            accepted.bool("correct") shouldBe true
-            accepted.bool("invalid") shouldBe false
-            accepted.int("attempt") shouldBe 1
-            accepted.int("missing") shouldBe 0
-            val expected = accepted.int("expectedCount")
-            accepted.field("feedback").jsonPrimitive.content shouldBe "Correct: all $expected expected results."
-
+            right.data().shouldRevealNoCorrectness()
+            right.data().int("save") shouldBe 1
             val wrong = ada.submit(drawn(fireSpeedQuery(minimumSpeed = null))).data()
-            wrong.bool("correct") shouldBe false
-            wrong.int("attempt") shouldBe 2
-            wrong.int("matched") shouldBe expected
-            val extra = wrong.int("extra")
-            (extra > 0) shouldBe true
-            wrong.field("feedback").jsonPrimitive.content shouldBe "Incorrect: $expected of $expected expected results; $extra extra."
-            listOf("expected\"", "Charizard", "values").forEach { (it in ada.submit().bodyAsText()) shouldBe false }
+            wrong.shouldRevealNoCorrectness()
+            wrong.int("save") shouldBe 2
+            listOf("correct", "feedback", "expected", "Charizard", "values", "matched").forEach {
+                (it in ada.submit().bodyAsText()) shouldBe false
+            }
+
+            val (first, second) = context.checks("Ada").map { it.shouldBeInstanceOf<AnswerCheck.ByVariable>() }
+            first.variables.map { it.variable to it.match } shouldBe listOf("?pokemon" to true, "?speed" to false)
+            first.matched?.variable shouldBe "?pokemon"
+            second.match shouldBe false
+            val pokemon = second.variables.first()
+            (pokemon.result!!.outcome.extra > 0) shouldBe true
+            pokemon.result.outcome.missing shouldBe 0
+        }
+
+    @Test
+    fun `an entity-only diagram is saved and checked structurally against the reference`() =
+        testApplication {
+            val context = studyApp()
+            val (ada) = fireTaskFor("Ada")
+
+            val saved = ada.submit(drawn(charizardQuery))
+            saved.status shouldBe HttpStatusCode.Created
+            saved.data().shouldRevealNoCorrectness()
+            // One node and no relation: an empty where is a diagram too.
+            ada.submit(drawn("""{"where":[],"variableFilters":[]}""")).status shouldBe HttpStatusCode.Created
+
+            // The reference has two triples with ?pokemon and ?speed; neither is among the answer's.
+            context.checks("Ada") shouldBe
+                listOf(AnswerCheck.Structural(missing = 2, extra = 2), AnswerCheck.Structural(missing = 2, extra = 0))
         }
 
     @Test
     fun `a client correctness value or any extra field changes nothing`() =
         testApplication {
-            studyApp()
+            val context = studyApp()
             val (ada) = fireTaskFor("Ada")
             val forged = drawn(fireSpeedQuery(minimumSpeed = null)).dropLast(1) + ""","correct":true,"expected":[],"matched":99}"""
 
-            val response = ada.submit(forged).data()
+            ada.submit(forged).data().shouldRevealNoCorrectness()
 
-            response.bool("correct") shouldBe false
-            ada.get("/api/study/submissions?task=fire-fast").data().jsonArray.single().field("correct").jsonPrimitive.boolean shouldBe false
+            context.checks("Ada").single().match shouldBe false
         }
 
     @Test
-    fun `a user sees only their own attempts`() =
+    fun `a user sees only their own saves`() =
         testApplication {
             studyApp()
             val (ada, bob) = fireTaskFor("Ada", "Bob")
@@ -95,9 +128,10 @@ class StudySubmissionRoutesTest {
             ada.submit(drawn(fireSpeedQuery(100)))
             bob.submit(drawn(fireSpeedQuery(null)))
 
-            ada.get("/api/study/submissions?task=fire-fast").data().jsonArray.map { it.int("attempt") to it.bool("correct") } shouldBe
-                listOf(1 to true, 2 to false)
-            bob.get("/api/study/submissions?task=fire-fast").data().jsonArray.map { it.int("attempt") } shouldBe listOf(1)
+            val adaSaves = ada.get("/api/study/submissions?task=fire-fast").data().jsonArray
+            adaSaves.map { it.int("save") } shouldBe listOf(1, 2)
+            adaSaves.forEach { it.shouldRevealNoCorrectness() }
+            bob.get("/api/study/submissions?task=fire-fast").data().jsonArray.map { it.int("save") } shouldBe listOf(1)
             // QUAL-019: without the task in their group, Cyd cannot tell that it exists.
             userClient("Cyd").get("/api/study/submissions?task=fire-fast").bodyAsText() shouldBe """{"error":"Task not found"}"""
             ada.get("/api/study/submissions").status shouldBe HttpStatusCode.BadRequest
@@ -105,38 +139,37 @@ class StudySubmissionRoutesTest {
         }
 
     @Test
-    fun `each attempt carries the task revision it was checked against`() =
+    fun `each save carries the task revision it was checked against`() =
         testApplication {
-            studyApp()
+            val context = studyApp()
             val admin = userClient(ADMIN)
             val (ada) = fireTaskFor("Ada")
-            ada.submit(drawn(fireSpeedQuery(100))).data().bool("correct") shouldBe false
+            ada.submit(drawn(fireSpeedQuery(100)))
 
             admin.putJson("/api/admin/tasks/fire-fast", taskBody(reference = drawn(fireSpeedQuery(100)))).data().int("revision") shouldBe 2
-            val second = ada.submit(drawn(fireSpeedQuery(100))).data()
+            ada.submit(drawn(fireSpeedQuery(100)))
 
-            second.bool("correct") shouldBe true
             ada.get("/api/study/submissions?task=fire-fast").data().jsonArray.map { it.int("taskRevision") } shouldBe listOf(1, 2)
+            context.checks("Ada").map { it.match } shouldBe listOf(false, true)
         }
 
     @Test
-    fun `a query that cannot run is stored as an invalid attempt with a clear message`() =
+    fun `a query that cannot run is saved like any other and the admin check keeps the diagnostic`() =
         testApplication {
-            studyApp()
+            val context = studyApp()
             val (ada) = fireTaskFor("Ada")
             val broken =
-                """{"variableName":"?pokemon","where":[{"subject":"?pokemon","predicate":"<${PK}speed>","object":"?speed"}],""" +
+                """{"where":[{"subject":"?pokemon","predicate":"<${PK}speed>","object":"?speed"}],""" +
                     """"variableFilters":[{"variableName":"?nowhere","filterType":2,"value":"90"}]}"""
 
             val response = ada.submit(drawn(broken))
 
             response.status shouldBe HttpStatusCode.Created
-            val attempt = response.data()
-            attempt.bool("invalid") shouldBe true
-            attempt.bool("correct") shouldBe false
-            attempt.field("matched").toString() shouldBe "null"
-            attempt.field("feedback").jsonPrimitive.content shouldStartWith "The query could not run: "
-            ada.get("/api/study/submissions?task=fire-fast").data().jsonArray.single().bool("invalid") shouldBe true
+            response.data().shouldRevealNoCorrectness()
+            val check = context.checks("Ada").single().shouldBeInstanceOf<AnswerCheck.ByVariable>()
+            check.invalid shouldBe true
+            check.variables.map { it.variable } shouldBe listOf("?pokemon", "?speed", "?nowhere")
+            check.variables.first().summary shouldStartWith "?pokemon: The query could not run: "
             ada.submit("""{"graph":$fireSpeedGraph}""").status shouldBe HttpStatusCode.BadRequest
         }
 
@@ -146,9 +179,10 @@ class StudySubmissionRoutesTest {
         }
 
     @Test
-    fun `the task list shows each task as not started, attempted or solved from the caller's own attempts`() =
+    fun `the task list shows each task as not started or answered, with the last save time, from the caller's own saves`() =
         testApplication {
-            studyApp()
+            val clock = MutableClock()
+            studyApp(clock = clock)
             val admin = userClient(ADMIN)
             val ada = userClient("Ada")
             val bob = userClient("Bob")
@@ -159,20 +193,21 @@ class StudySubmissionRoutesTest {
             ada.statuses() shouldBe mapOf("fire-fast" to "not_started", "water" to "not_started")
             ada.get("/api/study/tasks/fire-fast")
             ada.statuses().getValue("fire-fast") shouldBe "not_started"
+            ada.get("/api/study/tasks").data().jsonArray.first().field("lastSavedAt").toString() shouldBe "null"
 
-            ada.submit(drawn(fireSpeedQuery(minimumSpeed = null))).data().bool("correct") shouldBe false
-            bob.submit().data().bool("correct") shouldBe true
-            ada.statuses() shouldBe mapOf("fire-fast" to "attempted", "water" to "not_started")
-            bob.statuses() shouldBe mapOf("fire-fast" to "solved", "water" to "not_started")
-
-            ada.submit().data().bool("correct") shouldBe true
             ada.submit(drawn(fireSpeedQuery(minimumSpeed = null)))
-            ada.statuses().getValue("fire-fast") shouldBe "solved"
+            clock.advance(Duration.ofSeconds(60))
+            val last = ada.submit(drawn(charizardQuery)).data().field("savedAt").jsonPrimitive.content
+            ada.statuses() shouldBe mapOf("fire-fast" to "answered", "water" to "not_started")
+            bob.statuses() shouldBe mapOf("fire-fast" to "not_started", "water" to "not_started")
+            ada.get("/api/study/tasks").data().jsonArray.first().field("lastSavedAt").jsonPrimitive.content shouldBe last
 
-            // A correct attempt at an earlier revision still counts as solved.
+            // A save at an earlier revision still counts as answered.
             admin.putJson("/api/admin/tasks/fire-fast", taskBody(reference = drawn(fireSpeedQuery(100)))).data().int("revision") shouldBe 2
-            bob.statuses().getValue("fire-fast") shouldBe "solved"
-            listOf("expected", "Charizard", "SELECT").forEach { (it in ada.get("/api/study/tasks").bodyAsText()) shouldBe false }
+            ada.statuses().getValue("fire-fast") shouldBe "answered"
+            listOf("expected", "Charizard", "SELECT", "solved", "correct").forEach {
+                (it in ada.get("/api/study/tasks").bodyAsText()) shouldBe false
+            }
         }
 
     @Test

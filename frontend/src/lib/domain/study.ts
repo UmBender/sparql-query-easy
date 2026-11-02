@@ -1,13 +1,15 @@
 /**
- * A drawn query as a proposed-task answer or reference (STUDY-006, DEC-014
- * Q5): the request the server runs is derived here with the same mapping as
- * Run Query (`runQueryDecision`), with the answer variable chosen by the user
- * instead of the last one met. The server sets the endpoint and the limit.
+ * A drawn query as a proposed-task reference (STUDY-006, DEC-014 Q5) or a
+ * participant's saved answer (STUDY-016, DEC-020): the request is derived here
+ * with the same mapping as Run Query (`runQueryDecision`). A reference names
+ * the answer variable the admin chose; an answer names none and may have no
+ * variables at all. The server sets the endpoint and the limit.
  */
-import { nodesOf, type QueryGraph, type VariableNode } from './graph.js';
+import { components, nodesOf, type QueryGraph, type VariableNode } from './graph.js';
 import {
 	PARALLEL_PREDICATES_MESSAGE,
 	SEPARATE_VARIABLE_GROUPS_MESSAGE,
+	extractVariableName,
 	hasParallelPredicateVariables,
 	selectQueryComponent,
 	variableFilterItems,
@@ -24,6 +26,9 @@ export type AnswerQuery = {
 	where: QueryFilter[];
 	variableFilters?: VariableFilter[];
 };
+
+/** A participant's answer request (DEC-020 C2): no answer variable. */
+export type SavedAnswerQuery = Omit<AnswerQuery, 'variableName'>;
 
 /**
  * The variables that can be an answer: the entity variables (`?` nodes) of
@@ -60,6 +65,37 @@ export function answerQuery(
 			variableFilterItems(component)
 		)
 	};
+}
+
+/**
+ * The request for a participant's answer (STUDY-016, DEC-020 C1), or why it
+ * cannot be saved. A diagram without variables keeps every relation of the
+ * graph, so the server can compare its triples with the reference's; one
+ * with variables keeps the query component, as Run Query does. Any
+ * non-empty diagram can be saved, even a single node (an empty `where`).
+ */
+export function savedAnswerQuery(
+	graph: QueryGraph,
+	now?: () => number
+): { query: SavedAnswerQuery } | { message: string } {
+	if (nodesOf(graph).length === 0) return { message: 'Draw your answer before saving.' };
+	const all = components(graph).flat();
+	if (!extractVariableName(all)) return { query: { where: whereOf(graph, all, now) } };
+	const { component, ambiguous } = selectQueryComponent(graph);
+	if (ambiguous || !component) return { message: SEPARATE_VARIABLE_GROUPS_MESSAGE };
+	if (hasParallelPredicateVariables(graph, component))
+		return { message: PARALLEL_PREDICATES_MESSAGE };
+	return {
+		query: withVariableFilters(
+			{ where: whereOf(graph, component, now) },
+			variableFilterItems(component)
+		)
+	};
+}
+
+/** When an answer was saved, as the participant reads it (DEC-020 C8). */
+export function savedAtLabel(iso: string): string {
+	return new Date(iso).toLocaleString(undefined, { dateStyle: 'medium', timeStyle: 'short' });
 }
 
 /**

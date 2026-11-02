@@ -2,8 +2,8 @@
  * The participant's side of the study on the real stack (STUDY-003): the
  * tasks of their group in order, a task page with the statement and the
  * editor on the starting graph with the endpoint locked, and the note for a
- * participant without a group. STUDY-004: a correct and a wrong answer, the
- * server's feedback and the attempt history. STUDY-005: the final submission
+ * participant without a group. STUDY-004/016: two saved answers that show
+ * only when they were saved, never a verdict. STUDY-005: the final submission
  * closes the tasks. STUDY-008: the consent screen comes first. STUDY-010: the profile questionnaire before the
  * tasks and the usability questionnaire after the final submission, with per-page progress kept in the browser.
  * Test data comes from the admin API.
@@ -74,7 +74,7 @@ test('a participant without a group is told no tasks are assigned', async ({ pag
 	await expect(page.getByRole('alert')).toHaveText('Task not found');
 });
 
-test('a participant submits a correct and a wrong answer and sees the feedback and both attempts', async ({
+test('a participant saves two answers, sees only when, and the task shows as answered', async ({
 	page,
 	browser
 }) => {
@@ -85,33 +85,42 @@ test('a participant submits a correct and a wrong answer and sees the feedback a
 	const taskPage = new TaskPage(page);
 	await taskPage.open(keys[1]);
 	await expect(taskPage.editor.nodeCount).toHaveText('Nodes: 3');
-	await expect(taskPage.answerVariable('pokemon')).toBeChecked();
-	await taskPage.submit();
-	await expect(taskPage.feedback).toHaveText(/^Correct: all \d+ expected results\.$/);
+	await expect(taskPage.feedback).toHaveText('No answer saved yet.');
+	await taskPage.save();
+	await expect(taskPage.feedback).toContainText('Saved at');
 
-	// The same query without its speed filter: every Fire-type Pokémon.
+	// The same query without its speed filter: every Fire-type Pokémon. Still only a save time (DEC-020).
 	const saved = JSON.parse(readFileSync(FIRE_SPEED, 'utf8'));
 	for (const node of saved.nodes) if (node.kind === 'valueVariable') node.filter = null;
 	await taskPage.editor.uploadQuery('fire-any-speed.query.json', saved);
-	await taskPage.submit();
-	await expect(taskPage.feedback).toHaveText(
-		/^Incorrect: (\d+) of \1 expected results; \d+ extra\.$/
-	);
-
-	const history = taskPage.attempts;
-	await expect(history).toHaveCount(2);
-	await expect(history.nth(0)).toContainText('#2 · Incorrect');
-	await expect(history.nth(1)).toContainText('#1 · Correct');
-	await page.reload();
-	await expect(taskPage.attempts).toHaveCount(2);
-
-	// STUDY-014: a correct attempt, even followed by a wrong one, marks the task solved.
-	await page.getByRole('link', { name: 'Proposed queries' }).click();
-	await expect(page.getByTestId('study-task-status')).toHaveText([
-		'Not started',
-		'Solved',
-		'Not started'
+	// "Saved at" is already shown, so wait for the second save itself.
+	await Promise.all([
+		page.waitForResponse(
+			(reply) => reply.request().method() === 'POST' && reply.url().includes('/submissions')
+		),
+		taskPage.save()
 	]);
+	await expect(taskPage.feedback).toContainText('Saved at');
+	await expect(taskPage.feedback).not.toContainText(/correct|expected|invalid/i);
+	const saves = await page.request.get(`/api/study/submissions?task=${keys[1]}`);
+	const body = (await saves.json()) as { data: Record<string, unknown>[] };
+	expect(body.data.map((item) => item.save)).toEqual([1, 2]);
+	for (const item of body.data)
+		expect(Object.keys(item).sort()).toEqual([
+			'save',
+			'savedAt',
+			'taskRevision',
+			'timeSpentMs'
+		]);
+	await page.reload();
+	await expect(taskPage.feedback).toContainText('Saved at');
+
+	// DEC-020 C8: the list shows answered, never solved.
+	await page.getByRole('link', { name: 'Proposed queries' }).click();
+	const markers = page.getByTestId('study-task-status');
+	await expect(markers.nth(0)).toHaveText('Not started');
+	await expect(markers.nth(1)).toContainText('Answered, saved');
+	await expect(markers.nth(2)).toHaveText('Not started');
 });
 
 test('after the final submission the task pages show the finished page', async ({

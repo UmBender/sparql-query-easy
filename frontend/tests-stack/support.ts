@@ -1,4 +1,5 @@
 /** Shared steps of the real-stack suites (STUDY-003…007). */
+import { execFileSync } from 'node:child_process';
 import { readFileSync } from 'node:fs';
 import { expect, type APIRequestContext, type Browser, type Page } from '@playwright/test';
 import type { QuestionnairePage } from '../tests/support/pages/questionnaire-page';
@@ -192,4 +193,20 @@ export async function seedStudy(browser: Browser, participant: string): Promise<
 	} finally {
 		await admin.close();
 	}
+}
+
+/** Runs one SQL query in the stack's PostgreSQL container (Testcontainers, found by its published port). */
+export function sql<T>(query: string): T {
+	const url = readFileSync(new URL('../../build/stack-postgres.ready', import.meta.url), 'utf8');
+	const port = /:(\d+)\//.exec(url)![1];
+	const container = execFileSync('docker', ['ps', '-q', '--filter', `publish=${port}`], {
+		encoding: 'utf8'
+	}).trim();
+	expect(container, `PostgreSQL container on port ${port}`).not.toBe('');
+	const out = execFileSync(
+		'docker',
+		['exec', container, 'psql', '-U', 'postgres', '-d', 'postgres', '-At', '-c', query],
+		{ encoding: 'utf8' }
+	);
+	return JSON.parse(out.trim() || 'null') as T;
 }

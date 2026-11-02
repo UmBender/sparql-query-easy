@@ -17,7 +17,7 @@ User request (2026-10-27): the participant's task list (`/study`) should
 show whether each question was already done. Skills: `tcc-fullstack`
 (`tcc-backend`, `tcc-frontend`, `tcc-style`). Contract:
 [[../../03 - Backend/API v1#Proposed tasks (participant, STUDY-003)]],
-[[../../03 - Backend/API v1#Answers and attempts (participant, STUDY-004)]].
+[[../../03 - Backend/API v1#Saved answers (participant, STUDY-004, STUDY-016)]].
 
 ## Scope and acceptance
 

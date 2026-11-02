@@ -1,5 +1,7 @@
 package com.example.sparqlqueryeasy.application.study
 
+import com.example.sparqlqueryeasy.application.query.GeneralQueryRequest
+import com.example.sparqlqueryeasy.wikidata.query.TriplePattern
 import java.time.Clock
 import java.time.Duration
 import java.time.Instant
@@ -33,15 +35,27 @@ interface StudyProgressStore {
     suspend fun finishedAt(userId: Long): Instant?
 }
 
+/** A task in the participant's list with their own status (STUDY-014, DEC-020 C8): never correctness. */
+data class TaskProgress(
+    val task: StudyTask,
+    /** When the user last saved an answer to the task, at any revision; null when they never did. */
+    val lastSavedAt: Instant?,
+) {
+    val status: StudyTaskStatus
+        get() = if (lastSavedAt == null) StudyTaskStatus.NOT_STARTED else StudyTaskStatus.ANSWERED
+}
+
 /**
- * What a participant does with the proposed tasks (STUDY-003…005): only the active tasks of their group
- * (STUDY-007), never the reference query or the expected result.
+ * What a participant does with the proposed tasks (STUDY-003…005, STUDY-016): only the active tasks of their group
+ * (STUDY-007), never the reference query, the expected result or the automatic check of their answers (DEC-020).
+ * [referencePatterns] reads the triples of a task's stored reference request (the HTTP layer owns its format).
  */
 class StudyService(
     private val groups: StudyGroupStore,
     private val progress: StudyProgressStore,
     private val submissions: StudySubmissionStore,
     private val runner: StudyQueryRunner,
+    private val referencePatterns: (StudyTask) -> List<TriplePattern>,
     private val clock: Clock = Clock.systemUTC(),
 ) {
     /**
@@ -55,22 +69,11 @@ class StudyService(
     /** The user's group's active tasks in group order; none without a group. */
     suspend fun tasks(userId: Long): List<StudyTask> = groups.activeTasksFor(userId)
 
-    /**
-     * [tasks] with the user's own status on each (STUDY-014): solved after a correct attempt at any revision of
-     * the task, attempted after attempts that were all incorrect or invalid, else not started.
-     */
-    suspend fun tasksWithStatus(userId: Long): List<Pair<StudyTask, StudyTaskStatus>> {
+    /** [tasks] with the user's own progress on each: answered after any save, at any revision of the task. */
+    suspend fun tasksWithProgress(userId: Long): List<TaskProgress> {
         val tasks = tasks(userId)
-        val solved = if (tasks.isEmpty()) emptyMap() else submissions.solvedByTask(userId)
-        return tasks.map { task ->
-            val status =
-                when (solved[task.id]) {
-                    null -> StudyTaskStatus.NOT_STARTED
-                    true -> StudyTaskStatus.SOLVED
-                    false -> StudyTaskStatus.ATTEMPTED
-                }
-            task to status
-        }
+        val saved = if (tasks.isEmpty()) emptyMap() else submissions.lastSaveByTask(userId)
+        return tasks.map { TaskProgress(it, saved[it.id]) }
     }
 
     /** The task when the user may open it (in their group and active), recording the first open; else null. */
@@ -84,19 +87,19 @@ class StudyService(
     }
 
     /**
-     * Checks [answer] against the task (DEC-014 Q5): runs its request on the task's endpoint with the task's
-     * cap, compares with the stored expected result and stores the attempt with the task's revision. A query
-     * that cannot run is stored as an invalid attempt. Null when the user may not open the task.
+     * Saves [answer] with the task's revision (STUDY-016) and the admin-only automatic check (DEC-020 C1, C2): an
+     * answer without variables is compared structurally with the reference; one with variables runs each of its
+     * first [MAX_CHECKED_VARIABLES] variables on the task's endpoint with the task's cap. A query that cannot run
+     * is still saved. Null when the user may not open the task.
      */
-    suspend fun submit(
+    suspend fun save(
         userId: Long,
         key: String,
-        answer: DrawnQuery,
+        answer: DrawnAnswer,
     ): Submission? {
         val task = tasks(userId).singleOrNull { it.key == key } ?: return null
         val now = clock.instant()
         val firstOpen = progress.recordOpen(userId, task.id, now)
-        val checked = check(task, runner.run(task.endpoint, answer.request, task.maxResults))
         return submissions.add(
             Submission(
                 id = 0,
@@ -105,11 +108,7 @@ class StudyService(
                 taskRevision = task.revision,
                 graphJson = answer.graphJson,
                 requestJson = answer.requestJson,
-                answerVariable = answer.request.variable.render(),
-                sparql = checked.sparql,
-                result = checked.result,
-                correct = checked.result?.outcome?.correct ?: false,
-                feedback = checked.feedback,
+                check = check(task, answer),
                 createdAt = now,
                 timeSpentMillis = Duration.between(firstOpen, now).toMillis(),
             ),
@@ -117,10 +116,10 @@ class StudyService(
     }
 
     /**
-     * The user's own attempts at the task, oldest first; null, like [open], unless the task is an active task of
+     * The user's own saves of the task, oldest first; null, like [open], unless the task is an active task of
      * the user's group, so the answer never tells whether another group's task exists (QUAL-019).
      */
-    suspend fun attempts(
+    suspend fun saves(
         userId: Long,
         key: String,
     ): List<Submission>? {
@@ -128,30 +127,18 @@ class StudyService(
         return submissions.list(userId, task.id)
     }
 
-    private fun check(
+    private suspend fun check(
         task: StudyTask,
-        run: AnswerRun,
-    ): Checked =
-        when (run) {
-            is AnswerRun.Failed -> Checked(null, run.sparql, "The query could not run: ${run.diagnostic}")
-            is AnswerRun.Complete -> {
-                val outcome = AnswerComparison.compare(task.expected.values, run.result.values, task.comparison)
-                val result = AttemptResult(outcome, run.result.values, truncated = false)
-                Checked(result, run.result.sparql, outcome.feedback)
+        answer: DrawnAnswer,
+    ): AnswerCheck {
+        val variables = answer.variables
+        if (variables.isEmpty()) return AnswerComparison.compareStructure(referencePatterns(task), answer.patterns)
+        val checked =
+            variables.take(MAX_CHECKED_VARIABLES).map { variable ->
+                val request = GeneralQueryRequest(variable, answer.patterns, variableFilters = answer.variableFilters)
+                val run = runner.run(task.endpoint, request, task.maxResults)
+                AnswerComparison.checkVariable(variable.render(), run, task.expected.values, task.comparison)
             }
-            is AnswerRun.Truncated -> {
-                val outcome =
-                    AnswerComparison.compare(task.expected.values, run.values, task.comparison).copy(correct = false)
-                val feedback =
-                    "Incorrect: the query returns more than ${task.maxResults} results; the expected answer has " +
-                        "${outcome.expectedCount}."
-                Checked(AttemptResult(outcome, run.values, truncated = true), run.sparql, feedback)
-            }
-        }
-
-    private data class Checked(
-        val result: AttemptResult?,
-        val sparql: String?,
-        val feedback: String,
-    )
+        return AnswerCheck.ByVariable(checked, variables.drop(MAX_CHECKED_VARIABLES).map { it.render() })
+    }
 }

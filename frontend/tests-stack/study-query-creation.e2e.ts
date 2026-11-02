@@ -12,12 +12,11 @@
  * Writes test-results/study-query-creation/report.md (also attached to the
  * Playwright report) with the SPARQL, each attempt and the stored rows.
  */
-import { execFileSync } from 'node:child_process';
 import { mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { expect, test, type Page } from '@playwright/test';
 import { EditorPage } from '../tests/support/pages/editor-page';
 import { TaskPage } from '../tests/support/pages/task-page';
-import { guardOffline, joinStudy, loginAs } from './support.js';
+import { guardOffline, joinStudy, loginAs, sql } from './support.js';
 
 const PK = 'http://easyquery.example.org/pokemon#';
 const iri = (name: string) => `<${PK}${name}>`;
@@ -312,22 +311,6 @@ async function drawQ2(draw: Drawing, hp: 'MAX' | 'MIN'): Promise<Q2> {
 	return { pokemon, hp: hpNode, relation };
 }
 
-/** Runs one SQL query in the stack's PostgreSQL container (Testcontainers, found by its published port). */
-function sql<T>(query: string): T {
-	const url = readFileSync(new URL('../../build/stack-postgres.ready', import.meta.url), 'utf8');
-	const port = /:(\d+)\//.exec(url)![1];
-	const container = execFileSync('docker', ['ps', '-q', '--filter', `publish=${port}`], {
-		encoding: 'utf8'
-	}).trim();
-	expect(container, `PostgreSQL container on port ${port}`).not.toBe('');
-	const out = execFileSync(
-		'docker',
-		['exec', container, 'psql', '-U', 'postgres', '-d', 'postgres', '-At', '-c', query],
-		{ encoding: 'utf8' }
-	);
-	return JSON.parse(out.trim() || 'null') as T;
-}
-
 type StoredTask = {
 	task_key: string;
 	comparison: string;
@@ -341,9 +324,13 @@ type StoredSubmission = {
 	id: number;
 	task_key: string;
 	task_revision: number;
-	answer_variable: string;
-	sparql: string;
-	result_summary: { values?: { type: string; value: string }[]; [key: string]: unknown };
+	answer_variable: string | null;
+	sparql: string | null;
+	result_summary: { values?: { type: string; value: string }[]; [key: string]: unknown } | null;
+	auto_check: {
+		kind: string;
+		variables?: { variable: string; result: { correct: boolean } | null }[];
+	};
 	correct: boolean;
 	feedback: string;
 	invalid: boolean;
@@ -362,7 +349,7 @@ const storedSubmissions = (user: string) =>
 	sql<StoredSubmission[]>(
 		`select coalesce(json_agg(row_to_json(s) order by s.id), '[]') from (select s.id, t.task_key, s.task_revision,
 		 s.answer_variable, s.sparql, s.result_summary, s.correct, s.feedback, s.invalid, s.time_spent_ms, s.graph,
-		 s.request from study_submission s join study_task t on t.id = s.task_id join app_user u on u.id = s.user_id
+		 s.request, s.auto_check from study_submission s join study_task t on t.id = s.task_id join app_user u on u.id = s.user_id
 		 where u.username = '${user}') s`
 	);
 
@@ -399,14 +386,22 @@ async function saveTask(
 	return line;
 }
 
-type Attempt = { label: string; feedback: string };
+type Attempt = { label: string; check: string };
 
-/** Submits the drawn answer on a task page and returns the feedback line. */
-async function submit(taskPage: TaskPage, answer: string, expected: RegExp) {
-	await taskPage.page.locator(`input[name="answer-variable"][value="${answer}"]`).check();
-	await taskPage.submit();
-	await expect(taskPage.feedback).toHaveText(expected);
-	return (await taskPage.feedback.textContent())!.trim();
+/**
+ * Saves the drawn answer on a task page (STUDY-016): the page tells only when it was saved, never a verdict.
+ * Returns the admin-only check summary the server should store for [variable].
+ */
+async function save(taskPage: TaskPage, variable: string, check: string) {
+	await Promise.all([
+		taskPage.page.waitForResponse(
+			(reply) => reply.request().method() === 'POST' && reply.url().includes('/submissions')
+		),
+		taskPage.save()
+	]);
+	await expect(taskPage.feedback).toContainText('Saved at');
+	await expect(taskPage.feedback).not.toContainText(/correct|expected/i);
+	return `${variable}: ${check}`;
 }
 
 const short = (terms: { value: string }[]) =>
@@ -537,33 +532,26 @@ test('two proposed queries drawn in the UI are stored, checked and reported', as
 	const taskPage = new TaskPage(solverPage);
 	const solve = new Drawing(solverPage);
 	const attempts: Attempt[] = [];
-	const record = (label: string, feedback: string) => attempts.push({ label, feedback });
+	const record = (label: string, check: string) => attempts.push({ label, check });
 
 	await taskPage.open(tasks.q1.key);
 	await expect(taskPage.statement).toHaveText(tasks.q1.statement);
 	const p1 = await drawQ1(solve, false);
 	record(
 		'Q1 without the "fish" filter',
-		await submit(taskPage, p1.pokemon, /^Incorrect: 2 of 2 expected results; 2 extra\.$/)
+		await save(taskPage, p1.pokemon, 'Incorrect: 2 of 2 expected results; 2 extra.')
 	);
 	await addFish(solve, p1.pokemon);
-	record(
-		'Q1 complete',
-		await submit(taskPage, p1.pokemon, /^Correct: all 2 expected results\.$/)
-	);
-	await expect(taskPage.attempts).toHaveCount(2);
+	record('Q1 complete', await save(taskPage, p1.pokemon, 'Correct: all 2 expected results.'));
 
 	await taskPage.open(tasks.q2.key);
 	const p2 = await drawQ2(solve, 'MIN');
 	record(
 		'Q2 with MIN instead of MAX',
-		await submit(taskPage, p2.pokemon, /^Incorrect: 0 of 2 expected results; 1 extra\.$/)
+		await save(taskPage, p2.pokemon, 'Incorrect: 0 of 2 expected results; 1 extra.')
 	);
 	await solve.editValue(p2.hp, 'MAX', '');
-	record(
-		'Q2 complete',
-		await submit(taskPage, p2.pokemon, /^Correct: all 2 expected results\.$/)
-	);
+	record('Q2 complete', await save(taskPage, p2.pokemon, 'Correct: all 2 expected results.'));
 	expect(solverUnexpected, 'Unexpected external browser requests (participant)').toEqual([]);
 
 	// What PostgreSQL stored.
@@ -589,49 +577,35 @@ test('two proposed queries drawn in the UI are stored, checked and reported', as
 	const opens = storedOpens(participant).map((open) => open.task_key);
 	expect(opens.sort()).toEqual([tasks.q1.key, tasks.q2.key].sort());
 
+	// DEC-020: the automatic check is the admin's hint; every variable of the answer is checked (C2).
 	const submissions = storedSubmissions(participant);
 	expect(
-		submissions.map(({ task_key, correct, invalid, task_revision, answer_variable }) => ({
+		submissions.map(({ task_key, correct, invalid, task_revision, auto_check }) => ({
 			task_key,
 			correct,
 			invalid,
 			task_revision,
-			answer_variable
+			kind: auto_check.kind
 		}))
-	).toEqual([
-		{
-			task_key: tasks.q1.key,
-			correct: false,
+	).toEqual(
+		[tasks.q1.key, tasks.q1.key, tasks.q2.key, tasks.q2.key].map((task_key, index) => ({
+			task_key,
+			correct: index % 2 === 1,
 			invalid: false,
 			task_revision: 1,
-			answer_variable: p1.pokemon
-		},
-		{
-			task_key: tasks.q1.key,
-			correct: true,
-			invalid: false,
-			task_revision: 1,
-			answer_variable: p1.pokemon
-		},
-		{
-			task_key: tasks.q2.key,
-			correct: false,
-			invalid: false,
-			task_revision: 1,
-			answer_variable: p2.pokemon
-		},
-		{
-			task_key: tasks.q2.key,
-			correct: true,
-			invalid: false,
-			task_revision: 1,
-			answer_variable: p2.pokemon
-		}
-	]);
+			kind: 'variables'
+		}))
+	);
+	expect(submissions[1].answer_variable).toBe(p1.pokemon);
+	expect(submissions[3].answer_variable).toBe(p2.pokemon);
 	submissions.forEach((submission, index) => {
-		expect(submission.feedback).toBe(attempts[index].feedback);
+		expect(submission.feedback).toContain(attempts[index].check);
 		expect(submission.time_spent_ms).toBeGreaterThan(0);
 		expect(submission.sparql).toContain('SELECT');
+		const pokemonVariable = index < 2 ? p1.pokemon : p2.pokemon;
+		expect(submission.auto_check.variables?.map((item) => item.variable)).toContain(
+			pokemonVariable
+		);
 	});
 
 	// The report for the human check.
@@ -668,20 +642,20 @@ test('two proposed queries drawn in the UI are stored, checked and reported', as
 					: [])
 			];
 		}),
-		'## Participant attempts (`study_submission`)',
+		'## Participant saves (`study_submission`, admin-only check)',
 		'',
-		'| # | Task | Attempt | Returned | Correct | Feedback | Time spent (ms) |',
-		'|---|---|---|---|---|---|---|',
+		'| # | Task | Save | Variable | Returned | Match | Check | Time spent (ms) |',
+		'|---|---|---|---|---|---|---|---|',
 		...submissions.map(
 			(row, index) =>
-				`| ${index + 1} | ${row.task_key} | ${attempts[index].label} | ${short(row.result_summary.values ?? [])} | ${row.correct} | ${row.feedback} | ${row.time_spent_ms} |`
+				`| ${index + 1} | ${row.task_key} | ${attempts[index].label} | ${row.answer_variable} | ${short(row.result_summary?.values ?? [])} | ${row.correct} | ${row.feedback} | ${row.time_spent_ms} |`
 		),
 		'',
 		...submissions.flatMap((row, index) => [
-			`### Attempt ${index + 1}: ${attempts[index].label}`,
+			`### Save ${index + 1}: ${attempts[index].label}`,
 			'',
 			'Stored `sparql`:',
-			fence(row.sparql, 'sparql'),
+			fence(row.sparql ?? '', 'sparql'),
 			'Stored `result_summary`:',
 			fence(JSON.stringify(row.result_summary, null, 2), 'json')
 		]),

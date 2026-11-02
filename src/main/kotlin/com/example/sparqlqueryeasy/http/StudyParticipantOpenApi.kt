@@ -2,6 +2,7 @@
 
 package com.example.sparqlqueryeasy.http
 
+import com.example.sparqlqueryeasy.application.study.MAX_CHECKED_VARIABLES
 import io.ktor.http.ContentType
 import io.ktor.http.HttpStatusCode
 import io.ktor.openapi.Responses
@@ -52,15 +53,18 @@ internal fun Route.documentStudyGetTask(): Route =
 internal fun Route.documentStudySubmit(): Route =
     describe {
         operationId = "studySubmitAnswer"
-        summary = "Submit a drawn query as an answer"
+        summary = "Save a drawn answer"
         description =
-            "The body is the drawn graph (formatVersion 1) and the request derived from it, whose variableName is " +
-            "the answer variable. The server runs it on the task's endpoint with the task's result cap, compares " +
-            "with the stored expected result (set or multiset) and stores the attempt with the task revision and " +
-            "the time since the first open. Attempts have no total limit, but at most $SUBMISSIONS_PER_MINUTE a " +
-            "minute per user (429, QUAL-023). Unknown fields such as `correct` are ignored. " +
-            "A query that cannot run is stored as an invalid attempt (201, invalid true). The response never " +
-            "contains expected values. Same origin only (403) and JSON only (415). $SESSION_NOTE"
+            "STUDY-016 (DEC-020): the body is the drawn graph (formatVersion 1) and the request derived from it, " +
+            "with any number of variables or none; variableName is not read and `where` may be empty. The server " +
+            "stores the answer with the task revision, the time since the first open and an admin-only automatic " +
+            "check: an answer without variables is compared with the reference as a set of triples; one with " +
+            "variables runs each of its first $MAX_CHECKED_VARIABLES variables on the task's endpoint with the " +
+            "task's result cap and compares its values with the expected result. A query that cannot run is " +
+            "still saved (201). The response never tells correctness, counts, expected values or whether the " +
+            "query ran. Saves have no total limit, but at most $SUBMISSIONS_PER_MINUTE a minute per user (429, " +
+            "QUAL-023); the last save is the answer. Unknown fields such as `correct` are ignored. Same origin " +
+            "only (403) and JSON only (415). $SESSION_NOTE"
         tag("Study")
         requestBody {
             required = true
@@ -68,18 +72,18 @@ internal fun Route.documentStudySubmit(): Route =
         }
         responses {
             HttpStatusCode.Created {
-                description = "The stored attempt."
+                description = "The saved answer: its number and when it was saved."
                 schema = jsonSchema<DataResponse<StudySubmissionHttpResponse>>()
             }
             HttpStatusCode.BadRequest {
                 description =
-                    "Malformed body: missing graph or query, or a request that is not a query; text with U+0000, an " +
-                    "answer variable over ${MAX_ANSWER_VARIABLE_LENGTH - 1} characters or JSON nested deeper than " +
+                    "Malformed body: missing graph or query, or a request that is not a query; text with U+0000, a " +
+                    "variable over ${MAX_ANSWER_VARIABLE_LENGTH - 1} characters or JSON nested deeper than " +
                     "$MAX_JSON_DEPTH levels (QUAL-023)."
                 schema = jsonSchema<ErrorResponse>()
             }
             HttpStatusCode.TooManyRequests {
-                description = "More than $SUBMISSIONS_PER_MINUTE attempts by this user in the last minute."
+                description = "More than $SUBMISSIONS_PER_MINUTE saves by this user in the last minute."
                 schema = jsonSchema<ErrorResponse>()
             }
             HttpStatusCode.NotFound {
@@ -97,8 +101,10 @@ internal fun Route.documentStudySubmit(): Route =
 internal fun Route.documentStudyListSubmissions(): Route =
     describe {
         operationId = "studyListSubmissions"
-        summary = "List my attempts at a task"
-        description = "The caller's own attempts at the task given by `?task=<key>`, oldest first. $SESSION_NOTE"
+        summary = "List my saved answers to a task"
+        description =
+            "The caller's own saves of the task given by `?task=<key>`, oldest first, without any correctness " +
+            "(DEC-020). $SESSION_NOTE"
         tag("Study")
         parameters {
             query("task") {
@@ -108,7 +114,7 @@ internal fun Route.documentStudyListSubmissions(): Route =
         }
         responses {
             HttpStatusCode.OK {
-                description = "The attempts."
+                description = "The saves."
                 schema = jsonSchema<DataResponse<List<StudySubmissionHttpResponse>>>()
             }
             HttpStatusCode.BadRequest {

@@ -1,9 +1,11 @@
 package com.example.sparqlqueryeasy.persistence
 
+import com.example.sparqlqueryeasy.application.study.AnswerCheck
 import com.example.sparqlqueryeasy.application.study.AttemptResult
 import com.example.sparqlqueryeasy.application.study.ComparisonOutcome
 import com.example.sparqlqueryeasy.application.study.StudySubmissionStore
 import com.example.sparqlqueryeasy.application.study.Submission
+import com.example.sparqlqueryeasy.application.study.VariableCheck
 import kotlinx.serialization.Serializable
 import org.jetbrains.exposed.v1.core.ReferenceOption
 import org.jetbrains.exposed.v1.core.ResultRow
@@ -11,10 +13,12 @@ import org.jetbrains.exposed.v1.core.SortOrder
 import org.jetbrains.exposed.v1.core.Table
 import org.jetbrains.exposed.v1.core.and
 import org.jetbrains.exposed.v1.core.eq
+import org.jetbrains.exposed.v1.core.max
 import org.jetbrains.exposed.v1.javatime.timestamp
 import org.jetbrains.exposed.v1.jdbc.insert
 import org.jetbrains.exposed.v1.jdbc.select
 import org.jetbrains.exposed.v1.jdbc.selectAll
+import java.time.Instant
 
 internal object StudySubmissions : Table("study_submission") {
     val id = long("id").autoIncrement()
@@ -24,13 +28,14 @@ internal object StudySubmissions : Table("study_submission") {
     val graph = jsonb("graph")
     val request = jsonb("request")
     val sparql = text("sparql").nullable()
-    val answerVariable = varchar("answer_variable", 64)
+    val answerVariable = varchar("answer_variable", 64).nullable()
     val resultSummary = jsonb("result_summary").nullable()
     val correct = bool("correct")
     val feedback = text("feedback")
     val invalid = bool("invalid")
     val createdAt = timestamp("created_at")
     val timeSpentMs = long("time_spent_ms")
+    val autoCheck = jsonb("auto_check").nullable()
     override val primaryKey = PrimaryKey(id)
 }
 
@@ -46,10 +51,38 @@ private data class StoredResult(
     val values: List<StoredTerm>,
 )
 
-/** [StudySubmissionStore] on the migrated PostgreSQL database (V7__study_submissions.sql). */
+@Serializable
+private data class StoredVariableCheck(
+    val variable: String,
+    val sparql: String?,
+    val diagnostic: String?,
+    val result: StoredResult?,
+)
+
+/** The stored form of [AnswerCheck] (V12__study_answer_check.sql). */
+@Serializable
+private data class StoredCheck(
+    val kind: String,
+    val missing: Int? = null,
+    val extra: Int? = null,
+    val variables: List<StoredVariableCheck> = emptyList(),
+    val unchecked: List<String> = emptyList(),
+)
+
+private const val STRUCTURAL = "structural"
+private const val VARIABLES = "variables"
+private const val COULD_NOT_RUN = "The query could not run: "
+
+/**
+ * [StudySubmissionStore] on the migrated PostgreSQL database (V7__study_submissions.sql, V12). The summary columns
+ * (correct, invalid, feedback, answer_variable, sparql, result_summary) are derived from the check; rows saved before
+ * V12 have no auto_check and are read back from those columns as a single-variable check.
+ */
 class PostgresStudySubmissionStore(private val connector: DatabaseConnector) : StudySubmissionStore {
     override suspend fun add(submission: Submission): Submission =
         connector.inTransaction {
+            val check = submission.check
+            val primary = (check as? AnswerCheck.ByVariable)?.primary
             val id =
                 StudySubmissions.insert {
                     it[userId] = submission.userId
@@ -57,14 +90,15 @@ class PostgresStudySubmissionStore(private val connector: DatabaseConnector) : S
                     it[taskRevision] = submission.taskRevision
                     it[graph] = submission.graphJson
                     it[request] = submission.requestJson
-                    it[sparql] = submission.sparql
-                    it[answerVariable] = submission.answerVariable
-                    it[resultSummary] = submission.result?.let { result -> storedJson.encodeToString(result.stored()) }
-                    it[correct] = submission.correct
-                    it[feedback] = submission.feedback
-                    it[invalid] = submission.invalid
+                    it[sparql] = primary?.sparql
+                    it[answerVariable] = primary?.variable
+                    it[resultSummary] = primary?.result?.let { result -> storedJson.encodeToString(result.stored()) }
+                    it[correct] = check.match
+                    it[feedback] = check.summary
+                    it[invalid] = (check as? AnswerCheck.ByVariable)?.invalid ?: false
                     it[createdAt] = submission.createdAt
                     it[timeSpentMs] = submission.timeSpentMillis
+                    it[autoCheck] = storedJson.encodeToString(check.stored())
                 }[StudySubmissions.id]
             submission.copy(id = id)
         }
@@ -80,12 +114,13 @@ class PostgresStudySubmissionStore(private val connector: DatabaseConnector) : S
                 .map { it.toSubmission() }
         }
 
-    override suspend fun solvedByTask(userId: Long): Map<Long, Boolean> =
+    override suspend fun lastSaveByTask(userId: Long): Map<Long, Instant> =
         connector.inTransaction {
-            StudySubmissions.select(StudySubmissions.taskId, StudySubmissions.correct)
+            val last = StudySubmissions.createdAt.max()
+            StudySubmissions.select(StudySubmissions.taskId, last)
                 .where { StudySubmissions.userId eq userId }
-                .groupBy({ it[StudySubmissions.taskId] }, { it[StudySubmissions.correct] })
-                .mapValues { (_, verdicts) -> verdicts.any { it } }
+                .groupBy(StudySubmissions.taskId)
+                .associate { it[StudySubmissions.taskId] to checkNotNull(it[last]) }
         }
 
     private fun AttemptResult.stored() =
@@ -99,31 +134,64 @@ class PostgresStudySubmissionStore(private val connector: DatabaseConnector) : S
             values.map(StoredTerm::of),
         )
 
-    private fun ResultRow.toSubmission(): Submission {
+    private fun StoredResult.toAttemptResult() =
+        AttemptResult(
+            ComparisonOutcome(correct, matched, missing, extra, expectedCount),
+            values.map(StoredTerm::toRdfValue),
+            truncated,
+        )
+
+    private fun AnswerCheck.stored(): StoredCheck =
+        when (this) {
+            is AnswerCheck.Structural -> StoredCheck(STRUCTURAL, missing = missing, extra = extra)
+            is AnswerCheck.ByVariable ->
+                StoredCheck(
+                    VARIABLES,
+                    variables =
+                        variables.map {
+                            StoredVariableCheck(it.variable, it.sparql, it.diagnostic, it.result?.stored())
+                        },
+                    unchecked = unchecked,
+                )
+        }
+
+    private fun StoredCheck.toCheck(): AnswerCheck =
+        when (kind) {
+            STRUCTURAL -> AnswerCheck.Structural(checkNotNull(missing), checkNotNull(extra))
+            else ->
+                AnswerCheck.ByVariable(
+                    variables.map {
+                        VariableCheck(it.variable, it.sparql, it.result?.toAttemptResult(), it.diagnostic)
+                    },
+                    unchecked,
+                )
+        }
+
+    /** A row saved before V12: one chosen answer variable, its result, or the failure in feedback. */
+    private fun ResultRow.legacyCheck(): AnswerCheck {
         val result =
             this[StudySubmissions.resultSummary]?.let { json ->
-                val stored = storedJson.decodeFromString<StoredResult>(json)
-                val outcome = with(stored) { ComparisonOutcome(correct, matched, missing, extra, expectedCount) }
-                AttemptResult(
-                    outcome,
-                    stored.values.map(StoredTerm::toRdfValue),
-                    stored.truncated,
-                )
+                storedJson.decodeFromString<StoredResult>(json).toAttemptResult()
             }
-        return Submission(
+        val diagnostic = this[StudySubmissions.feedback].takeIf { result == null }?.removePrefix(COULD_NOT_RUN)
+        val variable =
+            checkNotNull(this[StudySubmissions.answerVariable]) { "A row saved before V12 has an answer variable" }
+        val sparql = this[StudySubmissions.sparql]
+        return AnswerCheck.ByVariable(listOf(VariableCheck(variable, sparql, result, diagnostic)))
+    }
+
+    private fun ResultRow.toSubmission(): Submission =
+        Submission(
             id = this[StudySubmissions.id],
             userId = this[StudySubmissions.userId],
             taskId = this[StudySubmissions.taskId],
             taskRevision = this[StudySubmissions.taskRevision],
             graphJson = this[StudySubmissions.graph],
             requestJson = this[StudySubmissions.request],
-            answerVariable = this[StudySubmissions.answerVariable],
-            sparql = this[StudySubmissions.sparql],
-            result = result,
-            correct = this[StudySubmissions.correct],
-            feedback = this[StudySubmissions.feedback],
+            check =
+                this[StudySubmissions.autoCheck]?.let { storedJson.decodeFromString<StoredCheck>(it).toCheck() }
+                    ?: legacyCheck(),
             createdAt = this[StudySubmissions.createdAt],
             timeSpentMillis = this[StudySubmissions.timeSpentMs],
         )
-    }
 }

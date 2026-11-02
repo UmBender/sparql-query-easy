@@ -19,6 +19,7 @@ import io.ktor.server.testing.testApplication
 import kotlinx.serialization.json.JsonArray
 import kotlinx.serialization.json.JsonElement
 import kotlinx.serialization.json.jsonArray
+import kotlinx.serialization.json.jsonObject
 import kotlinx.serialization.json.jsonPrimitive
 import org.junit.jupiter.api.Test
 
@@ -103,7 +104,7 @@ class ParticipantIsolationTest {
         }
 
     @Test
-    fun `a submission body naming another user or carrying a verdict is stored as the caller's own attempt`() =
+    fun `a submission body naming another user or carrying a verdict is stored as the caller's own save`() =
         testApplication {
             val fixture = accessFixture()
             val bobId = fixture.context.userId("Bob")
@@ -118,7 +119,10 @@ class ParticipantIsolationTest {
                 }
 
             response.status shouldBe HttpStatusCode.Created
-            response.data().field("correct").jsonPrimitive.content shouldBe "false"
+            // STUDY-016: the save tells no correctness, and the forged verdict is not the stored check.
+            response.data().jsonObject.keys shouldBe setOf("save", "taskRevision", "timeSpentMs", "savedAt")
+            val adaSaves = checkNotNull(fixture.context.study.study.saves(fixture.context.userId("Ada"), A_TASK))
+            adaSaves.single().check.match shouldBe false
             fixture.ada.get("/api/study/submissions?task=$A_TASK").data().jsonArray.size shouldBe 1
             fixture.bob.get("/api/study/submissions?task=$B_TASK").data().jsonArray.size shouldBe 1
         }

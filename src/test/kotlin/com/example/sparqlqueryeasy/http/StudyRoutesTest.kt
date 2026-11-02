@@ -77,7 +77,7 @@ class StudyRoutesTest {
             admin.createGroup("A", listOf("fire-fast"), listOf("Ada"))
 
             val summary = ada.get("/api/study/tasks").data().jsonArray.single().jsonObject
-            summary.keys shouldBe setOf("key", "title", "summary", "status")
+            summary.keys shouldBe setOf("key", "title", "summary", "status", "lastSavedAt")
             val task = ada.get("/api/study/tasks/fire-fast").data().jsonObject
             task.keys shouldBe setOf("key", "title", "statement", "endpoint", "startingGraph")
             task.getValue("endpoint").jsonPrimitive.content shouldBe "PokemonGen1"

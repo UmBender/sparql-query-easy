@@ -19,7 +19,10 @@ import kotlinx.serialization.json.intOrNull
 /** The request a drawn query derives with the Run Query mapping (DEC-014 Q5); the server sets endpoint and limit. */
 @Serializable
 data class AnswerQueryHttpRequest(
-    @JsonSchema.Description("The answer variable, with or without the leading ?.")
+    @JsonSchema.Description(
+        "The reference's answer variable, with or without the leading ?. Ignored in a participant's answer " +
+            "(DEC-020), which may have any number of variables, or none.",
+    )
     val variableName: String? = null,
     val where: List<WhereHttpRequest>? = null,
     val variableFilters: List<VariableFilterHttpRequest> = emptyList(),
@@ -120,7 +123,10 @@ internal suspend inline fun <reified T> RoutingContext.receiveLenient(): T {
     return malformedAsValidation { lenientJson.decodeFromJsonElement<T>(element) }
 }
 
-/** QUAL-023: `study_submission.answer_variable` is VARCHAR(64) and holds the variable with its `?`. */
+/**
+ * QUAL-023: `study_submission.answer_variable` is VARCHAR(64) and holds the variable with its `?`; for an answer
+ * (STUDY-016) any of its variables may be stored there.
+ */
 internal const val MAX_ANSWER_VARIABLE_LENGTH = 64
 
 private fun requireStorableVariable(

@@ -2,7 +2,8 @@
 	The proposed queries (STUDY-003): the active tasks of the participant's
 	group, in the group's order (STUDY-007), or a note that none are assigned,
 	and the final submission (STUDY-005), after which the finished view shows.
-	Each task shows the participant's own status (STUDY-014).
+	Each task shows the participant's own status and last save (STUDY-014,
+	DEC-020 C8), never correctness.
 	The consent screen comes first until the current text is accepted
 	(STUDY-008), then the profile questionnaire until it is answered; after
 	the final submission the usability questionnaire comes before the finished
@@ -113,7 +114,10 @@
 								class="flex flex-wrap items-baseline justify-between gap-x-3 gap-y-1"
 							>
 								<span class="font-medium">{index + 1}. {task.title}</span>
-								<TaskStatusMarker status={task.status} />
+								<TaskStatusMarker
+									status={task.status}
+									lastSavedAt={task.lastSavedAt}
+								/>
 							</span>
 							<span class="text-sm text-muted-foreground">{task.summary}</span>
 						</a>

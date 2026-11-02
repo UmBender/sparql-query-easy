@@ -138,7 +138,8 @@ test('the task list, a task page and its feedback show titles and statements as 
 		key: 'xss',
 		title: PAYLOAD,
 		summary: PAYLOAD,
-		status: 'not_started'
+		status: 'not_started',
+		lastSavedAt: null
 	};
 	api.override('/api/study/tasks', () => ({ data: [summary] }));
 	api.override('/api/study/tasks/xss', () => ({
@@ -151,22 +152,11 @@ test('the task list, a task page and its feedback show titles and statements as 
 		}
 	}));
 	api.override('/api/study/submissions', () => ({ data: [] }));
-	api.override('/api/study/tasks/xss/submissions', () => {
-		const attempt: Schemas['StudySubmissionHttpResponse'] = {
-			attempt: 1,
-			correct: false,
-			invalid: true,
-			feedback: PAYLOAD,
-			matched: null,
-			missing: null,
-			extra: null,
-			expectedCount: null,
-			taskRevision: 1,
-			timeSpentMs: 0,
-			createdAt: '2026-10-20T12:00:00Z'
-		};
-		return { data: attempt };
-	});
+	// STUDY-016: a save shows no server text, but a refused one shows the server's error.
+	api.override('/api/study/tasks/xss/submissions', () => ({
+		status: 400,
+		json: { error: PAYLOAD }
+	}));
 
 	await page.goto('/study');
 	await expect(page.getByTestId('study-task')).toContainText(SHOWN);
@@ -177,9 +167,9 @@ test('the task list, a task page and its feedback show titles and statements as 
 	await expect(taskPage.title).toContainText(SHOWN);
 	await expect(page.getByText(PAYLOAD).first()).toBeVisible();
 	await expectInert(page, 'task page');
-	await taskPage.submit();
+	await taskPage.save();
 	await expect(taskPage.feedback).toContainText(SHOWN);
-	await expectInert(page, 'attempt feedback');
+	await expectInert(page, 'save error');
 });
 
 test('questionnaire titles, questions and labels show as text', async ({ page }) => {

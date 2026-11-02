@@ -50,19 +50,22 @@ const studyTasks: Schemas['StudyTaskSummaryHttpResponse'][] = [
 		key: 'fire-fast',
 		title: 'Fast Fire-type Pokémon',
 		summary: 'Speed of at least 90.',
-		status: 'solved'
+		status: 'answered',
+		lastSavedAt: '2026-10-20T12:00:00Z'
 	},
 	{
 		key: 'charmander-family',
 		title: 'The Charmander family',
 		summary: 'Who evolves from whom.',
-		status: 'attempted'
+		status: 'answered',
+		lastSavedAt: '2026-10-20T12:30:00Z'
 	},
 	{
 		key: 'water',
 		title: 'All Water-type Pokémon',
 		summary: 'Every Pokémon of the Water type.',
-		status: 'not_started'
+		status: 'not_started',
+		lastSavedAt: null
 	}
 ];
 

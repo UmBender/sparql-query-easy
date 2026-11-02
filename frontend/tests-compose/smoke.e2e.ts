@@ -121,7 +121,6 @@ test('a participant seeded through the API answers a proposed task', async ({ pa
 	const taskPage = new TaskPage(page);
 	await taskPage.open(keys[1]);
 	await expect(taskPage.editor.nodeCount).toHaveText('Nodes: 3');
-	await taskPage.submit();
-	await expect(taskPage.feedback).toHaveText(/^Correct: all \d+ expected results\.$/);
-	await expect(taskPage.attempts).toHaveCount(1);
+	await taskPage.save();
+	await expect(taskPage.feedback).toContainText('Saved at');
 });

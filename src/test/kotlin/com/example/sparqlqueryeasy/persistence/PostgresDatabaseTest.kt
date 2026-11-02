@@ -22,7 +22,7 @@ class PostgresDatabaseTest {
         val firstHistory = appliedVersions(settings)
         PostgresDatabase.connect(settings).close()
 
-        firstHistory shouldBe listOf("1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11")
+        firstHistory shouldBe listOf("1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11", "12")
         appliedVersions(settings) shouldBe firstHistory
     }
 

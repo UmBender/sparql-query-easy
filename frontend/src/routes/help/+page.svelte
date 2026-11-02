@@ -339,13 +339,15 @@
 		<p class="text-sm">
 			The editor works without an account. With an account (<strong>Log in</strong>, then
 			create one) you can take part in the study: open <strong>Study</strong> in the app bar,
-			accept the consent text, answer a short questionnaire, then solve the
-			<strong>proposed queries</strong> by drawing each answer in the editor and submitting
-			it.
-			<strong>Proposed queries</strong> at the top of a task goes back to the list, and a
-			correct answer offers <strong>Next task</strong>. You may submit as often as you like
-			until you make the final submission; a last questionnaire about using the editor follows
-			it.
+			accept the consent text, answer a short questionnaire, then answer the
+			<strong>proposed queries</strong> by drawing each answer in the editor and choosing
+			<strong>Save answer</strong>. An answer may use variables or only concrete entities and
+			relations. The page tells you when your answer was saved, not whether it is right: the
+			answers are evaluated after the study.
+			<strong>Proposed queries</strong> at the top of a task goes back to the list, and a save
+			offers <strong>Next task</strong>. You may change and save an answer as often as you
+			like until you make the final submission; the last saved answer counts. A last
+			questionnaire about using the editor follows it.
 		</p>
 	</section>
 

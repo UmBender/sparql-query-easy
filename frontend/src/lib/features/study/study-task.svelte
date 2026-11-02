@@ -1,27 +1,27 @@
 <!--
-	One proposed task (STUDY-003, STUDY-004): the statement beside the shared
+	One proposed task (STUDY-003, STUDY-016): the statement beside the shared
 	QueryEditor (FE-053), which starts from the task's starting graph, or empty,
-	on the task's endpoint and keeps that endpoint locked. Submit answer sends
-	the drawn graph and the request derived from it for the chosen answer
-	variable; the server decides correctness and answers with a verdict and
-	counts (DEC-014 Q2, Q5). Attempts are unlimited (Q1) and listed below.
-	FE-061: a back link to the proposed queries tops the panel, and a Correct
-	verdict offers Back to the tasks and, when one follows in the group's
-	order, Next task. All are plain links, so browser Back keeps working.
+	on the task's endpoint and keeps that endpoint locked. Save answer sends
+	the drawn graph and the request derived from it, with or without variables
+	(DEC-020 C1, C2). The page tells only when the answer was last saved, never
+	whether it is correct (C8); saves are unlimited and the last one counts.
+	FE-061: a back link to the proposed queries tops the panel, and after a
+	save Back to the tasks and, when one follows in the group's order, Next
+	task are offered. All are plain links, so browser Back keeps working.
 -->
 <script lang="ts">
 	import { resolve } from '$app/paths';
 	import { createQuery, useQueryClient } from '@tanstack/svelte-query';
-	import SendIcon from '@lucide/svelte/icons/send';
+	import SaveIcon from '@lucide/svelte/icons/save';
 	import ArrowLeftIcon from '@lucide/svelte/icons/arrow-left';
 	import ArrowRightIcon from '@lucide/svelte/icons/arrow-right';
 	import { api, type StudySubmission, type StudyTask } from '#lib/api/client.js';
 	import { queryKeys } from '#lib/api/queries.js';
 	import { Button } from '#lib/components/ui/button/index.js';
 	import {
-		answerQuery,
-		answerVariables,
 		loadQuery,
+		savedAnswerQuery,
+		savedAtLabel,
 		serializeQuery,
 		type QueryDocument
 	} from '#lib/domain/index.js';
@@ -39,7 +39,7 @@
 	})();
 
 	const queryClient = useQueryClient();
-	const history = createQuery(() => ({
+	const saves = createQuery(() => ({
 		queryKey: queryKeys.studySubmissions(start.key),
 		queryFn: ({ signal }) => api.study.submissions(start.key, { signal }),
 		staleTime: 0
@@ -58,20 +58,16 @@
 	});
 
 	let store = $state<QueryStore | null>(null);
-	let answerVariable = $state('');
 	let pending = $state(false);
+	// The save made on this page; the list catches up after the refetch.
 	let latest = $state<StudySubmission | null>(null);
 	let problem = $state<string | null>(null);
+	const lastSavedAt = $derived(latest?.savedAt ?? saves.data?.at(-1)?.savedAt ?? null);
 
-	const variables = $derived(store ? answerVariables(store.graph) : []);
-	$effect(() => {
-		if (!variables.includes(answerVariable)) answerVariable = variables[0] ?? '';
-	});
-
-	async function submit() {
+	async function save() {
 		if (!store || pending) return;
 		problem = null;
-		const derived = answerQuery(store.graph, answerVariable);
+		const derived = savedAnswerQuery(store.graph);
 		if ('message' in derived) {
 			problem = derived.message;
 			return;
@@ -87,19 +83,12 @@
 		} finally {
 			pending = false;
 		}
-		// The task list's status (STUDY-014) changes with each attempt.
+		// The save time and the task list's status (DEC-020 C8) change with each save.
 		await Promise.all([
 			queryClient.invalidateQueries({ queryKey: queryKeys.studySubmissions(start.key) }),
 			queryClient.invalidateQueries({ queryKey: queryKeys.studyTasks })
 		]);
 	}
-
-	const verdict = (attempt: StudySubmission) =>
-		attempt.invalid ? 'Invalid query' : attempt.correct ? 'Correct' : 'Incorrect';
-	const minutes = (ms: number) => {
-		const seconds = Math.round(ms / 1000);
-		return `${Math.floor(seconds / 60)}:${String(seconds % 60).padStart(2, '0')}`;
-	};
 </script>
 
 <QueryEditor
@@ -109,8 +98,8 @@
 	onready={(created) => (store = created)}
 >
 	{#snippet actions()}
-		<Button id="submit-answer-btn" disabled={pending} onclick={submit}
-			><SendIcon aria-hidden="true" />Submit answer</Button
+		<Button id="submit-answer-btn" disabled={pending} onclick={save}
+			><SaveIcon aria-hidden="true" />Save answer</Button
 		>
 	{/snippet}
 	{#snippet panel()}
@@ -129,46 +118,26 @@
 				</p>
 			</section>
 
-			<fieldset class="flex flex-col gap-1.5">
-				<legend class="mb-1 text-sm font-medium">Answer variable</legend>
-				{#each variables as name (name)}
-					<label class="flex items-center gap-2 text-sm">
-						<input
-							type="radio"
-							name="answer-variable"
-							value={name}
-							bind:group={answerVariable}
-							class="size-4 accent-primary"
-						/>
-						{store?.nameOf(name) ?? name}
-					</label>
-				{:else}
-					<p class="text-xs text-muted-foreground">
-						Add a variable (?) node for the answer to your query.
-					</p>
-				{/each}
-			</fieldset>
+			<p class="text-xs text-muted-foreground">
+				Draw your answer and save it. You can change it and save again until you finish the
+				study; the last saved answer counts.
+			</p>
 
 			<div role="status" aria-live="polite" data-testid="answer-feedback">
 				{#if problem}
 					<p class="text-sm text-danger">{problem}</p>
-				{:else if latest}
-					<p
-						class={[
-							'text-sm font-medium',
-							latest.correct
-								? 'text-success'
-								: latest.invalid
-									? 'text-danger'
-									: 'text-warning'
-						]}
-					>
-						{latest.feedback}
+				{:else if lastSavedAt}
+					<p class="text-sm font-medium">
+						Saved at <time datetime={lastSavedAt}>{savedAtLabel(lastSavedAt)}</time>
 					</p>
+				{:else if saves.isError}
+					<p class="text-sm text-danger">{saves.error.message}</p>
+				{:else if saves.isSuccess}
+					<p class="text-xs text-muted-foreground">No answer saved yet.</p>
 				{/if}
 			</div>
-			{#if !problem && latest?.correct}
-				<nav aria-label="After a correct answer" class="flex flex-wrap gap-2">
+			{#if latest && !problem}
+				<nav aria-label="After saving" class="flex flex-wrap gap-2">
 					<Button variant="outline" href={resolve('/study')}>Back to the tasks</Button>
 					{#if nextTask}
 						<Button href={resolve('/study/[key]', { key: nextTask.key })}
@@ -177,29 +146,6 @@
 					{/if}
 				</nav>
 			{/if}
-
-			<section class="flex flex-col gap-2" aria-labelledby="attempts-title">
-				<h2 id="attempts-title" class="text-sm font-semibold">Your attempts</h2>
-				{#if history.isError}
-					<p class="text-sm text-danger">{history.error.message}</p>
-				{:else if !history.data?.length}
-					<p class="text-xs text-muted-foreground">No attempts yet.</p>
-				{:else}
-					<ol class="flex flex-col gap-1" data-testid="attempt-history">
-						{#each history.data.toReversed() as attempt (attempt.attempt)}
-							<li class="rounded-md border px-2 py-1 text-xs">
-								<span class="font-medium"
-									>#{attempt.attempt} · {verdict(attempt)}</span
-								>
-								<span class="text-muted-foreground">
-									· {minutes(attempt.timeSpentMs)}</span
-								>
-								<p>{attempt.feedback}</p>
-							</li>
-						{/each}
-					</ol>
-				{/if}
-			</section>
 		</div>
 	{/snippet}
 </QueryEditor>

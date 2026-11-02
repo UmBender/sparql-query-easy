@@ -72,9 +72,9 @@ Every limit is checked before a query is generated or anything is stored.
 | Stage `bindings` | 16 (API-002) | `400` |
 | JSON nesting of study and admin bodies | 32 levels, counted before parsing | `400 JSON must not nest deeper than 32 levels` |
 | Text in study and admin bodies | no U+0000 (PostgreSQL `text`/`jsonb` cannot store it) | `400 Text must not contain the NUL character (U+0000)` |
-| Answer variable of a drawn query | 63 characters after `?` (`study_submission.answer_variable` is `VARCHAR(64)`) | `400` |
+| Answer variable of a drawn query; every variable of a saved answer (STUDY-016) | 63 characters after `?` (`study_submission.answer_variable` is `VARCHAR(64)`) | `400` |
 | Local graph query time | 30 s, as a remote request (`WikidataHttpClient`); Jena stops the query and the request thread is not held | `502 {"error":"Query timed out after 30s"}` |
-| Attempts at proposed tasks | 30 a minute per user (fixed window, in memory); the total stays unlimited (DEC-014 Q1 A) | `429 {"error":"Too many attempts; try again in a minute"}` |
+| Saved answers to proposed tasks | 30 a minute per user (fixed window, in memory); the total stays unlimited (DEC-014 Q1 A) | `429 {"error":"Too many saves; try again in a minute"}` |
 | Login and registration | `EASYQUERY_AUTH_ATTEMPTS_PER_MINUTE` per client address (default 10, AUTH-001) | `429` |
 
 `limit` of `relationships` and `relationship-value` is accepted but not
@@ -676,55 +676,71 @@ tasks of their group (STUDY-007).
 
 | Route | Success | Errors |
 |---|---|---|
-| `GET /api/study/tasks` | `200 {"data":[{"key","title","summary","status"}]}` in group order; `[]` without a group | — |
+| `GET /api/study/tasks` | `200 {"data":[{"key","title","summary","status","lastSavedAt"}]}` in group order; `[]` without a group | — |
 | `GET /api/study/tasks/{key}` | `200 {"data":{"key","title","statement","endpoint","startingGraph"}}` (`startingGraph` a saved query or `null`) | `404 {"error":"Task not found"}` for an unknown or inactive task or one outside the caller's group |
 
 - `summary` is the statement's first paragraph, whitespace collapsed, cut to
   160 characters with `…`.
-- `status` (STUDY-014) is the caller's own progress on the task, from their
-  own attempts only: `not_started` (no attempt; opening the task does not
-  count), `attempted` (attempts, none correct; invalid attempts count) or
-  `solved` (at least one correct attempt at any revision of the task; a later
-  wrong attempt or a task edit does not undo it). Other users' attempts never
-  count, and it reveals nothing about the expected answer.
+- `status` (STUDY-014, DEC-020 C8 since STUDY-016) is the caller's own
+  progress on the task, from their own saves only: `not_started` (nothing
+  saved; opening the task does not count) or `answered` (an answer saved at
+  any revision of the task). `lastSavedAt` is the time of the caller's last
+  save, `null` when not started. Other users' saves never count, and neither
+  field reveals correctness or the expected answer.
 - Neither route returns the reference graph, its request or SPARQL, or the
   expected result.
 - The first `GET /api/study/tasks/{key}` by a user is recorded in
   `study_task_open` (`V6__study_task_opens.sql`); later opens keep the first
   time. STUDY-004 measures time spent from it.
 
-## Answers and attempts (participant, STUDY-004)
+## Saved answers (participant, STUDY-004, STUDY-016)
 
 | Route | Body | Success | Errors |
 |---|---|---|---|
-| `POST /api/study/tasks/{key}/submissions` | a drawn query `{"graph","query"}` (as for task references) | `201` the attempt | `400` malformed body or a [request limit](#Request limits (QUAL-023)) (not stored), `404` task not open to the caller, `403`/`415` CSRF, `429` more than 30 attempts a minute |
-| `GET /api/study/submissions?task={key}` | — | `200` the caller's attempts at the task, oldest first | `400` no `task`, `404 {"error":"Task not found"}` for an unknown or inactive task or one outside the caller's group (QUAL-019) |
+| `POST /api/study/tasks/{key}/submissions` | a drawn answer `{"graph","query"}` | `201` the save | `400` malformed body or a [request limit](#Request limits (QUAL-023)) (not stored), `404` task not open to the caller, `403`/`415` CSRF, `429` more than 30 saves a minute |
+| `GET /api/study/submissions?task={key}` | — | `200` the caller's saves of the task, oldest first | `400` no `task`, `404 {"error":"Task not found"}` for an unknown or inactive task or one outside the caller's group (QUAL-019) |
 
-- An attempt is `{"attempt","correct","invalid","feedback","matched","missing",
-  "extra","expectedCount","taskRevision","timeSpentMs","createdAt"}`;
-  `attempt` numbers the caller's attempts at the task from 1. It never holds
-  the expected values (DEC-014 Q2 A).
-- The server runs `query` on the task's endpoint with the task's cap (any
-  client endpoint or limit is ignored), compares the answer variable's terms
-  with the stored expected result and stores graph, request, generated
-  SPARQL, answer variable, the result terms and counts, the verdict, the task
-  revision and the time since the first open (`study_submission`,
-  `V7__study_submissions.sql`). Body fields such as `correct` or `expected`
-  are ignored. Attempts are unlimited in total (Q1 A), at most 30 a minute
-  per user (QUAL-023).
-- Comparison (Q4): typed terms (IRI; literal by lexical form, datatype and
-  language, the tag regardless of case). `set`: distinct values; `multiset`:
-  values with repetitions. `matched` + `missing` = `expectedCount`; `extra`
-  counts answer values not expected.
-- Feedback: `Correct: all N expected results.`, `Incorrect: M of N expected
-  results[; X extra].`; an answer with more rows than the cap is incorrect
-  (`Incorrect: the query returns more than C results; the expected answer has
-  N.`).
-- A query that cannot be built or run is stored as an invalid attempt
-  (`201`, `invalid: true`, counts `null`, feedback `The query could not run:
-  …`), not a server error.
+Since STUDY-016 (DEC-020) the participant saves answers and sees no
+correctness; the evaluation is manual, after the study.
+
+- A save is `{"save","taskRevision","timeSpentMs","savedAt"}`; `save` numbers
+  the caller's saves of the task from 1, and the last one is the answer. No
+  verdict, count, expected value, feedback or whether the query ran is ever
+  returned to the participant.
+- `query` is `{"where","variableFilters"}` derived from the graph with the Run
+  Query mapping; `variableName` is not read. An answer may have any number of
+  variables or none, and `where` may be empty (a diagram of one node). The
+  browser keeps every relation of a diagram without variables, and the query
+  component of one with variables.
+- The server stores graph, request, task revision and the time since the
+  first open (`study_submission`, `V7__study_submissions.sql`) with an
+  admin-only automatic check (`auto_check`, `V12__study_answer_check.sql`), a
+  hint for the researcher and not a grade:
+  - without variables (C1): the answer's triples (subject, predicate, object
+    and any literal filter) compared as a set with the reference request's,
+    nothing run; `{"kind":"structural","missing","extra"}`.
+  - with variables (C2): each of the first 6 variables, in order of
+    appearance (subjects, predicates, objects, then filters), run as the
+    projected variable on the task's endpoint with the task's cap (client
+    endpoint and limit ignored) and its typed terms compared with the stored
+    expected result; `{"kind":"variables","variables":[{"variable","sparql",
+    "diagnostic","result"}],"unchecked"}`. The answer matches when any
+    variable matches.
+  - `correct` holds the match; `invalid` is true when no variable's query
+    could run; `feedback` is a one-line summary; `answer_variable`, `sparql`
+    and `result_summary` describe the matched variable, else the first one,
+    and are `null` without variables. Rows saved before V12 have no
+    `auto_check` and are read as a check of their one chosen variable.
+- Comparison of a variable (Q4): typed terms (IRI; literal by lexical form,
+  datatype and language, the tag regardless of case). `set`: distinct values;
+  `multiset`: values with repetitions. A result with more rows than the cap
+  never matches. A query that cannot be built or run is still saved (`201`).
+- Body fields such as `correct` or `expected` are ignored. Saves are
+  unlimited in total (Q1 A), at most 30 a minute per user (QUAL-023).
 - `timeSpentMs` is measured from the first `GET /api/study/tasks/{key}` (a
-  submission without one records the open first, so it counts 0).
+  save without one records the open first, so it counts 0).
+- No route shows the check yet; the admin review is STUDY-017 and the export
+  STUDY-018.
 
 ## Final submission (participant, STUDY-005)
 

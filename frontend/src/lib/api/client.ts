@@ -15,7 +15,7 @@ import type {
 } from '#lib/domain/legacy/query-calculations.js';
 import type { StageRequest } from '#lib/domain/legacy/query-stages.js';
 import type { SavedQueryV1 } from '#lib/domain/saved-format.js';
-import type { AnswerQuery } from '#lib/domain/study.js';
+import type { AnswerQuery, SavedAnswerQuery } from '#lib/domain/study.js';
 import type { FormDefinition } from '#lib/domain/forms.js';
 
 type Schemas = components['schemas'];
@@ -48,6 +48,8 @@ export type StudyTask = Omit<Schemas['StudyTaskHttpResponse'], 'startingGraph'> 
 };
 /** A drawn query (DEC-014 Q5): the saved graph and the request derived from it. */
 export type DrawnQuery = { graph: SavedQueryV1; query: AnswerQuery };
+/** A participant's answer (STUDY-016, DEC-020): the saved graph and its request, without an answer variable. */
+export type DrawnAnswer = { graph: SavedQueryV1; query: SavedAnswerQuery };
 export type AdminTaskBody = {
 	key: string;
 	title: string;
@@ -499,14 +501,14 @@ export function createApiClient({
 					options,
 					isTask
 				),
-			/** STUDY-004: the server checks the answer; the client never sends a verdict. */
-			submit: (key: string, answer: DrawnQuery) =>
+			/** STUDY-016: saves the answer; the response tells when, never whether it is correct (DEC-020). */
+			submit: (key: string, answer: DrawnAnswer) =>
 				post<StudySubmission>(
 					`/api/study/tasks/${encodeURIComponent(key)}/submissions`,
 					answer,
-					'Submitting the answer failed',
+					'Saving the answer failed',
 					{},
-					(data) => typeof (data as StudySubmission | null)?.correct === 'boolean'
+					(data) => typeof (data as StudySubmission | null)?.savedAt === 'string'
 				),
 			/** STUDY-005: the final submission; afterwards the task routes answer `forbidden`. */
 			finish: () =>
@@ -521,7 +523,7 @@ export function createApiClient({
 			submissions: (key: string, options?: Options) =>
 				get<StudySubmission[]>(
 					`/api/study/submissions?${new URLSearchParams({ task: key })}`,
-					'Attempt history failed',
+					'Loading your saved answers failed',
 					options,
 					isArray
 				)
