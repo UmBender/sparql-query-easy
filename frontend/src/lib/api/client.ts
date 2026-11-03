@@ -35,6 +35,24 @@ export type AdminTask = Omit<
 	'startingGraph' | 'referenceGraph'
 > & { startingGraph: SavedQueryV1 | null; referenceGraph: SavedQueryV1 };
 export type TaskPreview = Schemas['TaskPreviewHttpResponse'];
+/** STUDY-017: a participant's last save, as the admin review lists it. */
+export type AdminSubmissionSummary = Schemas['AdminSubmissionSummaryHttpResponse'];
+export type AnswerCheckReview = Schemas['AnswerCheckHttpResponse'];
+export type VariableCheckReview = Schemas['VariableCheckHttpResponse'];
+export type TaskRevision = Omit<
+	NonNullable<Schemas['TaskRevisionHttpResponse']>,
+	'referenceGraph'
+> & {
+	referenceGraph: SavedQueryV1;
+};
+/** STUDY-017: a last save with its check and the reference of its revision (null when not kept). */
+export type AdminSubmission = Omit<
+	Schemas['AdminSubmissionHttpResponse'],
+	'graph' | 'reference'
+> & {
+	graph: SavedQueryV1;
+	reference: TaskRevision | null;
+};
 export type StudyGroup = Schemas['StudyGroupHttpResponse'];
 export type Participant = Schemas['ParticipantHttpResponse'];
 export type StudyTaskSummary = Schemas['StudyTaskSummaryHttpResponse'];
@@ -374,6 +392,21 @@ export function createApiClient({
 					'Changing the task failed',
 					{},
 					isTask
+				),
+			/** STUDY-017: the last saved answers and one with the reference of its revision. */
+			submissions: (options?: Options) =>
+				get<AdminSubmissionSummary[]>(
+					'/api/admin/submissions',
+					'Saved answer list failed',
+					options,
+					isArray
+				),
+			submission: (id: number, options?: Options) =>
+				get<AdminSubmission>(
+					`/api/admin/submissions/${id}`,
+					'Saved answer lookup failed',
+					options,
+					(data) => !!data && typeof (data as { check?: unknown }).check === 'object'
 				),
 			/** STUDY-007: participant groups. */
 			participants: (options?: Options) =>

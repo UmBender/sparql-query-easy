@@ -1,7 +1,7 @@
 ---
 id: STUDY-017
 title: Let an admin review each participant's last saved answer beside the task's reference query
-status: BACKLOG
+status: DONE
 priority: P1
 type: fullstack
 depends_on: [STUDY-016]
@@ -37,3 +37,40 @@ Main skill: tcc-fullstack. Contract: [[DEC-020-manual-evaluation-and-submission-
 
 Backend route tests (Testcontainers), frontend component test of the review
 page, and the fullstack gate.
+
+## Conclusion (2026-11-02)
+
+Done. `V13__study_task_revisions.sql` adds `study_task_revision` and copies
+each task's current revision; `PostgresStudyStore` writes the current revision
+on every create and update (upsert, so an edit that keeps the revision
+replaces its row). `SubmissionReviewService` with
+`PostgresSubmissionReviewStore` lists the last save per participant and task
+(`GET /api/admin/submissions`) and reviews one with the reference of its
+revision (`GET /api/admin/submissions/{id}`, 404 for an earlier save).
+`/admin/submissions` lists them and `/admin/submissions/[id]` shows the saved
+diagram read-only (`diagram-view.svelte`: the editor's `viewElements` and
+stylesheet, no editing, also listed as text) with the check, each variable's
+SPARQL and values, beside the statement, reference diagram, SPARQL and
+expected values of the save's revision. `/admin` links to it.
+Contract: [[../../03 - Backend/API v1#Saved answer review (admin, STUDY-017)]].
+
+Deviation from DEC-020 C10, to confirm: pseudonyms are numbered by each
+participant's **first save**, not by account creation order. With account
+order, an older account that saves for the first time after an export would
+shift every later pseudonym, which C10 itself forbids. First-save order keeps
+"P + position among participants with a save" and never renumbers.
+
+Limitations: the read-only diagram is the editor's canvas view, not the full
+`QueryEditor` with its panels (no run, no filters dialog). A save to a
+revision overwritten before V13 shows "reference for revision N not kept".
+
+Validation: `AdminSubmissionRoutesTest` (Testcontainers: list with
+pseudonyms, saves, finished and hint; stable pseudonyms when a newcomer
+saves; old reference after an edit; structural check; missing revision; 404,
+403, 401), `AccessControlMatrixTest`, `OpenApiRoutesTest`,
+`PostgresDatabaseTest`; Kotlin gate (ktlint, detekt, 365 tests) passed after
+the two expected-list updates; `submission-review.svelte.spec.ts`; frontend
+check, lint and `npm test` (Vitest and 135 offline Playwright, axe on the new
+pages) passed; `test:screens` passed after adding the four
+`admin-submission(s)` baselines and refreshing `/admin` (new link; reviewed);
+`test:stack` (22, live OpenAPI equals the snapshot) passed.

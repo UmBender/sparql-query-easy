@@ -640,6 +640,12 @@ a session cookie gets `503 {"error":"Accounts are temporarily unavailable"}`.
   graph or starting-graph change keeps the revision and the expected result.
 - Tasks are never deleted; deactivating keeps the row and hides the task from
   participants.
+- Revisions (STUDY-017, DEC-020 C3): every create and update also writes the
+  task's current revision (statement, title, endpoint, reference graph and
+  request, SPARQL, expected result, comparison, cap) to `study_task_revision`
+  (`V13__study_task_revisions.sql`); an update that keeps the revision
+  replaces that revision's row. The migration copied only each task's
+  revision at that time; older revisions were already overwritten.
 
 ## Participant groups (admin, STUDY-007)
 
@@ -899,6 +905,41 @@ ids, then the placeholder v1 ids, empty on v2 rows and vice versa).
 
 `/admin` lists the questionnaires (`GET /api/study/forms`, which admins reach
 without consent) with one download link each (`formResponsesCsvPath`).
+
+## Saved answer review (admin, STUDY-017)
+
+DEC-020 points 2–4, C3, C9, C10. Admin role (401 without a session, 403 for a
+participant).
+
+| Route | Success | Errors |
+|---|---|---|
+| `GET /api/admin/submissions` | `200` the last save (latest `savedAt`, then id) of every participant and task with a save: `id`, `participant` (pseudonym), `username`, `taskKey`, `taskTitle`, `taskRevision`, `savedAt`, `timeSpentMs`, `saves` (count at any revision), `finished` (final submission made), `autoCheck` (`match`, `no_match`, `not_checked`), by pseudonym then task key | — |
+| `GET /api/admin/submissions/{id}` | `200 {"data":{"summary","graph","query","check","reference"}}` | `404 {"error":"Saved answer not found"}` for an id that is not a last save (earlier saves are kept but not reviewed) |
+
+- Pseudonym: `P` and the participant's position, at least three digits
+  (`P001`), by the time of their first save (then user id) among the users
+  with a save. A first save never changes, so a pseudonym stays the same
+  while the study goes on; a new participant only adds a higher number.
+  DEC-020 C10 says "by account creation order"; that order would renumber
+  everyone after an older account's first save, against C10's own
+  requirement that pseudonyms not change between exports, so the first save
+  is used (STUDY-017). The account (`username`) is shown only on these admin
+  routes and pages, never in an export.
+- `check`: `kind` `structural` (no variables: `missing`/`extra` reference
+  triples, C1) or `variables` (each checked variable with its `sparql`,
+  `match`, `diagnostic`, typed `values`, `truncated` and the counts, plus the
+  `unchecked` ones beyond the first 6, C2); `hint` as `autoCheck`;
+  `summary` one line. `not_checked` means no variable's query could run.
+- `reference`: the task as it was at the save's `taskRevision` (`revision`,
+  `title`, `statement`, `endpoint`, `referenceGraph`, `referenceQuery`,
+  `referenceSparql`, `expected`, `comparison`, `maxResults`, `savedAt`), or
+  `null` when that revision was not kept (saved before V13 to a revision
+  that was no longer current).
+
+`/admin/submissions` lists the last saves; `/admin/submissions/[id]` shows the
+saved diagram read-only (the editor's canvas view, also listed as text) with
+the check, each variable's SPARQL and values, beside the statement, reference
+diagram, SPARQL and expected values of the save's revision.
 
 ## Endpoint selection
 

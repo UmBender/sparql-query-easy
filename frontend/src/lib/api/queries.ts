@@ -56,6 +56,8 @@ export const queryKeys = {
 	/** STUDY-006: the admin's task list and one task; saving invalidates `['admin', 'tasks']`. */
 	adminTasks: ['admin', 'tasks'] as const,
 	adminTask: (key: string) => ['admin', 'tasks', key] as const,
+	adminSubmissions: ['admin', 'submissions'] as const,
+	adminSubmission: (id: number) => ['admin', 'submissions', id] as const,
 	/** STUDY-007: groups and participants; a change invalidates `['admin', 'groups']` and the participants. */
 	adminGroups: ['admin', 'groups'] as const,
 	adminGroup: (id: number) => ['admin', 'groups', id] as const,

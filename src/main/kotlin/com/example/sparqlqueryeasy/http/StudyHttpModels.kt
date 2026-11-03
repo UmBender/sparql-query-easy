@@ -183,7 +183,7 @@ internal fun AdminTaskHttpRequest.toDraft(): TaskDraft =
         maxResults = maxResults,
     )
 
-private fun parseObject(json: String): JsonObject = lenientJson.parseToJsonElement(json) as JsonObject
+internal fun parseJsonObject(json: String): JsonObject = lenientJson.parseToJsonElement(json) as JsonObject
 
 internal fun StudyTask.toSummaryResponse() =
     AdminTaskSummaryHttpResponse(
@@ -203,8 +203,8 @@ internal fun StudyTask.toAdminResponse() =
         title = title,
         statement = statement,
         endpoint = endpoint,
-        startingGraph = startingGraphJson?.let(::parseObject),
-        referenceGraph = parseObject(referenceGraphJson),
+        startingGraph = startingGraphJson?.let(::parseJsonObject),
+        referenceGraph = parseJsonObject(referenceGraphJson),
         referenceQuery = lenientJson.decodeFromString(referenceRequestJson),
         referenceSparql = expected.sparql,
         expected = expected.values.map { it.toTermResponse() },

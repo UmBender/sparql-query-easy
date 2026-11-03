@@ -121,3 +121,7 @@ STUDY-016 (save without feedback, variable-free answers) → STUDY-017
   devDependency) and C7 (`.mmd` name) removed.
 - 2026-11-02: The user accepted C1–C5 and C8–C10 as recommended ("Ok"). DONE;
   STUDY-016 is READY.
+- 2026-11-02: STUDY-017 numbers pseudonyms by first save instead of account
+  creation order: account order renumbers participants when an older account
+  saves for the first time, contrary to C10's stability goal. Recorded in API
+  v1 (Saved answer review); to be confirmed by the user.

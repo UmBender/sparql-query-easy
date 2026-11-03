@@ -57,6 +57,8 @@ internal val ACCESS_RULES: Map<String, Access> =
         "POST /api/admin/groups/{id}/members/remove" to Access.ADMIN,
         "POST /api/admin/groups/{id}/delete" to Access.ADMIN,
         "GET /api/admin/forms/{slug}/responses.csv" to Access.ADMIN,
+        "GET /api/admin/submissions" to Access.ADMIN,
+        "GET /api/admin/submissions/{id}" to Access.ADMIN,
         // Study: consent (STUDY-008), questionnaires (STUDY-009/010), tasks and answers (STUDY-003…005).
         "GET /api/study/consent" to Access.PARTICIPANT_OWN,
         "POST /api/study/consent" to Access.PARTICIPANT_OWN,

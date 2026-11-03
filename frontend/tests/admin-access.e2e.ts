@@ -19,7 +19,9 @@ const ADMIN_PAGES = [
 	'/admin/tasks/new',
 	'/admin/tasks/fire-fast',
 	'/admin/groups',
-	'/admin/groups/1'
+	'/admin/groups/1',
+	'/admin/submissions',
+	'/admin/submissions/7'
 ];
 
 const SESSIONS = [

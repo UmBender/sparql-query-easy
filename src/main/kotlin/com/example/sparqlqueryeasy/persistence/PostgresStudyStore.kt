@@ -22,6 +22,7 @@ import org.jetbrains.exposed.v1.jdbc.JdbcTransaction
 import org.jetbrains.exposed.v1.jdbc.insertIgnore
 import org.jetbrains.exposed.v1.jdbc.selectAll
 import org.jetbrains.exposed.v1.jdbc.update
+import org.jetbrains.exposed.v1.jdbc.upsert
 import org.postgresql.util.PGobject
 import java.sql.SQLException
 import java.time.Instant
@@ -61,6 +62,23 @@ internal object StudyTasks : Table("study_task") {
     override val primaryKey = PrimaryKey(id)
 }
 
+/** STUDY-017 (V13__study_task_revisions.sql): each task revision, written with the task (DEC-020 C3). */
+internal object StudyTaskRevisions : Table("study_task_revision") {
+    val taskId = long("task_id").references(StudyTasks.id)
+    val revision = integer("revision")
+    val title = varchar("title", 200)
+    val statement = text("statement")
+    val endpoint = varchar("endpoint", 64)
+    val referenceGraph = jsonb("reference_graph")
+    val referenceRequest = jsonb("reference_request")
+    val referenceSparql = text("reference_sparql")
+    val expectedResult = jsonb("expected_result")
+    val comparison = varchar("comparison", 16)
+    val maxResults = integer("max_results")
+    val savedAt = timestamp("saved_at")
+    override val primaryKey = PrimaryKey(taskId, revision)
+}
+
 /** How a typed RDF term is stored in JSON columns: the API's RdfTermHttp shape. */
 @Serializable
 internal data class StoredTerm(
@@ -94,7 +112,7 @@ internal fun termsFromJson(json: String): List<RdfValue> {
     return storedJson.decodeFromString<List<StoredTerm>>(json).map(StoredTerm::toRdfValue)
 }
 
-/** [StudyTaskStore] on the migrated PostgreSQL database (V4__study_tasks.sql). */
+/** [StudyTaskStore] on the migrated PostgreSQL database (V4__study_tasks.sql, V13 for the revisions). */
 class PostgresStudyStore(private val connector: DatabaseConnector) : StudyTaskStore {
     override suspend fun create(
         draft: TaskDraft,
@@ -120,7 +138,7 @@ class PostgresStudyStore(private val connector: DatabaseConnector) : StudyTaskSt
                     it[createdAt] = now
                     it[updatedAt] = now
                 }
-            if (inserted.insertedCount == 1) findTask(draft.key) else null
+            if (inserted.insertedCount == 1) findTask(draft.key)?.also { saveRevision(it, now) } else null
         }
 
     override suspend fun update(
@@ -143,6 +161,7 @@ class PostgresStudyStore(private val connector: DatabaseConnector) : StudyTaskSt
                 it[updatedAt] = now
             }
             checkNotNull(findTask(task.key)) { "Task ${task.key} disappeared during its update" }
+                .also { saveRevision(it, now) }
         }
 
     override suspend fun find(key: String): StudyTask? = use { findTask(key) }
@@ -164,6 +183,27 @@ class PostgresStudyStore(private val connector: DatabaseConnector) : StudyTaskSt
             }
             findTask(key)
         }
+
+    /** Stores [task]'s current revision; an edit that kept the revision replaces its row. */
+    private fun saveRevision(
+        task: StudyTask,
+        now: Instant,
+    ) {
+        StudyTaskRevisions.upsert {
+            it[taskId] = task.id
+            it[revision] = task.revision
+            it[title] = task.title
+            it[statement] = task.statement
+            it[endpoint] = task.endpoint
+            it[referenceGraph] = task.referenceGraphJson
+            it[referenceRequest] = task.referenceRequestJson
+            it[referenceSparql] = task.expected.sparql
+            it[expectedResult] = task.expected.values.toTermsJson()
+            it[comparison] = task.comparison.wire
+            it[maxResults] = task.maxResults
+            it[savedAt] = now
+        }
+    }
 
     private fun findTask(key: String): StudyTask? {
         return StudyTasks.selectAll().where { StudyTasks.key eq key }.singleOrNull()?.toTask()

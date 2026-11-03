@@ -122,76 +122,76 @@ class PostgresStudySubmissionStore(private val connector: DatabaseConnector) : S
                 .groupBy(StudySubmissions.taskId)
                 .associate { it[StudySubmissions.taskId] to checkNotNull(it[last]) }
         }
+}
 
-    private fun AttemptResult.stored() =
-        StoredResult(
-            outcome.correct,
-            outcome.matched,
-            outcome.missing,
-            outcome.extra,
-            outcome.expectedCount,
-            truncated,
-            values.map(StoredTerm::of),
-        )
+private fun AttemptResult.stored() =
+    StoredResult(
+        outcome.correct,
+        outcome.matched,
+        outcome.missing,
+        outcome.extra,
+        outcome.expectedCount,
+        truncated,
+        values.map(StoredTerm::of),
+    )
 
-    private fun StoredResult.toAttemptResult() =
-        AttemptResult(
-            ComparisonOutcome(correct, matched, missing, extra, expectedCount),
-            values.map(StoredTerm::toRdfValue),
-            truncated,
-        )
+private fun StoredResult.toAttemptResult() =
+    AttemptResult(
+        ComparisonOutcome(correct, matched, missing, extra, expectedCount),
+        values.map(StoredTerm::toRdfValue),
+        truncated,
+    )
 
-    private fun AnswerCheck.stored(): StoredCheck =
-        when (this) {
-            is AnswerCheck.Structural -> StoredCheck(STRUCTURAL, missing = missing, extra = extra)
-            is AnswerCheck.ByVariable ->
-                StoredCheck(
-                    VARIABLES,
-                    variables =
-                        variables.map {
-                            StoredVariableCheck(it.variable, it.sparql, it.diagnostic, it.result?.stored())
-                        },
-                    unchecked = unchecked,
-                )
-        }
-
-    private fun StoredCheck.toCheck(): AnswerCheck =
-        when (kind) {
-            STRUCTURAL -> AnswerCheck.Structural(checkNotNull(missing), checkNotNull(extra))
-            else ->
-                AnswerCheck.ByVariable(
+private fun AnswerCheck.stored(): StoredCheck =
+    when (this) {
+        is AnswerCheck.Structural -> StoredCheck(STRUCTURAL, missing = missing, extra = extra)
+        is AnswerCheck.ByVariable ->
+            StoredCheck(
+                VARIABLES,
+                variables =
                     variables.map {
-                        VariableCheck(it.variable, it.sparql, it.result?.toAttemptResult(), it.diagnostic)
+                        StoredVariableCheck(it.variable, it.sparql, it.diagnostic, it.result?.stored())
                     },
-                    unchecked,
-                )
-        }
-
-    /** A row saved before V12: one chosen answer variable, its result, or the failure in feedback. */
-    private fun ResultRow.legacyCheck(): AnswerCheck {
-        val result =
-            this[StudySubmissions.resultSummary]?.let { json ->
-                storedJson.decodeFromString<StoredResult>(json).toAttemptResult()
-            }
-        val diagnostic = this[StudySubmissions.feedback].takeIf { result == null }?.removePrefix(COULD_NOT_RUN)
-        val variable =
-            checkNotNull(this[StudySubmissions.answerVariable]) { "A row saved before V12 has an answer variable" }
-        val sparql = this[StudySubmissions.sparql]
-        return AnswerCheck.ByVariable(listOf(VariableCheck(variable, sparql, result, diagnostic)))
+                unchecked = unchecked,
+            )
     }
 
-    private fun ResultRow.toSubmission(): Submission =
-        Submission(
-            id = this[StudySubmissions.id],
-            userId = this[StudySubmissions.userId],
-            taskId = this[StudySubmissions.taskId],
-            taskRevision = this[StudySubmissions.taskRevision],
-            graphJson = this[StudySubmissions.graph],
-            requestJson = this[StudySubmissions.request],
-            check =
-                this[StudySubmissions.autoCheck]?.let { storedJson.decodeFromString<StoredCheck>(it).toCheck() }
-                    ?: legacyCheck(),
-            createdAt = this[StudySubmissions.createdAt],
-            timeSpentMillis = this[StudySubmissions.timeSpentMs],
-        )
+private fun StoredCheck.toCheck(): AnswerCheck =
+    when (kind) {
+        STRUCTURAL -> AnswerCheck.Structural(checkNotNull(missing), checkNotNull(extra))
+        else ->
+            AnswerCheck.ByVariable(
+                variables.map {
+                    VariableCheck(it.variable, it.sparql, it.result?.toAttemptResult(), it.diagnostic)
+                },
+                unchecked,
+            )
+    }
+
+/** A row saved before V12: one chosen answer variable, its result, or the failure in feedback. */
+private fun ResultRow.legacyCheck(): AnswerCheck {
+    val result =
+        this[StudySubmissions.resultSummary]?.let { json ->
+            storedJson.decodeFromString<StoredResult>(json).toAttemptResult()
+        }
+    val diagnostic = this[StudySubmissions.feedback].takeIf { result == null }?.removePrefix(COULD_NOT_RUN)
+    val variable =
+        checkNotNull(this[StudySubmissions.answerVariable]) { "A row saved before V12 has an answer variable" }
+    val sparql = this[StudySubmissions.sparql]
+    return AnswerCheck.ByVariable(listOf(VariableCheck(variable, sparql, result, diagnostic)))
 }
+
+internal fun ResultRow.toSubmission(): Submission =
+    Submission(
+        id = this[StudySubmissions.id],
+        userId = this[StudySubmissions.userId],
+        taskId = this[StudySubmissions.taskId],
+        taskRevision = this[StudySubmissions.taskRevision],
+        graphJson = this[StudySubmissions.graph],
+        requestJson = this[StudySubmissions.request],
+        check =
+            this[StudySubmissions.autoCheck]?.let { storedJson.decodeFromString<StoredCheck>(it).toCheck() }
+                ?: legacyCheck(),
+        createdAt = this[StudySubmissions.createdAt],
+        timeSpentMillis = this[StudySubmissions.timeSpentMs],
+    )

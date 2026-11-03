@@ -2547,6 +2547,149 @@
                 }
             }
         },
+        "/api/admin/submissions": {
+            "get": {
+                "operationId": "adminListSubmissions",
+                "tags": [
+                    "Admin"
+                ],
+                "summary": "List the last saved answers",
+                "description": "The last save of every participant and task with a save (DEC-020 points 3 and 4, C9), by pseudonym and task key, with the account behind each pseudonym. Requires the admin role (401 without a session, 403 for a participant).",
+                "responses": {
+                    "200": {
+                        "description": "The last saves.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "required": [
+                                        "data"
+                                    ],
+                                    "properties": {
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "$ref": "#/components/schemas/AdminSubmissionSummaryHttpResponse"
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "No valid session.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorResponse"
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "description": "The user lacks the role, or the request came from another site.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorResponse"
+                                }
+                            }
+                        }
+                    },
+                    "503": {
+                        "description": "The database is not configured or unreachable.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorResponse"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/admin/submissions/{id}": {
+            "get": {
+                "operationId": "adminGetSubmission",
+                "tags": [
+                    "Admin"
+                ],
+                "summary": "Review a last saved answer",
+                "description": "The saved diagram and request, the automatic check with each variable's SPARQL and values, and the task as it was at the save's revision (DEC-020 C3). Requires the admin role (401 without a session, 403 for a participant).",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "The saved answer and its reference.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "required": [
+                                        "data"
+                                    ],
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/components/schemas/AdminSubmissionHttpResponse"
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "No last save has this id (an earlier save is not reviewed).",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorResponse"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "No valid session.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorResponse"
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "description": "The user lacks the role, or the request came from another site.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorResponse"
+                                }
+                            }
+                        }
+                    },
+                    "503": {
+                        "description": "The database is not configured or unreachable.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorResponse"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
         "/api/study/consent": {
             "post": {
                 "operationId": "studyAcceptConsent",
@@ -4499,6 +4642,289 @@
                             "string",
                             "null"
                         ]
+                    }
+                }
+            },
+            "AdminSubmissionSummaryHttpResponse": {
+                "type": "object",
+                "title": "AdminSubmissionSummaryHttpResponse",
+                "required": [
+                    "id",
+                    "participant",
+                    "username",
+                    "taskKey",
+                    "taskTitle",
+                    "taskRevision",
+                    "savedAt",
+                    "timeSpentMs",
+                    "saves",
+                    "finished",
+                    "autoCheck"
+                ],
+                "properties": {
+                    "id": {
+                        "type": "integer",
+                        "description": "The save's id; GET /api/admin/submissions/{id} reads it."
+                    },
+                    "participant": {
+                        "type": "string",
+                        "description": "The pseudonym (DEC-020 C10): P and the participant's position, at least three digits, by the time of their first save. Stable while the study goes on."
+                    },
+                    "username": {
+                        "type": "string",
+                        "description": "The account behind the pseudonym; shown only on the admin review, never exported."
+                    },
+                    "taskKey": {
+                        "type": "string"
+                    },
+                    "taskTitle": {
+                        "type": "string"
+                    },
+                    "taskRevision": {
+                        "type": "integer"
+                    },
+                    "savedAt": {
+                        "type": "string"
+                    },
+                    "timeSpentMs": {
+                        "type": "integer",
+                        "description": "Milliseconds since the participant first opened the task, measured on the server."
+                    },
+                    "saves": {
+                        "type": "integer",
+                        "description": "How many times the participant saved an answer to the task; this is the last one."
+                    },
+                    "finished": {
+                        "type": "boolean",
+                        "description": "The participant made the final submission (STUDY-005)."
+                    },
+                    "autoCheck": {
+                        "type": "string",
+                        "description": "The automatic check's hint for the researcher, not a grade (DEC-020).",
+                        "enum": [
+                            "match",
+                            "no_match",
+                            "not_checked"
+                        ]
+                    }
+                }
+            },
+            "VariableCheckHttpResponse": {
+                "type": "object",
+                "title": "VariableCheckHttpResponse",
+                "required": [
+                    "variable",
+                    "match",
+                    "values",
+                    "truncated"
+                ],
+                "properties": {
+                    "variable": {
+                        "type": "string",
+                        "description": "The variable with its ?."
+                    },
+                    "sparql": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "description": "The SPARQL generated for this variable; null when no query could be built."
+                    },
+                    "match": {
+                        "type": "boolean"
+                    },
+                    "diagnostic": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "description": "Why the query could not run; null when it ran."
+                    },
+                    "values": {
+                        "type": "array",
+                        "description": "The variable's typed terms, one per result row; empty when the query did not run.",
+                        "items": {
+                            "$ref": "#/components/schemas/RdfTermHttp"
+                        }
+                    },
+                    "truncated": {
+                        "type": "boolean"
+                    },
+                    "matched": {
+                        "type": [
+                            "integer",
+                            "null"
+                        ]
+                    },
+                    "missing": {
+                        "type": [
+                            "integer",
+                            "null"
+                        ]
+                    },
+                    "extra": {
+                        "type": [
+                            "integer",
+                            "null"
+                        ]
+                    },
+                    "expectedCount": {
+                        "type": [
+                            "integer",
+                            "null"
+                        ]
+                    }
+                }
+            },
+            "AnswerCheckHttpResponse": {
+                "type": "object",
+                "title": "AnswerCheckHttpResponse",
+                "required": [
+                    "kind",
+                    "hint",
+                    "summary",
+                    "variables",
+                    "unchecked"
+                ],
+                "properties": {
+                    "kind": {
+                        "type": "string",
+                        "description": "structural: an answer without variables, its triples compared as a set with the reference's (C1); variables: each checked variable run and compared with the expected values (C2).",
+                        "enum": [
+                            "structural",
+                            "variables"
+                        ]
+                    },
+                    "hint": {
+                        "type": "string",
+                        "enum": [
+                            "match",
+                            "no_match",
+                            "not_checked"
+                        ]
+                    },
+                    "summary": {
+                        "type": "string"
+                    },
+                    "missing": {
+                        "type": [
+                            "integer",
+                            "null"
+                        ],
+                        "description": "Structural only: reference triples the answer lacks."
+                    },
+                    "extra": {
+                        "type": [
+                            "integer",
+                            "null"
+                        ],
+                        "description": "Structural only: answer triples the reference lacks."
+                    },
+                    "variables": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/VariableCheckHttpResponse"
+                        }
+                    },
+                    "unchecked": {
+                        "type": "array",
+                        "description": "Variables beyond the checked ones, not run.",
+                        "items": {
+                            "type": "string"
+                        }
+                    }
+                }
+            },
+            "TaskRevisionHttpResponse": {
+                "type": [
+                    "object",
+                    "null"
+                ],
+                "title": "TaskRevisionHttpResponse",
+                "description": "The task as it was at the save's revision; null when that revision was not kept (saved before STUDY-017).",
+                "required": [
+                    "revision",
+                    "title",
+                    "statement",
+                    "endpoint",
+                    "referenceGraph",
+                    "referenceQuery",
+                    "referenceSparql",
+                    "expected",
+                    "comparison",
+                    "maxResults",
+                    "savedAt"
+                ],
+                "properties": {
+                    "revision": {
+                        "type": "integer"
+                    },
+                    "title": {
+                        "type": "string"
+                    },
+                    "statement": {
+                        "type": "string"
+                    },
+                    "endpoint": {
+                        "type": "string"
+                    },
+                    "referenceGraph": {
+                        "type": "object",
+                        "additionalProperties": {
+                            "$ref": "#/components/schemas/JsonElement"
+                        }
+                    },
+                    "referenceQuery": {
+                        "$ref": "#/components/schemas/AnswerQueryHttpRequest"
+                    },
+                    "referenceSparql": {
+                        "type": "string"
+                    },
+                    "expected": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/RdfTermHttp"
+                        }
+                    },
+                    "comparison": {
+                        "type": "string"
+                    },
+                    "maxResults": {
+                        "type": "integer"
+                    },
+                    "savedAt": {
+                        "type": "string"
+                    }
+                }
+            },
+            "AdminSubmissionHttpResponse": {
+                "type": "object",
+                "title": "AdminSubmissionHttpResponse",
+                "required": [
+                    "summary",
+                    "graph",
+                    "query",
+                    "check"
+                ],
+                "properties": {
+                    "summary": {
+                        "$ref": "#/components/schemas/AdminSubmissionSummaryHttpResponse"
+                    },
+                    "graph": {
+                        "type": "object",
+                        "description": "The saved diagram (formatVersion 1), as the participant's editor sent it.",
+                        "additionalProperties": {
+                            "$ref": "#/components/schemas/JsonElement"
+                        }
+                    },
+                    "query": {
+                        "$ref": "#/components/schemas/AnswerQueryHttpRequest"
+                    },
+                    "check": {
+                        "$ref": "#/components/schemas/AnswerCheckHttpResponse"
+                    },
+                    "reference": {
+                        "$ref": "#/components/schemas/TaskRevisionHttpResponse"
                     }
                 }
             },

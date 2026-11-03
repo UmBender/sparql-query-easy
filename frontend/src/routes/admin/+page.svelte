@@ -1,7 +1,8 @@
 <!--
 	The admin area (AUTH-005). Only admins reach it (root layout guard): the
 	proposed tasks (STUDY-006), the participant groups (STUDY-007) and the
-	questionnaire responses as CSV, one file per questionnaire (STUDY-011).
+	questionnaire responses as CSV, one file per questionnaire (STUDY-011) and
+	the participants' last saved answers (STUDY-017).
 -->
 <script lang="ts">
 	import { resolve } from '$app/paths';
@@ -32,6 +33,7 @@
 		<nav aria-label="Admin" class="flex flex-wrap gap-2">
 			<Button href={resolve('/admin/tasks')}>Proposed tasks</Button>
 			<Button href={resolve('/admin/groups')}>Participant groups</Button>
+			<Button href={resolve('/admin/submissions')}>Saved answers</Button>
 			<Button variant="outline" href={resolve('/')}>Back to the editor</Button>
 		</nav>
 		<section
