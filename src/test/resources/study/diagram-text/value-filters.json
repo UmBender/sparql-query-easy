@@ -1,0 +1,164 @@
+{
+  "formatVersion": 1,
+  "endpoint": {
+    "kind": "builtIn",
+    "id": "CampeonatoBrasileiro2023"
+  },
+  "limit": 150,
+  "order": [
+    "?equipe"
+  ],
+  "nodes": [
+    {
+      "id": "?equipe",
+      "kind": "variable",
+      "label": "?",
+      "name": "?equipe"
+    },
+    {
+      "id": "?nome",
+      "kind": "valueVariable",
+      "label": "? starts with Sã",
+      "name": "?nome",
+      "filter": {
+        "code": 0,
+        "value": "Sã"
+      }
+    },
+    {
+      "id": "?cidade",
+      "kind": "valueVariable",
+      "label": "? contains Paulo",
+      "name": "?cidade",
+      "filter": {
+        "code": 1,
+        "value": "Paulo"
+      }
+    },
+    {
+      "id": "?pontos",
+      "kind": "valueVariable",
+      "label": "? ≤ 50",
+      "name": "?pontos",
+      "filter": {
+        "code": 3,
+        "value": "50"
+      }
+    },
+    {
+      "id": "?gols",
+      "kind": "valueVariable",
+      "label": "? MAX",
+      "name": "?gols",
+      "filter": {
+        "code": 4,
+        "value": ""
+      }
+    },
+    {
+      "id": "?saldo",
+      "kind": "valueVariable",
+      "label": "? 10–20",
+      "name": "?saldo",
+      "filter": {
+        "code": 6,
+        "value": "10..20"
+      }
+    },
+    {
+      "id": "?sigla",
+      "kind": "valueVariable",
+      "label": "? = PAL",
+      "name": "?sigla",
+      "filter": {
+        "code": null,
+        "value": "PAL"
+      }
+    },
+    {
+      "id": "?estado",
+      "kind": "valueVariable",
+      "label": "?",
+      "name": "?estado",
+      "filter": null
+    },
+    {
+      "id": "?jogos",
+      "kind": "variable",
+      "label": "N results",
+      "name": "?jogos",
+      "many": true
+    },
+    {
+      "id": "<http://easyquery.example.org/br2023#Clube>",
+      "kind": "class",
+      "label": "Clube",
+      "value": "<http://easyquery.example.org/br2023#Clube>"
+    }
+  ],
+  "edges": [
+    {
+      "id": "a",
+      "source": "?equipe",
+      "target": "<http://easyquery.example.org/br2023#Clube>",
+      "predicate": "<http://www.w3.org/1999/02/22-rdf-syntax-ns#type>",
+      "label": "type"
+    },
+    {
+      "id": "b",
+      "source": "?equipe",
+      "target": "?nome",
+      "predicate": "<http://easyquery.example.org/br2023#nome>",
+      "label": "nome"
+    },
+    {
+      "id": "c",
+      "source": "?equipe",
+      "target": "?cidade",
+      "predicate": "<http://easyquery.example.org/br2023#cidade>",
+      "label": "cidade"
+    },
+    {
+      "id": "d",
+      "source": "?equipe",
+      "target": "?pontos",
+      "predicate": "<http://easyquery.example.org/br2023#pontos>",
+      "label": "pontos"
+    },
+    {
+      "id": "e",
+      "source": "?equipe",
+      "target": "?gols",
+      "predicate": "<http://easyquery.example.org/br2023#gols>",
+      "label": "gols"
+    },
+    {
+      "id": "f",
+      "source": "?equipe",
+      "target": "?saldo",
+      "predicate": "<http://easyquery.example.org/br2023#saldo>",
+      "label": "saldo"
+    },
+    {
+      "id": "g",
+      "source": "?equipe",
+      "target": "?sigla",
+      "predicate": "<http://easyquery.example.org/br2023#sigla>",
+      "label": "sigla"
+    },
+    {
+      "id": "h",
+      "source": "?equipe",
+      "target": "?estado",
+      "predicate": "<http://easyquery.example.org/br2023#estado>",
+      "label": "estado"
+    },
+    {
+      "id": "i",
+      "source": "?equipe",
+      "target": "?jogos",
+      "predicate": "<http://easyquery.example.org/br2023#jogou>",
+      "label": "jogou"
+    }
+  ]
+}

@@ -1,0 +1,10 @@
+Diagram of P001, task demo, revision 1
+
+Nodes
+[1] ?pokemon — variable
+[2] Fire — entity <http://easyquery.example.org/pokemon#FireType>
+[3] ?speed — value variable, filter: at least 90
+
+Relations
+[1] --has type--> [2] (predicate <http://easyquery.example.org/pokemon#hasType>)
+[1] --speed--> [3] (predicate <http://easyquery.example.org/pokemon#speed>)

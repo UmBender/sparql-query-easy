@@ -1,0 +1,72 @@
+{
+  "formatVersion": 1,
+  "endpoint": {
+    "kind": "builtIn",
+    "id": "CampeonatoBrasileiro2023"
+  },
+  "limit": 150,
+  "order": [],
+  "nodes": [
+    {
+      "id": "n1",
+      "kind": "entity",
+      "label": "A --x--> [2]",
+      "value": "<http://easyquery.example.org/br2023#A>"
+    },
+    {
+      "id": "n2",
+      "kind": "entity",
+      "label": "Line one\nline two\r\n\tthree four",
+      "value": "<http://easyquery.example.org/br2023#B>"
+    },
+    {
+      "id": "n3",
+      "kind": "entity",
+      "label": "   ",
+      "value": "<http://easyquery.example.org/br2023#C>"
+    },
+    {
+      "id": "n4",
+      "kind": "value",
+      "label": "say \"hi\"",
+      "term": {
+        "type": "literal",
+        "value": "say \"hi\"\nbye",
+        "datatype": null,
+        "language": "en"
+      },
+      "filter": 1
+    }
+  ],
+  "edges": [
+    {
+      "id": "r1",
+      "source": "n1",
+      "target": "n2",
+      "predicate": "<http://easyquery.example.org/br2023#p>",
+      "label": "goes\n--> [3] --to"
+    },
+    {
+      "id": "r2",
+      "source": "n2",
+      "target": "n3",
+      "predicate": null,
+      "label": "?",
+      "variableMark": true
+    },
+    {
+      "id": "r3",
+      "source": "n3",
+      "target": "n4",
+      "predicate": "<http://easyquery.example.org/br2023#q>",
+      "label": ""
+    },
+    {
+      "id": "r4",
+      "source": "n3",
+      "target": "missing",
+      "predicate": "<http://easyquery.example.org/br2023#q>",
+      "label": "dangling"
+    }
+  ]
+}

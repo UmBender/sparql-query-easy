@@ -4,13 +4,19 @@ package com.example.sparqlqueryeasy.http
 
 import com.example.sparqlqueryeasy.application.study.AnswerCheck
 import com.example.sparqlqueryeasy.application.study.ReviewedSave
+import com.example.sparqlqueryeasy.application.study.SubmissionExportService
 import com.example.sparqlqueryeasy.application.study.SubmissionReviewService
 import com.example.sparqlqueryeasy.application.study.TaskRevision
 import com.example.sparqlqueryeasy.application.study.VariableCheck
+import io.ktor.http.ContentDisposition
+import io.ktor.http.ContentType
+import io.ktor.http.HttpHeaders
 import io.ktor.http.HttpStatusCode
 import io.ktor.openapi.JsonSchema
 import io.ktor.openapi.jsonSchema
+import io.ktor.server.response.header
 import io.ktor.server.response.respond
+import io.ktor.server.response.respondBytes
 import io.ktor.server.routing.Route
 import io.ktor.server.routing.get
 import io.ktor.server.routing.openapi.describe
@@ -114,7 +120,20 @@ data class AdminSubmissionHttpResponse(
 internal fun Route.adminSubmissionRoutes(
     auth: AuthHttpDependencies,
     reviews: SubmissionReviewService,
+    exports: SubmissionExportService,
 ) {
+    get("/api/admin/submissions.zip") {
+        adminRead(auth) {
+            val archive = exports.export()
+            call.response.header(
+                HttpHeaders.ContentDisposition,
+                ContentDisposition.Attachment
+                    .withParameter(ContentDisposition.Parameters.FileName, archive.fileName)
+                    .toString(),
+            )
+            call.respondBytes(archive.bytes, ContentType.Application.Zip)
+        }
+    }.documentAdminExportSubmissions()
     get("/api/admin/submissions") {
         adminRead(auth) { call.respond(DataResponse(reviews.list().map { it.toSummaryResponse() })) }
     }.documentAdminListSubmissions()
@@ -219,6 +238,27 @@ private fun Route.documentAdminListSubmissions(): Route =
             HttpStatusCode.OK {
                 description = "The last saves."
                 schema = jsonSchema<DataResponse<List<AdminSubmissionSummaryHttpResponse>>>()
+            }
+            readErrors()
+        }
+    }
+
+private fun Route.documentAdminExportSubmissions(): Route =
+    describe {
+        operationId = "adminExportSubmissions"
+        summary = "Download the last saved answers as a ZIP"
+        description =
+            "submissions-<date>.zip (STUDY-018, DEC-020): index.csv (participant, task_key, task_revision, " +
+            "saved_at, time_spent_s, saves, finished, auto_check), then <pseudonym>/<task_key>/ per last save with " +
+            "diagram.txt (plain-text diagram derived from diagram.json), diagram.json (the saved diagram, " +
+            "formatVersion 1), reference.txt (the reference of the save's revision as plain text, with statement, " +
+            "SPARQL and expected values), and, for an answer with variables, query.sparql and values.csv. No " +
+            "account name, e-mail or user id is written. Sent as an attachment. $SUBMISSION_ADMIN_NOTE"
+        tag("Admin")
+        responses {
+            HttpStatusCode.OK {
+                description = "The ZIP file."
+                ContentType.Application.Zip { schema = jsonSchema<String>() }
             }
             readErrors()
         }

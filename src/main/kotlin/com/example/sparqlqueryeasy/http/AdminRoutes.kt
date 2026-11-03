@@ -23,7 +23,7 @@ internal fun Route.adminRoutes(
         adminTaskRoutes(auth, it.tasks)
         adminGroupRoutes(auth, it.groups)
         adminFormRoutes(auth, it.questionnaires)
-        adminSubmissionRoutes(auth, it.reviews)
+        adminSubmissionRoutes(auth, it.reviews, it.exports)
     }
     route("/api/admin/{...}") {
         handle {

@@ -2547,6 +2547,58 @@
                 }
             }
         },
+        "/api/admin/submissions.zip": {
+            "get": {
+                "operationId": "adminExportSubmissions",
+                "tags": [
+                    "Admin"
+                ],
+                "summary": "Download the last saved answers as a ZIP",
+                "description": "submissions-<date>.zip (STUDY-018, DEC-020): index.csv (participant, task_key, task_revision, saved_at, time_spent_s, saves, finished, auto_check), then <pseudonym>/<task_key>/ per last save with diagram.txt (plain-text diagram derived from diagram.json), diagram.json (the saved diagram, formatVersion 1), reference.txt (the reference of the save's revision as plain text, with statement, SPARQL and expected values), and, for an answer with variables, query.sparql and values.csv. No account name, e-mail or user id is written. Sent as an attachment. Requires the admin role (401 without a session, 403 for a participant).",
+                "responses": {
+                    "200": {
+                        "description": "The ZIP file.",
+                        "content": {
+                            "application/zip": {
+                                "schema": {
+                                    "type": "string"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "No valid session.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorResponse"
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "description": "The user lacks the role, or the request came from another site.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorResponse"
+                                }
+                            }
+                        }
+                    },
+                    "503": {
+                        "description": "The database is not configured or unreachable.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorResponse"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
         "/api/admin/submissions": {
             "get": {
                 "operationId": "adminListSubmissions",

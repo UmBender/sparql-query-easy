@@ -60,6 +60,7 @@ class OpenApiRoutesTest {
             // STUDY-011
             "/api/admin/forms/{slug}/responses.csv" to setOf("get"),
             "/api/admin/submissions" to setOf("get"),
+            "/api/admin/submissions.zip" to setOf("get"),
             "/api/admin/submissions/{id}" to setOf("get"),
             // STUDY-003
             "/api/study/consent" to setOf("get", "post"),

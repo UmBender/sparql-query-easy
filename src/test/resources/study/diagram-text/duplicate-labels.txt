@@ -1,0 +1,11 @@
+Diagram of P001, task demo, revision 1
+
+Nodes
+[1] São Paulo — entity <http://easyquery.example.org/br2023#SaoPaulo>
+[2] São Paulo — entity <http://easyquery.example.org/br2023#SaoPauloCidade>
+[3] ?estadio — variable
+
+Relations
+[1] --sede--> [2] (predicate <http://easyquery.example.org/br2023#sede>)
+[1] --sede--> [2] (predicate <http://easyquery.example.org/br2023#fundadoEm>)
+[3] --cidade--> [2] (predicate <http://easyquery.example.org/br2023#cidade>)

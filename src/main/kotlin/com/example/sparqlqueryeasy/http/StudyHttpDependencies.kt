@@ -8,6 +8,7 @@ import com.example.sparqlqueryeasy.application.study.StudyQueryRunner
 import com.example.sparqlqueryeasy.application.study.StudyResources
 import com.example.sparqlqueryeasy.application.study.StudyService
 import com.example.sparqlqueryeasy.application.study.StudyTaskService
+import com.example.sparqlqueryeasy.application.study.SubmissionExportService
 import com.example.sparqlqueryeasy.application.study.SubmissionReviewService
 import com.example.sparqlqueryeasy.persistence.DatabaseConnector
 import com.example.sparqlqueryeasy.persistence.PostgresConsentStore
@@ -22,7 +23,7 @@ import java.time.Clock
 
 /**
  * The proposed-task study (STUDY-006/007, STUDY-003/004/005), its consent (STUDY-008), questionnaires (T9) and the
- * admin review of saved answers (STUDY-017).
+ * admin review and export of saved answers (STUDY-017, STUDY-018).
  */
 data class StudyHttpDependencies(
     val tasks: StudyTaskService,
@@ -31,6 +32,7 @@ data class StudyHttpDependencies(
     val consent: ConsentService,
     val questionnaires: QuestionnaireService,
     val reviews: SubmissionReviewService,
+    val exports: SubmissionExportService,
     // QUAL-023: a save may run queries for the automatic check, so saves are limited per user, not only per address.
     val submissionLimiter: AttemptLimiter = AttemptLimiter(SUBMISSIONS_PER_MINUTE),
 )
@@ -59,4 +61,5 @@ fun studyHttpDependencies(
         ConsentService(resources.consent, PostgresConsentStore(database), clock),
         QuestionnaireService(resources, PostgresFormStore(database), PostgresFormResponseStore(database), clock),
         SubmissionReviewService(PostgresSubmissionReviewStore(database)),
+        SubmissionExportService(SubmissionReviewService(PostgresSubmissionReviewStore(database)), clock),
     )

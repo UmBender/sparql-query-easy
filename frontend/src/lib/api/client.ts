@@ -172,6 +172,12 @@ type Options = { signal?: AbortSignal };
 export const formResponsesCsvPath = (slug: string) =>
 	`/api/admin/forms/${encodeURIComponent(slug)}/responses.csv`;
 
+/**
+ * STUDY-018: where an admin downloads the last saved answers as a ZIP, a plain
+ * link like `formResponsesCsvPath`.
+ */
+export const submissionsZipPath = '/api/admin/submissions.zip';
+
 export type ApiClientOptions = { fetch?: typeof fetch; baseUrl?: string };
 
 export function createApiClient({

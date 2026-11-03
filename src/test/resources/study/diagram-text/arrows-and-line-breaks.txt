@@ -1,0 +1,13 @@
+Diagram of P001, task demo, revision 1
+
+Nodes
+[1] "A --x--> [2]" — entity <http://easyquery.example.org/br2023#A>
+[2] Line one line two three four — entity <http://easyquery.example.org/br2023#B>
+[3] (no label) — entity <http://easyquery.example.org/br2023#C>
+[4] "say \"hi\"" — value "say \"hi\"\u000Abye"@en, filter: contains "say \"hi\" bye"
+
+Relations
+[1] --"goes --> [3] --to"--> [2] (predicate <http://easyquery.example.org/br2023#p>)
+[2] --?--> [3] (no predicate)
+[3] --(no label)--> [4] (predicate <http://easyquery.example.org/br2023#q>)
+[3] --dangling--> [?] (predicate <http://easyquery.example.org/br2023#q>)

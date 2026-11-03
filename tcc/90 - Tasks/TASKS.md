@@ -136,7 +136,7 @@ Ordered by dependencies, then priority among selection candidates. See [worker r
 | DEC-020 | DONE | P1 | decision | [Decide how saved answers are evaluated by hand and exported with a plain-text diagram](<items/DEC-020-manual-evaluation-and-submission-export.md>) |
 | STUDY-016 | DONE | P1 | fullstack | [Save a drawn answer, with or without variables, and show the participant no correctness](<items/STUDY-016-save-answer-without-feedback.md>) |
 | STUDY-017 | DONE | P1 | fullstack | [Let an admin review each participant's last saved answer beside the task's reference query](<items/STUDY-017-admin-submission-review.md>) |
-| STUDY-018 | BACKLOG | P1 | fullstack | [Export the last saved answers as a ZIP with plain-text diagrams for manual or AI-assisted grading](<items/STUDY-018-submission-export-plain-text.md>) |
+| STUDY-018 | DONE | P1 | fullstack | [Export the last saved answers as a ZIP with plain-text diagrams for manual or AI-assisted grading](<items/STUDY-018-submission-export-plain-text.md>) |
 | DEC-019 | DONE | P1 | decision | [Decide what multiset comparison means when drawn answers run as SELECT DISTINCT](<items/DEC-019-multiset-and-distinct-answers.md>) |
 | BUG-009 | DONE | P1 | bug | [Nodes added by search or Explore relationships land on top of the first node](<items/BUG-009-new-nodes-stack-on-first-node.md>) |
 | BUG-010 | DONE | P2 | bug | [A MAX or MIN value applied with an empty value field reopens with text filters only](<items/BUG-010-max-min-reopens-as-text.md>) |

@@ -81,7 +81,8 @@
 						</p>
 					{/if}
 					{#if variable.sparql}
-						<pre class="overflow-x-auto rounded-md bg-muted p-2 text-xs"><code
+						<pre
+							class="rounded-md bg-muted p-2 text-xs break-all whitespace-pre-wrap"><code
 								>{variable.sparql}</code
 							></pre>
 					{/if}
@@ -96,7 +97,7 @@
 						</p>
 					{/if}
 					{#if variable.values.length}
-						<ul class="flex max-h-40 flex-wrap gap-x-3 gap-y-1 overflow-y-auto text-sm">
+						<ul class="flex flex-wrap gap-x-3 gap-y-1 text-sm">
 							{#each variable.values as term, index (index)}
 								<li><TermValue {term} /></li>
 							{/each}
@@ -123,14 +124,14 @@
 					{reference.statement}
 				</p>
 				<DiagramView graph={reference.referenceGraph} label="Reference diagram" />
-				<pre class="overflow-x-auto rounded-md bg-muted p-2 text-xs"><code
+				<pre class="rounded-md bg-muted p-2 text-xs break-all whitespace-pre-wrap"><code
 						>{reference.referenceSparql}</code
 					></pre>
 				<p class="text-sm text-muted-foreground">
 					{reference.expected.length} expected values ({reference.comparison}) of
 					{reference.referenceQuery?.variableName ?? 'the answer variable'}.
 				</p>
-				<ul class="flex max-h-40 flex-wrap gap-x-3 gap-y-1 overflow-y-auto text-sm">
+				<ul class="flex flex-wrap gap-x-3 gap-y-1 text-sm">
 					{#each reference.expected as term, index (index)}
 						<li><TermValue {term} /></li>
 					{/each}

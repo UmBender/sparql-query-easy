@@ -1,0 +1,64 @@
+{
+  "edges": [
+    {
+      "id": "type",
+      "label": "has type",
+      "predicate": "<http://easyquery.example.org/pokemon#hasType>",
+      "source": "?pokemon",
+      "target": "<http://easyquery.example.org/pokemon#FireType>"
+    },
+    {
+      "id": "speed",
+      "label": "speed",
+      "predicate": "<http://easyquery.example.org/pokemon#speed>",
+      "source": "?pokemon",
+      "target": "?speed"
+    }
+  ],
+  "endpoint": {
+    "id": "PokemonGen1",
+    "kind": "builtIn"
+  },
+  "formatVersion": 1,
+  "limit": 150,
+  "nodes": [
+    {
+      "id": "?pokemon",
+      "kind": "variable",
+      "label": "?",
+      "name": "?pokemon",
+      "position": {
+        "x": 150,
+        "y": 150
+      }
+    },
+    {
+      "id": "<http://easyquery.example.org/pokemon#FireType>",
+      "kind": "entity",
+      "label": "Fire",
+      "position": {
+        "x": 410,
+        "y": 150
+      },
+      "value": "<http://easyquery.example.org/pokemon#FireType>"
+    },
+    {
+      "filter": {
+        "code": 2,
+        "value": "90"
+      },
+      "id": "?speed",
+      "kind": "valueVariable",
+      "label": "? ≥ 90",
+      "name": "?speed",
+      "position": {
+        "x": 670,
+        "y": 150
+      }
+    }
+  ],
+  "order": [
+    "?pokemon",
+    "?speed"
+  ]
+}

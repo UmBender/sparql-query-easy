@@ -1,0 +1,24 @@
+Diagram of P001, task demo, revision 1
+
+Nodes
+[1] ?equipe — variable
+[2] ?nome — value variable, filter: starts with "Sã"
+[3] ?cidade — value variable, filter: contains "Paulo"
+[4] ?pontos — value variable, filter: at most 50
+[5] ?gols — value variable, filter: the maximum
+[6] ?saldo — value variable, filter: between 10 and 20
+[7] ?sigla — value variable, filter: equals "PAL"
+[8] ?estado — value variable
+[9] ?jogos — variable (many results)
+[10] Clube — class <http://easyquery.example.org/br2023#Clube>
+
+Relations
+[1] --type--> [10] (predicate <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>)
+[1] --nome--> [2] (predicate <http://easyquery.example.org/br2023#nome>)
+[1] --cidade--> [3] (predicate <http://easyquery.example.org/br2023#cidade>)
+[1] --pontos--> [4] (predicate <http://easyquery.example.org/br2023#pontos>)
+[1] --gols--> [5] (predicate <http://easyquery.example.org/br2023#gols>)
+[1] --saldo--> [6] (predicate <http://easyquery.example.org/br2023#saldo>)
+[1] --sigla--> [7] (predicate <http://easyquery.example.org/br2023#sigla>)
+[1] --estado--> [8] (predicate <http://easyquery.example.org/br2023#estado>)
+[1] --jogou--> [9] (predicate <http://easyquery.example.org/br2023#jogou>)

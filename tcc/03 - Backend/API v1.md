@@ -941,6 +941,56 @@ saved diagram read-only (the editor's canvas view, also listed as text) with
 the check, each variable's SPARQL and values, beside the statement, reference
 diagram, SPARQL and expected values of the save's revision.
 
+## Saved answer export (admin, STUDY-018)
+
+DEC-020 points 3–5, C4, C5, C9, C10. `GET /api/admin/submissions.zip` (admin
+role: 401 without a session, 403 for a participant) answers `200
+application/zip` with `Content-Disposition: attachment;
+filename=submissions-<YYYY-MM-DD>.zip` (UTC date), built with
+`java.util.zip` (`application/study/SubmissionExport.kt`):
+
+```
+index.csv                participant, task_key, task_revision, saved_at, time_spent_s, saves, finished, auto_check
+<pseudonym>/<task_key>/  one folder per participant and task, the last save only
+  diagram.txt            plain-text diagram derived from diagram.json
+  diagram.json           the saved diagram (formatVersion 1), same JSON value as stored, indented
+  reference.txt          the reference of the save's revision: its diagram as text, statement, SPARQL, expected values
+  query.sparql           with variables only: each checked variable's SPARQL under a `# ?variable` comment
+  values.csv             with variables only: variable, row, type, value, datatype, language
+```
+
+- Pseudonyms and order as `GET /api/admin/submissions`; no username,
+  e-mail or user id anywhere in the archive. `saved_at` UTC ISO-8601,
+  `time_spent_s` seconds with up to three decimals, `finished` `true`/`false`,
+  `auto_check` `match`/`no_match`/`not_checked`. CSVs are RFC 4180 with CRLF;
+  text starting with `=`, `+`, `-`, `@`, tab or carriage return gets a leading
+  `'` unless it is a number. A revision that was not kept gives a
+  `reference.txt` that says so.
+- `diagram.txt` (`application/study/DiagramText.kt`; golden files in
+  `src/test/resources/study/diagram-text/`): a title line naming the
+  pseudonym, task, revision and source, a blank line, `Nodes` with one line per
+  node in the saved order as `[n] <label> — <kind>…`, a blank line and
+  `Relations` with one line per relation as `[n] --<label>--> [m] (<predicate>)`;
+  `(none)` for an empty section.
+  - Kinds: `entity <IRI>`, `class <IRI>`, `variable` (named by its `?name`;
+    `(many results)` for an N-results placeholder), `value variable` with an
+    optional `filter: …`, `value "lexical"^^<datatype>` / `@lang` with an
+    optional filter. Filters read `starts with "…"`, `contains "…"`,
+    `at least n`, `at most n`, `the maximum`, `the minimum`,
+    `between a and b`, `equals "…"`.
+  - Predicates: `(predicate <IRI>)`, `(predicate variable ?p)` (the relation
+    is then named by its variable when its label is `?`), `(no predicate)`.
+    A relation to a node that is not in the diagram shows `[?]`.
+  - Unambiguous whatever the labels hold (C5): every whitespace run, line
+    breaks and U+2028/U+2029/U+0085 included, becomes one space; a label that
+    holds `--`, `[`, `]`, `—`, `"` or `\` is written in double quotes with `"`
+    and `\` escaped; literal values escape control characters as `\uXXXX`;
+    an empty label is `(no label)`. Relations name their predicate, so two
+    relations with the same label between the same nodes stay distinct (an
+    addition to the DEC-020 example, which showed `[n] --label--> [m]` only).
+
+`/admin` has a "Download saved answers (ZIP)" link (`submissionsZipPath`).
+
 ## Endpoint selection
 
 `endpointUrl` accepts the built-in identifiers `CampeonatoBrasileiro2023` and

@@ -1,0 +1,10 @@
+Diagram of P001, task demo, revision 1
+
+Nodes
+[1] Palmeiras — entity <http://easyquery.example.org/br2023#Palmeiras>
+[2] Brasileirão 2023 — entity <http://easyquery.example.org/br2023#Brasileirao2023>
+[3] 70 — value "70"^^<http://www.w3.org/2001/XMLSchema#integer>
+
+Relations
+[1] --venceu--> [2] (predicate <http://easyquery.example.org/br2023#venceu>)
+[1] --pontos--> [3] (predicate <http://easyquery.example.org/br2023#pontos>)

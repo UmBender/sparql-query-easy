@@ -2,12 +2,13 @@
 	The admin area (AUTH-005). Only admins reach it (root layout guard): the
 	proposed tasks (STUDY-006), the participant groups (STUDY-007) and the
 	questionnaire responses as CSV, one file per questionnaire (STUDY-011) and
-	the participants' last saved answers (STUDY-017).
+	the participants' last saved answers, reviewed (STUDY-017) or downloaded as a
+	ZIP (STUDY-018).
 -->
 <script lang="ts">
 	import { resolve } from '$app/paths';
 	import { createQuery } from '@tanstack/svelte-query';
-	import { api, formResponsesCsvPath } from '#lib/api/client.js';
+	import { api, formResponsesCsvPath, submissionsZipPath } from '#lib/api/client.js';
 	import { queryKeys } from '#lib/api/queries.js';
 	import { Button } from '#lib/components/ui/button/index.js';
 	import { authSession } from '#lib/features/auth/auth-session.svelte.js';
@@ -36,6 +37,27 @@
 			<Button href={resolve('/admin/submissions')}>Saved answers</Button>
 			<Button variant="outline" href={resolve('/')}>Back to the editor</Button>
 		</nav>
+		<section
+			aria-labelledby="answers-title"
+			class="flex flex-col gap-2 border-t pt-4"
+			data-testid="submission-export"
+		>
+			<h2 id="answers-title" class="font-medium">Saved answers</h2>
+			<p class="text-sm text-muted-foreground">
+				One ZIP with each participant's last save per task, under a pseudonym, with a
+				plain-text diagram for grading.
+			</p>
+			<div>
+				<Button
+					variant="outline"
+					href={submissionsZipPath}
+					download="submissions.zip"
+					data-sveltekit-reload
+				>
+					Download saved answers (ZIP)
+				</Button>
+			</div>
+		</section>
 		<section
 			aria-labelledby="responses-title"
 			class="flex flex-col gap-2 border-t pt-4"

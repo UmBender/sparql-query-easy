@@ -1,0 +1,47 @@
+{
+  "edges": [
+    {
+      "id": "relation",
+      "label": "?",
+      "predicate": "?predicate_1",
+      "source": "<http://easyquery.example.org/pokemon#Pikachu>",
+      "target": "90",
+      "variableMark": true
+    }
+  ],
+  "endpoint": {
+    "kind": "remote",
+    "url": "https://query.wikidata.org/sparql"
+  },
+  "formatVersion": 1,
+  "limit": 20,
+  "nodes": [
+    {
+      "id": "<http://easyquery.example.org/pokemon#Pikachu>",
+      "kind": "entity",
+      "label": "Pikachu",
+      "value": "<http://easyquery.example.org/pokemon#Pikachu>"
+    },
+    {
+      "filter": 2,
+      "id": "90",
+      "kind": "value",
+      "label": "≥ 90",
+      "term": {
+        "datatype": "http://www.w3.org/2001/XMLSchema#integer",
+        "language": null,
+        "type": "literal",
+        "value": "90"
+      }
+    },
+    {
+      "id": "type-class",
+      "kind": "class",
+      "label": "Type",
+      "value": "<http://easyquery.example.org/pokemon#Type>"
+    }
+  ],
+  "order": [
+    "?predicate_1"
+  ]
+}

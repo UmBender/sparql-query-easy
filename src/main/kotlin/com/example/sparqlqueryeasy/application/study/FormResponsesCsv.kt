@@ -73,9 +73,9 @@ object FormResponsesCsv {
             is JsonObject -> text(value.toString())
         }
 
-    private fun text(value: String): String = if (value.firstOrNull() in FORMULA_STARTS) "'$value" else value
+    internal fun text(value: String): String = if (value.firstOrNull() in FORMULA_STARTS) "'$value" else value
 
-    private fun quote(value: String): String =
+    internal fun quote(value: String): String =
         if (value.any { it in QUOTED }) {
             "\"" + value.replace("\"", "\"\"") + "\""
         } else {

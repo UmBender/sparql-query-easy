@@ -1,0 +1,54 @@
+{
+  "formatVersion": 1,
+  "endpoint": {
+    "kind": "builtIn",
+    "id": "CampeonatoBrasileiro2023"
+  },
+  "limit": 150,
+  "order": [
+    "?estadio"
+  ],
+  "nodes": [
+    {
+      "id": "<http://easyquery.example.org/br2023#SaoPaulo>",
+      "kind": "entity",
+      "label": "São Paulo",
+      "value": "<http://easyquery.example.org/br2023#SaoPaulo>"
+    },
+    {
+      "id": "<http://easyquery.example.org/br2023#SaoPauloCidade>",
+      "kind": "entity",
+      "label": "São Paulo",
+      "value": "<http://easyquery.example.org/br2023#SaoPauloCidade>"
+    },
+    {
+      "id": "?estadio",
+      "kind": "variable",
+      "label": "?",
+      "name": "?estadio"
+    }
+  ],
+  "edges": [
+    {
+      "id": "x",
+      "source": "<http://easyquery.example.org/br2023#SaoPaulo>",
+      "target": "<http://easyquery.example.org/br2023#SaoPauloCidade>",
+      "predicate": "<http://easyquery.example.org/br2023#sede>",
+      "label": "sede"
+    },
+    {
+      "id": "y",
+      "source": "<http://easyquery.example.org/br2023#SaoPaulo>",
+      "target": "<http://easyquery.example.org/br2023#SaoPauloCidade>",
+      "predicate": "<http://easyquery.example.org/br2023#fundadoEm>",
+      "label": "sede"
+    },
+    {
+      "id": "z",
+      "source": "?estadio",
+      "target": "<http://easyquery.example.org/br2023#SaoPauloCidade>",
+      "predicate": "<http://easyquery.example.org/br2023#cidade>",
+      "label": "cidade"
+    }
+  ]
+}
