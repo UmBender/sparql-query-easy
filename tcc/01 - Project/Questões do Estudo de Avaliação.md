@@ -5,7 +5,11 @@
 > avaliar as funcionalidades de **pré-visualização (preview)** e de
 > **filtros**, que surgiram depois da avaliação da dissertação. As propostas
 > seguem a mesma metodologia da dissertação e os princípios da Física das
-> Notações (Moody, 2009).
+> Notações (Moody, 2009), explicados em [[Física das Notações (Moody, 2009)]].
+> Revisão de 03/11/2026: as questões PokemonGen1 seguem a forma de tarefa
+> definida com o orientador (DEC-020: diagrama salvo, sem variáveis
+> obrigatórias, correção manual) e o questionário completa o SUS e cobre os
+> nove princípios (§6).
 > Tarefa: DOC-010. Fontes: `tcc/PDF/Dissertação Corrigida - Versao Deposito
 > Biblioteca Digital.pdf` (§2.5, §4.1–4.6, §5.2) e `tcc/PDF/The “Physics”
 > of Notations.pdf` (§4). Respostas conferidas em 28/10/2026 (ver
@@ -141,138 +145,368 @@ Por isso as questões novas são sobre o PokemonGen1 (151 Pokémon,
 Brasileirão no [Apêndice A](#apêndice-a-banco-alternativo-no-brasileirão-2023-treino),
 para treino.
 
-Critérios, os mesmos da dissertação mais três:
+### 5.1 Forma das tarefas (redefinida com o orientador em 02/11/2026)
 
-1. Enunciado em linguagem comum, sem termos de SPARQL, como em §4.2.
+A decisão com o orientador ([[../90 - Tasks/items/DEC-020-manual-evaluation-and-submission-export|DEC-020]],
+implementada em STUDY-016/017/018) muda o que é uma tarefa e como ela é
+corrigida:
+
+1. **O participante salva um diagrama, não uma variável de resposta.** Ele
+   usa a ferramenta até chegar ao resultado e salva o diagrama (*Save
+   answer*). Pode salvar várias vezes; vale o **último** salvamento.
+2. **Sem correção visível.** O participante não vê certo/errado nem
+   contagens. A questão precisa deixar claro *o que* encontrar, porque ele
+   não terá retorno.
+3. **A resposta não depende de variáveis.** São aceitas duas formas:
+   - **(A) com variáveis:** o diagrama é uma consulta (variáveis, filtros)
+     cujo resultado é a resposta;
+   - **(B) sem variáveis:** o diagrama mostra as entidades e relações da
+     resposta, por exemplo depois de *Assume*/*Apply to graph* na
+     pré-visualização, ou desenhado a partir da busca e de *Explore
+     relationships*.
+4. **Correção manual** (ou com ajuda de IA) depois do estudo, no
+   `/admin/submissions` ou no ZIP (`diagram.txt` ao lado do `reference.txt`
+   da mesma revisão). O `auto_check` é só uma pista.
+
+Consequências para as questões:
+
+- O enunciado **não fala de variáveis** nem de "variável de resposta"
+  (diferente das tarefas de treino do Brasileirão, que ainda dizem
+  "Responda com a variável…", ver a limitação de STUDY-016).
+- O enunciado pede **todas** as informações que o diagrama deve mostrar
+  (por exemplo, "e qual item é usado"), porque é isso que será conferido.
+- Cada questão tem um **diagrama de referência** (forma A, §5.5) e um
+  exemplo de resposta aceita na forma B.
+- Os recursos (filtro, preview) são o **caminho esperado**, não uma
+  exigência: quem chega ao resultado por outro caminho acerta. A forma do
+  diagrama salvo mostra o caminho usado, o que complementa o item de
+  contexto 36 do questionário (§6).
+
+Instrução comum a todas as tarefas, exibida antes do enunciado:
+
+> Use a ferramenta para encontrar a resposta da pergunta abaixo. Quando o
+> diagrama mostrar a resposta, clique em *Save answer*. Você pode salvar
+> quantas vezes quiser; vale o último salvamento. Não é preciso usar
+> variáveis.
+
+### 5.2 Critérios das questões
+
+Os da dissertação, mais três:
+
+1. Enunciado em linguagem comum, sem termos de SPARQL nem de variáveis,
+   como em §4.2.
 2. Diferentes dos exemplos que o participante já vê: o exemplo da Help e do
    tour (Fogo com *speed* ≥ 90) e as consultas de teste do STUDY-012
    ("Fast-growing Water fish" e "Toughest Fire Pokémon").
-3. Cada questão **exige** pelo menos um filtro ou a exploração em etapas com
-   preview. A resposta foi conferida na base (§9).
-4. Respostas pequenas (até ~10 valores), para que a correção pelo app
-   (`set`, DEC-019) e a leitura pelo participante sejam simples.
+3. Cada questão tem como **caminho esperado** pelo menos um filtro ou a
+   exploração em etapas com preview, mas pode ser respondida sem
+   variáveis. A resposta foi conferida na base (§9).
+4. Respostas pequenas (até ~10 valores), para que a correção manual e um
+   diagrama sem variáveis (forma B) sejam viáveis.
 
-Os nomes de tipos e itens aparecem em inglês no app (*Electric*, *Moon
-Stone*). O enunciado pode usar os dois: "tipo Elétrico (*Electric*)".
+Os nomes de tipos, itens e propriedades aparecem em inglês no app
+(*Electric*, *Moon Stone*, *Speed*). O enunciado usa os dois.
 
-### 5.1 Filtros
+### 5.3 Rubrica de correção
 
-| # | Questão proposta | Recursos exigidos | Funil esperado | Resposta |
-|---|---|---|---|---|
-| NF1 | Quais Pokémon do tipo Elétrico têm velocidade de pelo menos 100? | *At least* + histograma | 151 → 9 → 6 | Electrode (150), Jolteon (130), Raichu (110), Electabuzz (105), Voltorb (100), Zapdos (100) |
-| NF2 | Quais Pokémon medem entre 2 e 3 metros de altura? | *Between* com decimais (controle deslizante) | 151 → 9 | Ekans, Exeggutor, Mewtwo, Moltres, Venusaur (2,0); Snorlax (2,1); Dragonite, Kangaskhan (2,2); Lapras (2,5) |
-| NF3 | Qual é o Pokémon mais leve? | **MIN** com empate | 151 → 2 | Gastly e Haunter (0,1 kg) |
-| NF4 | Qual Pokémon do tipo Psíquico tem o maior ataque especial? | tipo fixo + **MAX** | 151 → 14 → 1 | Mewtwo (154) |
-| NF5 | Quais Pokémon têm uma categoria que contém a palavra "Bird"? | *Contains* + sugestões de texto | 151 → 6 | Pidgey, Pidgeotto, Pidgeot, Spearow, Doduo, Dodrio |
-| NF6 | Quais Pokémon têm uma categoria que começa com "Poison"? | *Starts with* | 151 → 8 | Nidoran♀, Nidorina, Nidoran♂, Nidorino, Beedrill, Venomoth, Koffing, Weezing |
-| NF7 | Quais Pokémon do tipo Água têm defesa e velocidade de pelo menos 80? | tipo + dois *At least*; **funil** de 3 passos | 151 → 32 → 16 → 3 | Kabutops, Seadra, Starmie |
-| NF8 | Quais Pokémon que não evoluem de nenhum outro (estágio de evolução 1) têm total de atributos de pelo menos 500? | filtro exato (estágio 1) + *At least*; **funil** | 151 → 79 → 10 | Mewtwo, Mew, Articuno, Moltres, Zapdos, Snorlax, Lapras, Aerodactyl, Pinsir, Scyther |
+| Nota | Forma A (com variáveis) | Forma B (sem variáveis) |
+|---|---|---|
+| **Correta** | A consulta gerada é equivalente à de referência: mesmas condições, mesmo resultado, independente dos nomes das variáveis, da ordem e da posição dos nós. | O diagrama mostra todas as entidades da resposta, só elas, cada uma ligada às relações que a pergunta pede. |
+| **Parcial** | Caminho certo com um erro que muda o resultado: falta ou sobra uma condição, limite errado, um empate perdido. | Falta ou sobra uma entidade, ou falta a relação que justifica a resposta (por exemplo, o item da evolução). |
+| **Incorreta** | Outra pergunta, resultado vazio ou sem relação com a pergunta. | Entidades erradas ou diagrama sem relação com a pergunta. |
+
+Resultado igual **não basta** na forma A: na NF4, um diagrama sem o tipo
+Psíquico também dá Mewtwo (o maior ataque especial de toda a base), mas
+responde outra pergunta e é **parcial**. Registrar, para cada resposta, a
+nota, a forma (A ou B) e os recursos que o diagrama mostra (filtro, MAX/MIN,
+duas variáveis).
+
+### 5.4 Banco de questões
+
+#### Filtros
+
+| # | Enunciado (como o participante vê) | Caminho esperado | Funil esperado | Resultado esperado | Exemplo aceito na forma B |
+|---|---|---|---|---|---|
+| NF1 | Quais Pokémon do tipo Elétrico (*Electric*) têm velocidade (*Speed*) de pelo menos 100? | *At least* + histograma | 151 → 9 → 6 | Electrode (150), Jolteon (130), Raichu (110), Electabuzz (105), Voltorb (100), Zapdos (100) | os 6 Pokémon, cada um com *has type* → Electric e *Speed* → seu valor |
+| NF2 | Quais Pokémon medem entre 2 e 3 metros de altura (*height*)? | *Between* com decimais (ou *At least* + *At most*) | 151 → 9 | Ekans, Exeggutor, Mewtwo, Moltres, Venusaur (2,0); Snorlax (2,1); Dragonite, Kangaskhan (2,2); Lapras (2,5) | os 9, cada um com *height (m)* → seu valor |
+| NF3 | Qual é o Pokémon mais leve (*weight*)? | **MIN** com empate | 151 → 2 | Gastly e Haunter (0,1 kg) | Gastly e Haunter com *weight (kg)* → 0.1; só um dos dois é parcial |
+| NF4 | Qual Pokémon do tipo Psíquico (*Psychic*) tem o maior ataque especial (*Sp. Atk*)? | tipo fixo + **MAX** | 151 → 14 → 1 | Mewtwo (154) | Mewtwo com *has type* → Psychic e *Sp. Atk* → 154 |
+| NF5 | Quais Pokémon têm uma categoria (*category*) que contém a palavra "Bird"? | *Contains* + sugestões de texto | 151 → 6 | Pidgey, Pidgeotto, Pidgeot, Spearow, Doduo, Dodrio | os 6, cada um com *category* → sua categoria |
+| NF6 | Quais Pokémon têm uma categoria (*category*) que começa com "Poison"? | *Starts with* | 151 → 8 | Nidoran♀, Nidorina, Nidoran♂, Nidorino, Beedrill, Venomoth, Koffing, Weezing | os 8, cada um com *category* → sua categoria |
+| NF7 | Quais Pokémon do tipo Água (*Water*) têm defesa (*Defense*) e velocidade (*Speed*) de pelo menos 80? | tipo + dois *At least*; **funil** de 3 passos | 151 → 32 → 16 → 3 | Kabutops, Seadra, Starmie | os 3, cada um com o tipo, a defesa e a velocidade |
+| NF8 | Quais Pokémon que não evoluem de nenhum outro (estágio de evolução 1, *evolution stage*) têm total de atributos (*base stat total*) de pelo menos 500? | valor exato (estágio 1) + *At least*; **funil** | 151 → 79 → 10 | Mewtwo, Mew, Articuno, Moltres, Zapdos, Snorlax, Lapras, Aerodactyl, Pinsir, Scyther | os 10, cada um com o estágio e o total |
 
 Notas:
 
 - NF3 e NF4: MAX/MIN só se aplica a um **valor literal**, não a uma variável
-  de valor literal (nota do vídeo, F20). O empate da NF3 testa se o
-  participante entende que MIN mantém todos os empates.
+  de valor literal (nota do vídeo, F20). A NF3 testa se o participante
+  percebe que há empate; sem retorno de correção, só a pré-visualização ou
+  o resultado mostram os dois.
 - NF4: os 14 Pokémon Psíquicos incluem os de tipo secundário (`hasType`).
 - NF8 é a mais difícil do bloco: "não evolui de nenhum outro" precisa virar
-  `evolutionStage = 1`. Na Help, isso pode exigir uma dica no enunciado
-  ("estágio de evolução 1").
+  `evolution stage = 1`; por isso o enunciado dá a dica.
+- Na forma B das questões de filtro, o diagrama precisa mostrar o valor que
+  justifica cada entidade. Uma lista de Pokémon sem os valores é
+  **parcial**: mostra o resultado, mas não que ele atende à pergunta.
 
-### 5.2 Pré-visualização e exploração em etapas
+#### Pré-visualização e exploração em etapas
 
-Questões com duas variáveis, em que *Find matching values* e o *Possible
-graph* ajudam a escolher e conferir os valores etapa por etapa.
+Questões com duas etapas, em que *Find matching values* e o *Possible
+graph* ajudam a escolher e conferir os valores. Aqui a forma B é natural:
+escolher os valores na pré-visualização e levá-los ao grafo com *Assume*.
 
-| # | Questão proposta | Etapas (variáveis) | Resposta |
-|---|---|---|---|
-| NP1 | Em quais Pokémon o Eevee evolui, e qual item é usado em cada evolução? | Pokémon → item | Vaporeon (Water Stone), Jolteon (Thunder Stone), Flareon (Fire Stone) |
-| NP2 | Quais Pokémon evoluem usando a Moon Stone, e de qual Pokémon cada um evolui? | Pokémon → pré-evolução | Nidoqueen ← Nidorina, Nidoking ← Nidorino, Clefable ← Clefairy, Wigglytuff ← Jigglypuff |
-| NP3 | A quais tipos os Pokémon do tipo Dragão são fracos? | Pokémon → tipo | Dragon, Fairy, Ice (os três); Rock (só Dragonite) |
-| NP4 | De quais Pokémon evoluem os Pokémon do tipo Venenoso com o maior ataque? | MAX (empate) + pré-evolução | Muk ← Grimer e Victreebel ← Weepinbell (ataque 105): **combina filtro e preview** (desafio) |
+| # | Enunciado (como o participante vê) | Etapas | Resultado esperado | Exemplo aceito na forma B |
+|---|---|---|---|---|
+| NP1 | Em quais Pokémon o Eevee evolui, e qual item (*evolution item*) é usado em cada evolução? | Pokémon → item | Vaporeon (Water Stone), Jolteon (Thunder Stone), Flareon (Fire Stone) | Vaporeon, Jolteon e Flareon, cada um com *evolves from* → Eevee e *evolution item* → sua pedra |
+| NP2 | Quais Pokémon evoluem usando a Moon Stone, e de qual Pokémon cada um evolui? | Pokémon → pré-evolução | Nidoqueen ← Nidorina, Nidoking ← Nidorino, Clefable ← Clefairy, Wigglytuff ← Jigglypuff | os 4 pares, cada um com *evolution item* → Moon Stone e *evolves from* → a pré-evolução |
+| NP3 | A quais tipos os Pokémon do tipo Dragão (*Dragon*) são fracos (*weak to*)? | Pokémon → tipo | Dragon, Fairy, Ice (os três Dragões); Rock (só Dragonite) | Dratini, Dragonair e Dragonite ligados por *weak to* aos tipos; mostrar só os 4 tipos sem os Pokémon é **parcial** |
+| NP4 | De quais Pokémon evoluem os Pokémon do tipo Venenoso (*Poison*) com o maior ataque (*Attack*)? | MAX (empate) + pré-evolução | Muk ← Grimer e Victreebel ← Weepinbell (ataque 105): **combina filtro e preview** (desafio) | Muk e Victreebel com *Attack* → 105, *has type* → Poison e *evolves from* → Grimer/Weepinbell |
 
-Na NP3, a resposta pedida é o conjunto de tipos (variável de resposta: o
-tipo). O preview mostra, para cada Pokémon, de onde vem cada fraqueza. Na
-NP4, a variável de resposta é a pré-evolução.
+Na NP3, a resposta é o conjunto de tipos; o preview mostra de que Pokémon
+vem cada fraqueza. Na NP4, a resposta são as pré-evoluções (Grimer e
+Weepinbell), e o diagrama deve mostrar por que elas foram escolhidas.
 
-### 5.3 Como sortear
+### 5.5 Diagramas de referência (forma A)
+
+Para desenhar no `/admin/tasks/new`. Nomes de variáveis livres; os rótulos
+são os do app.
+
+```
+NF1  ?pokémon --has type--> Electric
+     ?pokémon --Speed--> ?velocidade          [At least 100]
+NF2  ?pokémon --height (m)--> ?altura         [Between 2 and 3]
+NF3  ?pokémon --weight (kg)--> ?peso          [MIN]
+NF4  ?pokémon --has type--> Psychic
+     ?pokémon --Sp. Atk--> ?ataque            [MAX]
+NF5  ?pokémon --category--> ?categoria        [Contains "Bird"]
+NF6  ?pokémon --category--> ?categoria        [Starts with "Poison"]
+NF7  ?pokémon --has type--> Water
+     ?pokémon --Defense--> ?defesa            [At least 80]
+     ?pokémon --Speed--> ?velocidade          [At least 80]
+NF8  ?pokémon --evolution stage--> 1          (valor literal)
+     ?pokémon --base stat total--> ?total     [At least 500]
+NP1  ?pokémon --evolves from--> Eevee
+     ?pokémon --evolution item--> ?item
+NP2  ?pokémon --evolution item--> Moon Stone
+     ?pokémon --evolves from--> ?pré
+NP3  ?pokémon --has type--> Dragon
+     ?pokémon --weak to--> ?tipo
+NP4  ?pokémon --has type--> Poison
+     ?pokémon --Attack--> ?ataque             [MAX]
+     ?pokémon --evolves from--> ?pré
+```
+
+Limitação conhecida (STUDY-016): uma resposta na forma B nunca bate no
+`auto_check` estrutural com uma referência na forma A, porque as triplas da
+referência têm variáveis. O `auto_check` = `no_match` nesse caso não indica
+erro; a nota é dada pela rubrica (§5.3).
+
+### 5.6 Como sortear
 
 Para replicar o desenho da dissertação (cinco questões sorteadas de um
 banco) e cobrir as novas funcionalidades:
 
-- **Cinco tarefas por participante**, sorteadas por estrato: duas de §5.1,
-  duas de §5.2 e uma "básica", sem filtro nem preview (ver o passo 3 de
-  §8).
+- **Cinco tarefas por participante**, sorteadas por estrato: duas de
+  filtros, duas de pré-visualização e uma "básica", sem filtro nem preview
+  (ver o passo 3 de §8).
 - Os grupos de participantes do app (STUDY-006) dão um conjunto fixo e
   ordenado de tarefas a cada grupo. O sorteio pode ser feito ao montar os
   grupos (por exemplo, quatro grupos com combinações diferentes).
 - O item 2 do questionário aceita até 20 no app, então seis tarefas também
   funcionam.
 
-## 6. Novos itens do questionário (mesma metodologia)
+## 6. Novos itens do questionário (SUS e Física das Notações)
 
 Os itens 1–15 ficam **inalterados**, para que as pontuações continuem
 comparáveis com 57/70 e 15,9/20. Os novos itens entram depois do 15, em
-dois blocos de cinco, cada um com a mesma forma do bloco de notação (0–20,
-aceitável acima de 10).
+quatro blocos. Cada bloco pode ser aplicado ou retirado sem afetar os
+outros.
 
-Cada bloco tem um item negativo (–), como no SUS, para reduzir a tendência
-de concordar com tudo. Para replicar exatamente o bloco de notação (só
-positivos), basta reescrever o item negativo na forma positiva indicada.
+Mesma forma dos itens 5–12: "Como você avaliaria a afirmação de que…",
+escala de Likert de 1 ("Discordo fortemente") a 5 ("Concordo fortemente").
+Positivos (+) pontuam `q − 1` e negativos (–) `5 − q`, como em §4.5 da
+dissertação. Cada bloco tem pelo menos um item negativo, como no SUS, para
+reduzir a tendência de concordar com tudo.
 
-### 6.1 Bloco "Filtros" (itens 16–20)
+### 6.1 O que falta do SUS e da Física das Notações
+
+- **SUS.** A dissertação usou 7 dos 10 itens do SUS (Brooke, 1995):
+
+  | Item SUS (Brooke) | Pol. | Item da dissertação |
+  |---|---|---|
+  | 1. Gostaria de usar o sistema com frequência | + | — |
+  | 2. Achei o sistema desnecessariamente complexo | – | — |
+  | 3. Achei o sistema fácil de usar | + | 3 |
+  | 4. Precisaria de suporte técnico | – | 5 |
+  | 5. Funções bem integradas | + | 6 |
+  | 6. Muita inconsistência | – | 7 |
+  | 7. A maioria aprenderia rápido | + | 8 |
+  | 8. Achei o sistema muito trabalhoso | – | — |
+  | 9. Me senti confiante | + | 9 |
+  | 10. Precisei aprender muitas coisas antes | – | 10 |
+
+  Faltam os itens 1, 2 e 8. Com eles, o SUS fica completo (0–100) e pode
+  ser comparado diretamente com o corte de 68 de Lewis (2018) e com outros
+  estudos, sem a normalização para 47,6.
+- **Física das Notações.** Os itens 11–15 cobrem 5 dos 9 princípios
+  (discernimento perceptivo, transparência semântica, economia gráfica,
+  clareza semiótica e gerenciamento de complexidade). Ficam de fora a
+  **integração cognitiva**, a **expressividade visual**, a **codificação
+  dupla** e o **ajuste cognitivo**. A explicação de cada princípio está em
+  [[Física das Notações (Moody, 2009)]].
+
+### 6.2 Bloco "SUS complementar" (itens 16–18)
+
+| # | Item proposto | Pol. | Item SUS | Princípio relacionado (indireto) |
+|---|---|---|---|---|
+| 16 | Como você avaliaria a afirmação de que você gostaria de usar esta ferramenta com frequência, sempre que precisasse consultar uma base de dados como a dos Pokémon? | + | 1 | — (satisfação/intenção de uso) |
+| 17 | Como você avaliaria a afirmação de que a ferramenta é desnecessariamente complexa? | – | 2 | economia gráfica, gerenciamento de complexidade |
+| 18 | Como você avaliaria a afirmação de que a ferramenta é muito trabalhosa de usar? | – | 8 | gerenciamento de complexidade |
+
+O SUS mede a usabilidade da **ferramenta**, não da notação. A coluna
+"princípio relacionado" serve só para a discussão; esses itens não entram
+na pontuação de notação.
+
+### 6.3 Bloco "Notação complementar" (itens 19–25)
+
+Um item por princípio que os itens 11–15 não cobrem, e dois que reforçam
+princípios cobertos de forma parcial.
+
+| # | Item proposto | Pol. | Princípio | O que mede |
+|---|---|---|---|---|
+| 19 | Como você avaliaria a afirmação de que todas as condições da sua consulta (relações, valores e filtros) estavam visíveis no diagrama, sem nada escondido? | + | clareza semiótica | déficit de símbolos (o item 14 cobre redundância e ambiguidade) |
+| 20 | Como você avaliaria a afirmação de que as cores dos nós e das setas ajudaram a reconhecer rapidamente o papel de cada elemento na consulta? | + | expressividade visual | uso de mais de uma variável visual (cor além da forma) |
+| 21 | Como você avaliaria a afirmação de que os textos junto aos símbolos (nomes dos nós, das relações e dos filtros) ajudaram a entender o diagrama? | + | codificação dupla | texto complementando o gráfico |
+| 22 | Como você avaliaria a afirmação de que havia tipos diferentes de símbolos demais para lembrar o que cada um significa? | – | economia gráfica | número de **tipos** de símbolo; o item 13 mede a quantidade de elementos na tela |
+| 23 | Como você avaliaria a afirmação de que é possível construir uma consulta sem conhecer termos técnicos de SPARQL ou de RDF? | + | ajuste cognitivo | adequação do dialeto ao público leigo |
+| 24 | Como você avaliaria a afirmação de que foi fácil relacionar o diagrama construído com a lista de resultados obtida? | + | integração cognitiva | integração conceitual entre duas representações (diagrama e resultados) |
+| 25 | Como você avaliaria a afirmação de que a direção das setas deixa claro o sentido de cada relação (por exemplo, qual Pokémon evolui de qual)? | + | transparência semântica | relações semanticamente transparentes (o item 12 trata dos símbolos dos nós) |
+
+### 6.4 Bloco "Filtros" (itens 26–30)
 
 | # | Item proposto | Pol. | Princípio |
 |---|---|---|---|
-| 16 | Como você avaliaria a afirmação de que os nomes dos tipos de filtro (por exemplo *At least*, *Between*, *Contains*, *MAX*) deixam claro o que cada filtro faz? | + | ajuste cognitivo / transparência semântica |
-| 17 | Como você avaliaria a afirmação de que o histograma e a lista de entidades mantidas ajudaram a escolher o valor de um filtro? | + | expressividade visual / codificação dupla |
-| 18 | Como você avaliaria a afirmação de que o selo "mantidos / total" sobre um nó filtrado mostra claramente o efeito do filtro? | + | codificação dupla |
-| 19 | Como você avaliaria a afirmação de que o funil de filtros (*Filter funnel*) ajudou a entender como cada filtro reduziu o resultado? | + | gerenciamento de complexidade / integração cognitiva (monitoramento de rota) |
-| 20 | Como você avaliaria a afirmação de que foi difícil distinguir, no grafo, os nós com filtro dos nós sem filtro? | – | discernimento perceptivo (positivo: "…é fácil distinguir…") |
+| 26 | Como você avaliaria a afirmação de que os nomes dos tipos de filtro (por exemplo *At least*, *Between*, *Contains*, *MAX*) deixam claro o que cada filtro faz? | + | ajuste cognitivo, transparência semântica |
+| 27 | Como você avaliaria a afirmação de que o histograma e a lista de entidades mantidas ajudaram a escolher o valor de um filtro? | + | expressividade visual, codificação dupla |
+| 28 | Como você avaliaria a afirmação de que o selo "mantidos / total" sobre um nó filtrado mostra claramente o efeito do filtro? | + | codificação dupla |
+| 29 | Como você avaliaria a afirmação de que o funil de filtros (*Filter funnel*) ajudou a entender como cada filtro reduziu o resultado? | + | gerenciamento de complexidade, integração cognitiva (monitoramento de rota) |
+| 30 | Como você avaliaria a afirmação de que foi difícil distinguir, no grafo, os nós com filtro dos nós sem filtro? | – | discernimento perceptivo |
 
-### 6.2 Bloco "Pré-visualização" (itens 21–25)
+### 6.5 Bloco "Pré-visualização" (itens 31–35)
 
 | # | Item proposto | Pol. | Princípio |
 |---|---|---|---|
-| 21 | Como você avaliaria a afirmação de que a execução em etapas (*Find matching values*), com as variáveis numeradas, deixou claro em que etapa da consulta você estava? | + | integração cognitiva (orientação) / gerenciamento de complexidade (modularização) |
-| 22 | Como você avaliaria a afirmação de que a pré-visualização do grafo (*Possible graph*), ao passar o mouse sobre um valor, ajudou a decidir qual valor escolher? | + | integração cognitiva (escolha de rota) |
-| 23 | Como você avaliaria a afirmação de que é fácil relacionar o grafo da pré-visualização com o grafo da consulta no editor? | + | integração cognitiva (integração perceptiva, *visual momentum*) |
-| 24 | Como você avaliaria a afirmação de que a pré-visualização e os painéis de filtro deixaram a tela sobrecarregada? | – | economia gráfica / gerenciamento de complexidade (positivo: "…não sobrecarregam…") |
-| 25 | Como você avaliaria a afirmação de que conseguiu conferir se a consulta estava certa (pelo funil, pelos selos ou pela pré-visualização) antes de enviar a resposta? | + | integração cognitiva (reconhecimento do destino) |
+| 31 | Como você avaliaria a afirmação de que a execução em etapas (*Find matching values*), com as variáveis numeradas, deixou claro em que etapa da consulta você estava? | + | integração cognitiva (orientação), gerenciamento de complexidade (modularização) |
+| 32 | Como você avaliaria a afirmação de que a pré-visualização do grafo (*Possible graph*), ao passar o mouse sobre um valor, ajudou a decidir qual valor escolher? | + | integração cognitiva (escolha de rota) |
+| 33 | Como você avaliaria a afirmação de que é fácil relacionar o grafo da pré-visualização com o grafo da consulta no editor? | + | integração cognitiva (integração perceptiva, *visual momentum*) |
+| 34 | Como você avaliaria a afirmação de que a pré-visualização e os painéis de filtro deixaram a tela sobrecarregada? | – | economia gráfica, gerenciamento de complexidade |
+| 35 | Como você avaliaria a afirmação de que conseguiu conferir se o diagrama mostrava a resposta certa (pelo funil, pelos selos ou pela pré-visualização) antes de salvá-lo? | + | integração cognitiva (reconhecimento do destino) |
 
-Rótulos da escala: "1 – Discordo fortemente" … "5 – Concordo fortemente",
-como os itens 5–12.
+O item 35 ganhou importância com a DEC-020: sem correção visível, os
+recursos de conferência são o único retorno que o participante tem.
 
-### 6.3 Pontuação
+### 6.6 Itens de contexto (não pontuados)
 
-Seguindo a fórmula de §4.5, com positivos `q − 1` e negativos `5 − q`:
-
-- **Filtros** = `(q16 − 1) + (q17 − 1) + (q18 − 1) + (q19 − 1) + (5 − q20)`,
-  de 0 a 20, aceitável acima de 10;
-- **Pré-visualização** = `(q21 − 1) + (q22 − 1) + (q23 − 1) + (5 − q24) + (q25 − 1)`,
-  de 0 a 20, aceitável acima de 10.
-
-Como no item 4 (vídeo), um item de **contexto não pontuado** ajuda a
-interpretar os blocos:
-
-- **26.** Quais destes recursos você usou durante as tarefas? (múltipla
+- **36.** Quais destes recursos você usou durante as tarefas? (múltipla
   escolha: histograma do filtro, sugestões de texto, selos, funil,
   *Find matching values*, *Possible graph*, *Assume*, *View SPARQL*,
   nenhum).
+- **37.** Quão seguro você está de que os diagramas que salvou respondem
+  corretamente às perguntas? (1 "Nada seguro" a 5 "Totalmente seguro").
 
-Quem marca "nenhum" num recurso tem uma nota pouco informativa no item
-correspondente. Na análise, separar as médias de quem usou e de quem não
-usou o recurso.
+Quem não usou um recurso dá uma nota pouco informativa no item
+correspondente; na análise, separar as médias de quem usou e de quem não
+usou. O item 37, comparado com a nota manual (§5.3), mostra se a confiança
+do participante corresponde ao acerto. É o mesmo cuidado que o item 2 pede
+agora (§7).
+
+### 6.7 Pontuação
+
+| Pontuação | Itens | Fórmula | Faixa | Aceitável |
+|---|---|---|---|---|
+| Usabilidade (dissertação) | 3, 5–10 | `2,5 · (Σ₍₅,₇,₁₀₎(5 − q) + Σ₍₃,₆,₈,₉₎(q − 1))` | 0–70 | ≥ 47,6 |
+| **SUS completo** | 3, 5–10, 16–18 | `2,5 · (Σ₍₅,₇,₁₀,₁₇,₁₈₎(5 − q) + Σ₍₃,₆,₈,₉,₁₆₎(q − 1))` | 0–100 | ≥ 68 (Lewis, 2018) |
+| Notação (dissertação) | 11–15 | `Σ₍₁₁–₁₅₎(q − 1)` | 0–20 | > 10 |
+| **Notação complementar** | 19–25 | `Σ₍₁₉,₂₀,₂₁,₂₃,₂₄,₂₅₎(q − 1) + (5 − q₂₂)` | 0–28 | > 14 |
+| **Notação completa** (9 princípios) | 11–15, 19–25 | soma das duas anteriores | 0–48 | > 24 |
+| **Filtros** | 26–30 | `Σ₍₂₆–₂₉₎(q − 1) + (5 − q₃₀)` | 0–20 | > 10 |
+| **Pré-visualização** | 31–35 | `Σ₍₃₁–₃₃,₃₅₎(q − 1) + (5 − q₃₄)` | 0–20 | > 10 |
+
+O critério "metade da escala" é o mesmo da dissertação para a notação; não
+há base teórica no SUS para um corte de notação.
+
+### 6.8 Princípios avaliados por item
+
+Cobertura dos nove princípios de Moody por todos os itens pontuados (os da
+dissertação e os propostos). **Negrito** = item principal do princípio.
+
+| Princípio | Itens da dissertação | Itens propostos | Itens SUS (relação indireta) |
+|---|---|---|---|
+| 1. Clareza semiótica | **14** | **19** | 7 (inconsistências) |
+| 2. Discernimento perceptivo | **11** | 30 | — |
+| 3. Transparência semântica | **12** | **25**, 26 | 8, 10 (aprendizado) |
+| 4. Gerenciamento de complexidade | **15** | 29, 31, 34 | 17, 18 |
+| 5. Integração cognitiva | — | **24**, 29, 31, 32, 33, 35 | 6 (funções integradas) |
+| 6. Expressividade visual | — | **20**, 27 | — |
+| 7. Codificação dupla | — | **21**, 27, 28 | — |
+| 8. Economia gráfica | **13** | **22**, 34 | 17 |
+| 9. Ajuste cognitivo | — | **23**, 26 | 3, 10 (facilidade para leigos) |
+
+Leitura por item:
+
+| Item | Princípio(s) |
+|---|---|
+| 11 | discernimento perceptivo |
+| 12 | transparência semântica |
+| 13 | economia gráfica (a dissertação atribui à clareza semiótica, ver §1) |
+| 14 | clareza semiótica (redundância e ambiguidade/sobrecarga) |
+| 15 | gerenciamento de complexidade |
+| 16 | — (SUS 1, intenção de uso) |
+| 17 | SUS 2; indiretamente economia gráfica e gerenciamento de complexidade |
+| 18 | SUS 8; indiretamente gerenciamento de complexidade |
+| 19 | clareza semiótica (déficit de símbolos) |
+| 20 | expressividade visual |
+| 21 | codificação dupla |
+| 22 | economia gráfica |
+| 23 | ajuste cognitivo |
+| 24 | integração cognitiva (conceitual) |
+| 25 | transparência semântica (relações) |
+| 26 | ajuste cognitivo, transparência semântica |
+| 27 | expressividade visual, codificação dupla |
+| 28 | codificação dupla |
+| 29 | gerenciamento de complexidade, integração cognitiva (monitoramento de rota) |
+| 30 | discernimento perceptivo |
+| 31 | integração cognitiva (orientação), gerenciamento de complexidade |
+| 32 | integração cognitiva (escolha de rota) |
+| 33 | integração cognitiva (integração perceptiva) |
+| 34 | economia gráfica, gerenciamento de complexidade |
+| 35 | integração cognitiva (reconhecimento do destino) |
+
+Com os itens propostos, todos os nove princípios têm pelo menos um item
+principal, e só o discernimento perceptivo continua com um único item
+geral (11) mais um específico dos filtros (30).
 
 ## 7. Ameaças à validade (para a discussão)
 
 - **Viés de aquiescência:** a dissertação reconhece (§5.2) que as boas
-  notas podem refletir o bom desempenho nas tarefas. Os itens negativos 20 e
-  24 e o item de contexto 26 reduzem esse risco.
+  notas podem refletir o bom desempenho nas tarefas. Os itens negativos 17,
+  18, 22, 30 e 34 e o item de contexto 36 reduzem esse risco.
+- **Item 2 sem correção visível:** desde a DEC-020, o participante não sabe
+  se acertou, então o item 2 ("quantidade de consultas que conseguiu
+  realizar") mede a conclusão **percebida**. Comparar com a nota manual
+  (§5.3) e com o item 37, em vez de tratá-lo como acerto.
+- **Correção manual:** a nota depende de quem corrige. Usar a rubrica de
+  §5.3, corrigir as tarefas antes de olhar o questionário do mesmo
+  participante e, se possível, ter um segundo avaliador (ou uma IA) em uma
+  amostra, registrando a concordância.
+- **Tamanho do questionário:** com os blocos novos são 37 itens (eram 15).
+  Se o tempo for um problema, os blocos de §6.2–§6.5 podem ser aplicados
+  separadamente; os itens 1–15 ficam sempre.
 - **Efeito do vídeo:** se o vídeo demonstra o preview e o funil, as notas
   medem também a qualidade da demonstração. Manter o item 4 e registrar a
   versão do vídeo usada.
 - **Dificuldade desigual:** questões sorteadas de bancos diferentes têm
-  dificuldades diferentes. Sortear por estrato (§5.3) e registrar quais
+  dificuldades diferentes. Sortear por estrato (§5.6) e registrar quais
   questões cada participante recebeu (o app já registra as tarefas e as
   tentativas).
 
@@ -281,13 +515,14 @@ usou o recurso.
 1. Questões de §5 como tarefas propostas do grupo de teste PokemonGen1,
    desenhadas pelo admin (`/admin/tasks/new`; formato de dados como o de
    `frontend/src/lib/domain/fixtures/demo-study/brasileirao-2023.json`,
-   STUDY-013). O servidor guarda a resposta esperada; conferir que ela bate
-   com §5.
-2. Itens 16–26: nova versão `usability.v3.json`, o mesmo versionamento de
-   STUDY-015. As respostas v2 continuam válidas e exportáveis. Duas colunas
-   novas no CSV (`filters_score`, `preview_score`) junto a `DissertationScores`.
-   O item 26 usa o tipo `multiple_choice`, que o motor de formulários já tem
-   (STUDY-009).
+   STUDY-013), com os enunciados de §5.4 e os diagramas de referência de
+   §5.5. O servidor guarda o resultado esperado; conferir que ele bate com
+   §5.4. A correção é manual (§5.3), no `/admin/submissions` ou no ZIP.
+2. Itens 16–37: nova versão `usability.v3.json`, o mesmo versionamento de
+   STUDY-015. As respostas v2 continuam válidas e exportáveis. Colunas
+   novas no CSV (`sus_score`, `notation_extra_score`, `filters_score`,
+   `preview_score`) junto a `DissertationScores`. O item 36 usa o tipo
+   `multiple_choice`, que o motor de formulários já tem (STUDY-009).
 3. Opcional, para comparar com 2025: escrever no PokemonGen1 questões
    **básicas** com a mesma estrutura das 13 originais (uma entidade e uma
    relação, um valor booleano, uma contagem, um MAX) e usá-las como estrato

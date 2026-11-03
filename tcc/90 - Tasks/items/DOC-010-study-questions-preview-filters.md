@@ -7,7 +7,7 @@ type: documentation
 depends_on: []
 human_gate: true
 created: 2026-10-28
-updated: 2026-10-28
+updated: 2026-11-03
 ---
 # Collect the dissertation's study questions and propose new ones for preview and filters
 
@@ -64,3 +64,28 @@ REVIEW (2026-10-28, human gate: the study design is the user's decision).
 - Approve or change the bank, the stratified draw (§5.3) and the new items.
 - Implementing it (tasks for the PokemonGen1 group, `usability.v3.json`,
   CSV scores) needs a separate task.
+
+## Revision (2026-11-03)
+
+User request (in Portuguese): explain the Physics of Notations paper and
+each of its principles; rewrite the PokemonGen1 questions in the task form
+redefined with the advisor; propose more questionnaire items from the SUS
+and the Physics of Notations, listing the principle each item evaluates.
+
+- New note [[../../01 - Project/Física das Notações (Moody, 2009)]]: the
+  paper's problem, descriptive theory (Bertin's variables, processing
+  stages), the nine principles with their sub-strategies and an EasyQuery
+  example, and their interactions. Linked from `00 - Home`.
+- §5 of the questions note follows DEC-020: statements without variables,
+  a common instruction, a manual grading rubric (correct/partial/incorrect
+  for answers with or without variables), an accepted variable-free example
+  per question and the reference diagrams. Answers unchanged:
+  `pokemon_gen1.ttl` has no commit since 2026-10-28.
+- §6 adds SUS items 1, 2 and 8 (16–18, full SUS 0–100), one item per
+  principle not covered by 11–15 (19–25), keeps the filter and preview
+  blocks (now 26–35), adds a confidence context item (37), the scores and a
+  principle-by-item matrix covering all nine principles.
+- Validation: `node scripts/check-project-docs.mjs`, `git diff --check`.
+
+Open for the user: approve the rubric, the new items and the questionnaire
+length (37 items; blocks can be dropped).
