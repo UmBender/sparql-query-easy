@@ -6,6 +6,9 @@
 # to HTTPS.
 {
 	admin off
+	# Clients send no SNI when the address is an IP (trial installs without a
+	# DNS name), so serve the certificate of EASYQUERY_DOMAIN by default.
+	default_sni {$EASYQUERY_DOMAIN}
 	# HTTP/3 needs UDP 443, which compose.yaml does not publish.
 	servers {
 		protocols h1 h2
