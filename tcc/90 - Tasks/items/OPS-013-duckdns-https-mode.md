@@ -1,7 +1,7 @@
 ---
 id: OPS-013
 title: Serve a trusted HTTPS certificate on a free DuckDNS name (mode duckdns)
-status: REVIEW
+status: DONE
 priority: P2
 type: operations
 depends_on: [OPS-012]
@@ -37,8 +37,9 @@ is bought.
   with `EASYQUERY_HTTPS_MODE=duckdns`, Caddy solved the DNS-01 challenge and
   obtained a Let's Encrypt certificate for the DuckDNS name; `curl` without `-k`
   to `https://<name>:8281/health` answered `{"status":"ok","database":"ready"}`.
-- Not verified: a browser on the USP network without a warning (human gate);
-  `scripts/check-https-modes.mjs` does not cover `duckdns`.
+- Human gate passed (2026-11-12): the user opened `https://<name>:8281` in a
+  browser and it worked.
+- Not verified: `scripts/check-https-modes.mjs` does not cover `duckdns`.
 
 ## Human gate
 
