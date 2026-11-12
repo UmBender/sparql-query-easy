@@ -79,6 +79,12 @@ After every install, update, rollback, restore or rotation:
 
 ## Update to a new version
 
+The checkout must be a git clone. If it was copied instead (as on the first
+test VM), convert it in place without touching `.env` or `backups/`, which are
+git-ignored: `git init -b main && git remote add origin <url> && git fetch --tags
+origin && git reset origin/main && git branch -u origin/main`; `git status`
+then lists only the differences from `origin/main`.
+
 ```sh
 cd /srv/easyquery/app
 docker compose exec backup easyquery-backup          # pre-update backup

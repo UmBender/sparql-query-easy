@@ -33,8 +33,12 @@ is bought.
   shows `dns.providers.duckdns` (and cloudflare); `caddy validate` of
   `duckdns.Caddyfile` reports "Valid configuration"; `docker compose config`
   passes with `EASYQUERY_HTTPS_MODE=duckdns`.
-- Not verified: a real certificate issue (needs the real token and the DuckDNS
-  A record); `scripts/check-https-modes.mjs` does not cover `duckdns`.
+- Verified on the test VM (2026-11-12): after `docker compose up -d --build --wait`
+  with `EASYQUERY_HTTPS_MODE=duckdns`, Caddy solved the DNS-01 challenge and
+  obtained a Let's Encrypt certificate for the DuckDNS name; `curl` without `-k`
+  to `https://<name>:8281/health` answered `{"status":"ok","database":"ready"}`.
+- Not verified: a browser on the USP network without a warning (human gate);
+  `scripts/check-https-modes.mjs` does not cover `duckdns`.
 
 ## Human gate
 
