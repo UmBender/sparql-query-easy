@@ -17,7 +17,9 @@ a user allowed to run Docker. `V` stands for a release tag such as `v1.0.0`.
 - The server reaches GitHub, Docker Hub, npm and Maven Central (images are
   built there), and Wikidata at runtime (checklist N3, N4).
 - The HTTPS mode is known: `auto` (DNS name pointing at the server, 80 and
-  443 open) or `proxy` (the university proxy's address) (checklist H1–H3).
+  443 open), `dns` (fallback when IT offers no name or certificate and only
+  other ports such as 8280/8281 are open: own domain on Cloudflare, A record
+  to the server with proxy off, API token) or `proxy` (the university proxy's address) (checklist H1–H3).
 - A backup directory on this server and, if available, an off-host one
   (checklist D1), and an `age` key pair made on your own computer
   (`age-keygen -o easyquery-backup.agekey`; private key kept in two places,
@@ -51,6 +53,7 @@ Edit `.env` (every variable is explained there):
 | `EASYQUERY_ENVIRONMENT` | `production` |
 | `EASYQUERY_ADMIN_USERNAMES` | the researchers' usernames |
 | HTTPS, mode `auto` | `EASYQUERY_HTTPS_MODE=auto`, `EASYQUERY_DOMAIN`, `EASYQUERY_TLS=<your e-mail>`, `WEB_BIND=0.0.0.0`, `WEB_PORT=80`, `WEB_HTTPS_BIND=0.0.0.0`, `WEB_HTTPS_PORT=443` |
+| HTTPS, mode `dns` (fallback) | `EASYQUERY_HTTPS_MODE=dns`, `EASYQUERY_DOMAIN`, `CLOUDFLARE_API_TOKEN`, `WEB_BIND=0.0.0.0`, `WEB_PORT=8280`, `WEB_HTTPS_BIND=0.0.0.0`, `WEB_HTTPS_PORT=8281`; the site is `https://<domain>:8281` |
 | HTTPS, mode `proxy` | `EASYQUERY_HTTPS_MODE=proxy`, `EASYQUERY_TRUSTED_PROXIES=<proxy address>/32`, `WEB_BIND`/`WEB_PORT` the proxy reaches |
 | Backups | `BACKUP_DIR=/srv/easyquery/backups`, `BACKUP_AGE_RECIPIENT=<public key age1…>`, `BACKUP_OFFSITE_DIR=<off-host mount>` |
 | Limits | raise `*_MEMORY_LIMIT` on a dedicated machine (checklist M1, M2) |
@@ -139,6 +142,7 @@ or pass its path, run the script, then the checks. Details and the drill:
 | Admin accounts | edit `EASYQUERY_ADMIN_USERNAMES`; `docker compose up -d --wait backend` |
 | Backup key | make a new pair on your computer, set `BACKUP_AGE_RECIPIENT`, `docker compose up -d --wait backup`; keep the old private key until the last copy encrypted with it has expired (4 weeks) |
 | ACME e-mail (`auto`) | edit `EASYQUERY_TLS`; `docker compose up -d --wait web` |
+| Cloudflare token (`dns`) | create a new token, set `CLOUDFLARE_API_TOKEN`, `docker compose up -d --wait web`; then delete the old token in Cloudflare |
 | All user sessions (suspected leak) | `docker compose exec db psql -U easyquery -d easyquery -c "DELETE FROM user_session"`: everyone logs in again |
 
 ## Verified (2026-10-21)

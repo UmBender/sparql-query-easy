@@ -9,7 +9,12 @@ RUN npx --yes npm@11 ci --ignore-scripts --no-audit --no-fund
 COPY frontend/ ./
 RUN npm run build
 
+# OPS-008 mode `dns`: Caddy with the Cloudflare DNS plugin for DNS-01 challenges.
+FROM caddy:2.10-builder-alpine AS caddy-build
+RUN xcaddy build --with github.com/caddy-dns/cloudflare
+
 FROM caddy:2.10-alpine
+COPY --from=caddy-build /usr/bin/caddy /usr/bin/caddy
 
 # OPS-008: one Caddyfile per EASYQUERY_HTTPS_MODE (compose.yaml picks
 # /etc/caddy/<mode>.Caddyfile); the image's default command uses the local one.

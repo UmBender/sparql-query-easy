@@ -30,7 +30,7 @@ Copy `.env.example` to `.env` (git-ignored) and set at least
 (default 8080), `EASYQUERY_ENVIRONMENT` (default `production`: session
 cookies are `Secure`; browsers accept them on `http://localhost` and
 `http://127.0.0.1`, not on another host over plain HTTP — serve another
-host through mode `auto` or `proxy`, below), `EASYQUERY_EXTREME_RESULT_LIMIT`,
+host through mode `auto`, `dns` or `proxy`, below), `EASYQUERY_EXTREME_RESULT_LIMIT`,
 `EASYQUERY_AUTH_ATTEMPTS_PER_MINUTE`.
 
 ## HTTPS modes (OPS-008)
@@ -44,6 +44,7 @@ host through mode `auto` or `proxy`, below), `EASYQUERY_EXTREME_RESULT_LIMIT`,
 |---|---|---|---|
 | `local` (default) | `deploy/Caddyfile` | development, tests | HTTP on `WEB_BIND:WEB_PORT` (127.0.0.1:8080) |
 | `auto` | `deploy/caddy/auto.Caddyfile` | the server is reachable on 80 and 443 under its own DNS name | `EASYQUERY_DOMAIN`, `EASYQUERY_TLS` (Let's Encrypt e-mail), `WEB_BIND=0.0.0.0`, `WEB_PORT=80`, `WEB_HTTPS_BIND=0.0.0.0`, `WEB_HTTPS_PORT=443`; HTTP redirects to HTTPS; HSTS one year without subdomains; HTTP/1.1 and 2 only |
+| `dns` | `deploy/caddy/dns.Caddyfile` | only other ports (such as 8280/8281) are reachable and the university cannot supply a name or certificate: you own a domain whose zone is on Cloudflare | `EASYQUERY_DOMAIN`, `CLOUDFLARE_API_TOKEN` ("Edit zone DNS" on that zone only); `WEB_HTTPS_PORT` e.g. 8281, site at `https://<domain>:<port>`; A record to the server with Cloudflare proxy off; certificate by DNS-01 challenge, so no port 80/443 is needed; the `web` image is built with the `caddy-dns/cloudflare` plugin (xcaddy stage in `deploy/web.Dockerfile`, needs internet at build) |
 | `proxy` | `deploy/caddy/proxy.Caddyfile` | the university proxy ends TLS | `EASYQUERY_TRUSTED_PROXIES` (CIDR list), `WEB_BIND`/`WEB_PORT` the proxy reaches; the proxy must forward the original `Host` |
 
 A missing required setting stops Caddy with its name in the error (`docker

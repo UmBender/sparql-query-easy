@@ -1,0 +1,23 @@
+# OPS-008, EASYQUERY_HTTPS_MODE=dns: like `auto`, but Caddy proves it controls
+# EASYQUERY_DOMAIN with a DNS-01 challenge (a TXT record created through the
+# Cloudflare API with CLOUDFLARE_API_TOKEN) instead of answering on ports 80 and
+# 443. Use it when only other ports are reachable from the internet (for example
+# 8280/8281 on the university VM): the domain's A record points at the server
+# (Cloudflare proxy off, "DNS only") and the site is served at
+# https://<domain>:<WEB_HTTPS_PORT>. Certificates are trusted, renew by
+# themselves and live in the caddy-data volume.
+{
+	admin off
+	# HTTP/3 needs UDP 443, which compose.yaml does not publish.
+	servers {
+		protocols h1 h2
+	}
+}
+
+{$EASYQUERY_DOMAIN} {
+	tls {
+		dns cloudflare {env.CLOUDFLARE_API_TOKEN}
+	}
+	import /etc/caddy/site.caddy
+	header Strict-Transport-Security "max-age=31536000"
+}
