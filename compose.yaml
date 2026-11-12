@@ -111,7 +111,7 @@ services:
       context: .
       dockerfile: deploy/web.Dockerfile
     image: easyquery-web:${EASYQUERY_VERSION:-local}
-    # OPS-008: local (deploy/Caddyfile), auto, dns or proxy (deploy/caddy/).
+    # OPS-008: local (deploy/Caddyfile), auto, dns, duckdns or proxy (deploy/caddy/).
     command: ["caddy", "run", "--config", "/etc/caddy/${EASYQUERY_HTTPS_MODE:-local}.Caddyfile", "--adapter", "caddyfile"]
     # Unset, these defaults make Caddy refuse to start in the mode that needs
     # them, with the variable's name in the error.
@@ -120,6 +120,7 @@ services:
       EASYQUERY_TLS: ${EASYQUERY_TLS:-EASYQUERY_TLS-is-required-in-auto-mode}
       EASYQUERY_TRUSTED_PROXIES: ${EASYQUERY_TRUSTED_PROXIES:-EASYQUERY_TRUSTED_PROXIES-is-required-in-proxy-mode}
       CLOUDFLARE_API_TOKEN: ${CLOUDFLARE_API_TOKEN:-CLOUDFLARE_API_TOKEN-is-required-in-dns-mode}
+      DUCKDNS_TOKEN: ${DUCKDNS_TOKEN:-DUCKDNS_TOKEN-is-required-in-duckdns-mode}
     ports:
       - "${WEB_BIND:-127.0.0.1}:${WEB_PORT:-8080}:80"
       # HTTPS for mode auto; without WEB_HTTPS_PORT Docker picks a free

@@ -152,6 +152,7 @@ Ordered by dependencies, then priority among selection candidates. See [worker r
 | OPS-010 | DONE | P2 | operations | [Write readable backend logs, rotate container logs and cap service resources](<items/OPS-010-logs-and-resource-limits.md>) |
 | OPS-011 | REVIEW | P1 | operations | [Install, update, roll back, restore and rotate secrets on the server by following one runbook](<items/OPS-011-deploy-runbook.md>) |
 | OPS-012 | REVIEW | P2 | operations | [Serve HTTPS with a DNS-01 certificate when the university offers no name or ports 80/443](<items/OPS-012-dns-https-mode.md>) |
+| OPS-013 | REVIEW | P2 | operations | [Serve a trusted HTTPS certificate on a free DuckDNS name (mode duckdns)](<items/OPS-013-duckdns-https-mode.md>) |
 | FE-049 | DONE | P1 | frontend | [Make the SvelteKit app the authoritative frontend and retire index2.html](<items/FE-049-legacy-cutover.md>) |
 | DEC-018 | DONE | P1 | decision | [Decide how the T12 brief changes the cutover done by FE-049](<items/DEC-018-t12-cutover-brief-differences.md>) |
 | DOC-007 | DONE | P2 | documentation | [Bring the README's current status in line with the cutover and the deploy work](<items/DOC-007-readme-current-status.md>) |

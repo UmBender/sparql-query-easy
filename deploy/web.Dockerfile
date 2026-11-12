@@ -9,9 +9,9 @@ RUN npx --yes npm@11 ci --ignore-scripts --no-audit --no-fund
 COPY frontend/ ./
 RUN npm run build
 
-# OPS-008 mode `dns`: Caddy with the Cloudflare DNS plugin for DNS-01 challenges.
+# OPS-008 modes `dns` and `duckdns`: Caddy with the Cloudflare and DuckDNS plugins for DNS-01 challenges.
 FROM caddy:2.10-builder-alpine AS caddy-build
-RUN xcaddy build --with github.com/caddy-dns/cloudflare
+RUN xcaddy build --with github.com/caddy-dns/cloudflare --with github.com/caddy-dns/duckdns
 
 FROM caddy:2.10-alpine
 COPY --from=caddy-build /usr/bin/caddy /usr/bin/caddy
