@@ -94,8 +94,8 @@ informações sobre os resultados gerais da pesquisa ao término do estudo.
 
 ### Termos de uso da ferramenta durante a pesquisa **[ADAPTADO]**
 
-Estes itens só descrevem o que os itens 2, 3 e 6 já dizem, aplicado ao uso
-da ferramenta online:
+Estes itens descrevem o que os itens 2, 3, 6 e 7 já dizem, aplicado ao uso
+da ferramenta online, e acrescentam a idade mínima e o prazo de guarda:
 
 - **T1. Finalidade.** A SPARQL EasyQuery é usada nesta sessão apenas para a
   pesquisa descrita acima, com a base de dados preparada para o estudo. O
@@ -109,7 +109,11 @@ da ferramenta online:
   deste termo ficam separados dos registros de desempenho (item 6).
 - **T4. Sem avaliação do participante.** O resultado das tarefas serve para
   avaliar a ferramenta (item 2); não há nota, aprovação ou reprovação.
-- **T5. Interrupção.** Posso parar a qualquer momento, fechando a página ou
+- **T5. Participação só de maiores de idade.** A pesquisa é destinada a
+  pessoas com 18 anos ou mais.
+- **T6. Prazo de guarda.** Os registros da pesquisa ficam armazenados até o
+  fim de 2026 (31 de dezembro).
+- **T7. Interrupção.** Posso parar a qualquer momento, fechando a página ou
   avisando a equipe, e pedir a retirada dos meus registros identificáveis
   conforme o item 7.
 
@@ -119,6 +123,7 @@ Declaro que li ou recebi explicações sobre as informações acima, tive
 oportunidade de fazer perguntas e concordo voluntariamente em participar
 desta pesquisa.
 
+- ☐ Declaro ter **18 anos ou mais**.
 - ☐ Li e **concordo** em participar, e aceito os termos de uso acima.
 - ☐ **Não concordo** em participar.
 
@@ -144,24 +149,27 @@ Av. Bandeirantes, 3900, CEP 14040-901, Ribeirão Preto (SP). Telefone:
 | Itens 1–8 | texto do pesquisador | idêntico |
 | Assinaturas | linhas de assinatura do participante e do pesquisador | caixa de aceite + nome + data; sem assinatura do pesquisador |
 | Cidade e data | "Ribeirão Preto, ___ de ___ de 2026" | só a data; o local não é necessário num aceite online |
-| Termos de uso (T1–T5) | não existem | acrescentados; repetem os itens 2, 3, 6 e 7 |
+| Termos de uso (T1–T7) | não existem | acrescentados; repetem os itens 2, 3, 6 e 7 e fixam idade mínima (18 anos) e prazo de guarda (31/12/2026) |
 | "Receberei uma via" | via assinada | cópia em PDF ou impressa |
 
-## Pendências antes de usar
+## Decisões já tomadas e pendências
 
-O TCLE não responde a estes pontos; decidir com o orientador, sem inventar
-no texto:
+Decidido pelo pesquisador em 12/11/2026:
 
-1. **Aprovação ética.** O TCLE não cita número de protocolo (CAAE) nem o
-   contato do Comitê de Ética em Pesquisa. Se o estudo precisa passar pelo
-   CEP, o número e o contato entram na seção de contatos.
-2. **Prazo e local de guarda dos dados.** O item 6 diz "base de dados com
-   acesso restrito", sem prazo. Dizer quanto tempo os registros ficam e onde
-   (servidor da universidade, DEC-003).
-3. **Aceite online.** Confirmar se um aceite por caixa de seleção vale como
-   consentimento para este estudo, ou se a assinatura em papel é exigida.
-4. **Menores e públicos especiais.** O TCLE não trata de menores de idade;
-   a seleção dos participantes deve excluí-los ou prever assentimento.
-5. **Implementação no app.** Mostrar este texto antes do primeiro acesso e
-   guardar só o aceite (data e versão do texto), separado dos registros de
-   desempenho, como o item 6 promete. Não há tarefa para isso hoje.
+- **Sem número de protocolo (CAAE).** O termo não cita aprovação ética nem
+  contato de comitê.
+- **Prazo de guarda:** até o fim de 2026 (T6).
+- **Aceite online vale como consentimento** (caixa de seleção, sem
+  assinatura).
+- **Só maiores de idade** (18 anos ou mais): declaração obrigatória no
+  aceite (T5).
+
+Ainda em aberto:
+
+1. **O que acontece no prazo.** T6 diz até quando os registros ficam, mas
+   não diz se depois são apagados ou só anonimizados. O item 7 do TCLE fala
+   em anonimização; escolher e escrever em T6.
+2. **Implementação no app.** Mostrar este texto antes do primeiro acesso,
+   bloquear quem não marcar "18 anos ou mais" e guardar só o aceite (data e
+   versão do texto), separado dos registros de desempenho, como o item 6
+   promete. Não há tarefa para isso hoje.
