@@ -161,7 +161,8 @@ test('a new participant sees the consent screen first and the tasks only after a
 
 	await page.goto('/study');
 	await expect(page.getByRole('heading', { name: 'Consent to take part' })).toBeVisible();
-	await expect(page.getByTestId('consent-text')).toContainText('PLACEHOLDER');
+	await expect(page.getByTestId('consent-text')).toContainText('TERMO DE CONSENTIMENTO LIVRE E ESCLARECIDO');
+	await expect(page.getByTestId('consent-text')).not.toContainText('PLACEHOLDER');
 	const results = await new AxeBuilder({ page })
 		.include('[data-testid="consent-screen"]')
 		.analyze();
@@ -172,7 +173,10 @@ test('a new participant sees the consent screen first and the tasks only after a
 	await page.getByRole('button', { name: 'I do not agree' }).click();
 	await expect(page.getByTestId('consent-declined')).toBeVisible();
 	await page.getByRole('button', { name: 'Read it again' }).click();
-	await page.getByRole('button', { name: 'I agree to take part' }).click();
+	const agree = page.getByRole('button', { name: 'I agree to take part' });
+	await expect(agree).toBeDisabled();
+	await page.getByRole('checkbox', { name: 'Declaro ter 18 anos ou mais' }).check();
+	await agree.click();
 
 	// STUDY-010: the profile questionnaire before the tasks, checked in the browser and on the server.
 	const questionnaire = new QuestionnairePage(page);

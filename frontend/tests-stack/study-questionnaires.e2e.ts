@@ -49,6 +49,7 @@ test('a participant answers both questionnaires and the admin finds them in the 
 	};
 
 	await page.goto('/study');
+	await page.getByRole('checkbox', { name: 'Declaro ter 18 anos ou mais' }).check();
 	await page.getByRole('button', { name: 'I agree to take part' }).click();
 
 	const questionnaire = new QuestionnairePage(page);

@@ -1,7 +1,7 @@
 ---
 id: STUDY-019
 title: Show the approved research terms on the consent screen and require the adult declaration
-status: BACKLOG
+status: IN_PROGRESS
 priority: P1
 type: fullstack
 depends_on: [STUDY-008]
@@ -60,3 +60,9 @@ stack spec `tests-stack/study-questionnaires.e2e.ts` (consent step; update
 `tests-stack/support.ts` if it accepts a fixed version). Closing: Kotlin gate
 (resource and `study.json` change), frontend gate, `test:stack`. Human gate:
 the user reads the shown text once.
+
+## Conclusion
+
+Implemented (unverified): `consent/v2.md` (items 1–8, T1–T7, declaration, contacts; no checkbox lines, no bold markers because the screen renders only paragraphs and `- ` lists; T6 states only the date), `study.json` -> version 2 (`v1.md` kept), `consent-screen.svelte` with the required "Declaro ter 18 anos ou mais" checkbox gating *Accept*, updated `StudyConsentRoutesTest`, `consent-screen.svelte.spec.ts` and the stack specs (`study-participant`, `study-questionnaires`, `auth`). `support.ts` needed no change (reads the current version).
+
+BLOCKED (batch): no gate could run. `GRADLE_USER_HOME=/tmp/sparql-query-easy-gradle ./gradlew ktlintCheck detekt test --no-daemon` was refused by the permission mode; `vitest --project client` fails because Playwright Firefox is not installed (`~/.cache/ms-playwright/firefox-1543`); `test:stack` was not tried. Fix: allow the Gradle gate command, run `npx playwright install firefox` yourself, then run the Kotlin gate, `npm --prefix frontend test` and `npm --prefix frontend run test:stack`. Human gate: read the rendered text and the T6 wording.

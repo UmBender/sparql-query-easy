@@ -9,6 +9,8 @@ import com.example.sparqlqueryeasy.persistence.DatabaseConnector
 import com.example.sparqlqueryeasy.persistence.PostgresConsentStore
 import com.example.sparqlqueryeasy.persistence.TestPostgres
 import io.kotest.matchers.shouldBe
+import io.kotest.matchers.string.shouldContain
+import io.kotest.matchers.string.shouldNotContain
 import io.kotest.matchers.string.shouldStartWith
 import io.ktor.client.HttpClient
 import io.ktor.client.request.get
@@ -41,10 +43,13 @@ class StudyConsentRoutesTest {
         )
 
     @Test
-    fun `the shipped consent text is a marked placeholder at version 1`() {
+    fun `the shipped consent text is the approved research terms at version 2`() {
         val consent = StudyResources.fromClasspath().consent
-        consent.version shouldBe 1
-        consent.text shouldStartWith "PLACEHOLDER"
+        consent.version shouldBe 2
+        consent.text shouldStartWith "TERMO DE CONSENTIMENTO LIVRE E ESCLARECIDO"
+        consent.text shouldContain "T6. Prazo de guarda"
+        consent.text shouldContain "gustavo.bender@usp.br"
+        consent.text shouldNotContain "PLACEHOLDER"
     }
 
     @Test
@@ -82,8 +87,8 @@ class StudyConsentRoutesTest {
             val ada = userClient("Ada", consent = false)
 
             val before = ada.get("/api/study/consent").data()
-            before.field("version").jsonPrimitive.content shouldBe "1"
-            before.field("text").jsonPrimitive.content shouldStartWith "PLACEHOLDER"
+            before.field("version").jsonPrimitive.content shouldBe "2"
+            before.field("text").jsonPrimitive.content shouldStartWith "TERMO DE CONSENTIMENTO"
             before.field("acceptedAt") shouldBe JsonNull
 
             val first = ada.acceptConsent().data()
@@ -103,7 +108,7 @@ class StudyConsentRoutesTest {
             val ada = userClient("Ada", consent = false)
 
             ada.json("/api/study/consent", """{"version":0}""").status shouldBe HttpStatusCode.Conflict
-            ada.json("/api/study/consent", """{"version":2}""").status shouldBe HttpStatusCode.Conflict
+            ada.json("/api/study/consent", """{"version":1}""").status shouldBe HttpStatusCode.Conflict
             ada.json("/api/study/consent", "{}").status shouldBe HttpStatusCode.BadRequest
             ada.get("/api/study/consent").data().field("acceptedAt") shouldBe JsonNull
             ada.get("/api/study/tasks").status shouldBe HttpStatusCode.Forbidden
@@ -117,11 +122,11 @@ class StudyConsentRoutesTest {
             userClient("Ada").get("/api/study/tasks").status shouldBe HttpStatusCode.OK
             val ada = context.userId("Ada")
 
-            val second = ConsentService(ConsentText(2, "PLACEHOLDER second text"), PostgresConsentStore(connector))
+            val second = ConsentService(ConsentText(3, "second text"), PostgresConsentStore(connector))
 
             second.hasConsented(ada) shouldBe false
-            (second.accept(ada, 1) is ConsentResult.NotCurrent) shouldBe true
-            (second.accept(ada, 2) is ConsentResult.Accepted) shouldBe true
+            (second.accept(ada, 2) is ConsentResult.NotCurrent) shouldBe true
+            (second.accept(ada, 3) is ConsentResult.Accepted) shouldBe true
             second.hasConsented(ada) shouldBe true
         }
 
