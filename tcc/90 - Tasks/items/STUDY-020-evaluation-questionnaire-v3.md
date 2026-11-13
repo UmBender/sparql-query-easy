@@ -1,7 +1,7 @@
 ---
 id: STUDY-020
 title: Replace the dissertation questionnaire with the complete SUS plus the five notation items
-status: IN_PROGRESS
+status: REVIEW
 priority: P1
 type: fullstack
 depends_on: [STUDY-015]
@@ -77,10 +77,12 @@ Validation: `npm --prefix frontend test` server project 267 passed (includes
 `forms.spec.ts`); its browser project cannot start (Playwright Firefox
 missing in this environment).
 
-BLOCKED (batch): `./gradlew` was refused in the unattended session, so
-`FormDefinitionsTest`, `StudyFormResponseRoutesTest`,
-`AdminFormExportRoutesTest` and the Kotlin closing gate were NOT run, nor
-`test:stack`/`test:screens`. Run:
-`GRADLE_USER_HOME=/tmp/sparql-query-easy-gradle ./gradlew ktlintCheck detekt test --no-daemon`,
-then `npm --prefix frontend run test:stack` (and `test:screens` if the
-questionnaire pages are captured), then read the rendered questionnaire.
+Gates after the permission fix: `./gradlew ktlintCheck detekt test --no-daemon`
+green (detekt first flagged one long line in `StudyFormResponseRoutesTest`,
+reformatted); `npm --prefix frontend run test:stack` 23 passed. `test:screens`
+not run: the screens only capture the task pages with a mocked form list, not
+the questionnaire. The browser Vitest project still lacks Playwright Firefox
+here (environment, not this change).
+
+Remaining human gate: read the rendered questionnaire once (status REVIEW
+until the owner moves it to DONE).

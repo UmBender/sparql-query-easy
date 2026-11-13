@@ -34,8 +34,10 @@ import java.sql.DriverManager
 class StudyFormResponseRoutesTest {
     /** Valid answers to the shipped usability questionnaire (v3): A2, A3, S1-S10 and N1-N5. */
     private val usability =
-        (listOf(""""a2_tasks_completed":4""") + USABILITY_LIKERT.mapIndexed { index, id -> """"$id":${index % 5 + 1}""" })
-            .joinToString(",", "{", "}")
+        (
+            listOf(""""a2_tasks_completed":4""") +
+                USABILITY_LIKERT.mapIndexed { index, id -> """"$id":${index % 5 + 1}""" }
+        ).joinToString(",", "{", "}")
 
     private suspend fun HttpClient.answer(
         slug: String,
