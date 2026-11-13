@@ -30,7 +30,15 @@
       "Bash(npm --prefix frontend test)",
       "Bash(npm --prefix frontend test *)",
       "Bash(node scripts/*)",
-      "Bash(node frontend/scripts/*)"
+      "Bash(node frontend/scripts/*)",
+      "Bash(npm --prefix frontend exec -- vitest *)",
+      "Bash(npx vitest *)",
+      "Bash(npm --prefix frontend exec -- playwright test *)",
+      "Bash(sed -i *)",
+      "Bash(node /tmp/*)",
+      "Bash(python3 -I /tmp/*)",
+      "Bash(jq *)",
+      "Bash(git diff --check *)"
     ],
     "deny": [
       "AskUserQuestion",

@@ -51,7 +51,10 @@ runner must outlive this session, and only one session may run):
    `Bash(*)`; allow `git merge/push` only if the policy permits) and
    `requires`.
 8. **Show** the owner the plan, the allow additions and the deny list; run
-   `scripts/batch/batch.sh check` and fix every `FAIL`.
+   `scripts/batch/batch.sh check` (offline: tools, clean tree, Docker, Playwright
+   Firefox, node_modules, cards) and `scripts/batch/batch.sh probe` (one cheap
+   session that tries the gate commands and counts permission refusals); fix
+   every `FAIL` and every refusal before handing over.
 9. **Hand over** the start command, e.g.
    `tmux new -s batch 'scripts/batch/batch.sh run'`. Remind them: the working
    tree must be clean and Docker running.

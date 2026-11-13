@@ -33,6 +33,14 @@ applies; these rules add to it.
 - Stay inside the task's scope and the code it touches. No subagents.
 - One simple command per call: compound commands (`&&`, `;`, heredocs, pipes
   to other tools) can be refused whole.
+- **Gradle: run `./gradlew <args>` exactly, with NO variable prefix.** The runner
+  already exports `GRADLE_USER_HOME`, and any `GRADLE_USER_HOME=... ./gradlew` or
+  `env ... ./gradlew` form is refused even though AGENTS.md and the Operational
+  Map show it: drop the prefix and keep the rest of the command. Single frontend
+  test files: `npm --prefix frontend exec -- vitest run <path>`.
+- Change files with the Edit and Write tools, never with shell redirects,
+  `tee`, `cat >` or heredocs. A generator script goes to `/tmp/<name>.mjs` (Write
+  tool) and runs as `node /tmp/<name>.mjs` or `python3 -I /tmp/<name>.py`.
 - Do not install anything (no `npm install`, `npm ci`, `pip`, `dnf`): gates
   assume dependencies are present.
 
@@ -43,6 +51,13 @@ applies; these rules add to it.
   turns the task into `blocked`.
 - Never edit goldens, snapshots or expectations just to pass; never use
   `--no-verify`.
+
+## A refused command is not a reason to stop
+If a command is refused, first try the allowed equivalent above (plain
+`./gradlew`, the Edit tool, a script in `/tmp`, `npm --prefix frontend run <script>`).
+Block only when no allowed way reaches the check and say which command to allow.
+When a gate cannot run for an environment reason you could not fix, still
+commit the work and finish with `blocked`, naming that single reason.
 
 ## When to block instead of guessing
 A decision the plan does not cover (and policy is `block`); a command, tool

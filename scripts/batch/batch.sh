@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # Unattended task batches: one non-interactive Claude Code session per task, one at a time.
-# Usage: scripts/batch/batch.sh check | run | status | report | reset <ID> | unblock <ID>
+# Usage: scripts/batch/batch.sh check | probe | run | status | report | reset <ID> | unblock <ID>
 # Plan first (interactive): skill batch-tasks, see .agents/skills/batch-tasks/SKILL.md.
 set -uo pipefail
 
@@ -82,9 +82,28 @@ cmd_check() {
       seen="$seen$id "
     done < <(queue_lines)
   fi
+  if [ -f "$B/queue" ]; then
+    local gates; gates=$(queue_lines | awk '{print $3}' | tr '+' '\n' | sort -u | tr '\n' ' ')
+    case $gates in *frontend*|*fullstack*|*stack*)
+      ls -d "${PLAYWRIGHT_BROWSERS_PATH:-$HOME/.cache/ms-playwright}"/firefox-* >/dev/null 2>&1 && ok "Playwright Firefox installed" || bad "Playwright Firefox missing: cd frontend && npx playwright install firefox"
+      [ -d "$ROOT/frontend/node_modules" ] && ok "frontend/node_modules" || bad "frontend/node_modules missing: npx --yes npm@11 ci (owner)" ;;
+    esac
+    case $gates in *stack*|*fullstack*|*kotlin*) docker info >/dev/null 2>&1 && ok "Docker daemon up" || bad "Docker is not running (Testcontainers and test:stack need it)" ;; esac
+  fi
   [ -f "$B/requires" ] && while read -r t; do [ -z "$t" ] && continue; command -v "$t" >/dev/null && ok "requires $t" || bad "requires $t (not installed)"; done <"$B/requires"
   echo "$fails failure(s), $warns warning(s)"
   [ "$fails" -eq 0 ]
+}
+
+cmd_probe() { # one cheap session that tries the commands every gate needs; counts permission refusals
+  local out="$B/logs/probe.jsonl" refused
+  mkdir -p "$B/logs"
+  timeout 300 "$CLAUDE" -p "Run each of these commands, one per call, exactly as written, and do not retry or work around a refusal: 1) ./gradlew --version 2) ./gradlew --version --no-daemon 3) npm --prefix frontend exec -- vitest --version 4) npm --prefix frontend run 5) git status 6) git log --oneline -n 3 7) rg -n batch .gitignore. Then say done." \
+    --permission-mode dontAsk --permission-prompts none --settings "$B/settings.json" --model haiku --effort low \
+    --output-format stream-json --verbose </dev/null >"$out" 2>&1
+  refused=$(jq -r 'select(.type=="user") | .message.content[]? | select(.type=="tool_result") | select((.content|tostring)|test("denied because Claude Code is running")) | 1' "$out" 2>/dev/null | wc -l)
+  echo "permission probe: $refused refusal(s) (0 expected); log $out"
+  [ "${refused:-1}" -eq 0 ]
 }
 
 wait_net() { until net_ok; do log "network down; retry in 60 s"; sleep 60; done; }
@@ -125,7 +144,7 @@ run_task() { # id base gate
     wait_net
     if [ "$resume" = 1 ] && [ -s "$sess_file" ]; then
       sid=$(cat "$sess_file")
-      prompt="Continue task $id from where you stopped. Follow the unattended rules. Read the git state and the task card first; do not start over. Finish by writing .batch/out/$id.status."
+      prompt="Continue task $id from where you stopped. Follow the unattended rules. Read the git state and the task card first; do not start over. Reminder: run ./gradlew with no variable prefix. If you were blocked, the cause has been fixed by the owner (permissions, tools or environment changed): retry the blocked step now and finish the task. Finish by writing .batch/out/$id.status."
       sid_args=(--resume "$sid")
     else
       sid=$(cat /proc/sys/kernel/random/uuid); echo "$sid" >"$sess_file"
@@ -211,6 +230,7 @@ case ${1:-} in
   run) cmd_run ;;
   status) cmd_status ;;
   report) cmd_report ;;
+  probe) cmd_probe ;;
   unblock) [ -n "${2:-}" ] || exit 2; rm -f "$B/out/$2.status"; state_set "$2" pending; echo "$2 will resume its session on the next run" ;;
   reset) [ -n "${2:-}" ] || exit 2; rm -f "$B/out/$2.status" "$B/sessions/$2"; state_set "$2" pending
          echo "$2 restarts with a new session on branch batch/$2 (the branch is kept; delete it yourself to restart from the base)" ;;
