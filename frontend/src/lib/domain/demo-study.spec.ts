@@ -64,7 +64,9 @@ describe('PokemonGen1 research tasks R1-R5 (STUDY-022)', () => {
 			expect(task.key).toMatch(/^[a-z0-9][a-z0-9-]{0,63}$/);
 			expect(task.endpoint).toBe('PokemonGen1');
 			expect(task.graph.endpoint).toEqual({ kind: 'builtIn', id: 'PokemonGen1' });
-			expect(task.statement.startsWith('Use a ferramenta para encontrar a resposta')).toBe(true);
+			expect(task.statement.startsWith('Use a ferramenta para encontrar a resposta')).toBe(
+				true
+			);
 			expect(task.statement).not.toMatch(/variável (de resposta|que representa)/);
 			expect(new Set(task.answers).size).toBe(task.answers.length);
 		}

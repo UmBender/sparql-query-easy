@@ -47,6 +47,8 @@ test('the research participant sees R1-R5 in order and saves an answer', async (
 
 	await tasks.nth(0).click();
 	await expect(page).toHaveURL(new RegExp(`/study/${bird.key}$`));
-	await expect(page.getByTestId('task-statement')).toContainText('Use a ferramenta para encontrar');
+	await expect(page.getByTestId('task-statement')).toContainText(
+		'Use a ferramenta para encontrar'
+	);
 	await expect(page.getByTestId('task-statement')).toContainText('contém a palavra "Bird"');
 });

@@ -13,11 +13,30 @@
 				"limit": 150,
 				"order": [],
 				"nodes": [
-					{ "id": "?pokemon", "kind": "variable", "label": "pokemon", "name": "?pokemon", "position": { "x": 200, "y": 200 } },
-					{ "id": "?categoria", "kind": "valueVariable", "label": "? contains Bird", "name": "?categoria", "filter": { "code": 1, "value": "Bird" }, "position": { "x": 450, "y": 200 } }
+					{
+						"id": "?pokemon",
+						"kind": "variable",
+						"label": "pokemon",
+						"name": "?pokemon",
+						"position": { "x": 200, "y": 200 }
+					},
+					{
+						"id": "?categoria",
+						"kind": "valueVariable",
+						"label": "? contains Bird",
+						"name": "?categoria",
+						"filter": { "code": 1, "value": "Bird" },
+						"position": { "x": 450, "y": 200 }
+					}
 				],
 				"edges": [
-					{ "id": "e1", "source": "?pokemon", "target": "?categoria", "predicate": "<http://easyquery.example.org/pokemon#category>", "label": "category" }
+					{
+						"id": "e1",
+						"source": "?pokemon",
+						"target": "?categoria",
+						"predicate": "<http://easyquery.example.org/pokemon#category>",
+						"label": "category"
+					}
 				]
 			},
 			"answers": ["Doduo", "Dodrio", "Pidgeot", "Pidgeotto", "Pidgey", "Spearow"],
@@ -25,7 +44,12 @@
 			"query": {
 				"variableName": "?pokemon",
 				"where": [
-					{ "subject": "?pokemon", "predicate": "<http://easyquery.example.org/pokemon#category>", "object": "?categoria", "filterType": null }
+					{
+						"subject": "?pokemon",
+						"predicate": "<http://easyquery.example.org/pokemon#category>",
+						"object": "?categoria",
+						"filterType": null
+					}
 				],
 				"variableFilters": [
 					{ "variableName": "?categoria", "filterType": 1, "value": "Bird" }
@@ -43,13 +67,44 @@
 				"limit": 150,
 				"order": [],
 				"nodes": [
-					{ "id": "?pokemon", "kind": "variable", "label": "pokemon", "name": "?pokemon", "position": { "x": 200, "y": 200 } },
-					{ "id": "<http://easyquery.example.org/pokemon#ElectricType>", "kind": "entity", "label": "Electric", "value": "<http://easyquery.example.org/pokemon#ElectricType>", "position": { "x": 450, "y": 100 } },
-					{ "id": "?velocidade", "kind": "valueVariable", "label": "? ≥ 100", "name": "?velocidade", "filter": { "code": 2, "value": "100" }, "position": { "x": 450, "y": 300 } }
+					{
+						"id": "?pokemon",
+						"kind": "variable",
+						"label": "pokemon",
+						"name": "?pokemon",
+						"position": { "x": 200, "y": 200 }
+					},
+					{
+						"id": "<http://easyquery.example.org/pokemon#ElectricType>",
+						"kind": "entity",
+						"label": "Electric",
+						"value": "<http://easyquery.example.org/pokemon#ElectricType>",
+						"position": { "x": 450, "y": 100 }
+					},
+					{
+						"id": "?velocidade",
+						"kind": "valueVariable",
+						"label": "? ≥ 100",
+						"name": "?velocidade",
+						"filter": { "code": 2, "value": "100" },
+						"position": { "x": 450, "y": 300 }
+					}
 				],
 				"edges": [
-					{ "id": "e1", "source": "?pokemon", "target": "<http://easyquery.example.org/pokemon#ElectricType>", "predicate": "<http://easyquery.example.org/pokemon#hasType>", "label": "has type" },
-					{ "id": "e2", "source": "?pokemon", "target": "?velocidade", "predicate": "<http://easyquery.example.org/pokemon#speed>", "label": "Speed" }
+					{
+						"id": "e1",
+						"source": "?pokemon",
+						"target": "<http://easyquery.example.org/pokemon#ElectricType>",
+						"predicate": "<http://easyquery.example.org/pokemon#hasType>",
+						"label": "has type"
+					},
+					{
+						"id": "e2",
+						"source": "?pokemon",
+						"target": "?velocidade",
+						"predicate": "<http://easyquery.example.org/pokemon#speed>",
+						"label": "Speed"
+					}
 				]
 			},
 			"answers": ["Electabuzz", "Electrode", "Jolteon", "Raichu", "Voltorb", "Zapdos"],
@@ -57,8 +112,18 @@
 			"query": {
 				"variableName": "?pokemon",
 				"where": [
-					{ "subject": "?pokemon", "predicate": "<http://easyquery.example.org/pokemon#hasType>", "object": "<http://easyquery.example.org/pokemon#ElectricType>", "filterType": null },
-					{ "subject": "?pokemon", "predicate": "<http://easyquery.example.org/pokemon#speed>", "object": "?velocidade", "filterType": null }
+					{
+						"subject": "?pokemon",
+						"predicate": "<http://easyquery.example.org/pokemon#hasType>",
+						"object": "<http://easyquery.example.org/pokemon#ElectricType>",
+						"filterType": null
+					},
+					{
+						"subject": "?pokemon",
+						"predicate": "<http://easyquery.example.org/pokemon#speed>",
+						"object": "?velocidade",
+						"filterType": null
+					}
 				],
 				"variableFilters": [
 					{ "variableName": "?velocidade", "filterType": 2, "value": "100" }
@@ -76,15 +141,59 @@
 				"limit": 150,
 				"order": [],
 				"nodes": [
-					{ "id": "?pokemon", "kind": "variable", "label": "pokemon", "name": "?pokemon", "position": { "x": 200, "y": 200 } },
-					{ "id": "<http://easyquery.example.org/pokemon#WaterType>", "kind": "entity", "label": "Water", "value": "<http://easyquery.example.org/pokemon#WaterType>", "position": { "x": 450, "y": 60 } },
-					{ "id": "?defesa", "kind": "valueVariable", "label": "? ≥ 80", "name": "?defesa", "filter": { "code": 2, "value": "80" }, "position": { "x": 450, "y": 200 } },
-					{ "id": "?velocidade", "kind": "valueVariable", "label": "? ≥ 80", "name": "?velocidade", "filter": { "code": 2, "value": "80" }, "position": { "x": 450, "y": 340 } }
+					{
+						"id": "?pokemon",
+						"kind": "variable",
+						"label": "pokemon",
+						"name": "?pokemon",
+						"position": { "x": 200, "y": 200 }
+					},
+					{
+						"id": "<http://easyquery.example.org/pokemon#WaterType>",
+						"kind": "entity",
+						"label": "Water",
+						"value": "<http://easyquery.example.org/pokemon#WaterType>",
+						"position": { "x": 450, "y": 60 }
+					},
+					{
+						"id": "?defesa",
+						"kind": "valueVariable",
+						"label": "? ≥ 80",
+						"name": "?defesa",
+						"filter": { "code": 2, "value": "80" },
+						"position": { "x": 450, "y": 200 }
+					},
+					{
+						"id": "?velocidade",
+						"kind": "valueVariable",
+						"label": "? ≥ 80",
+						"name": "?velocidade",
+						"filter": { "code": 2, "value": "80" },
+						"position": { "x": 450, "y": 340 }
+					}
 				],
 				"edges": [
-					{ "id": "e1", "source": "?pokemon", "target": "<http://easyquery.example.org/pokemon#WaterType>", "predicate": "<http://easyquery.example.org/pokemon#hasType>", "label": "has type" },
-					{ "id": "e2", "source": "?pokemon", "target": "?defesa", "predicate": "<http://easyquery.example.org/pokemon#defense>", "label": "Defense" },
-					{ "id": "e3", "source": "?pokemon", "target": "?velocidade", "predicate": "<http://easyquery.example.org/pokemon#speed>", "label": "Speed" }
+					{
+						"id": "e1",
+						"source": "?pokemon",
+						"target": "<http://easyquery.example.org/pokemon#WaterType>",
+						"predicate": "<http://easyquery.example.org/pokemon#hasType>",
+						"label": "has type"
+					},
+					{
+						"id": "e2",
+						"source": "?pokemon",
+						"target": "?defesa",
+						"predicate": "<http://easyquery.example.org/pokemon#defense>",
+						"label": "Defense"
+					},
+					{
+						"id": "e3",
+						"source": "?pokemon",
+						"target": "?velocidade",
+						"predicate": "<http://easyquery.example.org/pokemon#speed>",
+						"label": "Speed"
+					}
 				]
 			},
 			"answers": ["Kabutops", "Seadra", "Starmie"],
@@ -92,9 +201,24 @@
 			"query": {
 				"variableName": "?pokemon",
 				"where": [
-					{ "subject": "?pokemon", "predicate": "<http://easyquery.example.org/pokemon#hasType>", "object": "<http://easyquery.example.org/pokemon#WaterType>", "filterType": null },
-					{ "subject": "?pokemon", "predicate": "<http://easyquery.example.org/pokemon#defense>", "object": "?defesa", "filterType": null },
-					{ "subject": "?pokemon", "predicate": "<http://easyquery.example.org/pokemon#speed>", "object": "?velocidade", "filterType": null }
+					{
+						"subject": "?pokemon",
+						"predicate": "<http://easyquery.example.org/pokemon#hasType>",
+						"object": "<http://easyquery.example.org/pokemon#WaterType>",
+						"filterType": null
+					},
+					{
+						"subject": "?pokemon",
+						"predicate": "<http://easyquery.example.org/pokemon#defense>",
+						"object": "?defesa",
+						"filterType": null
+					},
+					{
+						"subject": "?pokemon",
+						"predicate": "<http://easyquery.example.org/pokemon#speed>",
+						"object": "?velocidade",
+						"filterType": null
+					}
 				],
 				"variableFilters": [
 					{ "variableName": "?defesa", "filterType": 2, "value": "80" },
@@ -113,13 +237,43 @@
 				"limit": 150,
 				"order": [],
 				"nodes": [
-					{ "id": "?pokemon", "kind": "variable", "label": "pokemon", "name": "?pokemon", "position": { "x": 200, "y": 200 } },
-					{ "id": "<http://easyquery.example.org/pokemon#Eevee>", "kind": "entity", "label": "Eevee", "value": "<http://easyquery.example.org/pokemon#Eevee>", "position": { "x": 450, "y": 100 } },
-					{ "id": "?item", "kind": "variable", "label": "item", "name": "?item", "position": { "x": 450, "y": 300 } }
+					{
+						"id": "?pokemon",
+						"kind": "variable",
+						"label": "pokemon",
+						"name": "?pokemon",
+						"position": { "x": 200, "y": 200 }
+					},
+					{
+						"id": "<http://easyquery.example.org/pokemon#Eevee>",
+						"kind": "entity",
+						"label": "Eevee",
+						"value": "<http://easyquery.example.org/pokemon#Eevee>",
+						"position": { "x": 450, "y": 100 }
+					},
+					{
+						"id": "?item",
+						"kind": "variable",
+						"label": "item",
+						"name": "?item",
+						"position": { "x": 450, "y": 300 }
+					}
 				],
 				"edges": [
-					{ "id": "e1", "source": "?pokemon", "target": "<http://easyquery.example.org/pokemon#Eevee>", "predicate": "<http://easyquery.example.org/pokemon#evolvesFrom>", "label": "evolves from" },
-					{ "id": "e2", "source": "?pokemon", "target": "?item", "predicate": "<http://easyquery.example.org/pokemon#evolutionItem>", "label": "evolution item" }
+					{
+						"id": "e1",
+						"source": "?pokemon",
+						"target": "<http://easyquery.example.org/pokemon#Eevee>",
+						"predicate": "<http://easyquery.example.org/pokemon#evolvesFrom>",
+						"label": "evolves from"
+					},
+					{
+						"id": "e2",
+						"source": "?pokemon",
+						"target": "?item",
+						"predicate": "<http://easyquery.example.org/pokemon#evolutionItem>",
+						"label": "evolution item"
+					}
 				]
 			},
 			"answers": ["Flareon", "Jolteon", "Vaporeon"],
@@ -127,8 +281,18 @@
 			"query": {
 				"variableName": "?pokemon",
 				"where": [
-					{ "subject": "?pokemon", "predicate": "<http://easyquery.example.org/pokemon#evolvesFrom>", "object": "<http://easyquery.example.org/pokemon#Eevee>", "filterType": null },
-					{ "subject": "?pokemon", "predicate": "<http://easyquery.example.org/pokemon#evolutionItem>", "object": "?item", "filterType": null }
+					{
+						"subject": "?pokemon",
+						"predicate": "<http://easyquery.example.org/pokemon#evolvesFrom>",
+						"object": "<http://easyquery.example.org/pokemon#Eevee>",
+						"filterType": null
+					},
+					{
+						"subject": "?pokemon",
+						"predicate": "<http://easyquery.example.org/pokemon#evolutionItem>",
+						"object": "?item",
+						"filterType": null
+					}
 				]
 			}
 		},
@@ -143,15 +307,62 @@
 				"limit": 150,
 				"order": [],
 				"nodes": [
-					{ "id": "?pokemon", "kind": "variable", "label": "pokemon", "name": "?pokemon", "position": { "x": 200, "y": 200 } },
-					{ "id": "<http://easyquery.example.org/pokemon#PoisonType>", "kind": "entity", "label": "Poison", "value": "<http://easyquery.example.org/pokemon#PoisonType>", "position": { "x": 450, "y": 60 } },
-					{ "id": "v-ataque", "kind": "value", "label": "MAX", "term": { "type": "literal", "value": "105", "datatype": "http://www.w3.org/2001/XMLSchema#integer" }, "filter": 4, "position": { "x": 450, "y": 200 } },
-					{ "id": "?pre", "kind": "variable", "label": "pre", "name": "?pre", "position": { "x": 450, "y": 340 } }
+					{
+						"id": "?pokemon",
+						"kind": "variable",
+						"label": "pokemon",
+						"name": "?pokemon",
+						"position": { "x": 200, "y": 200 }
+					},
+					{
+						"id": "<http://easyquery.example.org/pokemon#PoisonType>",
+						"kind": "entity",
+						"label": "Poison",
+						"value": "<http://easyquery.example.org/pokemon#PoisonType>",
+						"position": { "x": 450, "y": 60 }
+					},
+					{
+						"id": "v-ataque",
+						"kind": "value",
+						"label": "MAX",
+						"term": {
+							"type": "literal",
+							"value": "105",
+							"datatype": "http://www.w3.org/2001/XMLSchema#integer"
+						},
+						"filter": 4,
+						"position": { "x": 450, "y": 200 }
+					},
+					{
+						"id": "?pre",
+						"kind": "variable",
+						"label": "pre",
+						"name": "?pre",
+						"position": { "x": 450, "y": 340 }
+					}
 				],
 				"edges": [
-					{ "id": "e1", "source": "?pokemon", "target": "<http://easyquery.example.org/pokemon#PoisonType>", "predicate": "<http://easyquery.example.org/pokemon#hasType>", "label": "has type" },
-					{ "id": "e2", "source": "?pokemon", "target": "v-ataque", "predicate": "<http://easyquery.example.org/pokemon#attack>", "label": "Attack" },
-					{ "id": "e3", "source": "?pokemon", "target": "?pre", "predicate": "<http://easyquery.example.org/pokemon#evolvesFrom>", "label": "evolves from" }
+					{
+						"id": "e1",
+						"source": "?pokemon",
+						"target": "<http://easyquery.example.org/pokemon#PoisonType>",
+						"predicate": "<http://easyquery.example.org/pokemon#hasType>",
+						"label": "has type"
+					},
+					{
+						"id": "e2",
+						"source": "?pokemon",
+						"target": "v-ataque",
+						"predicate": "<http://easyquery.example.org/pokemon#attack>",
+						"label": "Attack"
+					},
+					{
+						"id": "e3",
+						"source": "?pokemon",
+						"target": "?pre",
+						"predicate": "<http://easyquery.example.org/pokemon#evolvesFrom>",
+						"label": "evolves from"
+					}
 				]
 			},
 			"answers": ["Grimer", "Weepinbell"],
@@ -159,9 +370,24 @@
 			"query": {
 				"variableName": "?pre",
 				"where": [
-					{ "subject": "?pokemon", "predicate": "<http://easyquery.example.org/pokemon#hasType>", "object": "<http://easyquery.example.org/pokemon#PoisonType>", "filterType": null },
-					{ "subject": "?pokemon", "predicate": "<http://easyquery.example.org/pokemon#attack>", "object": "105", "filterType": 4 },
-					{ "subject": "?pokemon", "predicate": "<http://easyquery.example.org/pokemon#evolvesFrom>", "object": "?pre", "filterType": null }
+					{
+						"subject": "?pokemon",
+						"predicate": "<http://easyquery.example.org/pokemon#hasType>",
+						"object": "<http://easyquery.example.org/pokemon#PoisonType>",
+						"filterType": null
+					},
+					{
+						"subject": "?pokemon",
+						"predicate": "<http://easyquery.example.org/pokemon#attack>",
+						"object": "105",
+						"filterType": 4
+					},
+					{
+						"subject": "?pokemon",
+						"predicate": "<http://easyquery.example.org/pokemon#evolvesFrom>",
+						"object": "?pre",
+						"filterType": null
+					}
 				]
 			}
 		}
