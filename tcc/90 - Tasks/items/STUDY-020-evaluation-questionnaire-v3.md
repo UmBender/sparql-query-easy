@@ -1,13 +1,13 @@
 ---
 id: STUDY-020
 title: Replace the dissertation questionnaire with the complete SUS plus the five notation items
-status: BACKLOG
+status: REVIEW
 priority: P1
 type: fullstack
 depends_on: [STUDY-015]
 human_gate: true
 created: 2026-11-12
-updated: 2026-11-12
+updated: 2026-11-13
 ---
 # Replace the dissertation questionnaire with the complete SUS plus the five notation items
 
@@ -58,3 +58,31 @@ Focused: `FormDefinitionsTest`, `FormAnswerValidatorTest`, the shared
 `PROFILE_ANSWERS`. Closing: Kotlin gate, frontend gate, `test:stack`,
 `test:screens` if the questionnaire screens are captured. Human gate: the
 user reads the rendered questionnaire once.
+
+## Conclusion
+
+Implemented (batch): `profile.v3.json` (A1) and `usability.v3.json` (A2, A3,
+S1–S10 on "Uso da ferramenta"; N1–N5 on "Notação gráfica"), listed in
+`study.json`; ids `a1_…`, `a2_…`, `a3_…`, `s01_…`–`s10_…`, `n1_…`–`n5_…`
+(none feeds `DissertationScores.appliesTo` on its own; the usability export
+still adds the empty v2 score columns because the union includes v2 ids).
+The form engine needed no change. Only end labels exist in the engine, so
+the Likert items show "Discordo totalmente"/"Concordo totalmente" at 1 and 5.
+Tests moved to v3: `FormDefinitionsTest`, `StudyFormResponseRoutesTest`,
+`StudyTestSupport`, `AdminFormExportRoutesTest`, `forms.spec.ts`,
+`tests-stack/*` (`support.ts`, questionnaires, participant), `tests/study.e2e.ts`,
+`tests/xss.e2e.ts`, `scripts/check-backup-restore.mjs`.
+
+Validation: `npm --prefix frontend test` server project 267 passed (includes
+`forms.spec.ts`); its browser project cannot start (Playwright Firefox
+missing in this environment).
+
+Gates after the permission fix: `./gradlew ktlintCheck detekt test --no-daemon`
+green (detekt first flagged one long line in `StudyFormResponseRoutesTest`,
+reformatted); `npm --prefix frontend run test:stack` 23 passed. `test:screens`
+not run: the screens only capture the task pages with a mocked form list, not
+the questionnaire. The browser Vitest project still lacks Playwright Firefox
+here (environment, not this change).
+
+Remaining human gate: read the rendered questionnaire once (status REVIEW
+until the owner moves it to DONE).

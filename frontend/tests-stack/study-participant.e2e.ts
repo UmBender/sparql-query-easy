@@ -191,11 +191,11 @@ test('a new participant sees the consent screen first and the tasks only after a
 	await questionnaire.send();
 	await expect(form.getByText('Answer this question.')).toBeVisible();
 	const bypass = await page.request.post('/api/study/forms/profile/responses', {
-		data: { version: PROFILE_VERSION, answers: { ...PROFILE_ANSWERS, q01_sparql_knowledge: 6 } }
+		data: { version: PROFILE_VERSION, answers: { ...PROFILE_ANSWERS, a1_sparql_knowledge: 6 } }
 	});
 	expect(bypass.status()).toBe(400);
 	expect((await bypass.json()).errors).toEqual({
-		q01_sparql_knowledge: 'Choose a value from 1 to 5.'
+		a1_sparql_knowledge: 'Choose a value from 1 to 5.'
 	});
 	await questionnaire.rate(PROFILE_QUESTION, 2);
 	await questionnaire.send();
@@ -225,7 +225,7 @@ test('the usability questionnaire keeps its first page across a reload until log
 	const form = questionnaire.form;
 	await expect(form).toHaveAttribute('data-slug', 'usability');
 	await expect(questionnaire.pageLabel).toHaveText('Page 1 of 2');
-	const [tool, notation] = shippedPages('usability.v2.json');
+	const [tool, notation] = shippedPages('usability.v3.json');
 	const ease = form.getByRole('group', { name: tool[1].text }).getByRole('radio', { name: '4' });
 	await answerPage(questionnaire, tool, 4, 3);
 	await questionnaire.next();

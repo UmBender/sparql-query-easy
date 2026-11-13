@@ -32,10 +32,12 @@ import java.sql.DriverManager
 
 /** STUDY-010 (DEC-015 Q3/Q6): each questionnaire is answered once, checked on the server, in its place. */
 class StudyFormResponseRoutesTest {
-    /** Valid answers to the shipped usability questionnaire (v2): questions 2 to 15. */
+    /** Valid answers to the shipped usability questionnaire (v3): A2, A3, S1-S10 and N1-N5. */
     private val usability =
-        (listOf(""""q02_queries_done":4""") + USABILITY_LIKERT.mapIndexed { index, id -> """"$id":${index % 5 + 1}""" })
-            .joinToString(",", "{", "}")
+        (
+            listOf(""""a2_tasks_completed":4""") +
+                USABILITY_LIKERT.mapIndexed { index, id -> """"$id":${index % 5 + 1}""" }
+        ).joinToString(",", "{", "}")
 
     private suspend fun HttpClient.answer(
         slug: String,
@@ -55,7 +57,7 @@ class StudyFormResponseRoutesTest {
             val first =
                 ada.json(
                     "/api/study/forms/profile/responses",
-                    """{"version":2,"submittedAt":"2000-01-01T00:00:00Z","answers":$PROFILE_ANSWERS}""",
+                    """{"version":3,"submittedAt":"2000-01-01T00:00:00Z","answers":$PROFILE_ANSWERS}""",
                 )
             first.status shouldBe HttpStatusCode.Created
             first.data().field("submittedAt").jsonPrimitive.content shouldBe clock.now.toString()
@@ -65,7 +67,7 @@ class StudyFormResponseRoutesTest {
 
             val rows = storedRows(checkNotNull(database))
             rows.size shouldBe 1
-            rows.single().first shouldBe "profile 2 2"
+            rows.single().first shouldBe "profile 3 2"
             Json.parseToJsonElement(rows.single().second).jsonObject shouldBe
                 Json.parseToJsonElement(PROFILE_ANSWERS).jsonObject
             ada.get("/api/study/forms/profile/response").data().field("answered").jsonPrimitive.content shouldBe "true"
@@ -81,13 +83,13 @@ class StudyFormResponseRoutesTest {
             val response =
                 ada.answer(
                     "profile",
-                    """{"q01_sparql_knowledge":6,"email":"ada@example.org"}""",
+                    """{"a1_sparql_knowledge":6,"email":"ada@example.org"}""",
                 )
 
             response.status shouldBe HttpStatusCode.BadRequest
             val body = Json.parseToJsonElement(response.bodyAsText()).jsonObject
             body.getValue("errors").jsonObject.mapValues { it.value.jsonPrimitive.content } shouldBe
-                mapOf("email" to "Unknown question.", "q01_sparql_knowledge" to "Choose a value from 1 to 5.")
+                mapOf("email" to "Unknown question.", "a1_sparql_knowledge" to "Choose a value from 1 to 5.")
             storedRows(checkNotNull(database)) shouldBe emptyList()
         }
 
@@ -96,11 +98,12 @@ class StudyFormResponseRoutesTest {
         testApplication {
             studyApp()
             val ada = userClient("Ada", profile = false)
-            val noAnswers = ada.json("/api/study/forms/profile/responses", """{"version":2}""")
+            val noAnswers = ada.json("/api/study/forms/profile/responses", """{"version":3}""")
             noAnswers.status shouldBe HttpStatusCode.BadRequest
-            // The placeholder v1 is no longer the current version (STUDY-015).
+            // Older versions are no longer the current version (STUDY-015, STUDY-020).
             ada.answer("profile", PROFILE_ANSWERS, version = 1).status shouldBe HttpStatusCode.Conflict
-            ada.answer("profile", PROFILE_ANSWERS, version = 3).status shouldBe HttpStatusCode.Conflict
+            ada.answer("profile", PROFILE_ANSWERS, version = 2).status shouldBe HttpStatusCode.Conflict
+            ada.answer("profile", PROFILE_ANSWERS, version = 4).status shouldBe HttpStatusCode.Conflict
             ada.answer("nope", "{}").status shouldBe HttpStatusCode.NotFound
             ada.get("/api/study/forms/nope/response").status shouldBe HttpStatusCode.NotFound
             ada.get("/api/study/forms/profile/response").data().field("submittedAt") shouldBe JsonNull
@@ -121,7 +124,7 @@ class StudyFormResponseRoutesTest {
             ada.post("/api/study/forms/profile/responses") {
                 contentType(ContentType.Application.Json)
                 header(HttpHeaders.Origin, "https://evil.example")
-                setBody("""{"version":2,"answers":$PROFILE_ANSWERS}""")
+                setBody("""{"version":3,"answers":$PROFILE_ANSWERS}""")
             }.status shouldBe HttpStatusCode.Forbidden
             ada.get("/api/study/forms/profile/response").data().field("answered").jsonPrimitive.content shouldBe "false"
         }
@@ -143,11 +146,11 @@ class StudyFormResponseRoutesTest {
             ada.answerProfile().status shouldBe HttpStatusCode.Created
             ada.get("/api/study/tasks").status shouldBe HttpStatusCode.OK
             ada.json("/api/study/finish").status shouldBe HttpStatusCode.OK
-            ada.answer("usability", """{"q02_queries_done":21}""").let { refused ->
+            ada.answer("usability", """{"a2_tasks_completed":6}""").let { refused ->
                 refused.status shouldBe HttpStatusCode.BadRequest
                 val errors = Json.parseToJsonElement(refused.bodyAsText()).jsonObject.getValue("errors").jsonObject
-                errors.getValue("q02_queries_done").jsonPrimitive.content shouldBe "Enter a number from 0 to 20."
-                errors.keys shouldBe (listOf("q02_queries_done") + USABILITY_LIKERT).toSet()
+                errors.getValue("a2_tasks_completed").jsonPrimitive.content shouldBe "Enter a number from 0 to 5."
+                errors.keys shouldBe (listOf("a2_tasks_completed") + USABILITY_LIKERT).toSet()
             }
             ada.answer("usability", usability).status shouldBe HttpStatusCode.Created
 
@@ -197,20 +200,23 @@ class StudyFormResponseRoutesTest {
         }
 }
 
-/** The Likert questions 3 to 15 of the shipped usability questionnaire (v2, STUDY-015). */
+/** The Likert questions (A3, S1-S10, N1-N5) of the shipped usability questionnaire (v3, STUDY-020). */
 internal val USABILITY_LIKERT =
     listOf(
-        "q03_ease_of_use",
-        "q04_video_usefulness",
-        "q05_needs_support",
-        "q06_well_integrated",
-        "q07_inconsistencies",
-        "q08_learn_quickly",
-        "q09_confident",
-        "q10_learn_before",
-        "q11_symbols_clear",
-        "q12_symbols_intuitive",
-        "q13_symbol_count",
-        "q14_notation_consistent",
-        "q15_layout_helps",
+        "a3_video_useful",
+        "s01_use_often",
+        "s02_too_complex",
+        "s03_easy_to_use",
+        "s04_needs_support",
+        "s05_well_integrated",
+        "s06_inconsistencies",
+        "s07_learn_quickly",
+        "s08_cumbersome",
+        "s09_confident",
+        "s10_learn_much",
+        "n1_clear_symbols",
+        "n2_distinguishable",
+        "n3_appearance_helps",
+        "n4_visual_features",
+        "n5_symbol_count",
     )

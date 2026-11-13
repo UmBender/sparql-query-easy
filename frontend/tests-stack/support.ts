@@ -18,18 +18,18 @@ export async function loginAs(request: APIRequestContext, username: string): Pro
 	}
 }
 
-/** The current version of the shipped profile questionnaire (STUDY-015: the dissertation's question 1). */
-export const PROFILE_VERSION = 2;
+/** The current version of the shipped profile questionnaire (STUDY-020: item A1). */
+export const PROFILE_VERSION = 3;
 
-/** Valid answers to the shipped profile questionnaire (v2). */
-export const PROFILE_ANSWERS = { q01_sparql_knowledge: 2 };
+/** Valid answers to the shipped profile questionnaire (v3). */
+export const PROFILE_ANSWERS = { a1_sparql_knowledge: 2 };
 
-/** The text of question 1, the profile questionnaire's only question (v2). */
-export const PROFILE_QUESTION = '1. Qual é o seu nível de conhecimento sobre SPARQL/RDF?';
+/** The text of item A1, the profile questionnaire's only question (v3). */
+export const PROFILE_QUESTION = 'Qual é o seu nível de conhecimento sobre SPARQL/RDF?';
 
 type ShippedQuestion = { id: string; type: string; text: string };
 
-/** The pages of a shipped questionnaire file, e.g. `usability.v2.json`, as lists of its questions. */
+/** The pages of a shipped questionnaire file, e.g. `usability.v3.json`, as lists of its questions. */
 export function shippedPages(name: string): ShippedQuestion[][] {
 	const url = new URL(`../../src/main/resources/study/forms/${name}`, import.meta.url);
 	const form = JSON.parse(readFileSync(url, 'utf8')) as {
@@ -40,7 +40,7 @@ export function shippedPages(name: string): ShippedQuestion[][] {
 
 /**
  * Answers one page of questions shown by `questionnaire`: every rating with `rating`, every number
- * (question 2, the number of queries) with `count`.
+ * (A2, the number of tasks) with `count`.
  */
 export async function answerPage(
 	questionnaire: QuestionnairePage,

@@ -22,7 +22,7 @@ const FIRE_SPEED = JSON.parse(
 );
 const PROFILE: Schemas['FormDefinition'] = JSON.parse(
 	readFileSync(
-		new URL('../../src/main/resources/study/forms/profile.v2.json', import.meta.url),
+		new URL('../../src/main/resources/study/forms/profile.v3.json', import.meta.url),
 		'utf8'
 	)
 );
@@ -313,7 +313,7 @@ test('the profile questionnaire shows a field error before sending its answers',
 		{
 			slug: 'usability',
 			title: 'Questionário de Avaliação',
-			version: 2,
+			version: 3,
 			phase: 'after_finish',
 			submittedAt: null
 		}
@@ -338,11 +338,11 @@ test('the profile questionnaire shows a field error before sending its answers',
 	await questionnaire.send();
 	await expect(questionnaire.form.getByText('Answer this question.')).toBeVisible();
 	expect(api.bodies('/api/study/forms/profile/responses')).toEqual([]);
-	await questionnaire.rate('1. Qual é o seu nível de conhecimento sobre SPARQL/RDF?', 2);
+	await questionnaire.rate('Qual é o seu nível de conhecimento sobre SPARQL/RDF?', 2);
 	await questionnaire.send();
 	await expect(page.getByTestId('no-tasks')).toBeVisible();
 	expect(api.bodies('/api/study/forms/profile/responses')).toEqual([
-		{ version: 2, answers: { q01_sparql_knowledge: 2 } }
+		{ version: 3, answers: { a1_sparql_knowledge: 2 } }
 	]);
 });
 

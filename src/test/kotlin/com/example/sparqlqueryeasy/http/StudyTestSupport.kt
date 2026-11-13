@@ -93,11 +93,11 @@ internal suspend fun ApplicationTestBuilder.userClient(
         if (profile) it.answerProfile()
     }
 
-/** Valid answers to the shipped profile questionnaire (v2, STUDY-015: the dissertation's question 1). */
-internal const val PROFILE_ANSWERS = """{"q01_sparql_knowledge":2}"""
+/** Valid answers to the shipped profile questionnaire (v3, STUDY-020: item A1). */
+internal const val PROFILE_ANSWERS = """{"a1_sparql_knowledge":2}"""
 
 /** The current version of the shipped profile questionnaire. */
-internal const val PROFILE_VERSION = 2
+internal const val PROFILE_VERSION = 3
 
 /** Answers the profile questionnaire; an already answered one answers 409, which is fine here. */
 internal suspend fun HttpClient.answerProfile(answers: String = PROFILE_ANSWERS): HttpResponse =

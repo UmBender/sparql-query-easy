@@ -28,7 +28,7 @@ const FIRE_SPEED = JSON.parse(
 );
 const PROFILE: Schemas['FormDefinition'] = JSON.parse(
 	readFileSync(
-		new URL('../../src/main/resources/study/forms/profile.v2.json', import.meta.url),
+		new URL('../../src/main/resources/study/forms/profile.v3.json', import.meta.url),
 		'utf8'
 	)
 );
