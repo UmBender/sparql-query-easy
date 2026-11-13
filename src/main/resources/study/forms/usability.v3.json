@@ -1,0 +1,173 @@
+{
+  "slug": "usability",
+  "version": 3,
+  "title": "Questionário de Avaliação",
+  "description": "Com base em sua experiência utilizando a SPARQL EasyQuery, indique seu grau de concordância com cada afirmação. Depois da submissão final.",
+  "pages": [
+    {
+      "id": "ferramenta",
+      "title": "Uso da ferramenta",
+      "questions": [
+        {
+          "id": "a2_tasks_completed",
+          "type": "number",
+          "text": "Quantas das cinco tarefas você conseguiu realizar?",
+          "required": true,
+          "min": 0,
+          "max": 5,
+          "integer": true
+        },
+        {
+          "id": "a3_video_useful",
+          "type": "likert",
+          "text": "Quão útil foi o vídeo de demonstração para aprender a usar a ferramenta?",
+          "required": true,
+          "scaleMax": 5,
+          "minLabel": "Nada útil",
+          "maxLabel": "Muito útil"
+        },
+        {
+          "id": "s01_use_often",
+          "type": "likert",
+          "text": "Eu gostaria de usar esta ferramenta com frequência, sempre que precisasse consultar uma base de dados.",
+          "required": true,
+          "scaleMax": 5,
+          "minLabel": "Discordo totalmente",
+          "maxLabel": "Concordo totalmente"
+        },
+        {
+          "id": "s02_too_complex",
+          "type": "likert",
+          "text": "A ferramenta é desnecessariamente complexa.",
+          "required": true,
+          "scaleMax": 5,
+          "minLabel": "Discordo totalmente",
+          "maxLabel": "Concordo totalmente"
+        },
+        {
+          "id": "s03_easy_to_use",
+          "type": "likert",
+          "text": "A ferramenta é fácil de usar.",
+          "required": true,
+          "scaleMax": 5,
+          "minLabel": "Discordo totalmente",
+          "maxLabel": "Concordo totalmente"
+        },
+        {
+          "id": "s04_needs_support",
+          "type": "likert",
+          "text": "Eu precisaria de suporte técnico para conseguir usar plenamente a ferramenta.",
+          "required": true,
+          "scaleMax": 5,
+          "minLabel": "Discordo totalmente",
+          "maxLabel": "Concordo totalmente"
+        },
+        {
+          "id": "s05_well_integrated",
+          "type": "likert",
+          "text": "As diferentes funcionalidades da ferramenta estão bem integradas.",
+          "required": true,
+          "scaleMax": 5,
+          "minLabel": "Discordo totalmente",
+          "maxLabel": "Concordo totalmente"
+        },
+        {
+          "id": "s06_inconsistencies",
+          "type": "likert",
+          "text": "Existem muitas inconsistências na ferramenta.",
+          "required": true,
+          "scaleMax": 5,
+          "minLabel": "Discordo totalmente",
+          "maxLabel": "Concordo totalmente"
+        },
+        {
+          "id": "s07_learn_quickly",
+          "type": "likert",
+          "text": "A maioria das pessoas aprenderia a usar esta ferramenta rapidamente.",
+          "required": true,
+          "scaleMax": 5,
+          "minLabel": "Discordo totalmente",
+          "maxLabel": "Concordo totalmente"
+        },
+        {
+          "id": "s08_cumbersome",
+          "type": "likert",
+          "text": "A ferramenta é muito trabalhosa de usar.",
+          "required": true,
+          "scaleMax": 5,
+          "minLabel": "Discordo totalmente",
+          "maxLabel": "Concordo totalmente"
+        },
+        {
+          "id": "s09_confident",
+          "type": "likert",
+          "text": "Eu me senti muito confiante usando a ferramenta.",
+          "required": true,
+          "scaleMax": 5,
+          "minLabel": "Discordo totalmente",
+          "maxLabel": "Concordo totalmente"
+        },
+        {
+          "id": "s10_learn_much",
+          "type": "likert",
+          "text": "Eu precisei aprender muitas coisas antes de começar a usar a ferramenta.",
+          "required": true,
+          "scaleMax": 5,
+          "minLabel": "Discordo totalmente",
+          "maxLabel": "Concordo totalmente"
+        }
+      ]
+    },
+    {
+      "id": "notacao",
+      "title": "Notação gráfica",
+      "questions": [
+        {
+          "id": "n1_clear_symbols",
+          "type": "likert",
+          "text": "Os elementos gráficos da ferramenta possuem significados claros, sem gerar confusão sobre o que representam.",
+          "required": true,
+          "scaleMax": 5,
+          "minLabel": "Discordo totalmente",
+          "maxLabel": "Concordo totalmente"
+        },
+        {
+          "id": "n2_distinguishable",
+          "type": "likert",
+          "text": "Consegui distinguir facilmente os diferentes tipos de elementos gráficos utilizados na construção das consultas.",
+          "required": true,
+          "scaleMax": 5,
+          "minLabel": "Discordo totalmente",
+          "maxLabel": "Concordo totalmente"
+        },
+        {
+          "id": "n3_appearance_helps",
+          "type": "likert",
+          "text": "A aparência dos elementos gráficos me ajudou a compreender o que eles representam na consulta.",
+          "required": true,
+          "scaleMax": 5,
+          "minLabel": "Discordo totalmente",
+          "maxLabel": "Concordo totalmente"
+        },
+        {
+          "id": "n4_visual_features",
+          "type": "likert",
+          "text": "A utilização de diferentes características visuais, como formas e cores, facilitou a compreensão das consultas.",
+          "required": true,
+          "scaleMax": 5,
+          "minLabel": "Discordo totalmente",
+          "maxLabel": "Concordo totalmente"
+        },
+        {
+          "id": "n5_symbol_count",
+          "type": "likert",
+          "text": "A quantidade de símbolos gráficos diferentes utilizados na ferramenta não dificultou sua compreensão.",
+          "required": true,
+          "scaleMax": 5,
+          "minLabel": "Discordo totalmente",
+          "maxLabel": "Concordo totalmente"
+        }
+      ]
+    }
+  ]
+}

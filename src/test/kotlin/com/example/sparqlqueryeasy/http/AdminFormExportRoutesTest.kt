@@ -42,11 +42,11 @@ class AdminFormExportRoutesTest {
             val lines = response.bodyAsText().split("\r\n")
             lines[0] shouldBe
                 "response_id,participant,group,form_version,consent_version,submitted_at," +
-                "q01_sparql_knowledge,$PROFILE_V1_COLUMNS"
+                "a1_sparql_knowledge,q01_sparql_knowledge,$PROFILE_V1_COLUMNS"
             lines[1].split(",").let { cells ->
                 cells[1] shouldBe ada.toString()
-                cells.drop(2).take(3) shouldBe listOf("Group A", "2", "1")
-                cells.drop(6) shouldBe listOf("2", "", "", "", "", "")
+                cells.drop(2).take(3) shouldBe listOf("Group A", "3", "1")
+                cells.drop(6) shouldBe listOf("2", "", "", "", "", "", "")
             }
             lines.drop(2) shouldBe listOf("")
             val body = response.bodyAsText()
@@ -85,14 +85,15 @@ class AdminFormExportRoutesTest {
 
             val lines = admin.get("/api/admin/forms/profile/responses.csv").bodyAsText().split("\r\n")
 
-            lines[0].substringAfter("submitted_at,") shouldBe "q01_sparql_knowledge,$PROFILE_V1_COLUMNS"
+            lines[0].substringAfter("submitted_at,") shouldBe
+                "a1_sparql_knowledge,q01_sparql_knowledge,$PROFILE_V1_COLUMNS"
             lines[1].split(",").let { cells ->
                 cells[3] shouldBe "1"
-                cells.drop(6) shouldBe listOf("", "heard_of", "sql;sparql", "4", "4", "")
+                cells.drop(6) shouldBe listOf("", "", "heard_of", "sql;sparql", "4", "4", "")
             }
             lines[2].split(",").let { cells ->
-                cells[3] shouldBe "2"
-                cells.drop(6) shouldBe listOf("2", "", "", "", "", "")
+                cells[3] shouldBe "3"
+                cells.drop(6) shouldBe listOf("2", "", "", "", "", "", "")
             }
         }
 

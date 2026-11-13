@@ -64,10 +64,10 @@ test('a participant answers both questionnaires and the admin finds them in the 
 	await page.getByRole('button', { name: 'Finish the study' }).click();
 	await page.getByRole('button', { name: 'Finish and submit' }).click();
 	await expect(form).toHaveAttribute('data-slug', 'usability');
-	const [tool, notation] = shippedPages('usability.v2.json');
-	await answerPage(questionnaire, tool, 4, 21);
+	const [tool, notation] = shippedPages('usability.v3.json');
+	await answerPage(questionnaire, tool, 4, 6);
 	await questionnaire.next();
-	await expect(form.getByText('Enter a number from 0 to 20.')).toBeVisible();
+	await expect(form.getByText('Enter a number from 0 to 5.')).toBeVisible();
 	await questionnaire.fill(tool[0].text, '5');
 	await questionnaire.next();
 	await answerPage(questionnaire, notation, 2);
@@ -97,13 +97,13 @@ test('a participant answers both questionnaires and the admin finds them in the 
 		const number = mine[0][1];
 		expect(Number.isInteger(Number(number))).toBe(true);
 		const cell = (name: string) => mine[0][column(usabilityHeader, name)];
-		expect(cell('form_version')).toBe('2');
-		expect(cell('q02_queries_done')).toBe('5');
+		expect(cell('form_version')).toBe('3');
+		expect(cell('a2_tasks_completed')).toBe('5');
 		for (const question of tool.slice(1)) expect(cell(question.id)).toBe('4');
 		for (const question of notation) expect(cell(question.id)).toBe('2');
-		// STUDY-015 scores: usability 2.5 · (3 · (5 − 4) + 4 · (4 − 1)) = 37.5, notation 5 · (2 − 1) = 5.
-		expect([cell('usability_score'), cell('notation_score')]).toEqual(['37.5', '5']);
-		// The placeholder v1 columns follow, empty for a v2 response.
+		// The v3 ids do not feed the dissertation scores (STUDY-021 adds the new ones): empty for v3.
+		expect([cell('usability_score'), cell('notation_score')]).toEqual(['', '']);
+		// The older columns follow, empty for a v3 response.
 		expect(cell('easy_to_use')).toBe('');
 		expect(usability.flat().join(',')).not.toContain(participant);
 
@@ -113,8 +113,8 @@ test('a participant answers both questionnaires and the admin finds them in the 
 		expect(rows).toHaveLength(1);
 		const answer = (name: string) => rows[0][column(profileHeader, name)];
 		expect(answer('submitted_at')).toBe(profileAt);
-		expect(answer('form_version')).toBe('2');
-		expect(answer('q01_sparql_knowledge')).toBe('3');
+		expect(answer('form_version')).toBe('3');
+		expect(answer('a1_sparql_knowledge')).toBe('3');
 		expect(profile.flat().join(',')).not.toContain(participant);
 	} finally {
 		await admin.close();

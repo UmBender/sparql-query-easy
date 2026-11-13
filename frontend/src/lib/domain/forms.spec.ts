@@ -121,27 +121,45 @@ describe('questionnaire schema for Superforms', () => {
 	});
 });
 
-describe('shipped questionnaires (STUDY-015: the dissertation questionnaire)', () => {
-	const current = [shipped('profile.v2.json'), shipped('usability.v2.json')];
+describe('shipped questionnaires (STUDY-020: A1-A3, the complete SUS and the notation items)', () => {
+	const current = [shipped('profile.v3.json'), shipped('usability.v3.json')];
 	const questions = current.flatMap(questionsOf);
 
-	it('ask questions 1 to 15 in order: 1 before the tasks, 2 to 15 after', () => {
+	it('ask A1 before the tasks, then A2, A3, S1-S10 and N1-N5 after, in order', () => {
 		expect(current.map((form) => [form.slug, form.version])).toEqual([
-			['profile', 2],
-			['usability', 2]
+			['profile', 3],
+			['usability', 3]
 		]);
-		expect(questions.map((question) => question.text.split('. ')[0])).toEqual(
-			Array.from({ length: 15 }, (_, index) => String(index + 1))
-		);
+		expect(questions.map((question) => question.id)).toEqual([
+			'a1_sparql_knowledge',
+			'a2_tasks_completed',
+			'a3_video_useful',
+			's01_use_often',
+			's02_too_complex',
+			's03_easy_to_use',
+			's04_needs_support',
+			's05_well_integrated',
+			's06_inconsistencies',
+			's07_learn_quickly',
+			's08_cumbersome',
+			's09_confident',
+			's10_learn_much',
+			'n1_clear_symbols',
+			'n2_distinguishable',
+			'n3_appearance_helps',
+			'n4_visual_features',
+			'n5_symbol_count'
+		]);
 		expect(questionsOf(current[0])).toHaveLength(1);
+		expect(current[1].pages.map((page) => page.title)).toEqual(['Uso da ferramenta', 'Notação gráfica']);
 		for (const question of questions) {
 			expect(question.required).toBe(true);
 			expect(question.text).not.toMatch(/PLACEHOLDER/);
 		}
 	});
 
-	it('rate every question but 2 from 1 to 5 with both end labels', () => {
-		for (const question of questions.filter((item) => item.id !== 'q02_queries_done')) {
+	it('rate every question but A2 from 1 to 5 with both end labels', () => {
+		for (const question of questions.filter((item) => item.id !== 'a2_tasks_completed')) {
 			expect(question).toMatchObject({ type: 'likert', scaleMax: 5 });
 			expect(question.minLabel).toBeTruthy();
 			expect(question.maxLabel).toBeTruthy();
@@ -149,16 +167,21 @@ describe('shipped questionnaires (STUDY-015: the dissertation questionnaire)', (
 		}
 	});
 
-	it('count the queries of question 2 as a whole number from 0 to 20', () => {
-		const queries = questions.find((question) => question.id === 'q02_queries_done')!;
-		expect(checkAnswer(queries, 0)).toEqual({ value: 0 });
-		expect(checkAnswer(queries, 20)).toEqual({ value: 20 });
-		expect(checkAnswer(queries, 21)).toEqual({ error: 'Enter a number from 0 to 20.' });
-		expect(checkAnswer(queries, 2.5)).toEqual({ error: MESSAGES.integer });
+	it('count the tasks of A2 as a whole number from 0 to 5', () => {
+		const tasks = questions.find((question) => question.id === 'a2_tasks_completed')!;
+		expect(checkAnswer(tasks, 0)).toEqual({ value: 0 });
+		expect(checkAnswer(tasks, 5)).toEqual({ value: 5 });
+		expect(checkAnswer(tasks, 6)).toEqual({ error: 'Enter a number from 0 to 5.' });
+		expect(checkAnswer(tasks, 2.5)).toEqual({ error: MESSAGES.integer });
 	});
 
-	it('keep the placeholder v1 files so that their responses stay readable', () => {
-		for (const name of ['profile.v1.json', 'usability.v1.json'])
-			expect(shipped(name).version).toBe(1);
+	it('keep the older files so that their responses stay readable', () => {
+		for (const [name, version] of [
+			['profile.v1.json', 1],
+			['usability.v1.json', 1],
+			['profile.v2.json', 2],
+			['usability.v2.json', 2]
+		] as const)
+			expect(shipped(name).version).toBe(version);
 	});
 });

@@ -27,33 +27,47 @@ class FormDefinitionsTest {
         FormDefinitions.problems(kotlinx.serialization.json.Json.decodeFromString<FormDefinition>(text))
 
     @Test
-    fun `the current questionnaires are the dissertation's questions 1 to 15 in order (STUDY-015)`() {
+    fun `the current questionnaires are A1-A3, the complete SUS and the five notation items in order (STUDY-020)`() {
         val resources = StudyResources.fromClasspath()
         val forms = resources.currentForms
         forms.keys shouldBe setOf("profile", "usability")
-        forms.values.forEach { it.version shouldBe 2 }
+        forms.values.forEach { it.version shouldBe 3 }
         val profile = forms.getValue("profile").questions
         val usability = forms.getValue("usability").questions
-        (profile + usability).map { it.text.substringBefore(". ") } shouldBe (1..15).map { it.toString() }
-        (profile + usability).map { it.id.take(3) } shouldBe (1..15).map { "q%02d".format(it) }
+        (profile + usability).map { it.id } shouldBe
+            listOf("a1_sparql_knowledge", "a2_tasks_completed", "a3_video_useful") +
+            listOf(
+                "s01_use_often", "s02_too_complex", "s03_easy_to_use", "s04_needs_support", "s05_well_integrated",
+                "s06_inconsistencies", "s07_learn_quickly", "s08_cumbersome", "s09_confident", "s10_learn_much",
+                "n1_clear_symbols", "n2_distinguishable", "n3_appearance_helps", "n4_visual_features",
+                "n5_symbol_count",
+            )
         (profile + usability).forEach { question ->
             question.required shouldBe true
             question.text shouldNotContain "PLACEHOLDER"
         }
-        profile.single().text shouldBe "1. Qual é o seu nível de conhecimento sobre SPARQL/RDF?"
+        // The ids must not make the dissertation scores (STUDY-021 adds the new ones) apply to v3 alone.
+        FormResponsesCsv.questionColumns(listOf(forms.getValue("usability"))).let {
+            DissertationScores.appliesTo(it) shouldBe false
+        }
+        profile.single().text shouldBe "Qual é o seu nível de conhecimento sobre SPARQL/RDF?"
         val queries = usability.first()
         queries.type shouldBe QuestionType.NUMBER
-        listOf(queries.min, queries.max, queries.integer) shouldBe listOf(0.0, 20.0, true)
+        listOf(queries.min, queries.max, queries.integer) shouldBe listOf(0.0, 5.0, true)
         usability.drop(1).forEach { question ->
             question.type shouldBe QuestionType.LIKERT
             question.scaleMax shouldBe 5
             question.minLabel.shouldNotBeNull()
             question.maxLabel.shouldNotBeNull()
         }
-        forms.getValue("usability").pages.map { page -> page.questions.size } shouldBe listOf(9, 5)
-        // The placeholder v1 files stay so that responses to them are still read and exported.
+        forms.getValue("usability").pages.map { page -> page.questions.size } shouldBe listOf(12, 5)
+        forms.getValue("usability").pages.map { it.title } shouldBe listOf("Uso da ferramenta", "Notação gráfica")
+        // The older files stay so that responses to them are still read and exported.
         resources.forms.map { it.slug to it.version }.toSet() shouldBe
-            setOf("profile" to 1, "profile" to 2, "usability" to 1, "usability" to 2)
+            setOf(
+                "profile" to 1, "profile" to 2, "profile" to 3,
+                "usability" to 1, "usability" to 2, "usability" to 3,
+            )
     }
 
     @Test

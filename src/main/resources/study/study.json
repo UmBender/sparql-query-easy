@@ -4,7 +4,9 @@
     "forms/profile.v1.json",
     "forms/profile.v2.json",
     "forms/usability.v1.json",
-    "forms/usability.v2.json"
+    "forms/usability.v2.json",
+    "forms/profile.v3.json",
+    "forms/usability.v3.json"
   ],
   "flow": { "beforeTasks": "profile", "afterFinish": "usability" }
 }
