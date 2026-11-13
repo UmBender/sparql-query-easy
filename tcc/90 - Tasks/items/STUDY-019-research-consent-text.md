@@ -1,7 +1,7 @@
 ---
 id: STUDY-019
 title: Show the approved research terms on the consent screen and require the adult declaration
-status: BACKLOG
+status: REVIEW
 priority: P1
 type: fullstack
 depends_on: [STUDY-008]
@@ -60,3 +60,11 @@ stack spec `tests-stack/study-questionnaires.e2e.ts` (consent step; update
 `tests-stack/support.ts` if it accepts a fixed version). Closing: Kotlin gate
 (resource and `study.json` change), frontend gate, `test:stack`. Human gate:
 the user reads the shown text once.
+
+## Conclusion
+
+Implemented: `consent/v2.md` (items 1–8, T1–T7, declaration, contacts; no checkbox lines, no bold markers because the screen renders only paragraphs and `- ` lists; T6 states only the date), `study.json` -> version 2 (`v1.md` kept), `consent-screen.svelte` with the required "Declaro ter 18 anos ou mais" checkbox gating *Accept*, updated `StudyConsentRoutesTest`, `consent-screen.svelte.spec.ts` and the stack specs (`study-participant`, `study-questionnaires`, `auth`). `support.ts` needed no change (reads the current version).
+
+Validation (after the owner fixed permissions and Firefox): `./gradlew ktlintCheck detekt test --no-daemon` green after two pinned consent versions were updated (`AdminFormExportRoutesTest` consent_version cell 1 -> 2, `StudyFormResponseRoutesTest` stored row "profile 2 2"; cause: the version bump, not the oracle); `npm --prefix frontend test` green (components, 135 e2e); `npm --prefix frontend run test:stack` green (23 passed).
+
+Remaining (human gate): read the rendered text at `/study` once and confirm the T6 wording (date only; delete vs anonymize still undecided).

@@ -45,7 +45,7 @@ class AdminFormExportRoutesTest {
                 "q01_sparql_knowledge,$PROFILE_V1_COLUMNS"
             lines[1].split(",").let { cells ->
                 cells[1] shouldBe ada.toString()
-                cells.drop(2).take(3) shouldBe listOf("Group A", "2", "1")
+                cells.drop(2).take(3) shouldBe listOf("Group A", "2", "2")
                 cells.drop(6) shouldBe listOf("2", "", "", "", "", "")
             }
             lines.drop(2) shouldBe listOf("")

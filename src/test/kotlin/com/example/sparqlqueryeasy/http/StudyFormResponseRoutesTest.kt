@@ -65,7 +65,7 @@ class StudyFormResponseRoutesTest {
 
             val rows = storedRows(checkNotNull(database))
             rows.size shouldBe 1
-            rows.single().first shouldBe "profile 2 1"
+            rows.single().first shouldBe "profile 2 2"
             Json.parseToJsonElement(rows.single().second).jsonObject shouldBe
                 Json.parseToJsonElement(PROFILE_ANSWERS).jsonObject
             ada.get("/api/study/forms/profile/response").data().field("answered").jsonPrimitive.content shouldBe "true"

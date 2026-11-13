@@ -105,6 +105,7 @@ test('a protected page needs a session and returns there after login', async ({
 		.click();
 	await expect(page).toHaveURL(/\/study$/);
 	// STUDY-008/010: a new participant consents and answers the profile questionnaire first.
+	await page.getByRole('checkbox', { name: 'Declaro ter 18 anos ou mais' }).check();
 	await page.getByRole('button', { name: 'I agree to take part' }).click();
 	await expect(page.getByTestId('questionnaire')).toHaveAttribute('data-slug', 'profile');
 	const profile = await page.request.post('/api/study/forms/profile/responses', {

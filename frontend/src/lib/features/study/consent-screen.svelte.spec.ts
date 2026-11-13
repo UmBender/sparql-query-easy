@@ -15,8 +15,24 @@ describe('ConsentScreen', () => {
 		const screen = await render(ConsentScreen, { consent, accept });
 		await expect.element(screen.getByText('PLACEHOLDER intro.')).toBeVisible();
 		await expect.element(screen.getByRole('listitem').nth(1)).toHaveTextContent('second point');
-		await screen.getByRole('button', { name: 'I agree to take part' }).click();
+		const agree = screen.getByRole('button', { name: 'I agree to take part' });
+		await expect.element(agree).toBeDisabled();
+		await screen.getByRole('checkbox', { name: 'Declaro ter 18 anos ou mais' }).click();
+		await expect.element(agree).toBeEnabled();
+		await agree.click();
 		expect(accept).toHaveBeenCalledWith(3);
+	});
+
+	it('keeps Accept disabled until the adult box is checked, and again when unchecked', async () => {
+		const accept = vi.fn(async () => {});
+		const screen = await render(ConsentScreen, { consent, accept });
+		const box = screen.getByRole('checkbox', { name: 'Declaro ter 18 anos ou mais' });
+		await box.click();
+		await box.click();
+		await expect
+			.element(screen.getByRole('button', { name: 'I agree to take part' }))
+			.toBeDisabled();
+		expect(accept).not.toHaveBeenCalled();
 	});
 
 	it('shows the server error when accepting fails', async () => {
@@ -24,6 +40,7 @@ describe('ConsentScreen', () => {
 			throw new Error('This is not the current consent text; reload it');
 		});
 		const screen = await render(ConsentScreen, { consent, accept });
+		await screen.getByRole('checkbox', { name: 'Declaro ter 18 anos ou mais' }).click();
 		await screen.getByRole('button', { name: 'I agree to take part' }).click();
 		await expect
 			.element(screen.getByRole('alert'))

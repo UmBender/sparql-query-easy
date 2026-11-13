@@ -24,6 +24,7 @@
 
 	const blocks = $derived(textBlocks(consent.text));
 	let declined = $state(false);
+	let adult = $state(false);
 	let pending = $state(false);
 	let error = $state('');
 
@@ -69,9 +70,13 @@
 					{/if}
 				{/each}
 			</div>
+			<label class="flex items-center gap-2 border-t pt-4 text-sm font-medium">
+				<input type="checkbox" bind:checked={adult} data-testid="consent-adult" />
+				Declaro ter 18 anos ou mais
+			</label>
 			{#if error}<p class="text-sm text-danger" role="alert">{error}</p>{/if}
-			<div class="flex flex-wrap gap-2 border-t pt-4">
-				<Button disabled={pending} onclick={agree}>I agree to take part</Button>
+			<div class="flex flex-wrap gap-2">
+				<Button disabled={pending || !adult} onclick={agree}>I agree to take part</Button>
 				<Button variant="outline" onclick={() => (declined = true)}>I do not agree</Button>
 			</div>
 		{/if}

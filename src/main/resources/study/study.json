@@ -1,5 +1,5 @@
 {
-  "consent": { "version": 1, "file": "consent/v1.md" },
+  "consent": { "version": 2, "file": "consent/v2.md" },
   "forms": [
     "forms/profile.v1.json",
     "forms/profile.v2.json",
