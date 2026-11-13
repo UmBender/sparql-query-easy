@@ -1,7 +1,7 @@
 ---
 id: STUDY-022
 title: Load the five PokemonGen1 research tasks R1-R5 as proposed tasks for the test group
-status: BACKLOG
+status: REVIEW
 priority: P1
 type: fullstack
 depends_on: [STUDY-016, STUDY-013]
@@ -71,3 +71,24 @@ English app labels in parentheses (as §5.4 does, e.g. *Speed*).
 Focused: the new Vitest spec and the stack spec. Closing: frontend gate +
 `test:stack`; the Kotlin gate only if backend code changes. Human gate: the
 user solves R1–R5 once as a participant.
+
+## Conclusion
+
+Implemented (batch, 2026-11-13): task set `frontend/src/lib/domain/fixtures/demo-study/research-pokemon-gen1.json`
+(group "Pesquisa PokemonGen1", R1–R5 in order, common §5.1 instruction before each
+statement, English labels in parentheses, answers 6/6/3/3/2; R5's answer variable is
+the pre-evolution `?pre`); `seed-demo-study.mjs` parameterized (`--set=research`,
+`readDemoStudy(file)`, `RESEARCH_STUDY_FILE`), script `demo:seed:research`; Vitest
+cases in `demo-study.spec.ts`; stack spec `tests-stack/research-study.e2e.ts`;
+runbook section in Docker Compose Stack.md. Brasileirão set untouched.
+
+Checks: `npm --prefix frontend test` — server project 273 passed (new R1–R5 cases
+included). Client project and `test:stack` could not run:
+`browserType.launch: Executable doesn't exist ... firefox-1543` (the existing
+`demo-study.e2e.ts` fails identically, so it is the environment, not this change).
+
+Retry after the environment fix: `npm --prefix frontend run test:stack -- research-study demo-study`
+2 passed (the seeder's expected-count check against the real PokemonGen1 data passed);
+`npm --prefix frontend test` full gate green (server 273, browser e2e 135 passed).
+Status REVIEW: human gate left — solve R1–R5 once as a participant, confirm R5's two
+pre-evolutions (Grimer, Weepinbell).

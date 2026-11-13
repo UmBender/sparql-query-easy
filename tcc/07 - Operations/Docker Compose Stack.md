@@ -244,6 +244,22 @@ Task data: `frontend/src/lib/domain/fixtures/demo-study/brasileirao-2023.json`
 (checked by `demo-study.spec.ts`; `tests-stack/demo-study.e2e.ts` seeds it
 on the real stack).
 
+### Research tasks R1–R5 (STUDY-022)
+
+Same procedure and accounts as above, with the research set: the five PokemonGen1
+tasks (R1 NF5, R2 NF1, R3 NF7, R4 NP1, R5 NP4 of the questions note) in the
+group **Pesquisa PokemonGen1**. The Brasileirão group and tasks stay as they are.
+
+```sh
+EASYQUERY_DEMO_ADMIN=demo-admin EASYQUERY_DEMO_ADMIN_PASSWORD='…' \
+EASYQUERY_DEMO_PARTICIPANT=gustavo EASYQUERY_DEMO_PARTICIPANT_PASSWORD='…' \
+npm --prefix frontend run demo:seed:research
+```
+
+Task data: `frontend/src/lib/domain/fixtures/demo-study/research-pokemon-gen1.json`
+(checked by `demo-study.spec.ts`; `tests-stack/research-study.e2e.ts` seeds it).
+The seeder fails when a stored expected count differs (6, 6, 3, 3, 2).
+
 ## Automated smoke (QUAL-017)
 
 `npm --prefix frontend run test:compose` builds both images and starts the

@@ -9,6 +9,9 @@
 //   EASYQUERY_DEMO_PARTICIPANT=… EASYQUERY_DEMO_PARTICIPANT_PASSWORD=… \
 //   npm --prefix frontend run demo:seed -- [--base-url=http://127.0.0.1:8080]
 //
+// STUDY-022: add `--set=research` (or `npm run demo:seed:research`) to load the five
+// PokemonGen1 research tasks R1-R5 into the group "Pesquisa PokemonGen1" instead.
+//
 // The admin username must be listed in EASYQUERY_ADMIN_USERNAMES of the backend.
 import { readFileSync } from 'node:fs';
 
@@ -24,9 +27,18 @@ export const DEMO_STUDY_FILE = new URL(
 	import.meta.url
 );
 
-/** @returns {DemoStudy} */
-export function readDemoStudy() {
-	return JSON.parse(readFileSync(DEMO_STUDY_FILE, 'utf8'));
+/** STUDY-022: the five PokemonGen1 research tasks R1-R5 (same seeding, another task set). */
+export const RESEARCH_STUDY_FILE = new URL(
+	'../src/lib/domain/fixtures/demo-study/research-pokemon-gen1.json',
+	import.meta.url
+);
+
+/**
+ * @param {URL} [file] the task set; the Brasileirão practice tasks by default
+ * @returns {DemoStudy}
+ */
+export function readDemoStudy(file = DEMO_STUDY_FILE) {
+	return JSON.parse(readFileSync(file, 'utf8'));
 }
 
 /** A cookie-carrying JSON client for one account. */
@@ -177,9 +189,11 @@ if (import.meta.url === `file://${process.argv[1]}`) {
 		process.argv
 			.find((argument) => argument.startsWith('--base-url='))
 			?.slice('--base-url='.length) ?? 'http://127.0.0.1:8080';
+	const research = process.argv.includes('--set=research');
 	try {
 		await seedDemoStudy({
 			baseUrl,
+			study: readDemoStudy(research ? RESEARCH_STUDY_FILE : DEMO_STUDY_FILE),
 			admin: {
 				username: required('EASYQUERY_DEMO_ADMIN'),
 				password: required('EASYQUERY_DEMO_ADMIN_PASSWORD')
