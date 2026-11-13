@@ -26,6 +26,7 @@
       "Bash(mkdir *)",
       "Bash(sort *)",
       "Bash(./gradlew *)",
+      "Bash(GRADLE_USER_HOME=* ./gradlew *)",
       "Bash(npm --prefix frontend run *)",
       "Bash(npm --prefix frontend test)",
       "Bash(npm --prefix frontend test *)",
