@@ -151,7 +151,10 @@ describe('shipped questionnaires (STUDY-020: A1-A3, the complete SUS and the not
 			'n5_symbol_count'
 		]);
 		expect(questionsOf(current[0])).toHaveLength(1);
-		expect(current[1].pages.map((page) => page.title)).toEqual(['Uso da ferramenta', 'Notação gráfica']);
+		expect(current[1].pages.map((page) => page.title)).toEqual([
+			'Uso da ferramenta',
+			'Notação gráfica'
+		]);
 		for (const question of questions) {
 			expect(question.required).toBe(true);
 			expect(question.text).not.toMatch(/PLACEHOLDER/);
