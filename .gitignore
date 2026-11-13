@@ -386,3 +386,6 @@ frontend/.svelte-kit/
 
 # Unattended batches (scripts/batch)
 /.batch/
+
+# Obsidian vault state (rewritten while Obsidian is open)
+/tcc/.obsidian/
