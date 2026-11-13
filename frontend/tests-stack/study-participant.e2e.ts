@@ -161,7 +161,9 @@ test('a new participant sees the consent screen first and the tasks only after a
 
 	await page.goto('/study');
 	await expect(page.getByRole('heading', { name: 'Consent to take part' })).toBeVisible();
-	await expect(page.getByTestId('consent-text')).toContainText('TERMO DE CONSENTIMENTO LIVRE E ESCLARECIDO');
+	await expect(page.getByTestId('consent-text')).toContainText(
+		'TERMO DE CONSENTIMENTO LIVRE E ESCLARECIDO'
+	);
 	await expect(page.getByTestId('consent-text')).not.toContainText('PLACEHOLDER');
 	const results = await new AxeBuilder({ page })
 		.include('[data-testid="consent-screen"]')
