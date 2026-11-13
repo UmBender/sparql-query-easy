@@ -137,6 +137,10 @@ Ordered by dependencies, then priority among selection candidates. See [worker r
 | STUDY-016 | DONE | P1 | fullstack | [Save a drawn answer, with or without variables, and show the participant no correctness](<items/STUDY-016-save-answer-without-feedback.md>) |
 | STUDY-017 | DONE | P1 | fullstack | [Let an admin review each participant's last saved answer beside the task's reference query](<items/STUDY-017-admin-submission-review.md>) |
 | STUDY-018 | DONE | P1 | fullstack | [Export the last saved answers as a ZIP with plain-text diagrams for manual or AI-assisted grading](<items/STUDY-018-submission-export-plain-text.md>) |
+| STUDY-019 | BACKLOG | P1 | fullstack | [Show the approved research terms on the consent screen and require the adult declaration](<items/STUDY-019-research-consent-text.md>) |
+| STUDY-020 | BACKLOG | P1 | fullstack | [Replace the dissertation questionnaire with the complete SUS plus the five notation items](<items/STUDY-020-evaluation-questionnaire-v3.md>) |
+| STUDY-021 | BACKLOG | P1 | backend | [Compute the SUS score (0-100) and the notation score (0-20) in the questionnaire CSV](<items/STUDY-021-sus-and-notation-scores.md>) |
+| STUDY-022 | BACKLOG | P1 | fullstack | [Load the five PokemonGen1 research tasks R1-R5 as proposed tasks for the test group](<items/STUDY-022-research-pokemon-tasks.md>) |
 | DEC-019 | DONE | P1 | decision | [Decide what multiset comparison means when drawn answers run as SELECT DISTINCT](<items/DEC-019-multiset-and-distinct-answers.md>) |
 | BUG-009 | DONE | P1 | bug | [Nodes added by search or Explore relationships land on top of the first node](<items/BUG-009-new-nodes-stack-on-first-node.md>) |
 | BUG-010 | DONE | P2 | bug | [A MAX or MIN value applied with an empty value field reopens with text filters only](<items/BUG-010-max-min-reopens-as-text.md>) |
