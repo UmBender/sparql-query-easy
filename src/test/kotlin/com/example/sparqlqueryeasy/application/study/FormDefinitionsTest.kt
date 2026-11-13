@@ -46,9 +46,10 @@ class FormDefinitionsTest {
             question.required shouldBe true
             question.text shouldNotContain "PLACEHOLDER"
         }
-        // The ids must not make the dissertation scores (STUDY-021 adds the new ones) apply to v3 alone.
+        // The v3 ids carry the SUS scores, not the dissertation's (v2) ones.
         FormResponsesCsv.questionColumns(listOf(forms.getValue("usability"))).let {
             DissertationScores.appliesTo(it) shouldBe false
+            SusScores.appliesTo(it) shouldBe true
         }
         profile.single().text shouldBe "Qual é o seu nível de conhecimento sobre SPARQL/RDF?"
         val queries = usability.first()

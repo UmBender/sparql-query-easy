@@ -1,13 +1,13 @@
 ---
 id: STUDY-021
 title: Compute the SUS score (0-100) and the notation score (0-20) in the questionnaire CSV
-status: BACKLOG
+status: DONE
 priority: P1
 type: backend
 depends_on: [STUDY-020]
 human_gate: false
 created: 2026-11-12
-updated: 2026-11-12
+updated: 2026-11-13
 ---
 # Compute the SUS score (0-100) and the notation score (0-20) in the questionnaire CSV
 
@@ -39,14 +39,24 @@ per-principle averages (done in analysis, not in the export).
 
 ## Acceptance criteria
 
-- [ ] A response with all S answers = 5 on positive items and 1 on negative
+- [x] A response with all S answers = 5 on positive items and 1 on negative
       items scores 100; all 3s score 50; the reverse extreme scores 0.
-- [ ] N all 5 scores 20, all 1 scores 0.
-- [ ] Incomplete S or N answers give an empty cell, not 0.
-- [ ] CSV of a mixed v1/v2/v3 export keeps the earlier columns intact.
+- [x] N all 5 scores 20, all 1 scores 0.
+- [x] Incomplete S or N answers give an empty cell, not 0.
+- [x] CSV of a mixed v1/v2/v3 export keeps the earlier columns intact.
 
 ## Validation
 
 Focused: extend `FormResponsesCsvTest` (extremes, mid-point, missing answer,
 mixed versions) plus a test with the oracle computed by hand in the card.
 Closing: Kotlin gate.
+
+## Conclusion
+
+`SusScores` and `ScoreColumns` in `FormResponsesCsv.kt` add `sus_score` and a
+shared `notation_score`; `usability_score` and the v1/v2 behavior are
+unchanged. `sus7_score` was left out (optional; can be derived in analysis).
+Tests: `FormResponsesCsvTest` (extremes 100/50/0, notation 20/10/0, hand
+oracle 77.5, missing answers, mixed v2/v3 export) and `FormDefinitionsTest`.
+Formulas documented in [[../../03 - Backend/API v1]].
+Validation: `./gradlew ktlintCheck detekt test --no-daemon` passed.

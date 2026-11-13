@@ -843,6 +843,16 @@ stay listed in `study.json` so that responses to them remain valid stored
 rows and stay in the export; a user who answered v1 is not asked v2 (one
 response per user and slug).
 
+Since STUDY-021 the same export also holds the v3 scores (`SusScores`) when
+the questionnaire versions include the v3 ids: `sus_score` = 2.5 ·
+(Σ_{S1,S3,S5,S7,S9}(q − 1) + Σ_{S2,S4,S6,S8,S10}(5 − q)), 0–100;
+`notation_score` = Σ_{N1–N5}(q − 1), 0–20. The columns are
+`usability_score`, `sus_score`, `notation_score` (each only when its ids are
+present, so a v2-only export is unchanged); `notation_score` is one column:
+a response takes the N1–N5 value when it has all five, else the questions
+11–15 value. A score is empty, never 0, when one of its answers is missing.
+The 7-item `sus7_score` of the card was not added.
+
 ## Questionnaire responses (participant, STUDY-010)
 
 DEC-015 Q3, Q4 A, Q6 A. `study/study.json` names the questionnaire answered
