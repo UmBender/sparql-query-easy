@@ -1,7 +1,7 @@
 ---
 id: STUDY-022
 title: Load the five PokemonGen1 research tasks R1-R5 as proposed tasks for the test group
-status: IN_PROGRESS
+status: REVIEW
 priority: P1
 type: fullstack
 depends_on: [STUDY-016, STUDY-013]
@@ -87,8 +87,8 @@ included). Client project and `test:stack` could not run:
 `browserType.launch: Executable doesn't exist ... firefox-1543` (the existing
 `demo-study.e2e.ts` fails identically, so it is the environment, not this change).
 
-BLOCKED (batch): the stack spec `research-study.e2e.ts` has not run (no Playwright
-Firefox; installing is not allowed in the batch). Unlock: `npx playwright install firefox`
-(in `frontend/`), then `npm --prefix frontend run test:stack -- research-study demo-study`
-with Docker/Postgres up; also confirm the seeder's expected counts against the real
-endpoint. Human gate after that: solve R1–R5 once, confirm R5's two pre-evolutions.
+Retry after the environment fix: `npm --prefix frontend run test:stack -- research-study demo-study`
+2 passed (the seeder's expected-count check against the real PokemonGen1 data passed);
+`npm --prefix frontend test` full gate green (server 273, browser e2e 135 passed).
+Status REVIEW: human gate left — solve R1–R5 once as a participant, confirm R5's two
+pre-evolutions (Grimer, Weepinbell).
