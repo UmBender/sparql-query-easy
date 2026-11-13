@@ -19,6 +19,7 @@
 		"test:coverage": "vitest run --project server --coverage",
 		"api:types": "node scripts/generate-api-types.mjs",
 		"demo:seed": "node scripts/seed-demo-study.mjs",
+		"demo:seed:research": "node scripts/seed-demo-study.mjs --set=research",
 		"test:stack": "playwright test --config playwright.stack.config.ts",
 		"test:screens": "node scripts/test-screens.mjs",
 		"test:compose": "node scripts/test-compose.mjs",

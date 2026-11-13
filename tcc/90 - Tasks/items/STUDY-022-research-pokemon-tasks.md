@@ -1,7 +1,7 @@
 ---
 id: STUDY-022
 title: Load the five PokemonGen1 research tasks R1-R5 as proposed tasks for the test group
-status: BACKLOG
+status: IN_PROGRESS
 priority: P1
 type: fullstack
 depends_on: [STUDY-016, STUDY-013]
@@ -71,3 +71,24 @@ English app labels in parentheses (as §5.4 does, e.g. *Speed*).
 Focused: the new Vitest spec and the stack spec. Closing: frontend gate +
 `test:stack`; the Kotlin gate only if backend code changes. Human gate: the
 user solves R1–R5 once as a participant.
+
+## Conclusion
+
+Implemented (batch, 2026-11-13): task set `frontend/src/lib/domain/fixtures/demo-study/research-pokemon-gen1.json`
+(group "Pesquisa PokemonGen1", R1–R5 in order, common §5.1 instruction before each
+statement, English labels in parentheses, answers 6/6/3/3/2; R5's answer variable is
+the pre-evolution `?pre`); `seed-demo-study.mjs` parameterized (`--set=research`,
+`readDemoStudy(file)`, `RESEARCH_STUDY_FILE`), script `demo:seed:research`; Vitest
+cases in `demo-study.spec.ts`; stack spec `tests-stack/research-study.e2e.ts`;
+runbook section in Docker Compose Stack.md. Brasileirão set untouched.
+
+Checks: `npm --prefix frontend test` — server project 273 passed (new R1–R5 cases
+included). Client project and `test:stack` could not run:
+`browserType.launch: Executable doesn't exist ... firefox-1543` (the existing
+`demo-study.e2e.ts` fails identically, so it is the environment, not this change).
+
+BLOCKED (batch): the stack spec `research-study.e2e.ts` has not run (no Playwright
+Firefox; installing is not allowed in the batch). Unlock: `npx playwright install firefox`
+(in `frontend/`), then `npm --prefix frontend run test:stack -- research-study demo-study`
+with Docker/Postgres up; also confirm the seeder's expected counts against the real
+endpoint. Human gate after that: solve R1–R5 once, confirm R5's two pre-evolutions.
